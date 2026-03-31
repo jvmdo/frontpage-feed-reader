@@ -10,7 +10,10 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.45.2",
     "next": "16.2.1",
+    "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -18,10 +21,13 @@
     "@biomejs/biome": "2.2.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "drizzle-kit": "^0.31.10",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   },
   "ignoreScripts": [
