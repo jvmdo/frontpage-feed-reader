@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test": "vitest",
+    "test:e2e": "PLAYWRIGHT_HTML_OPEN=never playwright test",
     "coverage": "vitest run --coverage",
     "dev": "next dev",
     "build": "next build",
@@ -41,6 +42,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
     "@electric-sql/pglite": "^0.4.2",
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
