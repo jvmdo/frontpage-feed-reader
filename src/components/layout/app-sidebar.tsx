@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type * as React from "react";
 
+import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import {
   Sidebar,
   SidebarContent,
@@ -57,6 +58,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </a>
                 </SidebarMenuButton>
                 <SidebarMenuBadge>3</SidebarMenuBadge>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <AddFeedDialog>
+                  <SidebarMenuButton tooltip="Add Feed">
+                    <PlusIcon />
+                    <span>Add Feed</span>
+                  </SidebarMenuButton>
+                </AddFeedDialog>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
