@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { anonymous } from "better-auth/plugins";
+import { anonymous, testUtils } from "better-auth/plugins";
 import { db } from "@/db";
 
 export const auth = betterAuth({
@@ -17,5 +17,6 @@ export const auth = betterAuth({
         // perform actions like moving the feed items from anonymous user to the new user
       },
     }),
+    testUtils(),
   ],
 });
