@@ -52,10 +52,9 @@ None.
 
 **Todos:**
 
-1. [ ] Create `src/components/feed/add-feed-dialog.tsx` using shadcn `Dialog`.
-2. [ ] Add a form shell inside the dialog with an `Input` for the feed URL and an "Add" button.
-3. [ ] Integrate the dialog trigger into a "Add Feed" button in the sidebar.
-4. [ ] Add a `DialogTitle` (sr-only if needed) for accessibility as per shadcn rules.
+1. [x] Create `src/components/feed/add-feed-dialog.tsx` using shadcn `Dialog`.
+2. [x] Add a form shell inside the dialog with an `Input` for the feed URL and an "Add" button.
+3. [x] Integrate the dialog trigger into a "Add Feed" button in the sidebar.
 
 **Done when:** Clicking "Add Feed" in the sidebar opens a dialog with the correct form fields.
 
@@ -68,9 +67,9 @@ None.
 
 **Todos:**
 
-1. [ ] E2E (Playwright): Verify that the sidebar is visible on page load.
-2. [ ] E2E (Playwright): Verify that clicking "Add Feed" opens the dialog.
-3. [ ] E2E (Playwright): Verify that the dialog contains a URL input field.
+1. [x] E2E (Playwright): Verify that the sidebar is visible on page load.
+2. [x] E2E (Playwright): Verify that clicking "Add Feed" opens the dialog.
+3. [x] E2E (Playwright): Verify that the dialog contains a URL input field.
 
 **Done when:** All tests pass and cover the layout and basic dialog interactivity.
 
