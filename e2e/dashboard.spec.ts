@@ -1,7 +1,9 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test-extend";
 
 test.describe("Dashboard", () => {
-  test("sidebar is visible on page load", async ({ page }) => {
+  test("sidebar is visible on page load", async ({ authedPage }) => {
+    const { page } = authedPage;
+
     // Navigate to the dashboard page
     await page.goto("/dashboard");
 
@@ -14,7 +16,9 @@ test.describe("Dashboard", () => {
     await expect(sidebar.getByText("Frontpage")).toBeVisible();
   });
 
-  test("clicking 'Add Feed' opens the dialog", async ({ page }) => {
+  test("clicking 'Add Feed' opens the dialog", async ({ authedPage }) => {
+    const { page } = authedPage;
+
     await page.goto("/dashboard");
     const sidebar = page.locator('[data-slot="sidebar"]');
 
@@ -28,7 +32,9 @@ test.describe("Dashboard", () => {
     await expect(dialog.getByText(/enter the url/i)).toBeVisible();
   });
 
-  test("dialog contains URL input and Add button", async ({ page }) => {
+  test("dialog contains URL input and Add button", async ({ authedPage }) => {
+    const { page } = authedPage;
+
     await page.goto("/dashboard");
     await page.getByRole("button", { name: /add feed/i }).click();
 

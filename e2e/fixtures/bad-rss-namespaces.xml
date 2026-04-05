@@ -1,0 +1,4 @@
+This is just a plain text file.
+There are no tags here.
+It is definitely not an RSS or Atom feed.
+It should trigger an immediate failure in the parser. 

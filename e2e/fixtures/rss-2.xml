@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+  xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+>
+  <channel>
+    <title>Standard RSS 2.0 Feed</title>
+    <link>https://css-tricks.com</link>
+    <description>Tips, Tricks, and Techniques on using Cascading Style Sheets.</description>
+    <item>
+      <title>Making Complex CSS Shapes Using shape()</title>
+      <link>https://css-tricks.com/complex-css-shapes-with-shape-function/</link>
+      <pubDate>Thu, 02 Apr 2026 13:58:24 +0000</pubDate>
+      <guid>https://css-tricks.com/?p=392986</guid>
+      <description>Creating rectangles, circles, and rounded rectangles is the basic of CSS.
+        Creating more complex CSS shapes such as triangles, hexagons, stars, hearts, etc. is more
+        challenging but still a simple task if we rely on modern features.</description>
+      <content:encoded>Creating rectangles, circles, and rounded rectangles is the basic of CSS.
+        Creating more complex CSS shapes such as triangles, hexagons, stars, hearts, etc. is more
+        challenging but still a simple task if we rely on modern features.</content:encoded>
+    </item>
+    <item>
+      <title>Front-End Fools: Top 10 April Fools’ UI Pranks of All Time</title>
+      <link>https://css-tricks.com/front-end-fools-top-10-april-fools-ui-pranks/</link>
+      <pubDate>Wed, 01 Apr 2026 10:00:00 +0000</pubDate>
+      <guid>https://css-tricks.com/?p=392987</guid>
+      <description>From un-clickable buttons to gravity-defying layouts, we look back at the most
+        creative front-end pranks.</description>
+      <content:encoded>From un-clickable buttons to gravity-defying layouts, we look back at the
+        most creative front-end pranks.</content:encoded>
+    </item>
+    <item>
+      <title>Sniffing Out the CSS Olfactive API</title>
+      <link>https://css-tricks.com/css-olfactive-api/</link>
+      <pubDate>Tue, 31 Mar 2026 15:30:00 +0000</pubDate>
+      <guid>https://css-tricks.com/?p=392988</guid>
+      <description>The CSS Olfactive API is a new proposal that allows developers to trigger scents
+        through compatible hardware.</description>
+      <content:encoded>The CSS Olfactive API is a new proposal that allows developers to trigger
+        scents through compatible hardware.</content:encoded>
+    </item>
+    <item>
+      <title>Generative UI Notes</title>
+      <link>https://css-tricks.com/generative-ui-notes/</link>
+      <pubDate>Mon, 30 Mar 2026 09:15:00 +0000</pubDate>
+      <guid>https://css-tricks.com/?p=392989</guid>
+      <description>Some thoughts on the current state of generative UI and where it might be headed.</description>
+      <content:encoded>Some thoughts on the current state of generative UI and where it might be
+        headed.</content:encoded>
+    </item>
+    <item>
+      <title>The Value of z-index</title>
+      <link>https://css-tricks.com/the-value-of-z-index/</link>
+      <pubDate>Sun, 29 Mar 2026 12:45:00 +0000</pubDate>
+      <guid>https://css-tricks.com/?p=392990</guid>
+      <description>Is z-index: 9999999 really necessary? Let's explore better ways to manage
+        stacking contexts.</description>
+      <content:encoded>Is z-index: 9999999 really necessary? Let's explore better ways to manage
+        stacking contexts.</content:encoded>
+    </item>
+  </channel>
+</rss>

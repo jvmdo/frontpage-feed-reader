@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Standard Atom 1.0 Feed</title>
+  <subtitle>Blog</subtitle>
+  <link href="https://vercel.com/atom" rel="self" type="application/rss+xml" />
+  <link href="https://vercel.com/" />
+  <updated>2024-04-03T12:00:00Z</updated>
+  <id>https://vercel.com/</id>
+
+  <entry>
+    <id>https://vercel.com/blog/optimizing-vercel-sandbox-snapshots</id>
+    <title>Optimizing Vercel Sandbox snapshots</title>
+    <link href="https://vercel.com/blog/optimizing-vercel-sandbox-snapshots" />
+    <updated>2024-04-03T12:00:00Z</updated>
+    <content type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        <p>When we recently shipped <a
+            href="https://vercel.com/changelog/filesystem-snapshots-supported-on-vercel-sandboxes">filesystem
+          snapshots</a> in Vercel Sandbox to let teams capture and restore a sandbox&#39;s entire
+          filesystem state, our initial engineering focus was pure reliability. We had to ensure the
+          system would never fail to snapshot or lose data.</p>
+        <p>Once that foundation was stable, we faced a new problem where p75 snapshot restores were
+          taking over 40 seconds. By implementing parallelization and local caching, we brought
+          those restore times down to under one second.</p>
+        <h2>What a snapshot looks like on disk</h2>
+        <p>Vercel Sandbox runs on the same infrastructure as our internal builds product, <a
+            href="https://vercel.com/blog/a-deep-dive-into-hive-vercels-builds-infrastructure">Hive</a>.
+          Each sandbox is an isolated container inside a Firecracker microVM.</p>
+        <p>A snapshot is a compressed copy of the sandbox&#39;s disk. We&#39;re working with two
+          different files:</p>
+        <ul>
+          <li>
+            <p>The raw disk image (<code>.img</code>), which can be several GBs</p>
+          </li>
+          <li>
+            <p>A compressed version in our custom <code>VHS</code> format (Vercel Hive Snapshot),
+              which is what gets uploaded to and downloaded from S3</p>
+          </li>
+        </ul>
+        <p>When you call <code>sandbox.snapshot()</code>, we compress the <code>.img</code> into a <code>
+          .vhs</code> and upload it to S3. When you call <code>Sandbox.create()</code> with a
+          snapshot, we download the <code>.vhs</code> and decompress it back. The compression cuts
+          the file size, which matters when you&#39;re moving hundreds of MBs to GBs over the
+          network.</p>
+        <h2>Parallelize you shall</h2>
+        <p>With reliability in place, we turned to performance. The restore path was painfully
+          sequential. We&#39;d download the entire <code>.vhs</code> file from S3 in a single
+          request, wait for it to finish, then decompress it in a single thread.</p>
+        <div></div>
+        <p>Snapshots range from 200MB to a few GBs, so that single S3 download alone could take
+          several seconds to tens of seconds. We used the <code>Range</code> HTTP header to <a
+            href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance-guidelines.html">download
+          chunks in parallel</a> instead. The AWS Go SDK has a <code>transfermanager</code> API
+          built for exactly this. After benchmarking various concurrency and chunk sizes, we ended
+          up with 2-5x faster downloads.</p>
+        <div></div>
+        <p>Next up was decompression. Our <code>.vhs</code> format is composed of a header and a
+          frame for each allocated region of the disk image. Instead of decoding and decompressing
+          frames one by one, we switched to one decoder and N decompression goroutines. This made
+          the <code>.vhs</code> to <code>.img</code> restore 2-4x faster, depending on snapshot
+          size.</p>
+        <div></div>
+        <p>With both downloading and decompressing parallelized, we still had one remaining
+          optimization. We piped S3 range request streams directly into decompression, without
+          writing an intermediary file to disk or waiting for the full download to complete. That
+          cut end-to-end restore time by another 2x.</p>
+        <div></div>
+        <h2>We… didn&#39;t cache?</h2>
+        <p>As you might have noticed, we so far only talked about improving the slow path, when we
+          need to retrieve a snapshot from S3 on a cache miss. Well, we actually didn&#39;t have a
+          fast path, so it was all cache misses. Yeah, we really didn&#39;t focus on performance at
+          first.</p>
+        <p>Our sandboxes run on metal instances with NVMe disks, which means several terabytes of
+          fast local storage that was mostly unused.</p>
+        <p>We added a local disk cache using LRU (least recently used) eviction, sized by total disk
+          space rather than number of entries. We cache the decompressed <code>.img</code> directly
+          rather than the compressed <code>.vhs</code>, so a cache hit skips both the download and
+          the decompression. Once the cache fills up, the least recently used snapshots get evicted
+          to make room.</p>
+        <p>Most customers have a &quot;base&quot; snapshot that they reuse across many sandboxes, so
+          we&#39;re seeing a 95% cache hit rate. On a cache hit, boot time is bounded only by
+          starting the microVM and container.</p>
+        <div></div>
+        <h2>From 40 seconds to sub-second</h2>
+        <p>p75 dropped from 40s to sub-second, and p95 went from 50s to 5s. With our cache hit rate,
+          most sandbox boots skip the download and decompression pipeline entirely.</p>
+        <div></div>
+        <p>We&#39;re exploring more ideas. Cache affinity would route sandboxes to metal instances
+          that already have the requested snapshot cached, potentially eliminating the cold path for
+          popular snapshots. But this risks thundering herds and hotspotting certain machines, so
+          we&#39;re being deliberate about it.</p>
+        <p>Long term, we want the cold path fast enough that caching is a bonus, not a requirement.</p>
+        <p>These optimizations already power <a
+            href="https://vercel.com/changelog/vercel-sandbox-persistent-sandboxes-beta">Automatic
+          Persistence</a>, now in beta. When you stop a named sandbox, its filesystem is
+          automatically snapshotted and restored on resume. Sub-second restore means that cycle
+          feels instant.</p>
+        <p>Filesystem snapshots are available today for all Vercel Sandboxes. Check the <a
+            href="https://vercel.com/docs/vercel-sandbox/concepts/snapshots">Sandbox documentation</a>
+          to get started.</p>
+        <p class="more">
+          <a href="https://vercel.com/blog/optimizing-vercel-sandbox-snapshots">Read more</a>
+        </p>
+      </div>
+    </content>
+    <author>
+      <name>Tom Lienard</name>
+    </author>
+    <author>
+      <name>Rob Herley</name>
+    </author>
+    <author>
+      <name>Luke Phillips-Sheard</name>
+    </author>
+
+  </entry>
+
+  <entry>
+    <id>https://vercel.com/blog/how-waldium-made-a-blog-platform-work-for-humans-and-ai-alike</id>
+    <title>How Waldium made a blog platform work for humans and AI alike</title>
+    <link
+      href="https://vercel.com/blog/how-waldium-made-a-blog-platform-work-for-humans-and-ai-alike" />
+    <updated>2024-04-03T12:00:00Z</updated>
+    <content type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        <p><a href="https://www.waldium.com">Waldium</a> is a two-person, YC-backed startup that
+          built an agentic CMS for businesses. Co-founded by Amrutha Gujjar and CTO Shivam Singhal,
+          the platform automates content research and creation, and gives every customer blog its
+          own MCP server endpoint so AI agents can query it directly. Today, it all runs from a
+          single <a href="https://nextjs.org">Next.js</a> deployment on Vercel.</p>
+        <p>Amrutha spent years building software where the infrastructure kept getting in the way.
+          &quot;I was never stuck on the part I was excited to build,&quot; she says. &quot;It was
+          always the infrastructure friction around it.&quot; That frustration became a design
+          principle for Waldium. The infrastructure needed to disappear so the product could stay
+          focused on what made it interesting.</p>
+        <p>
+          <b>Waldium on Vercel</b>
+        </p>
+        <ul>
+          <li>
+            <p><b>500+</b> customer blogs served from a single Vercel deployment</p>
+          </li>
+          <li>
+            <p>New customers get MCP endpoints live in under 5 minutes</p>
+          </li>
+          <li>
+            <p>AI query response times consistently under 50ms globally</p>
+          </li>
+          <li>
+            <p><b>45%</b> lower infrastructure cost vs. per-customer deployment model</p>
+          </li>
+          <li>
+            <p>One customer generated 1,000+ posts in a single month; research time cut from weeks
+              to hours</p>
+          </li>
+        </ul>
+        <div></div>
+        <h2>When agents became part of the audience</h2>
+        <p>Waldium started the way most content platforms do, building blogs for humans to read. But
+          something Amrutha kept noticing was quietly changing who, and what, showed up to read
+          them.</p>
+        <div></div>
+        <p>Developers and technical teams were pulling blog content into their coding environments,
+          into Claude Desktop, into ChatGPT, using it as live context in the tools where they
+          actually worked. The browser tab was still part of the picture, but it wasn&#39;t the
+          whole story anymore. Content that couldn&#39;t travel into those environments was leaving
+          reach on the table.</p>
+        <p>That insight pointed Waldium toward <a href="https://modelcontextprotocol.io">MCP (Model
+          Context Protocol)</a> as the right primitive. If every customer blog had its own MCP
+          server endpoint, an AI assistant could search, retrieve, and interact with that content
+          directly, without anyone leaving their workflow. A developer could ask an agent to find a
+          specific code snippet across an entire blog archive and get an answer in the same window
+          where they were building.</p>
+        <p>For technical founders who don&#39;t think of themselves as marketers, it opened up
+          something new entirely. &quot;Being able to use MCP,&quot; Amrutha says, &quot;allows you
+          to create a blog post from the same place you&#39;re building a feature.&quot;</p>
+        <p>The vision was clear, but the infrastructure question was harder.</p>
+        <h2>A thousand front pages, one codebase</h2>
+        <p>Supporting hundreds of customer blogs across custom domains is already a serious
+          engineering challenge. Give every one of those blogs its own branded MCP server, with
+          subdomain generation, SSL certificates, and a live install page, and you quickly outgrow
+          the DIY approach.</p>
+        <p>Waldium had started by assembling their own pipeline on AWS Amplify, wiring GitHub
+          Actions, managing deployment configs, and handling SSL manually. As the number of tenants
+          grew, the complexity grew faster, and the team found themselves spending more time
+          maintaining infrastructure than building their product. They moved to Vercel early, and
+          the difference was immediate.</p>
+        <p>&quot;The developer experience is so seamless,&quot; Amrutha says. &quot;It allows our
+          team to focus on what we do best.&quot;</p>
+        <div></div>
+        <p>The unlock for Waldium&#39;s MCP infrastructure specifically was <a
+            href="https://vercel.com/docs/multi-tenant">Vercel for Platforms</a>. With a single
+          Next.js application, the team now serves every customer blog, every MCP endpoint, and
+          every custom domain from one unified deployment. <a
+            href="https://vercel.com/docs/functions/edge-middleware">Vercel Middleware</a> handles
+          routing dynamically so that when an AI agent sends a query, the request reaches the right
+          tenant automatically.</p>
+        <p>The <a href="https://vercel.com/docs/multi-tenant/domain-management">Vercel Domains API</a>
+          provisions custom domains in seconds, with SSL certificates issued and renewed without any
+          manual work. When Waldium evaluated MCP-specific hosting tools, the subdomain limits
+          weren&#39;t close. Competitors capped out in the dozens. Vercel handles tens of thousands.</p>
+        <div></div>
+        <p>Shivam points to the overall mental model as the thing that&#39;s proved stickiest.
+          &quot;It&#39;s very simple now: push to a particular git branch, get a preview deployment,
+          get a production deployment. It works cleanly with authentication, with our databases. It
+          just works.&quot; The integrated storage layer, with <a
+            href="https://vercel.com/marketplace/neon">Neon</a> and <a
+            href="https://vercel.com/marketplace/upstash">Upstash</a> sitting alongside the
+          application rather than off in a separate console, gave the team what he calls &quot;a
+          single pane of glass into all the parts of our system.&quot;</p>
+        <div></div>
+        <p>Today, a new customer signs up, gets a unique subdomain generated during onboarding, and
+          walks away with a sitemap, <a href="https://llmstxt.org">LLMs.txt</a>, robots.txt, an MCP
+          install page, and a live MCP endpoint, all in under five minutes.</p>
+        <h2>From weeks of research to a thousand posts</h2>
+        <p>Because Waldium could give every customer a dedicated MCP endpoint without per-tenant
+          infrastructure work, their customers got a distribution channel that simply didn&#39;t
+          exist before. Their content became queryable directly inside AI assistants, not just
+          discoverable through search.</p>
+        <p>Take <a href="https://saphira.ai">Saphira AI</a>, a safety compliance company that
+          publishes highly technical educational content. Previously, their team faced weeks of
+          manual research for every content push, with someone reading through thousands of pages of
+          ISO standards to identify what would actually be useful to customers. With Waldium, a team
+          of research agents handles that work continuously, building company and industry profiles,
+          flagging newsworthy developments, and generating content at a volume no traditional
+          content team could match. Saphira AI produced over 1,000 posts in a single month. The
+          research timeline went from weeks to hours.</p>
+        <p>Amrutha sees this as the new table stakes.</p>
+        <div></div>
+        <p>Waldium is building that path, and <a href="https://vercel.com/docs/multi-tenant">Vercel
+          for Platforms</a> is what makes it possible to hand it to hundreds of customers at once,
+          without rebuilding it for each one.</p>
+        <p>&quot;Once you understand how good things can be,&quot; Amrutha says, &quot;it&#39;s
+          really hard to go back to a product that hasn&#39;t given as much intentional thought
+          toward good design.&quot;</p>
+        <p>That&#39;s what happens when good engineers pick the right foundation. Waldium is still a
+          two-person team, and 500+ businesses are publishing through their platform every day.</p>
+        <hr />
+        <p>
+          <i>About Waldium: </i>
+          <a href="https://www.waldium.com">Waldium</a>
+          <i> is a YC-backed platform founded by Amrutha Gujjar and Shivam Singhal. Learn more at </i>
+          <a href="https://www.waldium.com">waldium.com</a>
+          <i>.</i>
+        </p>
+        <p class="more">
+          <a
+            href="https://vercel.com/blog/how-waldium-made-a-blog-platform-work-for-humans-and-ai-alike">Read
+            more</a>
+        </p>
+      </div>
+    </content>
+    <author>
+      <name>Nic Vargus</name>
+    </author>
+
+  </entry>
+
+  <entry>
+    <id>https://vercel.com/blog/how-flora-shipped-a-creative-agent-on-vercels-ai-stack</id>
+    <title>How FLORA shipped a creative agent on Vercel&apos;s AI stack</title>
+    <link href="https://vercel.com/blog/how-flora-shipped-a-creative-agent-on-vercels-ai-stack" />
+    <updated>2024-04-03T12:00:00Z</updated>
+    <content type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        <h3>FLORA on Vercel</h3>
+        <ul>
+          <li>
+            <p>2x faster to production with their generation system</p>
+          </li>
+          <li>
+            <p>Zero infrastructure debates after migration</p>
+          </li>
+          <li>
+            <p>50+ image models orchestrated</p>
+          </li>
+        </ul>
+        <hr />
+        <p>A seasonal fashion launch is a story, not a single frame.</p>
+        <p>Crafting that story is a process of exploration: It’s the same piece, worn by different
+          models. The same pose, with different lighting and angles. The same set, with a background
+          that shifts from glossy to gritty.</p>
+        <div></div>
+        <p>FLORA was built to make that kind of visual iteration available to anyone through a
+          digital canvas. Their new creative agent FAUNA acts like a design partner, turning ideas
+          into a map of creative directions. </p>
+        <h2>From FLORA to FAUNA: a creative agent</h2>
+        <p>Flora started as a node-based creative workflow canvas. For advanced users, that canvas
+          is powerful: you can create steps and branches, adding detailed prompts at each stage to
+          hone every detail of the images.</p>
+        <div></div>
+        <p>But the canvas also came with a tradeoff: it asked every creative to think like a
+          workflow designer. You had to configure each state of an exploration with prompts and
+          model choices, interrupting the creative process. </p>
+        <p>That’s why they built FAUNA. </p>
+        <p>The agent removes the setup burden, but keeps the full power of AI. Instead of starting
+          with a blank canvas and a pile of example images, designers can start with their ideas.
+          Users tell FAUNA what they want to create, like a campaign visuals, moodboards, or a
+          lookbook direction, and the agent will pull references, choose models, and automatically
+          generate variations to explore and refine. </p>
+        <p>Under the hood, FAUNA is a long-running, highly parallel agent. Alec Jo, Head of Applied
+          AI at FLORA, leads the effort. </p>
+        <div></div>
+        <p>As Alec and his team were building it, they faced the same pain as their early canvas
+          users, spending too much time configuring AI tech instead of iterating on the agent
+          itself. That&#39;s when they started exploring Vercel. </p>
+        <h2>Infrastructure makes the agent</h2>
+        <p>If you use AI mainly for text-based tasks, it&#39;s easy to underestimate the additional
+          demands of visual workflows for professional creatives. </p>
+        <p>Image and video generations can take minutes, and a single creative session can fan out
+          into many concurrent jobs: different angles, backgrounds, styling directions, model
+          providers, and “what if” branches. </p>
+        <div></div>
+        <p>Those jobs need to run simultaneously, will finish at different times, and still need to
+          roll up into a coherent exploration path the user can navigate.</p>
+        <p>Early on, Alec&#39;s team used LangChain building blocks for agent primitives and
+          considered Temporal for orchestration. It worked, but it came with a cost: two separate
+          systems to maintain, two sets of abstractions to keep in sync, and too much AI plumbing to
+          keep the product moving.</p>
+        <p>FLORA migrated to the Vercel AI Stack to simplify building and deploying their agent:</p>
+        <ul>
+          <li>
+            <p><a href="https://ai-sdk.dev/">AI SDK</a> and its <a
+                href="https://ai-sdk.dev/docs/agents">agent framework</a> provides out-of-the-box
+              primitives that power FAUNA&#39;s behavior (models, tool calling, and the interface
+              layer for agent logic). </p>
+          </li>
+          <li>
+            <p><a href="https://useworkflow.dev/docs/api-reference/workflow-ai/durable-agent">Workflow
+              SDK’s <code>DurableAgent</code></a> adds durable orchestration to AI SDK&#39;s agent
+              framework, so each step in the loop persists, retries on failure, and can run for any
+              length of time without losing state.</p>
+          </li>
+          <li>
+            <p><a href="https://vercel.com/docs/fluid-compute">Fluid compute</a> runs jobs
+              cost-efficiently as the agent fans out into many concurrent tasks, which is critical
+              for parallel, long-running image generations. </p>
+          </li>
+        </ul>
+        <div></div>
+        <p>The point wasn’t just swapping tools for simplicity. It was moving to a single,
+          integrated AI stack where the primitives, orchestration, and compute are designed to work
+          as a system, not individual components. </p>
+        <h2>The process is the product</h2>
+        <p>FLORA&#39;s ultimate goal is to support all design work that isn’t UI/UX, and FAUNA is
+          their first step in orchestrating visual ideation end-to-end. </p>
+        <p>But building FAUNA had an unexpected impact on Alec&#39;s team: it helped understand
+          their users on a deeper level. In creative work, the process is the product. And the
+          longer you can maintain a flow state, the better the outcome. </p>
+        <div></div>
+        <p>Just like new visual ideas require new cycles of iteration, new image models and
+          capabilities launch every week, and now FLORA can take advantage of them without plumbing
+          or infrastructure getting in the way. </p>
+        <p class="more">
+          <a href="https://vercel.com/blog/how-flora-shipped-a-creative-agent-on-vercels-ai-stack">Read
+            more</a>
+        </p>
+      </div>
+    </content>
+    <author>
+      <name>Eric Dodds</name>
+    </author>
+
+  </entry>
+
+  <entry>
+    <id>https://vercel.com/blog/agent-responsibly</id>
+    <title>Agent responsibly</title>
+    <link href="https://vercel.com/blog/agent-responsibly" />
+    <updated>2024-04-03T12:00:00Z</updated>
+    <content type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        <p>
+          <i>The following is based on an internal talk given at Vercel. We&#39;re sharing it
+            publicly because the problem it describes isn&#39;t unique to us, and the framework is
+            useful for any team shipping with agents.</i>
+        </p>
+        <hr />
+        <p>Coding agents generate code at unprecedented speeds. In the hands of disciplined
+          engineers, they are a productivity multiplier. But without rigorous judgment, they are a
+          highly efficient way to ship bad assumptions directly to production.</p>
+        <p>When teams deploy agent-generated code blindly, the fallout can be immediate and severe.
+          A flawless-looking pull request can ship a query that passes tests, but scans every row in
+          production. Retry logic that seems correct can cause a thundering herd on a downstream
+          service. And a cache with no TTL can quietly grow until Redis dies.</p>
+        <p>Green CI is no longer proof of safety. In an agentic world, passing CI is merely a
+          reflection of the agent&#39;s ability to persuade your pipeline that a change is safe,
+          even if it will immediately degrade your infrastructure at scale.</p>
+        <h2>False confidence</h2>
+        <p>Agent-generated code is dangerously convincing. It comes with a polished PR description,
+          passes static analysis, follows repository conventions, and includes reasonable test
+          coverage. On the surface, it looks like it was written by an experienced engineer.</p>
+        <p>But an agent doesn&#39;t understand your production environment. It doesn&#39;t know your
+          traffic patterns, your failure modes, or the implicit constraints of your shared
+          infrastructure. It doesn&#39;t know that a Redis instance is near capacity, that a
+          database is hardcoded to a specific region, or that a feature flag rollout will
+          fundamentally change the load profile of a downstream system.</p>
+        <p>The gap between &quot;this PR looks correct&quot; and &quot;this PR is safe to ship&quot;
+          has always existed. Agents widen that gap by producing code that looks more flawless than
+          ever, while remaining entirely blind to production realities.</p>
+        <h2>Leveraging vs. relying</h2>
+        <p>There is a fundamental difference between relying on AI and leveraging it.</p>
+        <ul>
+          <li>
+            <p><b>Relying</b> means assuming that if the agent wrote it and the tests pass, it&#39;s
+              ready to ship. The author never builds a mental model of the change. The result is
+              massive PRs full of hidden assumptions that are impossible to review because neither
+              the author nor the reviewer has a clear picture of what the code actually does.</p>
+          </li>
+          <li>
+            <p><b>Leveraging</b> means using agents to iterate quickly while maintaining complete
+              ownership of the output. You know exactly how the code behaves under load. You
+              understand the associated risks. You&#39;re comfortable owning them.</p>
+          </li>
+        </ul>
+        <p>Putting your name on a pull request means &quot;I have read this and I understand what it
+          does.&quot; If you have to re-read your own PR to explain how it might impact production,
+          the engineering process has failed.</p>
+        <p>The litmus test is simple: would you be comfortable owning a production incident tied to
+          this pull request?</p>
+        <h2>Guarding production</h2>
+        <p>The answer isn&#39;t to stop using agents. The productivity gains are undeniable and
+          models will only get better. AI-assisted code review and analysis are incredibly powerful
+          tools that catch bugs and surface risks humans miss.</p>
+        <p>But relying solely on review, whether human or synthetic, is a losing battle against the
+          sheer volume of agent-generated code. We&#39;ve hit an inflection point where
+          implementation is abundant. The scarce resource is no longer writing code, it&#39;s the
+          judgment of what is safe to ship. All infrastructure must match that new reality.</p>
+        <p>This isn&#39;t about wrapping the development lifecycle in red tape. It&#39;s about
+          building a closed-loop system where agents can act with high autonomy because their
+          environment is standardized, verification is easy, and deployment is safe by default.</p>
+        <p>The organizing principle is simple: make the right thing easy to do.</p>
+        <p><b>Self-driving deployments.</b> Every change rolls out incrementally through gated
+          pipelines. If a canary deployment degrades, the rollout stops and rolls back
+          automatically. The system doesn&#39;t rely on an engineer babysitting a dashboard. It
+          catches the problem, contains it to a fraction of traffic, and reverses it. When something
+          goes wrong, it goes wrong in isolation, not globally.</p>
+        <p><b>Continuous validation.</b> The infrastructure tests itself continuously, not just at
+          deploy. Load tests, chaos experiments, and disaster recovery exercises run on an ongoing
+          basis. At Vercel, the database failover <a
+            href="https://vercel.com/blog/preparing-for-the-worst-our-core-database-failover-test">we
+          rehearsed in production last summer</a> is the reason a real Azure outage this year was a
+          non-event for our customers. The systems that hold up under pressure are the ones that
+          have been deliberately stressed.</p>
+        <p><b>Executable guardrails.</b> At Vercel, we are encoding operational knowledge as
+          runnable tools instead of documentation. A <code>safe-rollout</code> skill isn&#39;t a
+          Notion page explaining how feature flags work. It&#39;s a tool that wires the flag,
+          generates a rollout plan with rollback conditions, and specifies how to verify expected
+          behavior. When guardrails are executable, agents follow them autonomously and humans
+          don&#39;t have to memorize them.</p>
+        <p>The endgame isn&#39;t a world where engineers apply extraordinary rigor to every change.
+          It&#39;s a world where the infrastructure itself is rigorous. Where shipping fast is safe
+          by default because the system contains the blast radius, validates continuously, degrades
+          gracefully, and encodes best practices as executable defaults.</p>
+        <h2>What we&#39;re investing in</h2>
+        <p>We aren&#39;t just theorizing. Our core platform team is actively building these
+          guardrails into shared infrastructure:</p>
+        <ul>
+          <li>
+            <p>Stronger guardrails around shared infra, with runtime validation at every stage of
+              the deployment pipeline</p>
+          </li>
+          <li>
+            <p>Stricter static checks at PR time, especially around feature flags</p>
+          </li>
+          <li>
+            <p>Production-mirroring end-to-end testing in staging</p>
+          </li>
+          <li>
+            <p>Read-only agents that continuously verify system invariants in production, using
+              specialized agents to audit the assumptions made by generative agents</p>
+          </li>
+          <li>
+            <p>Metrics like defect-commit vs. defect-escape ratios to surface when risk is
+              increasing across the platform</p>
+          </li>
+        </ul>
+        <h2>Leverage agents, own the risk</h2>
+        <p>Our bar: leverage agents, don&#39;t rely on them.</p>
+        <p>Low-quality code used to look like low-quality code. That&#39;s not the case anymore. AI
+          tools are only going to get more powerful. The diffs will get larger, the code will get
+          more convincing, and the temptation to blindly trust the output will grow. The engineers
+          who thrive won&#39;t be the ones who generate the most code. They&#39;ll be the ones who
+          maintain ruthless judgment over what they ship.</p>
+        <p>Before you open your next PR, ask yourself:</p>
+        <ul>
+          <li>
+            <p>What does this do? How does it behave once rolled out?</p>
+          </li>
+          <li>
+            <p>How can this adversely impact production or customers?</p>
+          </li>
+          <li>
+            <p>Am I comfortable owning an incident tied to this code?</p>
+          </li>
+        </ul>
+        <p>If the answer is yes, you&#39;re leveraging AI. Ship it.</p>
+        <p>If the answer is no, you have more work to do.</p>
+        <p class="more">
+          <a href="https://vercel.com/blog/agent-responsibly">Read more</a>
+        </p>
+      </div>
+    </content>
+    <author>
+      <name>Matthew Binshtok</name>
+    </author>
+
+  </entry>
+
+  <entry>
+    <id>https://vercel.com/blog/unified-reporting-for-your-ai-spend</id>
+    <title>Unified reporting for all AI Gateway usage</title>
+    <link href="https://vercel.com/blog/unified-reporting-for-your-ai-spend" />
+    <updated>2024-04-03T12:00:00Z</updated>
+    <content type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        <p>If you&#39;re shipping AI features, you already have usage data. The problem is that
+          it&#39;s split across providers, keys, and dashboards, so it&#39;s hard to answer basic
+          questions before the bill shows up.</p>
+        <p>You&#39;ve probably felt the drift into after-the-fact reconciliation. Provider consoles
+          only show their own slice, so you end up exporting CSVs, rebuilding views in spreadsheets,
+          and still missing the context that matters, like your tags, feature boundaries, and
+          internal user IDs. When BYOK enters the picture, it gets worse because spend and usage
+          scatter across whatever keys your users bring.</p>
+        <p>The Custom Reporting API for <a href="https://vercel.com/ai-gateway">AI Gateway</a> is
+          now available in beta for teams on the Pro and Enterprise plans. It gives you programmatic
+          access to cost, token usage, and request volume across your AI Gateway traffic, including
+          BYOK requests.</p>
+        <p>You can break down spend by model, provider, user ID, custom tag, or credential type.
+          That makes it possible to track costs and usage per feature, per end customer, and per
+          pricing tier from a single endpoint. You can also query it live via Claude Code.</p>
+        <h3>How a platform saved $80K</h3>
+        <p>One AI platform aggregating models for 200K+ users previously relied on a separate proxy
+          layer to track costs across providers. During the Custom Reporting private beta, they
+          consolidated cost tracking and request management into a single system, replacing their
+          third-party proxy entirely and saving over $80K.</p>
+        <p>With Advanced Reporting, they now use custom tags and user IDs to track customers&#39;
+          usage and costs across models, gaining programmatic access to spend data in the same place
+          their inference already runs.</p>
+        <h3>Implement the reporting API</h3>
+        <p>Tag requests with <code>user</code> and <code>tags</code> so you can attribute cost in
+          terms your product and finance teams recognize. If you run a customer-facing AI feature,
+          you can tag each request with the customer ID, their plan, and the feature they are using.</p>
+        <div></div>
+        <p>Tagging works with the AI SDK, Chat Completions API, Responses API, OpenResponses API,
+          and Anthropic Messages API. No matter which interface or language you use, the data lands
+          in the same reporting endpoint.</p>
+        <div></div>
+        <p>Query the custom reporting endpoint to get answers:</p>
+        <div></div>
+        <p>This is where reporting stops being an exercise in reconciliation and starts being
+          something you can run as part of how you operate. You can measure the cost of a single
+          feature across all Enterprise teams, see which free-tier users are nearing the point where
+          they should upgrade, and calculate per-request unit economics before you change pricing.</p>
+        <p>Everything below works across both BYOK and system credentials. Whether your users bring
+          their own API keys or you pay through AI Gateway credits, the reporting API captures it in
+          one place.</p>
+        <p>With the results, you can track per-customer and per-feature costs to understand where
+          spend is actually going, monitor internal usage across models and providers to catch
+          spikes before they appear on the bill, and use the data to set budgets, calculate margins,
+          and make pricing decisions based on real unit economics.</p>
+        <div></div>
+        <p>Once your traffic runs through a single reporting endpoint, you can treat AI spend like
+          any other production metric. Tag requests the way your product works, query the reporting
+          endpoint on a schedule, and use the results to set budgets, price features, and catch
+          changes in usage before they turn into surprises.</p>
+        <p>Read the <a href="https://vercel.com/docs/ai-gateway/capabilities/custom-reporting">AI
+          Gateway documentation</a> and view <a href="https://vercel.com/ai-gateway/models">supported
+          models and providers</a>.</p>
+        <p class="more">
+          <a href="https://vercel.com/blog/unified-reporting-for-your-ai-spend">Read more</a>
+        </p>
+      </div>
+    </content>
+    <author>
+      <name>Jerilyn Zheng</name>
+    </author>
+    <author>
+      <name>Dan Fein</name>
+    </author>
+
+  </entry>
+</feed>
