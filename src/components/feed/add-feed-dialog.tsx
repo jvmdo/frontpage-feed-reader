@@ -30,9 +30,10 @@ import { type AddFeedInput, addFeedSchema } from "@/lib/validations/feed";
 
 interface AddFeedDialogProps {
   children: React.ReactNode;
+  asChild?: boolean;
 }
 
-export function AddFeedDialog({ children }: AddFeedDialogProps) {
+export function AddFeedDialog({ children, asChild }: AddFeedDialogProps) {
   const [open, setOpen] = useState(false);
   const { mutate: addFeed, isPending } = useAddFeed();
 
@@ -63,7 +64,7 @@ export function AddFeedDialog({ children }: AddFeedDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger asChild={asChild}>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Feed</DialogTitle>

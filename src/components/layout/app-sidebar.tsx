@@ -60,7 +60,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuBadge>3</SidebarMenuBadge>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <AddFeedDialog>
+                <AddFeedDialog asChild>
                   <SidebarMenuButton tooltip="Add Feed">
                     <PlusIcon />
                     <span>Add Feed</span>
