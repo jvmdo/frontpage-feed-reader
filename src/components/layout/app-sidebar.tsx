@@ -5,9 +5,11 @@ import {
   HashIcon,
   InboxIcon,
   PlusIcon,
+  RssIcon,
   SettingsIcon,
 } from "lucide-react";
 import type * as React from "react";
+import { usePathname } from "next/navigation";
 
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import {
@@ -26,6 +28,8 @@ import {
 } from "@/components/ui/sidebar";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="flex flex-row items-center gap-2 px-4 py-4">
@@ -42,8 +46,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive tooltip="All Items">
-                  <a href="#">
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/dashboard"}
+                  tooltip="All Items"
+                >
+                  <a href="/dashboard">
                     <InboxIcon />
                     <span>All Items</span>
                   </a>
@@ -51,13 +59,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuBadge>12</SidebarMenuBadge>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Saved">
-                  <a href="#">
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/saved"}
+                  tooltip="Saved"
+                >
+                  <a href="/saved">
                     <BookmarkIcon />
                     <span>Saved</span>
                   </a>
                 </SidebarMenuButton>
                 <SidebarMenuBadge>3</SidebarMenuBadge>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/manage-feeds"}
+                  tooltip="Manage Feeds"
+                >
+                  <a href="/manage-feeds">
+                    <RssIcon />
+                    <span>Manage Feeds</span>
+                  </a>
+                </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <AddFeedDialog asChild>
@@ -98,8 +122,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings">
-              <a href="#">
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === "/settings"}
+              tooltip="Settings"
+            >
+              <a href="/settings">
                 <SettingsIcon />
                 <span>Settings</span>
               </a>
