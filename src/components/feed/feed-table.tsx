@@ -5,13 +5,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Feed, Subscription } from "@/types";
+import type { FeedWithSubscription } from "@/types";
 import { FeedRow } from "./feed-row";
-
-type FeedWithSubscription = {
-  subscription: Subscription;
-  feed: Feed;
-};
 
 interface FeedTableProps {
   data: FeedWithSubscription[];

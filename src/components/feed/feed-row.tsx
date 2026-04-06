@@ -10,11 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
-import type { feeds, subscriptions } from "@/db/schema";
+import type { Feed, Subscription } from "@/types";
 
 interface FeedRowProps {
-  subscription: typeof subscriptions.$inferSelect;
-  feed: typeof feeds.$inferSelect;
+  subscription: Subscription;
+  feed: Feed;
 }
 
 const HEALTH_STATUS_CONFIG: Record<

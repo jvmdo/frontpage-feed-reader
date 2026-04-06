@@ -23,3 +23,8 @@ export type NewSubscription = typeof subscriptions.$inferInsert;
 export type Session = typeof session.$inferSelect;
 export type Account = typeof account.$inferSelect;
 export type Verification = typeof verification.$inferSelect;
+
+export type FeedWithSubscription = {
+  feed: Feed;
+  subscription: Subscription;
+};
