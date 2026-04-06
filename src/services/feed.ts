@@ -1,7 +1,9 @@
 import { and, asc, eq } from "drizzle-orm";
 import type { DB } from "@/db";
 import { feeds, subscriptions } from "@/db/schema";
+import { SubscriptionNotFoundError } from "@/lib/errors";
 import { fetchFeedMetadata } from "@/lib/feed/parser";
+import type { UpdateFeed, UpdateSubscription } from "@/types";
 
 /**
  * Retrieves all subscriptions for a user, joined with their corresponding feed metadata.
@@ -19,6 +21,113 @@ export async function getUserSubscriptions(db: DB, userId: string) {
     .innerJoin(feeds, eq(subscriptions.feedId, feeds.id))
     .where(eq(subscriptions.userId, userId))
     .orderBy(asc(feeds.title));
+}
+/**
+ * Retrieves a single subscription joined with its feed metadata.
+ * @param db - Drizzle database instance.
+ * @param userId - The ID of the user who owns the subscription.
+ * @param subscriptionId - The ID of the subscription to fetch.
+ */
+export async function getSubscriptionWithFeed(
+  db: DB,
+  userId: string,
+  subscriptionId: number,
+) {
+  const [row] = await db
+    .select({
+      subscription: subscriptions,
+      feed: feeds,
+    })
+    .from(subscriptions)
+    .innerJoin(feeds, eq(subscriptions.feedId, feeds.id))
+    .where(
+      and(
+        eq(subscriptions.id, subscriptionId),
+        eq(subscriptions.userId, userId),
+      ),
+    )
+    .limit(1);
+
+  return row;
+}
+
+/**
+ * Update a subscription's custom title.
+ * @param db - Drizzle database instance.
+ * @param userId - The ID of the user who owns the subscription.
+ * @param subscriptionId - The ID of the subscription to update.
+ * @param data - The data to update (customTitle).
+ */
+export async function updateSubscription(
+  db: DB,
+  userId: string,
+  subscriptionId: number,
+  data: UpdateSubscription,
+) {
+  const [subscription] = await db
+    .update(subscriptions)
+    .set(data)
+    .where(
+      and(
+        eq(subscriptions.id, subscriptionId),
+        eq(subscriptions.userId, userId),
+      ),
+    )
+    .returning();
+
+  if (!subscription) {
+    throw new SubscriptionNotFoundError();
+  }
+
+  return subscription;
+}
+
+/**
+ * Delete a feed subscription for a user.
+ * @param db - Drizzle database instance.
+ * @param userId - The ID of the user who owns the subscription.
+ * @param subscriptionId - The ID of the subscription to delete.
+ */
+export async function deleteSubscription(
+  db: DB,
+  userId: string,
+  subscriptionId: number,
+) {
+  const [deleted] = await db
+    .delete(subscriptions)
+    .where(
+      and(
+        eq(subscriptions.id, subscriptionId),
+        eq(subscriptions.userId, userId),
+      ),
+    )
+    .returning();
+
+  if (!deleted) {
+    throw new SubscriptionNotFoundError();
+  }
+
+  return deleted;
+}
+
+/**
+ * Update feed metadata and health status.
+ * @param db - Drizzle database instance.
+ * @param feedId - The ID of the feed to update.
+ * @param data - The data to update (title, description, healthStatus, etc.).
+ */
+export async function updateFeedMetadata(
+  db: DB,
+  feedId: number,
+  data: UpdateFeed,
+) {
+  const [updatedFeed] = await db
+    .update(feeds)
+    .set(data)
+    .where(eq(feeds.id, feedId))
+    .returning();
+
+  return updatedFeed;
 }
 
 /**

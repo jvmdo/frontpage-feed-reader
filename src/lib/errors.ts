@@ -47,3 +47,14 @@ export class FeedNetworkError extends Error {
     this.name = "FeedNetworkError";
   }
 }
+
+/**
+ * Thrown when a subscription could not be found.
+ */
+export class SubscriptionNotFoundError extends Error {
+  code = "SUBSCRIPTION_NOT_FOUND" as const;
+  constructor(message = "The subscription could not be found.") {
+    super(message);
+    this.name = "SubscriptionNotFoundError";
+  }
+}
