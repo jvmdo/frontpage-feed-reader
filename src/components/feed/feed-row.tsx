@@ -1,6 +1,9 @@
 "use client";
+
 import { formatDistanceToNow } from "date-fns";
-import { Edit2, MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
+import { Edit2, Loader2Icon, MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { useRefreshFeed } from "@/hooks/use-refresh-feed";
 import type { Feed, Subscription } from "@/types";
+import { EditSubscriptionDialog } from "./edit-subscription-dialog";
+import { RemoveSubscriptionDialog } from "./remove-subscription-dialog";
 
 interface FeedRowProps {
   subscription: Subscription;
@@ -47,51 +53,96 @@ const HEALTH_STATUS_CONFIG: Record<
 };
 
 export function FeedRow({ subscription, feed }: FeedRowProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+
+  const { mutate: refreshFeed, isPending: isRefreshing } = useRefreshFeed();
+
+  const handleRefresh = () => {
+    refreshFeed(
+      { id: subscription.id },
+      {
+        onSuccess: () => {
+          toast.success("Feed refreshed");
+        },
+        onError: (error) => {
+          toast.error(error.message || "Failed to refresh feed");
+        },
+      }
+    );
+  };
+
   const status =
     HEALTH_STATUS_CONFIG[feed.healthStatus] ?? HEALTH_STATUS_CONFIG.unknown;
 
   return (
-    <TableRow>
-      <TableCell className="font-medium">
-        {subscription.customTitle ?? feed.title ?? "Untitled"}
-      </TableCell>
-      <TableCell className="text-muted-foreground truncate max-w-75">
-        {feed.url}
-      </TableCell>
-      <TableCell>
-        <Badge variant={status.variant} className={status.className}>
-          {status.label}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        {feed.lastSuccessAt
-          ? formatDistanceToNow(feed.lastSuccessAt, { addSuffix: true })
-          : "Never"}
-      </TableCell>
-      <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal data-icon="inline" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <RefreshCw data-icon="inline-start" />
-              Refresh
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Edit2 data-icon="inline-start" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive">
-              <Trash2 data-icon="inline-start" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
-    </TableRow>
+    <>
+      <TableRow>
+        <TableCell className="font-medium">
+          {subscription.customTitle ?? feed.title ?? "Untitled"}
+        </TableCell>
+        <TableCell className="text-muted-foreground truncate max-w-75">
+          {feed.url}
+        </TableCell>
+        <TableCell>
+          <Badge variant={status.variant} className={status.className}>
+            {status.label}
+          </Badge>
+        </TableCell>
+        <TableCell>
+          {feed.lastSuccessAt
+            ? formatDistanceToNow(feed.lastSuccessAt, { addSuffix: true })
+            : "Never"}
+        </TableCell>
+        <TableCell className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal data-icon="inline" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? (
+                  <Loader2Icon data-icon="inline-start" className="animate-spin" />
+                ) : (
+                  <RefreshCw data-icon="inline-start" />
+                )}
+                Refresh
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                <Edit2 data-icon="inline-start" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setIsRemoveDialogOpen(true)}
+              >
+                <Trash2 data-icon="inline-start" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      </TableRow>
+
+      <EditSubscriptionDialog
+        subscription={subscription}
+        feed={feed}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
+
+      <RemoveSubscriptionDialog
+        subscription={subscription}
+        feed={feed}
+        open={isRemoveDialogOpen}
+        onOpenChange={setIsRemoveDialogOpen}
+      />
+    </>
   );
 }
