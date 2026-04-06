@@ -1,7 +1,7 @@
 import { Plus, Rss } from "lucide-react";
 import { redirect } from "next/navigation";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
-import { FeedTable } from "@/components/feed/feed-table";
+import { FeedManager } from "@/components/feed/feed-manager";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
@@ -35,7 +35,7 @@ export default async function ManageFeedsPage() {
 
       <div className="flex-1 rounded-xl border border-border/50 bg-card p-4 shadow-sm md:p-6">
         {subscriptions.length > 0 ? (
-          <FeedTable data={subscriptions} />
+          <FeedManager initialData={subscriptions} />
         ) : (
           <EmptyState
             title="No feeds yet"
