@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 
 export default function ManageFeedsError({
   error,
-  reset,
+  unstable_retry,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  unstable_retry: () => void;
 }) {
   useEffect(() => {
     console.error("[Manage Feeds Page]:", error);
@@ -42,7 +42,7 @@ export default function ManageFeedsError({
         <div className="flex flex-col sm:flex-row items-center gap-3 mt-2">
           <Button
             variant="default"
-            onClick={() => reset()}
+            onClick={() => unstable_retry()}
             className="w-full sm:w-auto"
           >
             <RotateCcwIcon className="size-4" />
