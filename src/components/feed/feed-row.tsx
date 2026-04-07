@@ -1,9 +1,15 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
-import { Edit2, Loader2Icon, MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
+import {
+  Edit2,
+  Loader2Icon,
+  MoreHorizontal,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { RelativeDate } from "@/components/shared/relative-date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,7 +74,7 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
         onError: (error) => {
           toast.error(error.message || "Failed to refresh feed");
         },
-      }
+      },
     );
   };
 
@@ -90,9 +96,11 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
           </Badge>
         </TableCell>
         <TableCell>
-          {feed.lastSuccessAt
-            ? formatDistanceToNow(feed.lastSuccessAt, { addSuffix: true })
-            : "Never"}
+          {feed.lastSuccessAt ? (
+            <RelativeDate date={new Date(feed.lastSuccessAt)} />
+          ) : (
+            "Never"
+          )}
         </TableCell>
         <TableCell className="text-right">
           <DropdownMenu>
@@ -103,12 +111,12 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-              >
+              <DropdownMenuItem onClick={handleRefresh} disabled={isRefreshing}>
                 {isRefreshing ? (
-                  <Loader2Icon data-icon="inline-start" className="animate-spin" />
+                  <Loader2Icon
+                    data-icon="inline-start"
+                    className="animate-spin"
+                  />
                 ) : (
                   <RefreshCw data-icon="inline-start" />
                 )}

@@ -175,18 +175,18 @@ export async function addFeedToUser(db: DB, userId: string, url: string) {
     });
 
     if (existingSubscription) {
-      return existingSubscription;
+      return { subscription: existingSubscription, feed };
     }
 
     // 3. Create subscription
     const [subscription] = await tx
       .insert(subscriptions)
       .values({
-        userId: userId,
+        userId,
         feedId: feed.id,
       })
       .returning();
 
-    return subscription;
+    return { subscription, feed: feed };
   });
 }
