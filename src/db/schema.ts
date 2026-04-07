@@ -5,6 +5,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -95,6 +96,34 @@ export const subscriptions = pgTable(
   (table) => [
     unique("subscriptions_user_id_feed_id_unique").on(table.userId, table.feedId),
     index("idx_subscriptions_user").on(table.userId),
+  ],
+);
+
+export const feedItems = pgTable(
+  "feed_items",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    feedId: bigint("feed_id", { mode: "number" })
+      .notNull()
+      .references(() => feeds.id, { onDelete: "cascade" }),
+
+    guid: text("guid").notNull(),
+    url: text("url"),
+    title: text("title"),
+    description: text("description"),
+    content: text("content"),
+    author: text("author"),
+
+    publishedAt: timestamp("published_at"),
+    updatedAt: timestamp("updated_at"),
+
+    rawPayload: jsonb("raw_payload"),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    unique("feed_items_feed_id_guid_unique").on(table.feedId, table.guid),
+    index("idx_feed_items_feed_published").on(table.feedId, table.publishedAt.desc()),
   ],
 );
 
