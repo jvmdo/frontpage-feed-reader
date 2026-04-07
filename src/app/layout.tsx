@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ReactQueryClientProvider } from "@/components/providers/query-client-provider";
+import { ServerTimeProvider } from "@/components/providers/server-time-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -38,7 +39,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ReactQueryClientProvider>
           <NuqsAdapter>
-            <TooltipProvider>{children}</TooltipProvider>
+            <ServerTimeProvider serverNow={new Date().toISOString()}>
+              <TooltipProvider>{children}</TooltipProvider>
+            </ServerTimeProvider>
           </NuqsAdapter>
         </ReactQueryClientProvider>
         <Toaster />

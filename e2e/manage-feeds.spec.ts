@@ -166,15 +166,16 @@ test.describe("Manage Feeds", () => {
           lastSuccessAt: new Date(),
         })
         .returning();
+
       await db.insert(subscriptions).values({ userId, feedId: feed.id });
 
-      // 2. Navigate and check for the "less than a minute ago" or similar text
+      // 2. Navigate and check for the "just now"
       // If there was a hydration error, Playwright would likely fail to find the element
       // or we could check the console for hydration errors.
       await page.goto("/manage-feeds");
 
       const table = page.getByRole("table");
-      await expect(table.getByText(/less than a minute ago/i)).toBeVisible();
+      await expect(table.getByText(/just now/i)).toBeVisible();
     });
   });
 });

@@ -96,11 +96,7 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
           </Badge>
         </TableCell>
         <TableCell>
-          {feed.lastSuccessAt ? (
-            <RelativeDate date={new Date(feed.lastSuccessAt)} />
-          ) : (
-            "Never"
-          )}
+          <LastFetched date={feed.lastSuccessAt} isRefreshing={isRefreshing} />
         </TableCell>
         <TableCell className="text-right">
           <DropdownMenu>
@@ -152,5 +148,21 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
         onOpenChange={setIsRemoveDialogOpen}
       />
     </>
+  );
+}
+
+function LastFetched({
+  date,
+  isRefreshing,
+}: {
+  date: Date | string | null;
+  isRefreshing: boolean;
+}) {
+  if (!date) return "Never";
+
+  return (
+    <div className={isRefreshing ? "animate-pulse opacity-50" : ""}>
+      <RelativeDate date={date} />
+    </div>
   );
 }
