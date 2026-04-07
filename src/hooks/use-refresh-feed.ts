@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { refreshFeedAction } from "@/actions/feed";
+import { refreshFeedAction } from "@/actions/feed/refresh-feed-action";
 import type { RefreshFeedInput } from "@/lib/validations/feed";
 import type { FeedWithSubscription } from "@/types";
 

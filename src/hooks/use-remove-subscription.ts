@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { removeSubscriptionAction } from "@/actions/feed";
+import { removeSubscriptionAction } from "@/actions/feed/remove-subscription-action";
 import type { RemoveSubscriptionInput } from "@/lib/validations/feed";
 import type { FeedWithSubscription } from "@/types";
 

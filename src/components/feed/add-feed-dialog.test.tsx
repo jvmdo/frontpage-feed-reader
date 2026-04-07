@@ -3,12 +3,12 @@
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addFeedAction } from "@/actions/feed";
+import { addFeedAction } from "@/actions/feed/add-feed-action";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { AddFeedDialog } from "./add-feed-dialog";
 
 // Mock the server action
-vi.mock("@/actions/feed", () => ({
+vi.mock("@/actions/feed/add-feed-action", () => ({
   addFeedAction: vi.fn(),
 }));
 
@@ -51,7 +51,7 @@ describe("AddFeedDialog", () => {
     const input = screen.getByRole("textbox", { name: /feed url/i });
     const submitButton = screen.getByRole("button", { name: /add/i });
 
-    await user.type(input, "not-a-url");
+    await user.type(input, "http://www.dot.@");
     await user.click(submitButton);
 
     expect(

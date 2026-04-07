@@ -9,7 +9,7 @@ import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { FeedManager } from "@/components/feed/feed-manager";
 import { db } from "@/db";
 import { getCurrentSession } from "@/lib/session";
-import { getUserSubscriptions } from "@/services/feed";
+import { getUserSubscriptions } from "@/services/feed/get-user-subscriptions";
 
 export default async function ManageFeedsPage() {
   const session = await getCurrentSession();

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addFeedAction } from "@/actions/feed";
+import { addFeedAction } from "@/actions/feed/add-feed-action";
 import type { AddFeedInput } from "@/lib/validations/feed";
 import type { FeedWithSubscription } from "@/types";
 
@@ -28,7 +28,11 @@ export function useAddFeed() {
           if (!old) return [newSubscription];
 
           // Avoid duplicates just in case
-          if (old.some((s) => s.subscription.id === newSubscription.subscription.id)) {
+          if (
+            old.some(
+              (s) => s.subscription.id === newSubscription.subscription.id,
+            )
+          ) {
             return old;
           }
 

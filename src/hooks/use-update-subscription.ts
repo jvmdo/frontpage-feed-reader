@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateSubscriptionAction } from "@/actions/feed";
+import { updateSubscriptionAction } from "@/actions/feed/update-subscription-action";
 import type { UpdateSubscriptionInput } from "@/lib/validations/feed";
 import type { FeedWithSubscription } from "@/types";
 
