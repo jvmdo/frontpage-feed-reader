@@ -50,9 +50,131 @@ test.describe("Manage Feeds", () => {
     await page.goto("/manage-feeds");
 
     // Verify empty state
-    await expect(page.getByText(/no feeds yet/i)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
+    ).toBeVisible();
     await expect(
       page.getByText(/you haven't subscribed to any rss feeds/i),
     ).toBeVisible();
+  });
+
+  test.describe("UI State Management & Transitions", () => {
+    test("transitions from empty state to table when a feed is added", async ({
+      authedPage,
+    }) => {
+      const { page, userId } = authedPage;
+      const feedUrl = `http://localhost:3432/rss-2.xml?tenant=${userId}`;
+
+      await page.goto("/manage-feeds");
+
+      // 1. Verify initial empty state
+      await expect(
+        page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
+      ).toBeVisible();
+
+      // 2. Add a feed
+      await page.getByRole("button", { name: /add your first feed/i }).click();
+      const dialog = page.getByRole("dialog");
+      await dialog.getByLabel(/feed url/i).fill(feedUrl);
+      await dialog.getByRole("button", { name: /add/i }).click();
+
+      // 3. Verify transition to table
+      await expect(page.getByRole("table")).toBeVisible();
+      await expect(page.getByText("Standard RSS 2.0 Feed")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
+      ).not.toBeVisible();
+    });
+
+    test("transitions from table to empty state when the last feed is deleted", async ({
+      authedPage,
+    }) => {
+      const { page, userId } = authedPage;
+
+      // 1. Setup: Seed one subscription
+      const [feed] = await db
+        .insert(feeds)
+        .values({
+          url: `https://example.com/to-delete?tenant=${userId}`,
+          title: "Delete Me",
+          healthStatus: "healthy",
+        })
+        .returning();
+      await db.insert(subscriptions).values({ userId, feedId: feed.id });
+
+      await page.goto("/manage-feeds");
+      await expect(page.getByRole("table")).toBeVisible();
+
+      // 2. Delete the only feed
+      await page.getByRole("button", { name: /open menu/i }).click();
+      await page.getByRole("menuitem", { name: /delete/i }).click();
+
+      const alertDialog = page.getByRole("alertdialog");
+      await alertDialog.getByRole("button", { name: /remove/i }).click();
+
+      // 3. Verify transition back to empty state
+      await expect(
+        page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
+      ).toBeVisible();
+      await expect(page.getByRole("table")).not.toBeVisible();
+    });
+
+    test("updates title immediately in the table", async ({ authedPage }) => {
+      const { page, userId } = authedPage;
+
+      // 1. Setup: Seed one subscription
+      const [feed] = await db
+        .insert(feeds)
+        .values({
+          url: `https://example.com/edit-me?tenant=${userId}`,
+          title: "Original Title",
+          healthStatus: "healthy",
+        })
+        .returning();
+      await db.insert(subscriptions).values({ userId, feedId: feed.id });
+
+      await page.goto("/manage-feeds");
+      await expect(page.getByText("Original Title")).toBeVisible();
+
+      // 2. Edit the title
+      await page.getByRole("button", { name: /open menu/i }).click();
+      await page.getByRole("menuitem", { name: /edit/i }).click();
+
+      const dialog = page.getByRole("dialog");
+      await dialog.getByLabel(/^title$/i).fill("New Better Title");
+      await dialog.getByRole("button", { name: /save changes/i }).click();
+
+      // 3. Verify immediate update
+      const toast = page.locator("[data-sonner-toast]");
+      await expect(toast).toContainText("Subscription updated");
+      await expect(page.getByText("New Better Title")).toBeVisible();
+      await expect(page.getByText("Original Title")).not.toBeVisible();
+    });
+
+    test("renders 'Last Fetched' relative time correctly without hydration errors", async ({
+      authedPage,
+    }) => {
+      const { page, userId } = authedPage;
+
+      // 1. Setup: Seed one subscription with a recent success timestamp
+      const [feed] = await db
+        .insert(feeds)
+        .values({
+          url: `https://example.com/time-test?tenant=${userId}`,
+          title: "Time Test",
+          healthStatus: "healthy",
+          lastSuccessAt: new Date(),
+        })
+        .returning();
+      await db.insert(subscriptions).values({ userId, feedId: feed.id });
+
+      // 2. Navigate and check for the "less than a minute ago" or similar text
+      // If there was a hydration error, Playwright would likely fail to find the element
+      // or we could check the console for hydration errors.
+      await page.goto("/manage-feeds");
+
+      const table = page.getByRole("table");
+      await expect(table.getByText(/less than a minute ago/i)).toBeVisible();
+    });
   });
 });

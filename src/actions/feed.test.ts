@@ -6,13 +6,21 @@ import {
   FeedNetworkError,
   FeedNotFoundError,
   FeedUnavailableError,
+  SubscriptionNotFoundError,
 } from "@/lib/errors";
+import * as parserModule from "@/lib/feed/parser";
 import * as sessionModule from "@/lib/session";
 import * as feedService from "@/services/feed";
-import { addFeedAction } from "./feed";
+import {
+  addFeedAction,
+  refreshFeedAction,
+  removeSubscriptionAction,
+  updateSubscriptionAction,
+} from "./feed";
 
 vi.mock("@/services/feed");
 vi.mock("@/lib/session");
+vi.mock("@/lib/feed/parser");
 
 describe("addFeedAction", () => {
   beforeEach(() => {
@@ -164,5 +172,283 @@ describe("addFeedAction", () => {
       error: "An unexpected error occurred. Please try again later.",
       code: "INTERNAL_ERROR",
     });
+  });
+});
+
+describe("updateSubscriptionAction", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("returns validation error if input is invalid", async () => {
+    const result = await updateSubscriptionAction({
+      id: "not-a-number",
+    } as any);
+
+    expect(result).toEqual({
+      success: false,
+      error: expect.any(String),
+      code: "VALIDATION_ERROR",
+    });
+  });
+
+  it("returns unauthorized error if session is missing", async () => {
+    vi.mocked(sessionModule.getCurrentSession).mockResolvedValueOnce(null);
+
+    const result = await updateSubscriptionAction({
+      id: 123,
+      customTitle: "New Title",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: "You must be signed in to update a subscription.",
+      code: "UNAUTHORIZED",
+    });
+  });
+
+  it("returns success and updated subscription data", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    const mockUpdatedSubscription = {
+      id: 123,
+      userId: "user-123",
+      customTitle: "New Title",
+    };
+
+    vi.mocked(sessionModule.getCurrentSession).mockResolvedValueOnce(
+      mockSession as any,
+    );
+    vi.mocked(feedService.updateSubscription).mockResolvedValueOnce(
+      mockUpdatedSubscription as any,
+    );
+
+    const result = await updateSubscriptionAction({
+      id: 123,
+      customTitle: "New Title",
+    });
+
+    expect(result).toEqual({
+      success: true,
+      data: mockUpdatedSubscription,
+    });
+    expect(feedService.updateSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-123",
+      123,
+      { customTitle: "New Title" },
+    );
+  });
+
+  it("returns subscription not found error", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    vi.mocked(sessionModule.getCurrentSession).mockResolvedValueOnce(
+      mockSession as any,
+    );
+    vi.mocked(feedService.updateSubscription).mockRejectedValueOnce(
+      new SubscriptionNotFoundError(),
+    );
+
+    const result = await updateSubscriptionAction({
+      id: 999,
+      customTitle: "Title",
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: "We couldn't find this subscription.",
+      code: "SUBSCRIPTION_NOT_FOUND",
+    });
+  });
+});
+
+describe("removeSubscriptionAction", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("returns validation error if input is invalid", async () => {
+    const result = await removeSubscriptionAction({
+      id: "not-a-number",
+    } as any);
+
+    expect(result).toEqual({
+      success: false,
+      error: expect.any(String),
+      code: "VALIDATION_ERROR",
+    });
+  });
+
+  it("returns unauthorized error if session is missing", async () => {
+    vi.mocked(sessionModule.getCurrentSession).mockResolvedValueOnce(null);
+
+    const result = await removeSubscriptionAction({ id: 123 });
+
+    expect(result).toEqual({
+      success: false,
+      error: "You must be signed in to remove a subscription.",
+      code: "UNAUTHORIZED",
+    });
+  });
+
+  it("returns success and deleted subscription data", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    const mockDeletedSubscription = {
+      id: 123,
+      userId: "user-123",
+      feedId: "feed-456",
+    };
+
+    vi.mocked(sessionModule.getCurrentSession).mockResolvedValueOnce(
+      mockSession as any,
+    );
+    vi.mocked(feedService.deleteSubscription).mockResolvedValueOnce(
+      mockDeletedSubscription as any,
+    );
+
+    const result = await removeSubscriptionAction({ id: 123 });
+
+    expect(result).toEqual({
+      success: true,
+      data: mockDeletedSubscription,
+    });
+    expect(feedService.deleteSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-123",
+      123,
+    );
+  });
+
+  it("returns subscription not found error", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    vi.mocked(sessionModule.getCurrentSession).mockResolvedValueOnce(
+      mockSession as any,
+    );
+    vi.mocked(feedService.deleteSubscription).mockRejectedValueOnce(
+      new SubscriptionNotFoundError(),
+    );
+
+    const result = await removeSubscriptionAction({ id: 999 });
+
+    expect(result).toEqual({
+      success: false,
+      error: "We couldn't find this subscription.",
+      code: "SUBSCRIPTION_NOT_FOUND",
+    });
+  });
+});
+
+describe("refreshFeedAction", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("returns validation error if input is invalid", async () => {
+    const result = await refreshFeedAction({ id: "not-a-number" } as any);
+
+    expect(result).toEqual({
+      success: false,
+      error: expect.any(String),
+      code: "VALIDATION_ERROR",
+    });
+  });
+
+  it("returns unauthorized error if session is missing", async () => {
+    vi.mocked(sessionModule.getCurrentSession).mockResolvedValueOnce(null);
+
+    const result = await refreshFeedAction({ id: 123 });
+
+    expect(result).toEqual({
+      success: false,
+      error: "You must be signed in to refresh a feed.",
+      code: "UNAUTHORIZED",
+    });
+  });
+
+  it("returns success and updated data when refresh is successful", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    const mockRow = {
+      subscription: { id: 123 },
+      feed: { id: 456, url: "https://example.com/feed" },
+    };
+    const mockMetadata = { title: "New Title", description: "New Desc" };
+    const mockUpdatedFeed = {
+      ...mockRow.feed,
+      ...mockMetadata,
+      healthStatus: "healthy",
+    };
+
+    vi.mocked(sessionModule.getCurrentSession).mockResolvedValueOnce(
+      mockSession as any,
+    );
+    vi.mocked(feedService.getSubscriptionWithFeed).mockResolvedValueOnce(
+      mockRow as any,
+    );
+    vi.mocked(parserModule.fetchFeedMetadata).mockResolvedValueOnce(
+      mockMetadata as any,
+    );
+    vi.mocked(feedService.updateFeedMetadata).mockResolvedValueOnce(
+      mockUpdatedFeed as any,
+    );
+
+    const result = await refreshFeedAction({ id: 123 });
+
+    expect(result).toEqual({
+      success: true,
+      data: {
+        subscription: mockRow.subscription,
+        feed: mockUpdatedFeed,
+      },
+    });
+    expect(parserModule.fetchFeedMetadata).toHaveBeenCalledWith(
+      mockRow.feed.url,
+    );
+    expect(feedService.updateFeedMetadata).toHaveBeenCalledWith(
+      expect.anything(),
+      mockRow.feed.id,
+      expect.objectContaining({
+        healthStatus: "healthy",
+      }),
+    );
+  });
+
+  it("handles fetch errors and updates feed status to error", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    const mockRow = {
+      subscription: { id: 123 },
+      feed: { id: 456, url: "https://example.com/feed" },
+    };
+    const mockErrorFeed = { ...mockRow.feed, healthStatus: "error" };
+
+    vi.mocked(sessionModule.getCurrentSession).mockResolvedValueOnce(
+      mockSession as any,
+    );
+    vi.mocked(feedService.getSubscriptionWithFeed).mockResolvedValueOnce(
+      mockRow as any,
+    );
+    vi.mocked(parserModule.fetchFeedMetadata).mockRejectedValueOnce(
+      new FeedNotFoundError(),
+    );
+    vi.mocked(feedService.updateFeedMetadata).mockResolvedValueOnce(
+      mockErrorFeed as any,
+    );
+
+    const result = await refreshFeedAction({ id: 123 });
+
+    expect(result).toEqual({
+      success: false,
+      error: "We couldn't reach this URL. Please double-check for typos.",
+      code: "FEED_NOT_FOUND",
+      data: {
+        subscription: mockRow.subscription,
+        feed: mockErrorFeed,
+      },
+    });
+    expect(feedService.updateFeedMetadata).toHaveBeenCalledWith(
+      expect.anything(),
+      mockRow.feed.id,
+      expect.objectContaining({
+        healthStatus: "error",
+      }),
+    );
   });
 });
