@@ -1,7 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import type { DB } from "@/db";
 import { feeds, subscriptions } from "@/db/schema";
-import { fetchFeedMetadata } from "@/lib/feed/parser";
+import { parseFeedXml } from "@/lib/feed/parser";
+import { fetchFeedXml } from "@/services/fetch-feed-xml";
 
 /**
  * Create a feed subscription for a user.
@@ -16,7 +17,8 @@ export async function addFeedToUser(db: DB, userId: string, url: string) {
     });
 
     if (!feed) {
-      const metadata = await fetchFeedMetadata(url);
+      const xml = await fetchFeedXml(url);
+      const { metadata } = await parseFeedXml(xml);
 
       const [newFeed] = await tx
         .insert(feeds)

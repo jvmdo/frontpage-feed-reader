@@ -1,65 +1,102 @@
+import { createHash } from "node:crypto";
 import Parser from "rss-parser";
-import {
-  FeedInvalidFormatError,
-  FeedNetworkError,
-  FeedNotFoundError,
-  FeedUnavailableError,
-} from "@/lib/errors";
+import { FeedInvalidFormatError } from "@/lib/errors";
 import { decodeEntities } from "./normalizer";
 
-const parser = new Parser();
+/**
+ * Custom fields extracted from the XML that aren't in the default RSS/Atom spec
+ * normalization provided by rss-parser.
+ */
+interface CustomItem {
+  contentEncoded?: string;
+  id?: string;
+  author?: string;
+}
+
+// biome-ignore lint/suspicious/noEmptyInterface: Future
+interface CustomFeed {
+  // Add custom feed-level fields here if needed
+}
+
+const parser: Parser<CustomFeed, CustomItem> = new Parser({
+  customFields: {
+    item: [["content:encoded", "contentEncoded"]],
+  },
+});
 
 export interface FeedMetadata {
-  title?: string;
-  description?: string;
+  title: string;
+  description: string;
   link?: string;
-  feedUrl?: string;
+}
+
+export interface FeedItem {
+  guid: string;
+  url?: string;
+  title: string;
+  description: string;
+  content?: string;
+  author?: string;
+  publishedAt?: Date;
+  updatedAt?: Date;
+  rawPayload: any;
+}
+
+export interface FullFeed {
+  metadata: FeedMetadata;
+  items: FeedItem[];
 }
 
 /**
- * Fetches basic metadata for a feed.
+ * Parses raw XML content into a structured feed object.
  */
-export async function fetchFeedMetadata(url: string): Promise<FeedMetadata> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
+export async function parseFeedXml(xml: string): Promise<FullFeed> {
   try {
-    let response: Response;
+    const feed = await parser.parseString(xml);
 
-    try {
-      response = await fetch(url, {
-        signal: controller.signal,
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message ? error.message : undefined;
-      throw new FeedNetworkError(message);
-    }
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new FeedNotFoundError();
-      }
-
-      throw new FeedUnavailableError();
-    }
-
-    try {
-      const xml = await response.text();
-      const feed = await parser.parseString(xml);
+    const items: FeedItem[] = feed.items.map((item) => {
+      const title = decodeEntities(item.title) || "Untitled Article";
+      const description =
+        decodeEntities(item.contentSnippet || item.summary) || "";
+      const content = item.contentEncoded || item.content;
+      const guid =
+        item.guid ||
+        item.id ||
+        generateDeterministicGuid(item.link || "", title);
 
       return {
-        title: decodeEntities(feed.title),
-        description: decodeEntities(feed.description),
-        link: feed.link,
-        feedUrl: feed.feedUrl || url,
+        guid,
+        url: item.link,
+        title,
+        description,
+        content,
+        author: item.creator || item.author,
+        publishedAt: item.pubDate ? new Date(item.pubDate) : undefined,
+        updatedAt: item.isoDate ? new Date(item.isoDate) : undefined,
+        rawPayload: item,
       };
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message ? error.message : undefined;
-      throw new FeedInvalidFormatError(message);
-    }
-  } finally {
-    clearTimeout(timeoutId);
+    });
+
+    return {
+      metadata: {
+        title: decodeEntities(feed.title) || "Untitled Feed",
+        description: decodeEntities(feed.description) || "",
+        link: feed.link,
+      },
+      items,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message ? error.message : undefined;
+    throw new FeedInvalidFormatError(message);
   }
+}
+
+/**
+ * Generates a deterministic GUID based on URL and Title.
+ */
+function generateDeterministicGuid(url: string, title: string): string {
+  const hash = createHash("sha256");
+  hash.update(url + title);
+  return hash.digest("hex");
 }
