@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { FeedInvalidFormatError } from "@/lib/errors";
 import { parseFeedXml } from "./parser";
 
@@ -9,13 +9,13 @@ describe("parseFeedXml", () => {
 
   it("correctly parses RSS 2.0 feed", async () => {
     const xml = fs.readFileSync(path.join(fixturesPath, "rss-2.xml"), "utf-8");
-    const result = await parseFeedXml(xml);
+    const result = await parseFeedXml(xml, "https://css-tricks.com/feed/");
 
     expect(result.metadata.title).toBe("Standard RSS 2.0 Feed");
     expect(result.metadata.description).toBe(
       "Tips, Tricks, and Techniques on using Cascading Style Sheets.",
     );
-    expect(result.metadata.link).toBe("https://css-tricks.com");
+    expect(result.metadata.link).toBe("https://css-tricks.com/");
     expect(result.items.length).toBe(5);
 
     const firstItem = result.items[0];
@@ -31,7 +31,7 @@ describe("parseFeedXml", () => {
 
   it("correctly parses Atom 1.0 feed", async () => {
     const xml = fs.readFileSync(path.join(fixturesPath, "atom-1.xml"), "utf-8");
-    const result = await parseFeedXml(xml);
+    const result = await parseFeedXml(xml, "https://vercel.com/blog/feed");
 
     expect(result.metadata.title).toBe("Standard Atom 1.0 Feed");
     expect(result.items.length).toBeGreaterThan(0);
@@ -46,9 +46,6 @@ describe("parseFeedXml", () => {
       "https://vercel.com/blog/optimizing-vercel-sandbox-snapshots",
     );
 
-    // rss-parser maps Atom authors differently. Let's verify what we get.
-    // If multiple authors, it's usually in authors. For now let's just see if creator is populated.
-    // In our parser.ts we use item.creator.
     expect(firstItem.author).toBeDefined();
     expect(firstItem.author).toBe("Tom Lienard");
   });
@@ -81,14 +78,14 @@ describe("parseFeedXml", () => {
     expect(result.items[0].title).toBe("Processing Inclusions with XSLT");
   });
 
-  it("decodes HTML entities in titles and descriptions", async () => {
+  it("decodes HTML entities and cleans text", async () => {
     const xml = `
       <rss version="2.0">
         <channel>
-          <title>Test &amp; Feed</title>
+          <title>Test &amp; Feed  </title>
           <item>
-            <title>Title &apos;with&apos; entities &amp; stuff</title>
-            <description>Description &lt;b&gt;with&lt;/b&gt; tags and &amp; entities</description>
+            <title>Title &apos;with&apos; entities &amp;   stuff</title>
+            <description>Description  &lt;b&gt;with&lt;/b&gt; tags and &amp; entities</description>
             <link>http://example.com/1</link>
           </item>
         </channel>
@@ -98,10 +95,60 @@ describe("parseFeedXml", () => {
 
     expect(result.metadata.title).toBe("Test & Feed");
     expect(result.items[0].title).toBe("Title 'with' entities & stuff");
-    // decodeEntities is used on contentSnippet or summary.
-    // rss-parser might strip tags for contentSnippet.
-    expect(result.items[0].description).toContain("Description");
     expect(result.items[0].description).toContain("with tags and & entities");
+  });
+
+  it("normalizes relative URLs", async () => {
+    const xml = `
+      <rss version="2.0">
+        <channel>
+          <title>Test Feed</title>
+          <link>/home</link>
+          <item>
+            <title>Item 1</title>
+            <link>post/1</link>
+          </item>
+        </channel>
+      </rss>
+    `;
+    const result = await parseFeedXml(xml, "https://example.com/feed.xml");
+
+    expect(result.metadata.link).toBe("https://example.com/home");
+    expect(result.items[0].url).toBe("https://example.com/post/1");
+  });
+
+  it("normalizes inconsistent dates", async () => {
+    const mockNow = new Date("2024-01-01T00:00:00.000Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(mockNow);
+
+    const xml = `
+      <rss version="2.0">
+        <channel>
+          <title>Test Feed</title>
+          <item>
+            <title>Valid Date</title>
+            <pubDate>Mon, 25 Dec 2023 12:00:00 GMT</pubDate>
+            <link>http://example.com/1</link>
+          </item>
+          <item>
+            <title>Invalid Date</title>
+            <pubDate>not-a-date</pubDate>
+            <link>http://example.com/2</link>
+          </item>
+        </channel>
+      </rss>
+    `;
+    const result = await parseFeedXml(xml);
+
+    expect(result.items[0].publishedAt?.toISOString()).toBe(
+      "2023-12-25T12:00:00.000Z",
+    );
+    expect(result.items[1].publishedAt?.toISOString()).toBe(
+      mockNow.toISOString(),
+    );
+
+    vi.useRealTimers();
   });
 
   it("generates a deterministic GUID if missing", async () => {
