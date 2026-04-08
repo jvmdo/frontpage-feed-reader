@@ -2,16 +2,14 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeedNotFoundError } from "@/lib/errors";
-import * as parserModule from "@/lib/feed/parser";
 import { getCurrentSession } from "@/lib/session";
 import { getSubscriptionWithFeed } from "@/services/feed/get-subscriptions-with-feed";
-import { updateFeedMetadata } from "@/services/feed/update-feed-metadata";
+import { ingestFeedItems } from "@/services/feed-ingestion";
 import { refreshFeedAction } from "./refresh-feed-action";
 
 vi.mock("@/services/feed/get-subscriptions-with-feed");
-vi.mock("@/services/feed/update-feed-metadata");
+vi.mock("@/services/feed-ingestion");
 vi.mock("@/lib/session");
-vi.mock("@/lib/feed/parser");
 
 describe("refreshFeedAction", () => {
   beforeEach(() => {
@@ -46,38 +44,29 @@ describe("refreshFeedAction", () => {
       subscription: { id: 123 },
       feed: { id: 456, url: "https://example.com/feed" },
     };
-    const mockMetadata = { title: "New Title", description: "New Desc" };
-    const mockUpdatedFeed = {
-      ...mockRow.feed,
-      ...mockMetadata,
-      healthStatus: "healthy",
+    const mockUpdatedRow = {
+      ...mockRow,
+      feed: { ...mockRow.feed, healthStatus: "healthy" },
     };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(getSubscriptionWithFeed).mockResolvedValueOnce(mockRow as any);
-    vi.mocked(parserModule.fetchFeedMetadata).mockResolvedValueOnce(
-      mockMetadata as any,
-    );
-    vi.mocked(updateFeedMetadata).mockResolvedValueOnce(mockUpdatedFeed as any);
+    vi.mocked(getSubscriptionWithFeed)
+      .mockResolvedValueOnce(mockRow as any) // Initial check
+      .mockResolvedValueOnce(mockUpdatedRow as any); // Updated data
+    vi.mocked(ingestFeedItems).mockResolvedValueOnce({ success: true } as any);
 
     const result = await refreshFeedAction({ id: 123 });
 
     expect(result).toEqual({
       success: true,
       data: {
-        subscription: mockRow.subscription,
-        feed: mockUpdatedFeed,
+        subscription: mockUpdatedRow.subscription,
+        feed: mockUpdatedRow.feed,
       },
     });
-    expect(parserModule.fetchFeedMetadata).toHaveBeenCalledWith(
-      mockRow.feed.url,
-    );
-    expect(updateFeedMetadata).toHaveBeenCalledWith(
+    expect(ingestFeedItems).toHaveBeenCalledWith(
       expect.anything(),
       mockRow.feed.id,
-      expect.objectContaining({
-        healthStatus: "healthy",
-      }),
     );
   });
 
@@ -87,14 +76,18 @@ describe("refreshFeedAction", () => {
       subscription: { id: 123 },
       feed: { id: 456, url: "https://example.com/feed" },
     };
-    const mockErrorFeed = { ...mockRow.feed, healthStatus: "error" };
+    const mockErrorRow = {
+      ...mockRow,
+      feed: { ...mockRow.feed, healthStatus: "error" },
+    };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(getSubscriptionWithFeed).mockResolvedValueOnce(mockRow as any);
-    vi.mocked(parserModule.fetchFeedMetadata).mockRejectedValueOnce(
+    vi.mocked(getSubscriptionWithFeed)
+      .mockResolvedValueOnce(mockRow as any) // Initial check
+      .mockResolvedValueOnce(mockErrorRow as any); // Data with error status
+    vi.mocked(ingestFeedItems).mockRejectedValueOnce(
       new FeedNotFoundError(),
     );
-    vi.mocked(updateFeedMetadata).mockResolvedValueOnce(mockErrorFeed as any);
 
     const result = await refreshFeedAction({ id: 123 });
 
@@ -103,16 +96,9 @@ describe("refreshFeedAction", () => {
       error: "We couldn't reach this URL. Please double-check for typos.",
       code: "FEED_NOT_FOUND",
       data: {
-        subscription: mockRow.subscription,
-        feed: mockErrorFeed,
+        subscription: mockErrorRow.subscription,
+        feed: mockErrorRow.feed,
       },
     });
-    expect(updateFeedMetadata).toHaveBeenCalledWith(
-      expect.anything(),
-      mockRow.feed.id,
-      expect.objectContaining({
-        healthStatus: "error",
-      }),
-    );
   });
 });
