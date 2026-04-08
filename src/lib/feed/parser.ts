@@ -7,6 +7,7 @@ import {
   normalizeDate,
   normalizeUrl,
 } from "./normalizer";
+import { sanitizeHtml } from "./sanitizer";
 
 /**
  * Custom fields extracted from the XML that aren't in the default RSS/Atom spec
@@ -67,9 +68,9 @@ export async function parseFeedXml(
     const items: FeedItem[] = feed.items.map((item) => {
       const rawTitle = decodeEntities(item.title) || "Untitled Article";
       const title = cleanText(rawTitle);
-      const description =
-        cleanText(decodeEntities(item.contentSnippet || item.summary)) || "";
-      const content = item.contentEncoded || item.content;
+      const rawDescription = decodeEntities(item.contentSnippet || item.summary);
+      const description = sanitizeHtml(cleanText(rawDescription));
+      const content = sanitizeHtml(item.contentEncoded || item.content);
       const url = normalizeUrl(item.link, feedLink || sourceUrl);
       const guid =
         item.guid || item.id || generateDeterministicGuid(url || "", title);
