@@ -17,7 +17,7 @@ export async function ingestFeedItems(db: DB, feedId: number) {
 
   try {
     const xml = await fetchFeedXml(feed.url);
-    const { metadata, items } = await parseFeedXml(xml);
+    const { metadata, items } = await parseFeedXml(xml, feed.url);
 
     // 1. Upsert items
     if (items.length > 0) {

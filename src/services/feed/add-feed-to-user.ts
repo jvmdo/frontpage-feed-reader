@@ -18,7 +18,7 @@ export async function addFeedToUser(db: DB, userId: string, url: string) {
 
     if (!feed) {
       const xml = await fetchFeedXml(url);
-      const { metadata } = await parseFeedXml(xml);
+      const { metadata } = await parseFeedXml(xml, url);
 
       const [newFeed] = await tx
         .insert(feeds)

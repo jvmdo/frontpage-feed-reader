@@ -1,7 +1,12 @@
 import { createHash } from "node:crypto";
 import Parser from "rss-parser";
 import { FeedInvalidFormatError } from "@/lib/errors";
-import { decodeEntities } from "./normalizer";
+import {
+  cleanText,
+  decodeEntities,
+  normalizeDate,
+  normalizeUrl,
+} from "./normalizer";
 
 /**
  * Custom fields extracted from the XML that aren't in the default RSS/Atom spec
@@ -50,38 +55,43 @@ export interface FullFeed {
 /**
  * Parses raw XML content into a structured feed object.
  */
-export async function parseFeedXml(xml: string): Promise<FullFeed> {
+export async function parseFeedXml(
+  xml: string,
+  sourceUrl?: string,
+): Promise<FullFeed> {
   try {
     const feed = await parser.parseString(xml);
 
+    const feedLink = normalizeUrl(feed.link, sourceUrl);
+
     const items: FeedItem[] = feed.items.map((item) => {
-      const title = decodeEntities(item.title) || "Untitled Article";
+      const rawTitle = decodeEntities(item.title) || "Untitled Article";
+      const title = cleanText(rawTitle);
       const description =
-        decodeEntities(item.contentSnippet || item.summary) || "";
+        cleanText(decodeEntities(item.contentSnippet || item.summary)) || "";
       const content = item.contentEncoded || item.content;
+      const url = normalizeUrl(item.link, feedLink || sourceUrl);
       const guid =
-        item.guid ||
-        item.id ||
-        generateDeterministicGuid(item.link || "", title);
+        item.guid || item.id || generateDeterministicGuid(url || "", title);
 
       return {
         guid,
-        url: item.link,
+        url,
         title,
         description,
         content,
-        author: item.creator || item.author,
-        publishedAt: item.pubDate ? new Date(item.pubDate) : undefined,
-        updatedAt: item.isoDate ? new Date(item.isoDate) : undefined,
+        author: cleanText(decodeEntities(item.creator || item.author)),
+        publishedAt: normalizeDate(item.pubDate),
+        updatedAt: normalizeDate(item.isoDate),
         rawPayload: item,
       };
     });
 
     return {
       metadata: {
-        title: decodeEntities(feed.title) || "Untitled Feed",
-        description: decodeEntities(feed.description) || "",
-        link: feed.link,
+        title: cleanText(decodeEntities(feed.title)) || "Untitled Feed",
+        description: cleanText(decodeEntities(feed.description)) || "",
+        link: feedLink,
       },
       items,
     };
