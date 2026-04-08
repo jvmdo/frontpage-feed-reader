@@ -175,6 +175,26 @@ describe("parseFeedXml", () => {
     expect(result2.items[0].guid).toBe(item.guid);
   });
 
+  it("sanitizes HTML content during parsing", async () => {
+    const xml = `
+      <rss version="2.0">
+        <channel>
+          <item>
+            <title>XSS Test</title>
+            <description>Safe &lt;script&gt;alert(1)&lt;/script&gt; text</description>
+            <link>http://example.com/xss</link>
+            <content:encoded>&lt;div&gt;Safe&lt;/div&gt;&lt;iframe src="http://malicious.com"&gt;&lt;/iframe&gt;</content:encoded>
+          </item>
+        </channel>
+      </rss>
+    `;
+    const result = await parseFeedXml(xml);
+    const item = result.items[0];
+
+    expect(item.description).toBe("Safe alert(1) text");
+    expect(item.content).toBe("<div>Safe</div>");
+  });
+
   it("throws FeedInvalidFormatError for invalid XML", async () => {
     const invalidXml = "not really xml";
     await expect(parseFeedXml(invalidXml)).rejects.toThrow(
