@@ -58,3 +58,14 @@ export class SubscriptionNotFoundError extends Error {
     this.name = "SubscriptionNotFoundError";
   }
 }
+
+/**
+ * Thrown when a feed record could not be found in the database.
+ */
+export class FeedRecordNotFoundError extends Error {
+  code = "FEED_RECORD_NOT_FOUND" as const;
+  constructor(message = "The feed record could not be found in the database.") {
+    super(message);
+    this.name = "FeedRecordNotFoundError";
+  }
+}

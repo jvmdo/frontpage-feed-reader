@@ -7,14 +7,13 @@ import {
   FeedNotFoundError,
   FeedUnavailableError,
 } from "@/lib/errors";
-import { fetchFeedMetadata } from "@/lib/feed/parser";
 import { getCurrentSession } from "@/lib/session";
 import {
   type RefreshFeedInput,
   refreshFeedSchema,
 } from "@/lib/validations/feed";
 import { getSubscriptionWithFeed } from "@/services/feed/get-subscriptions-with-feed";
-import { updateFeedMetadata } from "@/services/feed/update-feed-metadata";
+import { ingestFeedItems } from "@/services/feed-ingestion";
 
 /**
  * Server action to refresh a feed.
@@ -56,39 +55,30 @@ export async function refreshFeedAction(input: RefreshFeedInput) {
   const { subscription, feed } = row;
 
   try {
-    const metadata = await fetchFeedMetadata(feed.url);
+    await ingestFeedItems(db, feed.id);
 
-    const updatedFeed = await updateFeedMetadata(db, feed.id, {
-      title: metadata.title,
-      description: metadata.description,
-      healthStatus: "healthy",
-      lastFetchedAt: new Date(),
-      lastSuccessAt: new Date(),
-    });
+    // Fetch the updated feed data to return to the UI
+    const updatedRow = await getSubscriptionWithFeed(db, session.user.id, id);
 
     return {
       success: true,
       data: {
-        subscription,
-        feed: updatedFeed,
+        subscription: updatedRow?.subscription || subscription,
+        feed: updatedRow?.feed || feed,
       },
     };
   } catch (error) {
     console.error("[refreshFeedAction]", error);
 
-    // Update feed health status to error on failure
-    const updatedFeed = await updateFeedMetadata(db, feed.id, {
-      healthStatus: "error",
-      lastFetchedAt: new Date(),
-      lastFailureAt: new Date(),
-    });
+    // Fetch the updated feed data (with error status) to return to the UI
+    const updatedRow = await getSubscriptionWithFeed(db, session.user.id, id);
 
     const baseResponse = {
       success: false as const,
       // We return the updated feed data even on failure so the UI can show the error status
       data: {
-        subscription,
-        feed: updatedFeed,
+        subscription: updatedRow?.subscription || subscription,
+        feed: updatedRow?.feed || feed,
       },
     };
 
