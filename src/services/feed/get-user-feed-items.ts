@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import type { DB } from "@/db";
 import { feedItems, feeds, subscriptions } from "@/db/schema";
 import type { FeedItemWithSource } from "@/types";
@@ -6,6 +6,7 @@ import type { FeedItemWithSource } from "@/types";
 interface GetUserFeedItemsOptions {
   limit?: number;
   offset?: number;
+  feedId?: number;
 }
 
 /**
@@ -17,7 +18,7 @@ export async function getUserFeedItems(
   userId: string,
   options: GetUserFeedItemsOptions = {},
 ): Promise<FeedItemWithSource[]> {
-  const { limit = 50, offset = 0 } = options;
+  const { limit = 50, offset = 0, feedId } = options;
 
   const results = await db
     .select({
@@ -27,7 +28,12 @@ export async function getUserFeedItems(
     .from(feedItems)
     .innerJoin(feeds, eq(feedItems.feedId, feeds.id))
     .innerJoin(subscriptions, eq(feeds.id, subscriptions.feedId))
-    .where(eq(subscriptions.userId, userId))
+    .where(
+      and(
+        eq(subscriptions.userId, userId),
+        feedId ? eq(feedItems.feedId, feedId) : undefined,
+      ),
+    )
     .orderBy(desc(feedItems.publishedAt), desc(feedItems.createdAt))
     .limit(limit)
     .offset(offset);

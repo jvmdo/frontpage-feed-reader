@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   const parseResult = feedItemsQuerySchema.safeParse({
     limit: searchParams.get("limit"),
     offset: searchParams.get("offset"),
+    feedId: searchParams.get("feedId"),
   });
 
   if (!parseResult.success) {
@@ -24,10 +25,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { limit, offset } = parseResult.data;
+  const { limit, offset, feedId } = parseResult.data;
 
   try {
-    const items = await getUserFeedItems(db, session.user.id, { limit, offset });
+    const items = await getUserFeedItems(db, session.user.id, {
+      limit,
+      offset,
+      feedId,
+    });
     return NextResponse.json(items);
   } catch (error) {
     console.error("[GET /api/feeds/items] Error:", error);
