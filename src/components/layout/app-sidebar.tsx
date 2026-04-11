@@ -2,16 +2,16 @@
 
 import {
   BookmarkIcon,
-  HashIcon,
   InboxIcon,
   PlusIcon,
   RssIcon,
   SettingsIcon,
 } from "lucide-react";
-import type * as React from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-
+import type * as React from "react";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
+import { LinkPendingIndicator } from "@/components/shared/link-pending-indicator";
 import {
   Sidebar,
   SidebarContent,
@@ -26,9 +26,19 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { useFeedFilter } from "@/hooks/use-feed-filter";
+import type { FeedWithSubscription } from "@/types";
+import { SidebarSubscriptions } from "./sidebar-subscriptions";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  subscriptions: FeedWithSubscription[];
+}
+
+export function AppSidebar({ subscriptions, ...props }: AppSidebarProps) {
   const pathname = usePathname();
+  const { feedId } = useFeedFilter();
+
+  const isDashboardActive = pathname === "/dashboard" && !feedId;
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -48,13 +58,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === "/dashboard"}
+                  isActive={isDashboardActive}
                   tooltip="All Items"
+                  className="relative"
                 >
-                  <a href="/dashboard">
+                  <Link href="/dashboard">
                     <InboxIcon />
                     <span>All Items</span>
-                  </a>
+                    <LinkPendingIndicator />
+                  </Link>
                 </SidebarMenuButton>
                 <SidebarMenuBadge>12</SidebarMenuBadge>
               </SidebarMenuItem>
@@ -64,10 +76,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   isActive={pathname === "/saved"}
                   tooltip="Saved"
                 >
-                  <a href="/saved">
+                  <Link href="/saved">
                     <BookmarkIcon />
                     <span>Saved</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
                 <SidebarMenuBadge>3</SidebarMenuBadge>
               </SidebarMenuItem>
@@ -77,10 +89,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   isActive={pathname === "/manage-feeds"}
                   tooltip="Manage Feeds"
                 >
-                  <a href="/manage-feeds">
+                  <Link href="/manage-feeds">
                     <RssIcon />
                     <span>Manage Feeds</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -98,23 +110,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarSeparator />
 
         <SidebarGroup>
-          <SidebarGroupLabel>Categories</SidebarGroupLabel>
+          <SidebarGroupLabel>Subscriptions</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Frontend">
-                  <HashIcon />
-                  <span>Frontend</span>
-                </SidebarMenuButton>
-                <SidebarMenuBadge>5</SidebarMenuBadge>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Design">
-                  <HashIcon />
-                  <span>Design</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            <SidebarSubscriptions items={subscriptions} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

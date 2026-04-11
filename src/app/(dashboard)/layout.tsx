@@ -1,42 +1,43 @@
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { DashboardBreadcrumb } from "@/components/layout/dashboard-breadcrumb";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { db } from "@/db";
+import { getCurrentSession } from "@/lib/session";
+import { getUserSubscriptions } from "@/services/feed/get-user-subscriptions";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
+  const session = await getCurrentSession();
+
+  if (!session?.user) {
+    redirect("/sign-in");
+  }
+
+  const subscriptions = await getUserSubscriptions(db, session.user.id);
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar subscriptions={subscriptions} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Frontpage</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>All Items</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
+              <Suspense fallback={null}>
+                <DashboardBreadcrumb subscriptions={subscriptions} />
+              </Suspense>
             </Breadcrumb>
           </div>
         </header>
@@ -45,5 +46,5 @@ export default function DashboardLayout({
         </main>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
