@@ -22,6 +22,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { useRefreshFeed } from "@/hooks/use-refresh-feed";
 import type { Feed, Subscription } from "@/types";
 import { EditSubscriptionDialog } from "./edit-subscription-dialog";
+import { FeedIcon } from "./feed-icon";
 import { RemoveSubscriptionDialog } from "./remove-subscription-dialog";
 
 interface FeedRowProps {
@@ -85,7 +86,12 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
     <>
       <TableRow>
         <TableCell className="font-medium">
-          {subscription.customTitle ?? feed.title ?? "Untitled"}
+          <div className="flex items-center gap-3">
+            <FeedIcon url={feed.iconUrl} title={feed.title} size={24} />
+            <span className="truncate">
+              {subscription.customTitle ?? feed.title ?? "Untitled"}
+            </span>
+          </div>
         </TableCell>
         <TableCell className="text-muted-foreground truncate max-w-75">
           {feed.url}

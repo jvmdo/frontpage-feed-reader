@@ -58,6 +58,7 @@ export async function ingestFeedItems(db: DB, feedId: number) {
       .set({
         title: metadata.title,
         description: metadata.description,
+        iconUrl: metadata.iconUrl,
         healthStatus: "healthy",
         lastFetchedAt: new Date(),
         lastSuccessAt: new Date(),

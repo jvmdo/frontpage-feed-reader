@@ -34,6 +34,7 @@ export interface FeedMetadata {
   title: string;
   description: string;
   link?: string;
+  iconUrl?: string;
 }
 
 export interface FeedItem {
@@ -65,6 +66,17 @@ export async function parseFeedXml(
 
     const feedLink = normalizeUrl(feed.link, sourceUrl);
 
+    // Extract icon from the feed or fallback to Google's favicon service
+    let iconUrl = feed.image?.url;
+    if (!iconUrl && feedLink) {
+      try {
+        const domain = new URL(feedLink).hostname;
+        iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+      } catch {
+        // Ignore invalid URLs
+      }
+    }
+
     const items: FeedItem[] = feed.items.map((item) => {
       const rawTitle = decodeEntities(item.title) || "Untitled Article";
       const title = cleanText(rawTitle);
@@ -93,6 +105,7 @@ export async function parseFeedXml(
         title: cleanText(decodeEntities(feed.title)) || "Untitled Feed",
         description: cleanText(decodeEntities(feed.description)) || "",
         link: feedLink,
+        iconUrl,
       },
       items,
     };

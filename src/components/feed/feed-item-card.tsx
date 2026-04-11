@@ -1,8 +1,8 @@
 import { ExternalLinkIcon } from "lucide-react";
-import Image from "next/image";
 import { RelativeDate } from "@/components/shared/relative-date";
 import { cn } from "@/lib/utils";
 import type { FeedItemWithSource } from "@/types";
+import { FeedIcon } from "./feed-icon";
 
 interface FeedItemCardProps {
   data: FeedItemWithSource;
@@ -21,15 +21,7 @@ export function FeedItemCard({ data, className }: FeedItemCardProps) {
     >
       <header className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2 text-xs text-text-tertiary">
-          {feed.iconUrl && (
-            <Image
-              src={feed.iconUrl}
-              alt=""
-              width={16}
-              height={16}
-              className="size-4 rounded-sm object-contain"
-            />
-          )}
+          <FeedIcon url={feed.iconUrl} title={feed.title} size={16} />
           <span className="font-medium text-text-secondary truncate max-w-30 md:max-w-none">
             {feed.title || "Untitled Feed"}
           </span>

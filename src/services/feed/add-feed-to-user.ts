@@ -26,6 +26,7 @@ export async function addFeedToUser(db: DB, userId: string, url: string) {
           url,
           title: metadata.title,
           description: metadata.description,
+          iconUrl: metadata.iconUrl,
           healthStatus: "healthy",
           lastFetchedAt: new Date(),
           lastSuccessAt: new Date(),
