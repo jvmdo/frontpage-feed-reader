@@ -122,7 +122,7 @@ test.describe("Manage Feeds", () => {
     test("updates title immediately in the table", async ({ authedPage }) => {
       const { page, userId } = authedPage;
 
-      // 1. Setup: Seed one subscription
+      // Setup: Seed one subscription
       const [feed] = await db
         .insert(feeds)
         .values({
@@ -133,22 +133,29 @@ test.describe("Manage Feeds", () => {
         .returning();
       await db.insert(subscriptions).values({ userId, feedId: feed.id });
 
+      // Navigate
       await page.goto("/manage-feeds");
-      await expect(page.getByText("Original Title")).toBeVisible();
+
+      // 1. Get the table
+      const table = page.getByRole("table");
+
+      await expect(table.getByText("Original Title")).toBeVisible();
 
       // 2. Edit the title
-      await page.getByRole("button", { name: /open menu/i }).click();
+      await table.getByRole("button", { name: /open menu/i }).click();
       await page.getByRole("menuitem", { name: /edit/i }).click();
 
       const dialog = page.getByRole("dialog");
+
       await dialog.getByLabel(/^title$/i).fill("New Better Title");
       await dialog.getByRole("button", { name: /save changes/i }).click();
 
       // 3. Verify immediate update
       const toast = page.locator("[data-sonner-toast]");
+
       await expect(toast).toContainText("Subscription updated");
-      await expect(page.getByText("New Better Title")).toBeVisible();
-      await expect(page.getByText("Original Title")).not.toBeVisible();
+      await expect(table.getByText("New Better Title")).toBeVisible();
+      await expect(table.getByText("Original Title")).not.toBeVisible();
     });
 
     test("renders 'Last Fetched' relative time correctly without hydration errors", async ({

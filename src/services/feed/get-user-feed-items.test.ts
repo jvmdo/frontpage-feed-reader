@@ -153,4 +153,95 @@ describe("getUserFeedItems", () => {
     expect(offsetResult[0].item.title).toBe("Item 2");
     expect(offsetResult[1].item.title).toBe("Item 3");
   });
+
+  describe("filtering by feedId", () => {
+    test("returns only items from the specified feedId", async ({
+      tx,
+      testUser,
+    }) => {
+      // 1. Create two feeds and subscribe to both
+      const [feed1] = await tx
+        .insert(feeds)
+        .values({
+          url: "https://feed1.com/rss",
+          title: "Feed 1",
+        })
+        .returning();
+
+      const [feed2] = await tx
+        .insert(feeds)
+        .values({
+          url: "https://feed2.com/rss",
+          title: "Feed 2",
+        })
+        .returning();
+
+      await tx.insert(subscriptions).values([
+        { userId: testUser.id, feedId: feed1.id },
+        { userId: testUser.id, feedId: feed2.id },
+      ]);
+
+      // 2. Add items to both
+      await tx.insert(feedItems).values([
+        {
+          feedId: feed1.id,
+          guid: "f1-i1",
+          title: "Feed 1 Item",
+          publishedAt: new Date(),
+        },
+        {
+          feedId: feed2.id,
+          guid: "f2-i1",
+          title: "Feed 2 Item",
+          publishedAt: new Date(),
+        },
+      ]);
+
+      // 3. Request items only for feed1
+      const result = await getUserFeedItems(tx, testUser.id, {
+        feedId: feed1.id,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].item.title).toBe("Feed 1 Item");
+      expect(result[0].feed.id).toBe(feed1.id);
+    });
+
+    test("returns items from all subscribed feeds when feedId is not provided", async ({
+      tx,
+      testUser,
+    }) => {
+      const [feed1] = await tx
+        .insert(feeds)
+        .values({ url: "https://feed1.com/rss" })
+        .returning();
+      const [feed2] = await tx
+        .insert(feeds)
+        .values({ url: "https://feed2.com/rss" })
+        .returning();
+
+      await tx.insert(subscriptions).values([
+        { userId: testUser.id, feedId: feed1.id },
+        { userId: testUser.id, feedId: feed2.id },
+      ]);
+
+      await tx.insert(feedItems).values([
+        {
+          feedId: feed1.id,
+          guid: "f1-i1",
+          title: "F1",
+          publishedAt: new Date(),
+        },
+        {
+          feedId: feed2.id,
+          guid: "f2-i1",
+          title: "F2",
+          publishedAt: new Date(),
+        },
+      ]);
+
+      const result = await getUserFeedItems(tx, testUser.id);
+      expect(result).toHaveLength(2);
+    });
+  });
 });

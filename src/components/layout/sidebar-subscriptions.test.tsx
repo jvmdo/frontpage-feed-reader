@@ -1,0 +1,138 @@
+import { vi } from "vitest";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { render, screen } from "@/tests/rtl-utils";
+import type { FeedWithSubscription } from "@/types";
+import { SidebarSubscriptions } from "./sidebar-subscriptions";
+
+// Mock next/link's useLinkStatus
+vi.mock("next/link", async () => {
+  const actual = await vi.importActual("next/link");
+  return {
+    ...actual,
+    useLinkStatus: vi.fn(() => ({ pending: false })),
+  };
+});
+
+const mockSubscriptions: FeedWithSubscription[] = [
+  {
+    feed: {
+      id: 1,
+      title: "Feed 1",
+      url: "https://feed1.com",
+      description: null,
+      language: null,
+      iconUrl: "https://feed1.com/icon.png",
+      lastFetchedAt: null,
+      lastSuccessAt: null,
+      lastFailureAt: null,
+      healthStatus: "healthy",
+      httpEtag: null,
+      httpLastModified: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    subscription: {
+      id: 1,
+      userId: "user-1",
+      feedId: 1,
+      categoryId: null,
+      customTitle: "My Custom Feed 1",
+      ordering: null,
+      markedAllReadAt: null,
+      createdAt: new Date(),
+    },
+  },
+  {
+    feed: {
+      id: 2,
+      title: "Feed 2",
+      url: "https://feed2.com",
+      description: null,
+      language: null,
+      iconUrl: null,
+      lastFetchedAt: null,
+      lastSuccessAt: null,
+      lastFailureAt: null,
+      healthStatus: "healthy",
+      httpEtag: null,
+      httpLastModified: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    subscription: {
+      id: 2,
+      userId: "user-1",
+      feedId: 2,
+      categoryId: null,
+      customTitle: null,
+      ordering: null,
+      markedAllReadAt: null,
+      createdAt: new Date(),
+    },
+  },
+];
+
+describe("SidebarSubscriptions", () => {
+  it("renders all subscription items with correct titles", () => {
+    render(
+      <SidebarProvider>
+        <SidebarSubscriptions items={mockSubscriptions} />
+      </SidebarProvider>,
+    );
+
+    expect(screen.getByText(/my custom feed 1/i)).toBeInTheDocument();
+    expect(screen.getByText(/feed 2/i)).toBeInTheDocument();
+  });
+
+  it("highlights the active feed based on the feedId query parameter", () => {
+    render(
+      <SidebarProvider>
+        <SidebarSubscriptions items={mockSubscriptions} />
+      </SidebarProvider>,
+      {
+        searchParams: { feedId: "1" },
+      },
+    );
+
+    const link1 = screen.getByRole("link", { name: /my custom feed 1/i });
+    const button1 = link1.closest('[data-slot="sidebar-menu-button"]');
+    expect(button1).toHaveAttribute("data-active", "true");
+
+    const link2 = screen.getByRole("link", { name: /feed 2/i });
+    const button2 = link2.closest('[data-slot="sidebar-menu-button"]');
+    expect(button2).toHaveAttribute("data-active", "false");
+  });
+
+  it("shows the pending indicator when navigation is occurring", async () => {
+    const { useLinkStatus } = await import("next/link");
+    (useLinkStatus as any).mockReturnValue({ pending: true });
+
+    render(
+      <SidebarProvider>
+        <SidebarSubscriptions items={mockSubscriptions} />
+      </SidebarProvider>,
+    );
+
+    // We check for the presence of the indicator in the links
+    // LinkPendingIndicator is a span with animate-pulse
+    const links = screen.getAllByRole("link");
+    for (const link of links) {
+      // The indicator is a child of the link
+      const indicator = link.querySelector(".animate-pulse");
+      expect(indicator).toBeInTheDocument();
+    }
+  });
+
+  it("renders correctly without an iconUrl (using fallback)", () => {
+    // Feed 2 in mockSubscriptions has iconUrl: null
+    render(
+      <SidebarProvider>
+        <SidebarSubscriptions items={mockSubscriptions} />
+      </SidebarProvider>,
+    );
+
+    const feed2Item = screen.getByText(/feed 2/i);
+    expect(feed2Item).toBeInTheDocument();
+    // FeedIcon should handle null url
+  });
+});
