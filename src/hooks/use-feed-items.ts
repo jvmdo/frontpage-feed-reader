@@ -1,12 +1,20 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { FeedItemWithSource } from "@/types";
+import { useFeedFilter } from "./use-feed-filter";
 
 export function useFeedItems() {
+  const { feedId } = useFeedFilter();
+
   return useInfiniteQuery<FeedItemWithSource[]>({
-    queryKey: ["feeds", "items"],
+    queryKey: ["feeds", "items", { feedId }],
     queryFn: async ({ pageParam }) => {
       const offset = pageParam as number;
-      const response = await fetch(`/api/feeds/items?offset=${offset}&limit=20`);
+      let url = `/api/feeds/items?offset=${offset}&limit=20`;
+      if (feedId) {
+        url += `&feedId=${feedId}`;
+      }
+
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch feed items");
       }
