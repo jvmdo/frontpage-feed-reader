@@ -24,9 +24,10 @@ export default async function DashboardPage() {
 
   // Prefetch items for the unified "All Items" feed.
   // The key must match the one used in the useFeedItems hook.
-  await queryClient.prefetchQuery({
+  await queryClient.prefetchInfiniteQuery({
     queryKey: ["feeds", "items"],
-    queryFn: () => getUserFeedItems(db, session.user.id),
+    queryFn: () => getUserFeedItems(db, session.user.id, { limit: 20, offset: 0 }),
+    initialPageParam: 0,
   });
 
   return (
