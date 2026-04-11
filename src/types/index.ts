@@ -1,6 +1,7 @@
 import type {
   account,
   categories,
+  feedItems,
   feeds,
   session,
   subscriptions,
@@ -23,6 +24,10 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type NewSubscription = typeof subscriptions.$inferInsert;
 export type UpdateSubscription = Partial<NewSubscription>;
 
+export type FeedItem = typeof feedItems.$inferSelect;
+export type NewFeedItem = typeof feedItems.$inferInsert;
+export type UpdateFeedItem = Partial<NewFeedItem>;
+
 export type Session = typeof session.$inferSelect;
 export type Account = typeof account.$inferSelect;
 export type Verification = typeof verification.$inferSelect;
@@ -30,4 +35,9 @@ export type Verification = typeof verification.$inferSelect;
 export type FeedWithSubscription = {
   feed: Feed;
   subscription: Subscription;
+};
+
+export type FeedItemWithSource = {
+  item: FeedItem;
+  feed: Feed;
 };
