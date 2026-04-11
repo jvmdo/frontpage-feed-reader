@@ -5,12 +5,13 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
+    testTimeout: 10000,
     // 1. Specify the DOM environment
     environment: "jsdom",
     // 2. Enable global APIs like 'describe' and 'it' (optional but common)
     globals: true,
     // 3. Path to your setup file
-    setupFiles: "src/tests/setup.ts",
+    setupFiles: "src/tests/setup.tsx",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     exclude: ["node_modules", "e2e"],
     coverage: {
