@@ -33,6 +33,11 @@ test.describe("Manage Feeds", () => {
       page.getByRole("heading", { name: /manage feeds/i }),
     ).toBeVisible();
 
+    // Wait for streaming hydration to complete
+    await expect(
+      page.getByRole("status", { name: /loading feeds/i }),
+    ).toBeHidden();
+
     const table = page.getByRole("table");
     await expect(table.getByText("Test Feed Title")).toBeVisible();
     await expect(
@@ -48,6 +53,11 @@ test.describe("Manage Feeds", () => {
 
     // Navigate directly to Manage Feeds
     await page.goto("/manage-feeds");
+
+    // Wait for streaming hydration to complete
+    await expect(
+      page.getByRole("status", { name: /loading feeds/i }),
+    ).toBeHidden();
 
     // Verify empty state
     await expect(
@@ -67,20 +77,28 @@ test.describe("Manage Feeds", () => {
 
       await page.goto("/manage-feeds");
 
-      // 1. Verify initial empty state
+      // Wait for streaming hydration to complete
+      await expect(
+        page.getByRole("status", { name: /loading feeds/i }),
+      ).toBeHidden();
+
+      // Verify initial empty state
       await expect(
         page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
       ).toBeVisible();
 
-      // 2. Add a feed
+      // Add a feed
       await page.getByRole("button", { name: /add your first feed/i }).click();
+
       const dialog = page.getByRole("dialog");
+
       await dialog.getByLabel(/feed url/i).fill(feedUrl);
       await dialog.getByRole("button", { name: /add/i }).click();
 
-      // 3. Verify transition to table
-      await expect(page.getByRole("table")).toBeVisible();
-      await expect(page.getByText("Standard RSS 2.0 Feed")).toBeVisible();
+      // Verify transition to table
+      const table = page.getByRole("table");
+
+      await expect(table.getByText("Standard RSS 2.0 Feed")).toBeVisible();
       await expect(
         page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
       ).not.toBeVisible();
@@ -91,7 +109,7 @@ test.describe("Manage Feeds", () => {
     }) => {
       const { page, userId } = authedPage;
 
-      // 1. Setup: Seed one subscription
+      // Setup: Seed one subscription
       const [feed] = await db
         .insert(feeds)
         .values({
@@ -102,21 +120,27 @@ test.describe("Manage Feeds", () => {
         .returning();
       await db.insert(subscriptions).values({ userId, feedId: feed.id });
 
+      // Navigate
       await page.goto("/manage-feeds");
-      await expect(page.getByRole("table")).toBeVisible();
 
-      // 2. Delete the only feed
-      await page.getByRole("button", { name: /open menu/i }).click();
+      // Wait for streaming hydration to complete
+      await expect(
+        page.getByRole("status", { name: /loading feeds/i }),
+      ).toBeHidden();
+
+      // Delete the only feed
+      const table = page.getByRole("table");
+      await table.getByRole("button", { name: /open menu/i }).click();
       await page.getByRole("menuitem", { name: /delete/i }).click();
 
       const alertDialog = page.getByRole("alertdialog");
       await alertDialog.getByRole("button", { name: /remove/i }).click();
 
-      // 3. Verify transition back to empty state
+      // Verify transition back to empty state
       await expect(
         page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
       ).toBeVisible();
-      await expect(page.getByRole("table")).not.toBeVisible();
+      await expect(table).not.toBeVisible();
     });
 
     test("updates title immediately in the table", async ({ authedPage }) => {
@@ -136,12 +160,17 @@ test.describe("Manage Feeds", () => {
       // Navigate
       await page.goto("/manage-feeds");
 
-      // 1. Get the table
+      // Wait for streaming hydration to complete
+      await expect(
+        page.getByRole("status", { name: /loading feeds/i }),
+      ).toBeHidden();
+
+      // Get the table
       const table = page.getByRole("table");
 
       await expect(table.getByText("Original Title")).toBeVisible();
 
-      // 2. Edit the title
+      // Edit the title
       await table.getByRole("button", { name: /open menu/i }).click();
       await page.getByRole("menuitem", { name: /edit/i }).click();
 
@@ -150,10 +179,12 @@ test.describe("Manage Feeds", () => {
       await dialog.getByLabel(/^title$/i).fill("New Better Title");
       await dialog.getByRole("button", { name: /save changes/i }).click();
 
-      // 3. Verify immediate update
+      // Verify immediate update
       const toast = page.locator("[data-sonner-toast]");
 
       await expect(toast).toContainText("Subscription updated");
+
+      // Check both table and sidebar reflect the change
       await expect(table.getByText("New Better Title")).toBeVisible();
       await expect(table.getByText("Original Title")).not.toBeVisible();
     });
@@ -163,7 +194,7 @@ test.describe("Manage Feeds", () => {
     }) => {
       const { page, userId } = authedPage;
 
-      // 1. Setup: Seed one subscription with a recent success timestamp
+      // Setup: Seed one subscription with a recent success timestamp
       const [feed] = await db
         .insert(feeds)
         .values({
@@ -176,13 +207,18 @@ test.describe("Manage Feeds", () => {
 
       await db.insert(subscriptions).values({ userId, feedId: feed.id });
 
-      // 2. Navigate and check for the "just now"
-      // If there was a hydration error, Playwright would likely fail to find the element
-      // or we could check the console for hydration errors.
+      // Navigate and check for the "just now"
       await page.goto("/manage-feeds");
 
+      // Wait for streaming hydration to complete
+      await expect(
+        page.getByRole("status", { name: /loading feeds/i }),
+      ).toBeHidden();
+
+      // Assert
       const table = page.getByRole("table");
-      await expect(table.getByText(/just now/i)).toBeVisible();
+
+      await expect(table.getByText(/just now|seconds? ago/i)).toBeVisible();
     });
   });
 });

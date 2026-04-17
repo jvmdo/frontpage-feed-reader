@@ -1,22 +1,16 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { Plus, Rss } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
+import { useSubscriptions } from "@/hooks/use-subscriptions";
 import { AddFeedDialog } from "./add-feed-dialog";
 import { FeedTable } from "./feed-table";
 
 export function FeedManager() {
-  // We use useQuery purely for state management of the subscriptions list.
-  // All updates are handled manually via setQueryData in mutation hooks.
-  const { data } = useQuery({
-    queryKey: ["subscriptions"],
-    queryFn: () => [],
-    enabled: false,
-  });
+  const { data } = useSubscriptions();
 
-  if (!data || data.length === 0) {
+  if (data.length === 0) {
     return (
       <EmptyState
         title="No feeds yet"
