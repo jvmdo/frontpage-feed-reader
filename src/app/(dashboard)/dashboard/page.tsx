@@ -10,7 +10,6 @@ import { db } from "@/db";
 import { getCurrentSession } from "@/lib/session";
 import { feedItemsQuerySchema } from "@/lib/validations/feed";
 import { getUserFeedItems } from "@/services/feed/get-user-feed-items";
-import { getUserSubscriptions } from "@/services/feed/get-user-subscriptions";
 
 interface DashboardPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -37,7 +36,6 @@ export default async function DashboardPage({
     : { feedId: undefined, limit: 20, offset: 0 };
 
   const queryClient = new QueryClient();
-  const subscriptions = await getUserSubscriptions(db, session.user.id);
 
   // Prefetch items for the unified "All Items" feed or specific feed.
   // The key must match the one used in the useFeedItems hook.
@@ -50,7 +48,7 @@ export default async function DashboardPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <DashboardHeader subscriptions={subscriptions} />
+      <DashboardHeader />
       <div className="flex-1">
         <HydrationBoundary state={dehydrate(queryClient)}>
           <FeedItemList />

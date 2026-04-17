@@ -1,24 +1,21 @@
 "use client";
 
 import { useFeedFilter } from "@/hooks/use-feed-filter";
-import type { FeedWithSubscription } from "@/types";
-
-interface DashboardHeaderProps {
-  subscriptions: FeedWithSubscription[];
-}
+import { useSubscriptions } from "@/hooks/use-subscriptions";
 
 /**
  * Client component to render a reactive dashboard header (title and description).
  * Reacts instantly to URL filter changes without a server round-trip.
  */
-export function DashboardHeader({ subscriptions }: DashboardHeaderProps) {
+export function DashboardHeader() {
   const { feedId } = useFeedFilter();
+  const { data } = useSubscriptions();
 
   let title = "All Items";
   let description = "Everything from your subscriptions in one place.";
 
   if (feedId) {
-    const subWithFeed = subscriptions.find((s) => s.feed.id === feedId);
+    const subWithFeed = data.find((sub) => sub.feed.id === feedId);
     if (subWithFeed) {
       title =
         subWithFeed.subscription.customTitle ||

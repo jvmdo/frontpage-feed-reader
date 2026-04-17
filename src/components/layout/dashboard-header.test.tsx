@@ -75,48 +75,67 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
   });
 
   describe("DashboardHeader", () => {
-    it('renders "All Items" by default when no feedId is present', () => {
-      render(<DashboardHeader subscriptions={mockSubscriptions} />);
+    it('renders "All Items" by default when no feedId is present', async () => {
+      render(
+        <Suspense fallback={<div>Loading...</div>}>
+          <DashboardHeader />
+        </Suspense>,
+      );
 
       expect(
-        screen.getByRole("heading", { name: /all items/i }),
+        await screen.findByRole("heading", { name: /all items/i }),
       ).toBeInTheDocument();
       expect(
         screen.getByText(/everything from your subscriptions/i),
       ).toBeInTheDocument();
     });
 
-    it("renders the custom title and description when a filtered feedId matches", () => {
-      render(<DashboardHeader subscriptions={mockSubscriptions} />, {
-        searchParams: { feedId: "1" },
-      });
+    it("renders the custom title and description when a filtered feedId matches", async () => {
+      render(
+        <Suspense fallback={<div>Loading...</div>}>
+          <DashboardHeader />
+        </Suspense>,
+        {
+          searchParams: { feedId: "1" },
+        },
+      );
 
       expect(
-        screen.getByRole("heading", { name: /my custom feed 1/i }),
+        await screen.findByRole("heading", { name: /my custom feed 1/i }),
       ).toBeInTheDocument();
       expect(
         screen.getByText(/articles from my custom feed 1/i),
       ).toBeInTheDocument();
     });
 
-    it("renders the original feed title when no custom title is provided", () => {
-      render(<DashboardHeader subscriptions={mockSubscriptions} />, {
-        searchParams: { feedId: "2" },
-      });
+    it("renders the original feed title when no custom title is provided", async () => {
+      render(
+        <Suspense fallback={<div>Loading...</div>}>
+          <DashboardHeader />
+        </Suspense>,
+        {
+          searchParams: { feedId: "2" },
+        },
+      );
 
       expect(
-        screen.getByRole("heading", { name: /feed 2/i }),
+        await screen.findByRole("heading", { name: /feed 2/i }),
       ).toBeInTheDocument();
       expect(screen.getByText(/articles from feed 2/i)).toBeInTheDocument();
     });
 
-    it('falls back to "All Items" if the feedId does not match any subscription', () => {
-      render(<DashboardHeader subscriptions={mockSubscriptions} />, {
-        searchParams: { feedId: "999" },
-      });
+    it('falls back to "All Items" if the feedId does not match any subscription', async () => {
+      render(
+        <Suspense fallback={<div>Loading...</div>}>
+          <DashboardHeader />
+        </Suspense>,
+        {
+          searchParams: { feedId: "999" },
+        },
+      );
 
       expect(
-        screen.getByRole("heading", { name: /all items/i }),
+        await screen.findByRole("heading", { name: /all items/i }),
       ).toBeInTheDocument();
     });
   });
