@@ -9,18 +9,15 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useFeedFilter } from "@/hooks/use-feed-filter";
-import type { FeedWithSubscription } from "@/types";
+import { useSubscriptions } from "@/hooks/use-subscriptions";
 
-interface SidebarSubscriptionsProps {
-  items: FeedWithSubscription[];
-}
-
-export function SidebarSubscriptions({ items }: SidebarSubscriptionsProps) {
+export function SidebarSubscriptions() {
   const { feedId } = useFeedFilter();
+  const { data } = useSubscriptions();
 
   return (
     <SidebarMenu>
-      {items.map(({ subscription, feed }) => {
+      {data.map(({ subscription, feed }) => {
         const isActive = feedId === feed.id;
         const title = subscription.customTitle || feed.title || "Untitled Feed";
 

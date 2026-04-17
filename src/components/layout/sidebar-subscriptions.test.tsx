@@ -1,8 +1,16 @@
+import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
 import type { FeedWithSubscription } from "@/types";
 import { SidebarSubscriptions } from "./sidebar-subscriptions";
+
+// Mock next/navigation's usePathname and useSearchParams
+vi.mock("next/navigation", () => ({
+  usePathname: vi.fn(() => "/dashboard"),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+}));
 
 // Mock next/link's useLinkStatus
 vi.mock("next/link", async () => {
@@ -73,28 +81,36 @@ const mockSubscriptions: FeedWithSubscription[] = [
 ];
 
 describe("SidebarSubscriptions", () => {
-  it("renders all subscription items with correct titles", () => {
+  beforeEach(() => {
+    server.use(
+      http.get("/api/feeds/subscriptions", () => {
+        return HttpResponse.json({ success: true, data: mockSubscriptions });
+      }),
+    );
+  });
+
+  it("renders all subscription items with correct titles", async () => {
     render(
       <SidebarProvider>
-        <SidebarSubscriptions items={mockSubscriptions} />
+        <SidebarSubscriptions />
       </SidebarProvider>,
     );
 
-    expect(screen.getByText(/my custom feed 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/my custom feed 1/i)).toBeInTheDocument();
     expect(screen.getByText(/feed 2/i)).toBeInTheDocument();
   });
 
-  it("highlights the active feed based on the feedId query parameter", () => {
+  it("highlights the active feed based on the feedId query parameter", async () => {
     render(
       <SidebarProvider>
-        <SidebarSubscriptions items={mockSubscriptions} />
+        <SidebarSubscriptions />
       </SidebarProvider>,
       {
         searchParams: { feedId: "1" },
       },
     );
 
-    const link1 = screen.getByRole("link", { name: /my custom feed 1/i });
+    const link1 = await screen.findByRole("link", { name: /my custom feed 1/i });
     const button1 = link1.closest('[data-slot="sidebar-menu-button"]');
     expect(button1).toHaveAttribute("data-active", "true");
 
@@ -105,17 +121,17 @@ describe("SidebarSubscriptions", () => {
 
   it("shows the pending indicator when navigation is occurring", async () => {
     const { useLinkStatus } = await import("next/link");
-    (useLinkStatus as any).mockReturnValue({ pending: true });
+    vi.mocked(useLinkStatus).mockReturnValue({ pending: true });
 
     render(
       <SidebarProvider>
-        <SidebarSubscriptions items={mockSubscriptions} />
+        <SidebarSubscriptions />
       </SidebarProvider>,
     );
 
     // We check for the presence of the indicator in the links
     // LinkPendingIndicator is a span with animate-pulse
-    const links = screen.getAllByRole("link");
+    const links = await screen.findAllByRole("link");
     for (const link of links) {
       // The indicator is a child of the link
       const indicator = link.querySelector(".animate-pulse");
@@ -123,16 +139,14 @@ describe("SidebarSubscriptions", () => {
     }
   });
 
-  it("renders correctly without an iconUrl (using fallback)", () => {
-    // Feed 2 in mockSubscriptions has iconUrl: null
+  it("renders correctly without an iconUrl (using fallback)", async () => {
     render(
       <SidebarProvider>
-        <SidebarSubscriptions items={mockSubscriptions} />
+        <SidebarSubscriptions />
       </SidebarProvider>,
     );
 
-    const feed2Item = screen.getByText(/feed 2/i);
+    const feed2Item = await screen.findByText(/feed 2/i);
     expect(feed2Item).toBeInTheDocument();
-    // FeedIcon should handle null url
   });
 });

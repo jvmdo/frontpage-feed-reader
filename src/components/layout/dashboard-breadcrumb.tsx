@@ -8,24 +8,20 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useFeedFilter } from "@/hooks/use-feed-filter";
-import type { FeedWithSubscription } from "@/types";
-
-interface DashboardBreadcrumbProps {
-  subscriptions: FeedWithSubscription[];
-}
+import { useSubscriptions } from "@/hooks/use-subscriptions";
 
 /**
  * Client component to render a dynamic breadcrumb that reacts to the current feed filter.
  */
-export function DashboardBreadcrumb({
-  subscriptions,
-}: DashboardBreadcrumbProps) {
+export function DashboardBreadcrumb() {
   const { feedId } = useFeedFilter();
+  const { data } = useSubscriptions();
 
   let pageTitle = "All Items";
 
   if (feedId) {
-    const subWithFeed = subscriptions.find((s) => s.feed.id === feedId);
+    const subWithFeed = data.find((sub) => sub.feed.id === feedId);
+
     if (subWithFeed) {
       pageTitle =
         subWithFeed.subscription.customTitle ||

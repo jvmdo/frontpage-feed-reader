@@ -1,3 +1,6 @@
+import { HttpResponse, http } from "msw";
+import { Suspense } from "react";
+import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
 import type { FeedWithSubscription } from "@/types";
 import { DashboardBreadcrumb } from "./dashboard-breadcrumb";
@@ -63,6 +66,14 @@ const mockSubscriptions: FeedWithSubscription[] = [
 ];
 
 describe("DashboardHeader & DashboardBreadcrumb", () => {
+  beforeEach(() => {
+    server.use(
+      http.get("/api/feeds/subscriptions", () => {
+        return HttpResponse.json({ success: true, data: mockSubscriptions });
+      }),
+    );
+  });
+
   describe("DashboardHeader", () => {
     it('renders "All Items" by default when no feedId is present', () => {
       render(<DashboardHeader subscriptions={mockSubscriptions} />);
@@ -83,7 +94,9 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
       expect(
         screen.getByRole("heading", { name: /my custom feed 1/i }),
       ).toBeInTheDocument();
-      expect(screen.getByText(/articles from my custom feed 1/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/articles from my custom feed 1/i),
+      ).toBeInTheDocument();
     });
 
     it("renders the original feed title when no custom title is provided", () => {
@@ -91,7 +104,9 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
         searchParams: { feedId: "2" },
       });
 
-      expect(screen.getByRole("heading", { name: /feed 2/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /feed 2/i }),
+      ).toBeInTheDocument();
       expect(screen.getByText(/articles from feed 2/i)).toBeInTheDocument();
     });
 
@@ -107,27 +122,41 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
   });
 
   describe("DashboardBreadcrumb", () => {
-    it('renders "All Items" in the breadcrumb by default', () => {
-      render(<DashboardBreadcrumb subscriptions={mockSubscriptions} />);
+    it('renders "All Items" in the breadcrumb by default', async () => {
+      render(
+        <Suspense fallback={<div>Loading...</div>}>
+          <DashboardBreadcrumb />
+        </Suspense>,
+      );
 
-      expect(screen.getByText(/frontpage/i)).toBeInTheDocument();
+      expect(await screen.findByText(/frontpage/i)).toBeInTheDocument();
       expect(screen.getByText(/all items/i)).toBeInTheDocument();
     });
 
-    it("renders the feed title in the breadcrumb when filtered", () => {
-      render(<DashboardBreadcrumb subscriptions={mockSubscriptions} />, {
-        searchParams: { feedId: "1" },
-      });
+    it("renders the feed title in the breadcrumb when filtered", async () => {
+      render(
+        <Suspense fallback={<div>Loading...</div>}>
+          <DashboardBreadcrumb />
+        </Suspense>,
+        {
+          searchParams: { feedId: "1" },
+        },
+      );
 
-      expect(screen.getByText(/my custom feed 1/i)).toBeInTheDocument();
+      expect(await screen.findByText(/my custom feed 1/i)).toBeInTheDocument();
     });
 
-    it("renders the original feed title in the breadcrumb if no custom title", () => {
-      render(<DashboardBreadcrumb subscriptions={mockSubscriptions} />, {
-        searchParams: { feedId: "2" },
-      });
+    it("renders the original feed title in the breadcrumb if no custom title", async () => {
+      render(
+        <Suspense fallback={<div>Loading...</div>}>
+          <DashboardBreadcrumb />
+        </Suspense>,
+        {
+          searchParams: { feedId: "2" },
+        },
+      );
 
-      expect(screen.getByText(/feed 2/i)).toBeInTheDocument();
+      expect(await screen.findByText(/feed 2/i)).toBeInTheDocument();
     });
   });
 });

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type * as React from "react";
+import type { ReactNode } from "react";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { LinkPendingIndicator } from "@/components/shared/link-pending-indicator";
 import {
@@ -27,21 +27,15 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useFeedFilter } from "@/hooks/use-feed-filter";
-import type { FeedWithSubscription } from "@/types";
-import { SidebarSubscriptions } from "./sidebar-subscriptions";
 
-interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  subscriptions: FeedWithSubscription[];
-}
-
-export function AppSidebar({ subscriptions, ...props }: AppSidebarProps) {
+export function AppSidebar({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { feedId } = useFeedFilter();
 
   const isDashboardActive = pathname === "/dashboard" && !feedId;
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon">
       <SidebarHeader className="flex flex-row items-center gap-2 px-4 py-4">
         <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg font-bold">
           F
@@ -111,9 +105,7 @@ export function AppSidebar({ subscriptions, ...props }: AppSidebarProps) {
 
         <SidebarGroup>
           <SidebarGroupLabel>Subscriptions</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarSubscriptions items={subscriptions} />
-          </SidebarGroupContent>
+          <SidebarGroupContent>{children}</SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
