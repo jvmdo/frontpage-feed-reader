@@ -11,7 +11,7 @@ export function useFeedFilter() {
     parseAsInteger.withDefault(0).withOptions({
       shallow: true,
       clearOnDefault: true,
-      scroll: true,
+      scroll: false,
     }),
   );
 

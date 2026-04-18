@@ -4,6 +4,7 @@ import Link, { type LinkProps } from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useFeedFilter } from "@/hooks/use-feed-filter";
+import { saveFeedScroll } from "@/lib/feed/scroll-store";
 
 interface DashboardLinkProps extends LinkProps {
   feedId?: number | null;
@@ -22,12 +23,14 @@ export function DashboardLink({
   ...props
 }: DashboardLinkProps) {
   const pathname = usePathname();
-  const { setFeedId } = useFeedFilter();
+  const { feedId: currentFeedId, setFeedId } = useFeedFilter();
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // If we are already on the dashboard, intercept the click to do a shallow update
     if (pathname === "/dashboard") {
       e.preventDefault();
+
+      saveFeedScroll(currentFeedId);
       setFeedId(feedId);
     }
     // Otherwise, let the standard Link navigation happen

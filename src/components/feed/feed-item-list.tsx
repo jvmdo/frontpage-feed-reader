@@ -1,15 +1,25 @@
 "use client";
 
 import { RssIcon } from "lucide-react";
+import { useLayoutEffect } from "react";
 import { FeedItemCard } from "@/components/feed/feed-item-card";
 import FeedItemListSkeleton from "@/components/feed/feed-item-list-skeleton";
 import { InfiniteScrollTrigger } from "@/components/feed/infinite-scroll-trigger";
 import { EmptyState } from "@/components/shared/empty-state";
+import { useFeedFilter } from "@/hooks/use-feed-filter";
 import { useFeedItems } from "@/hooks/use-feed-items";
+import { getFeedScroll } from "@/lib/feed/scroll-store";
 
 export function FeedItemList() {
+  const { feedId } = useFeedFilter();
   const { data, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFeedItems();
+
+  // Restore scroll position when switching feeds
+  useLayoutEffect(() => {
+    const savedScroll = getFeedScroll(feedId);
+    window.scrollTo({ top: savedScroll, behavior: "instant" });
+  }, [feedId]);
 
   if (isError) {
     return (
