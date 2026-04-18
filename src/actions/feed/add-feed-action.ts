@@ -10,6 +10,7 @@ import {
 import { getCurrentSession } from "@/lib/session";
 import { type AddFeedInput, addFeedSchema } from "@/lib/validations/feed";
 import { addFeedToUser } from "@/services/feed/add-feed-to-user";
+import { ingestFeedItems } from "@/services/feed-ingestion";
 
 /**
  * Server action to add a feed.
@@ -40,6 +41,9 @@ export async function addFeedAction(input: AddFeedInput) {
 
   try {
     const subscription = await addFeedToUser(db, session.user.id, url);
+
+    // Trigger initial ingestion to populate the feed immediately
+    await ingestFeedItems(db, subscription.feed.id);
 
     return {
       success: true,

@@ -9,9 +9,11 @@ import {
 } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
 import { addFeedToUser } from "@/services/feed/add-feed-to-user";
+import { ingestFeedItems } from "@/services/feed-ingestion";
 import { addFeedAction } from "./add-feed-action";
 
 vi.mock("@/services/feed/add-feed-to-user");
+vi.mock("@/services/feed-ingestion");
 vi.mock("@/lib/session");
 
 describe("addFeedAction", () => {
@@ -43,26 +45,33 @@ describe("addFeedAction", () => {
 
   it("returns success and subscription data when addition is successful", async () => {
     const mockSession = { user: { id: "user-123" } };
-    const mockSubscription = {
-      id: "sub-123",
-      userId: "user-123",
-      feedId: "feed-123",
+    const mockResult = {
+      subscription: {
+        id: "sub-123",
+        userId: "user-123",
+        feedId: "feed-123",
+      },
+      feed: {
+        id: "feed-123",
+      },
     };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(addFeedToUser).mockResolvedValueOnce(mockSubscription as any);
+    vi.mocked(addFeedToUser).mockResolvedValueOnce(mockResult as any);
+    vi.mocked(ingestFeedItems).mockResolvedValueOnce({ success: true } as any);
 
     const result = await addFeedAction({ url: "https://example.com/feed.xml" });
 
     expect(result).toEqual({
       success: true,
-      data: mockSubscription,
+      data: mockResult,
     });
     expect(addFeedToUser).toHaveBeenCalledWith(
       expect.anything(),
       "user-123",
       "https://example.com/feed.xml",
     );
+    expect(ingestFeedItems).toHaveBeenCalledWith(expect.anything(), "feed-123");
   });
 
   it("returns friendly error when FeedNotFoundError is thrown", async () => {
