@@ -4,8 +4,8 @@ import { feedItems, feeds, subscriptions } from "@/db/schema";
 import type { FeedItemWithSource } from "@/types";
 
 interface GetUserFeedItemsOptions {
-  limit?: number;
-  offset?: number;
+  limit: number;
+  offset: number;
   feedId?: number;
 }
 
@@ -16,9 +16,9 @@ interface GetUserFeedItemsOptions {
 export async function getUserFeedItems(
   db: DB,
   userId: string,
-  options: GetUserFeedItemsOptions = {},
+  options: GetUserFeedItemsOptions,
 ): Promise<FeedItemWithSource[]> {
-  const { limit = 50, offset = 0, feedId } = options;
+  const { limit, offset, feedId } = options;
 
   const results = await db
     .select({

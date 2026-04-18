@@ -1,23 +1,36 @@
+import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
-interface FeedItemSkeletonProps {
-  className?: string;
+function FeedItemListSkeleton({
+  children = "Loading feed items...",
+}: {
+  children?: ReactNode;
+}) {
+  return (
+    <div aria-busy="true">
+      <span className="sr-only" role="status">
+        {children}
+      </span>
+
+      <div aria-hidden="true" className="flex flex-col gap-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: Static list
+          <FeedItemSkeleton key={`skeleton-${i}`} />
+        ))}
+      </div>
+    </div>
+  );
 }
+
+export default FeedItemListSkeleton;
 
 /**
  * A loading skeleton for the FeedItemCard component.
  * Mirrors the visual structure and spacing of the card.
  */
-export function FeedItemSkeleton({ className }: FeedItemSkeletonProps) {
+export function FeedItemSkeleton() {
   return (
-    <div
-      aria-hidden="true"
-      className={cn(
-        "flex flex-col gap-3 p-4 rounded-lg border border-border-subtle bg-surface",
-        className
-      )}
-    >
+    <div className="flex flex-col gap-3 p-4 rounded-lg border border-border-subtle bg-surface">
       <div className="flex flex-col gap-1.5">
         {/* Meta info (Source, Time) */}
         <div className="flex items-center gap-2">
@@ -26,7 +39,7 @@ export function FeedItemSkeleton({ className }: FeedItemSkeletonProps) {
           <span className="text-muted-foreground/20 text-xs">•</span>
           <Skeleton className="h-3 w-16" />
         </div>
-        
+
         {/* Title */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-2 flex-1">

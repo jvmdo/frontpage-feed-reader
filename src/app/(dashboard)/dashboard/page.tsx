@@ -1,12 +1,12 @@
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { FeedItemList } from "@/components/feed/feed-item-list";
+import FeedItemListSkeleton from "@/components/feed/feed-item-list-skeleton";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
 import { db } from "@/db";
+import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
+import { getQueryClient } from "@/lib/get-query-client";
 import { getCurrentSession } from "@/lib/session";
 import { feedItemsQuerySchema } from "@/lib/validations/feed";
 import { getUserFeedItems } from "@/services/feed/get-user-feed-items";
@@ -31,29 +31,33 @@ export default async function DashboardPage({
   const params = await searchParams;
   const result = feedItemsQuerySchema.safeParse(params);
 
-  const { feedId, limit, offset } = result.success
-    ? result.data
-    : { feedId: undefined, limit: 20, offset: 0 };
+  const {
+    feedId,
+    limit = PAGINATION_LIMIT,
+    offset = PAGINATION_INITIAL_OFFSET,
+  } = result.success ? result.data : {};
 
-  const queryClient = new QueryClient();
+  const queryClient = getQueryClient();
 
   // Prefetch items for the unified "All Items" feed or specific feed.
   // The key must match the one used in the useFeedItems hook.
-  await queryClient.prefetchInfiniteQuery({
+  queryClient.prefetchInfiniteQuery({
     queryKey: ["feeds", "items", { feedId: feedId || null }],
     queryFn: () =>
       getUserFeedItems(db, session.user.id, { limit, offset, feedId }),
-    initialPageParam: 0,
+    initialPageParam: PAGINATION_INITIAL_OFFSET,
   });
 
   return (
     <div className="flex flex-col gap-6">
       <DashboardHeader />
-      <div className="flex-1">
+      <section className="flex-1" aria-label="Feed">
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <FeedItemList />
+          <Suspense fallback={<FeedItemListSkeleton />}>
+            <FeedItemList />
+          </Suspense>
         </HydrationBoundary>
-      </div>
+      </section>
     </div>
   );
 }

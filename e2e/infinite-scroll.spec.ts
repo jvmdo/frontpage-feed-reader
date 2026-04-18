@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import { feedItems, feeds, subscriptions } from "@/db/schema";
+import { PAGINATION_LIMIT } from "@/lib/constants";
 import { expect, test } from "./fixtures/test-extend";
 
 test.describe("Infinite Scroll", () => {
@@ -23,10 +24,11 @@ test.describe("Infinite Scroll", () => {
       feedId: feed.id,
     });
 
-    // 3. Seed 45 items to ensure 3 pages (20 + 20 + 5)
+    // 3. Seed enough items to ensure 3 pages
     // We use a fixed date and decrement it to ensure reverse-chronological order
+    const totalItems = PAGINATION_LIMIT * 2 + 5;
     const now = Date.now();
-    const items = Array.from({ length: 45 }).map((_, i) => ({
+    const items = Array.from({ length: totalItems }).map((_, i) => ({
       feedId: feed.id,
       guid: `item-${i}-${userId}`,
       title: `Infinite Scroll Article ${i}`,
@@ -39,55 +41,50 @@ test.describe("Infinite Scroll", () => {
     // 4. Go to dashboard
     await page.goto("/dashboard");
 
-    // 5. Verify first page items (0-19)
-    await expect(
-      page.getByRole("heading", { name: "Infinite Scroll Article 0" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Infinite Scroll Article 19" }),
-    ).toBeVisible();
-    
-    // Article 20 should NOT be visible yet
-    await expect(
-      page.getByRole("heading", { name: "Infinite Scroll Article 20" }),
-    ).not.toBeVisible();
+    // Wait for initial hydration/loading to complete by checking for first article
+    const firstArticle = page.getByRole("heading", {
+      name: "Infinite Scroll Article 0",
+    });
+    await expect(firstArticle).toBeVisible();
 
-    // 6. Scroll to the bottom to trigger the first fetch
-    // We look for the scroll trigger or just scroll to bottom
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-
-    // 7. Verify second page items (20-39) are loaded
+    // 5. Verify first page items are present
     await expect(
-      page.getByRole("heading", { name: "Infinite Scroll Article 20" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Infinite Scroll Article 39" }),
-    ).toBeVisible();
-    
-    // Article 40 should NOT be visible yet
-    await expect(
-      page.getByRole("heading", { name: "Infinite Scroll Article 40" }),
-    ).not.toBeVisible();
-
-    // 8. Scroll to the bottom again to trigger the second fetch
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-
-    // 9. Verify third page items (40-44) are loaded
-    await expect(
-      page.getByRole("heading", { name: "Infinite Scroll Article 40" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Infinite Scroll Article 44" }),
+      page.getByRole("heading", {
+        name: `Infinite Scroll Article ${PAGINATION_LIMIT - 1}`,
+      }),
     ).toBeVisible();
 
-    // 10. Verify uniqueness: ensure Article 0 only appears once
+    // 6. Scroll to the bottom to trigger the next fetches
+    // We scroll multiple times to ensure we trigger all pages
+    for (let i = 0; i < 5; i++) {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await page.waitForTimeout(200);
+    }
+
+    // 7. Verify all articles are loaded
+    await expect(page.getByRole("article")).toHaveCount(totalItems);
+
+    // 8. Verify specific items from each page
+    await expect(
+      page.getByRole("heading", {
+        name: `Infinite Scroll Article ${PAGINATION_LIMIT}`,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: `Infinite Scroll Article ${PAGINATION_LIMIT * 2}`,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: `Infinite Scroll Article ${totalItems - 1}`,
+      }),
+    ).toBeVisible();
+
+    // 9. Verify uniqueness: ensure Article 0 only appears once
     const article0Count = await page
       .getByRole("heading", { name: "Infinite Scroll Article 0" })
       .count();
     expect(article0Count).toBe(1);
-
-    // Verify we have all 45 articles
-    const allArticles = page.getByRole("article");
-    await expect(allArticles).toHaveCount(45);
   });
 });

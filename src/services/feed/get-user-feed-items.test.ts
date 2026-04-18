@@ -1,14 +1,21 @@
 import { subMinutes } from "date-fns";
 import { feedItems, feeds, subscriptions } from "@/db/schema";
+import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import { test } from "@/tests/test-extend";
 import { getUserFeedItems } from "./get-user-feed-items";
+
+const options = {
+  limit: PAGINATION_LIMIT,
+  offset: PAGINATION_INITIAL_OFFSET,
+  feedId: undefined,
+};
 
 describe("getUserFeedItems", () => {
   test("returns empty array when user has no subscriptions", async ({
     tx,
     testUser,
   }) => {
-    const result = await getUserFeedItems(tx, testUser.id);
+    const result = await getUserFeedItems(tx, testUser.id, options);
     expect(result).toEqual([]);
   });
 
@@ -56,7 +63,7 @@ describe("getUserFeedItems", () => {
       },
     ]);
 
-    const result = await getUserFeedItems(tx, testUser.id);
+    const result = await getUserFeedItems(tx, testUser.id, options);
 
     expect(result).toHaveLength(3);
     // Should be sorted DESC: now, 10m ago, 20m ago
@@ -111,7 +118,7 @@ describe("getUserFeedItems", () => {
       },
     ]);
 
-    const result = await getUserFeedItems(tx, testUser.id);
+    const result = await getUserFeedItems(tx, testUser.id, options);
 
     expect(result).toHaveLength(1);
     expect(result[0].item.title).toBe("Feed 1 Item");
@@ -139,7 +146,10 @@ describe("getUserFeedItems", () => {
     await tx.insert(feedItems).values(items);
 
     // Test limit
-    const limitResult = await getUserFeedItems(tx, testUser.id, { limit: 2 });
+    const limitResult = await getUserFeedItems(tx, testUser.id, {
+      ...options,
+      limit: 2,
+    });
     expect(limitResult).toHaveLength(2);
     expect(limitResult[0].item.title).toBe("Item 0");
     expect(limitResult[1].item.title).toBe("Item 1");
@@ -199,6 +209,7 @@ describe("getUserFeedItems", () => {
 
       // 3. Request items only for feed1
       const result = await getUserFeedItems(tx, testUser.id, {
+        ...options,
         feedId: feed1.id,
       });
 
@@ -240,7 +251,7 @@ describe("getUserFeedItems", () => {
         },
       ]);
 
-      const result = await getUserFeedItems(tx, testUser.id);
+      const result = await getUserFeedItems(tx, testUser.id, options);
       expect(result).toHaveLength(2);
     });
   });

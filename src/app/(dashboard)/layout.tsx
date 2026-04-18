@@ -1,9 +1,4 @@
-import {
-  defaultShouldDehydrateQuery,
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -19,6 +14,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { db } from "@/db";
+import { getQueryClient } from "@/lib/get-query-client";
 import { getCurrentSession } from "@/lib/session";
 import { getUserSubscriptions } from "@/services/feed/get-user-subscriptions";
 
@@ -33,20 +29,11 @@ export default async function DashboardLayout({
     redirect("/sign-in");
   }
 
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      dehydrate: {
-        shouldDehydrateQuery: (query) =>
-          defaultShouldDehydrateQuery(query) ||
-          query.state.status === "pending",
-      },
-    },
-  });
+  const queryClient = getQueryClient();
 
   queryClient.prefetchQuery({
     queryKey: ["subscriptions"],
     queryFn: () => getUserSubscriptions(db, session.user.id),
-    staleTime: 1000 * 60 * 5,
   });
 
   return (
