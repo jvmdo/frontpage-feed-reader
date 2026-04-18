@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardLink } from "@/components/shared/dashboard-link";
 import {
   BreadcrumbItem,
   BreadcrumbLink,
@@ -10,9 +11,6 @@ import {
 import { useFeedFilter } from "@/hooks/use-feed-filter";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
 
-/**
- * Client component to render a dynamic breadcrumb that reacts to the current feed filter.
- */
 export function DashboardBreadcrumb() {
   const { feedId } = useFeedFilter();
   const { data } = useSubscriptions();
@@ -33,7 +31,11 @@ export function DashboardBreadcrumb() {
   return (
     <BreadcrumbList>
       <BreadcrumbItem className="hidden md:block">
-        <BreadcrumbLink href="/dashboard">Frontpage</BreadcrumbLink>
+        <BreadcrumbLink asChild>
+          <DashboardLink href="/dashboard" feedId={null}>
+            Frontpage
+          </DashboardLink>
+        </BreadcrumbLink>
       </BreadcrumbItem>
       <BreadcrumbSeparator className="hidden md:block" />
       <BreadcrumbItem>

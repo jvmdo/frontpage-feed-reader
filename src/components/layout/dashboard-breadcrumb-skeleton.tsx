@@ -1,3 +1,4 @@
+import { DashboardLink } from "@/components/shared/dashboard-link";
 import {
   BreadcrumbItem,
   BreadcrumbLink,
@@ -10,7 +11,11 @@ export function DashboardBreadcrumbSkeleton() {
   return (
     <BreadcrumbList>
       <BreadcrumbItem className="hidden md:block">
-        <BreadcrumbLink href="/dashboard">Frontpage</BreadcrumbLink>
+        <BreadcrumbLink asChild>
+          <DashboardLink href="/dashboard" feedId={null}>
+            Frontpage
+          </DashboardLink>
+        </BreadcrumbLink>
       </BreadcrumbItem>
       <BreadcrumbSeparator className="hidden md:block" />
       <BreadcrumbItem>

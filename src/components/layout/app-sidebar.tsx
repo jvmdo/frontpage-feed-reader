@@ -11,6 +11,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
+import { DashboardLink } from "@/components/shared/dashboard-link";
 import { LinkPendingIndicator } from "@/components/shared/link-pending-indicator";
 import {
   Sidebar,
@@ -56,11 +57,11 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                   tooltip="All Items"
                   className="relative"
                 >
-                  <Link href="/dashboard">
+                  <DashboardLink href="/dashboard" feedId={null}>
                     <InboxIcon />
                     <span>All Items</span>
                     <LinkPendingIndicator />
-                  </Link>
+                  </DashboardLink>
                 </SidebarMenuButton>
                 <SidebarMenuBadge>12</SidebarMenuBadge>
               </SidebarMenuItem>

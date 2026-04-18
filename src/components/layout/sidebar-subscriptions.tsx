@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { FeedIcon } from "@/components/feed/feed-icon";
+import { DashboardLink } from "@/components/shared/dashboard-link";
 import { LinkPendingIndicator } from "@/components/shared/link-pending-indicator";
 import {
   SidebarMenu,
@@ -14,6 +14,14 @@ import { useSubscriptions } from "@/hooks/use-subscriptions";
 export function SidebarSubscriptions() {
   const { feedId } = useFeedFilter();
   const { data } = useSubscriptions();
+
+  if (data.length === 0) {
+    return (
+      <div className="px-4 py-2 text-xs text-text-tertiary italic">
+        No subscriptions yet.
+      </div>
+    );
+  }
 
   return (
     <SidebarMenu>
@@ -29,7 +37,11 @@ export function SidebarSubscriptions() {
               tooltip={title}
               className="relative"
             >
-              <Link href={`/dashboard?feedId=${feed.id}`} prefetch={false}>
+              <DashboardLink
+                href={`/dashboard?feedId=${feed.id}`}
+                feedId={feed.id}
+                prefetch={false}
+              >
                 <FeedIcon
                   url={feed.iconUrl || feed.url}
                   title={title}
@@ -37,7 +49,7 @@ export function SidebarSubscriptions() {
                 />
                 <span className="truncate">{title}</span>
                 <LinkPendingIndicator />
-              </Link>
+              </DashboardLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
         );
