@@ -69,3 +69,14 @@ export class FeedRecordNotFoundError extends Error {
     this.name = "FeedRecordNotFoundError";
   }
 }
+
+/**
+ * Thrown when a user tries to create a category with a name that already exists for them.
+ */
+export class DuplicateCategoryError extends Error {
+  code = "DUPLICATE_CATEGORY" as const;
+  constructor(message = "A category with this name already exists.") {
+    super(message);
+    this.name = "DuplicateCategoryError";
+  }
+}
