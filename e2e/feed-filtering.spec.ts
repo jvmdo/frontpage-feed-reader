@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { feedItems, feeds, subscriptions } from "@/db/schema";
+import { seedFeedItems, seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test.describe("Feed Filtering", () => {
@@ -8,60 +8,47 @@ test.describe("Feed Filtering", () => {
   }) => {
     const { page, userId } = authedPage;
 
-    // 1. Seed two different feeds
-    const [feed1] = await db
-      .insert(feeds)
-      .values({
-        url: `https://feed1.com/rss?tenant=${userId}`,
-        title: "First Tech Feed",
-      })
-      .returning();
+    // 1. Seed two different feeds and subscriptions
+    const { feed: feed1 } = await seedFeedWithSubscription(db, userId, {
+      url: `https://feed1.com/rss?tenant=${userId}`,
+      title: "First Tech Feed",
+    });
 
-    const [feed2] = await db
-      .insert(feeds)
-      .values({
-        url: `https://feed2.com/rss?tenant=${userId}`,
-        title: "Second Design Feed",
-      })
-      .returning();
+    const { feed: feed2 } = await seedFeedWithSubscription(db, userId, {
+      url: `https://feed2.com/rss?tenant=${userId}`,
+      title: "Second Design Feed",
+    });
 
-    // 2. Seed Subscriptions
-    await db.insert(subscriptions).values([
-      { userId, feedId: feed1.id },
-      { userId, feedId: feed2.id },
-    ]);
-
-    // 3. Seed Items for both
-    await db.insert(feedItems).values([
+    // 2. Seed Items for both
+    await seedFeedItems(db, feed1.id, [
       {
-        feedId: feed1.id,
         guid: `item-f1-${userId}`,
         title: "Article from First Feed",
-        publishedAt: new Date(),
-      },
-      {
-        feedId: feed2.id,
-        guid: `item-f2-${userId}`,
-        title: "Article from Second Feed",
-        publishedAt: new Date(),
       },
     ]);
 
-    // 4. Navigate DIRECTLY to feed 1 filtered URL
+    await seedFeedItems(db, feed2.id, [
+      {
+        guid: `item-f2-${userId}`,
+        title: "Article from Second Feed",
+      },
+    ]);
+
+    // 3. Navigate DIRECTLY to feed 1 filtered URL
     await page.goto(`/dashboard?feedId=${feed1.id}`);
 
-    // 5. Verify immediate content (no loading flash)
+    // 4. Verify immediate content (no loading flash)
     const firstFeedItem = page.getByRole("heading", { name: "Article from First Feed" });
     const skeleton = page.getByLabel("Loading feed items...");
 
     await expect(firstFeedItem).toBeVisible();
     await expect(skeleton).not.toBeVisible();
 
-    // 6. Verify isolation
+    // 5. Verify isolation
     const secondFeedItem = page.getByRole("heading", { name: "Article from Second Feed" });
     await expect(secondFeedItem).not.toBeVisible();
 
-    // 7. Verify header title
+    // 6. Verify header title
     const headerTitle = page.getByRole("heading", { level: 1 });
     await expect(headerTitle).toHaveText("First Tech Feed");
   });
@@ -72,39 +59,27 @@ test.describe("Feed Filtering", () => {
     const { page, userId } = authedPage;
 
     // 1. Seed data
-    const [feedA] = await db
-      .insert(feeds)
-      .values({
-        url: `https://feed-a.com/rss?tenant=${userId}`,
-        title: "Feed A",
-      })
-      .returning();
+    const { feed: feedA } = await seedFeedWithSubscription(db, userId, {
+      url: `https://feed-a.com/rss?tenant=${userId}`,
+      title: "Feed A",
+    });
 
-    const [feedB] = await db
-      .insert(feeds)
-      .values({
-        url: `https://feed-b.com/rss?tenant=${userId}`,
-        title: "Feed B",
-      })
-      .returning();
+    const { feed: feedB } = await seedFeedWithSubscription(db, userId, {
+      url: `https://feed-b.com/rss?tenant=${userId}`,
+      title: "Feed B",
+    });
 
-    await db.insert(subscriptions).values([
-      { userId, feedId: feedA.id },
-      { userId, feedId: feedB.id },
-    ]);
-
-    await db.insert(feedItems).values([
+    await seedFeedItems(db, feedA.id, [
       {
-        feedId: feedA.id,
         guid: `item-a-${userId}`,
         title: "Item A",
-        publishedAt: new Date(),
       },
+    ]);
+
+    await seedFeedItems(db, feedB.id, [
       {
-        feedId: feedB.id,
         guid: `item-b-${userId}`,
         title: "Item B",
-        publishedAt: new Date(),
       },
     ]);
 

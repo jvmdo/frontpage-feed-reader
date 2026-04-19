@@ -1,6 +1,10 @@
 import { subMinutes } from "date-fns";
-import { feedItems, feeds, subscriptions } from "@/db/schema";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
+import {
+  seedFeed,
+  seedFeedItems,
+  seedFeedWithSubscription,
+} from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
 import { getUserFeedItems } from "./get-user-feed-items";
 
@@ -24,17 +28,8 @@ describe("getUserFeedItems", () => {
     testUser,
   }) => {
     // 1. Create a feed and subscription
-    const [feed] = await tx
-      .insert(feeds)
-      .values({
-        url: "https://example.com/rss",
-        title: "Example Feed",
-      })
-      .returning();
-
-    await tx.insert(subscriptions).values({
-      userId: testUser.id,
-      feedId: feed.id,
+    const { feed } = await seedFeedWithSubscription(tx, testUser.id, {
+      title: "Example Feed",
     });
 
     // 2. Create feed items with different publication dates
@@ -42,25 +37,10 @@ describe("getUserFeedItems", () => {
     const tenMinutesAgo = subMinutes(now, 10);
     const twentyMinutesAgo = subMinutes(now, 20);
 
-    await tx.insert(feedItems).values([
-      {
-        feedId: feed.id,
-        guid: "item1",
-        title: "Item 1",
-        publishedAt: tenMinutesAgo,
-      },
-      {
-        feedId: feed.id,
-        guid: "item2",
-        title: "Item 2",
-        publishedAt: now,
-      },
-      {
-        feedId: feed.id,
-        guid: "item3",
-        title: "Item 3",
-        publishedAt: twentyMinutesAgo,
-      },
+    await seedFeedItems(tx, feed.id, [
+      { title: "Item 1", publishedAt: tenMinutesAgo },
+      { title: "Item 2", publishedAt: now },
+      { title: "Item 3", publishedAt: twentyMinutesAgo },
     ]);
 
     const result = await getUserFeedItems(tx, testUser.id, options);
@@ -80,43 +60,13 @@ describe("getUserFeedItems", () => {
     testUser,
   }) => {
     // 1. Create two feeds
-    const [feed1] = await tx
-      .insert(feeds)
-      .values({
-        url: "https://feed1.com/rss",
-        title: "Feed 1",
-      })
-      .returning();
+    const { feed: feed1 } = await seedFeedWithSubscription(tx, testUser.id);
 
-    const [feed2] = await tx
-      .insert(feeds)
-      .values({
-        url: "https://feed2.com/rss",
-        title: "Feed 2",
-      })
-      .returning();
+    const feed2 = await seedFeed(tx);
 
-    // 2. Subscribe user to ONLY feed1
-    await tx.insert(subscriptions).values({
-      userId: testUser.id,
-      feedId: feed1.id,
-    });
-
-    // 3. Add items to both
-    await tx.insert(feedItems).values([
-      {
-        feedId: feed1.id,
-        guid: "f1-i1",
-        title: "Feed 1 Item",
-        publishedAt: new Date(),
-      },
-      {
-        feedId: feed2.id,
-        guid: "f2-i1",
-        title: "Feed 2 Item",
-        publishedAt: new Date(),
-      },
-    ]);
+    // 2. Add items to both
+    await seedFeedItems(tx, feed1.id, [{ title: "Feed 1 Item" }]);
+    await seedFeedItems(tx, feed2.id, [{ title: "Unsubscribed Feed Item" }]);
 
     const result = await getUserFeedItems(tx, testUser.id, options);
 
@@ -125,31 +75,22 @@ describe("getUserFeedItems", () => {
   });
 
   test("respects limit and offset", async ({ tx, testUser }) => {
-    const [feed] = await tx
-      .insert(feeds)
-      .values({ url: "https://example.com/rss" })
-      .returning();
-
-    await tx.insert(subscriptions).values({
-      userId: testUser.id,
-      feedId: feed.id,
-    });
+    const { feed } = await seedFeedWithSubscription(tx, testUser.id);
 
     // Create 5 items
     const items = Array.from({ length: 5 }).map((_, i) => ({
-      feedId: feed.id,
-      guid: `guid-${i}`,
       title: `Item ${i}`,
       publishedAt: subMinutes(new Date(), i),
     }));
 
-    await tx.insert(feedItems).values(items);
+    await seedFeedItems(tx, feed.id, items);
 
     // Test limit
     const limitResult = await getUserFeedItems(tx, testUser.id, {
       ...options,
       limit: 2,
     });
+
     expect(limitResult).toHaveLength(2);
     expect(limitResult[0].item.title).toBe("Item 0");
     expect(limitResult[1].item.title).toBe("Item 1");
@@ -159,6 +100,7 @@ describe("getUserFeedItems", () => {
       limit: 2,
       offset: 2,
     });
+
     expect(offsetResult).toHaveLength(2);
     expect(offsetResult[0].item.title).toBe("Item 2");
     expect(offsetResult[1].item.title).toBe("Item 3");
@@ -170,42 +112,12 @@ describe("getUserFeedItems", () => {
       testUser,
     }) => {
       // 1. Create two feeds and subscribe to both
-      const [feed1] = await tx
-        .insert(feeds)
-        .values({
-          url: "https://feed1.com/rss",
-          title: "Feed 1",
-        })
-        .returning();
-
-      const [feed2] = await tx
-        .insert(feeds)
-        .values({
-          url: "https://feed2.com/rss",
-          title: "Feed 2",
-        })
-        .returning();
-
-      await tx.insert(subscriptions).values([
-        { userId: testUser.id, feedId: feed1.id },
-        { userId: testUser.id, feedId: feed2.id },
-      ]);
+      const { feed: feed1 } = await seedFeedWithSubscription(tx, testUser.id);
+      const { feed: feed2 } = await seedFeedWithSubscription(tx, testUser.id);
 
       // 2. Add items to both
-      await tx.insert(feedItems).values([
-        {
-          feedId: feed1.id,
-          guid: "f1-i1",
-          title: "Feed 1 Item",
-          publishedAt: new Date(),
-        },
-        {
-          feedId: feed2.id,
-          guid: "f2-i1",
-          title: "Feed 2 Item",
-          publishedAt: new Date(),
-        },
-      ]);
+      await seedFeedItems(tx, feed1.id, [{ title: "Feed 1 Item" }]);
+      await seedFeedItems(tx, feed2.id, [{ title: "Feed 2 Item" }]);
 
       // 3. Request items only for feed1
       const result = await getUserFeedItems(tx, testUser.id, {
@@ -222,36 +134,14 @@ describe("getUserFeedItems", () => {
       tx,
       testUser,
     }) => {
-      const [feed1] = await tx
-        .insert(feeds)
-        .values({ url: "https://feed1.com/rss" })
-        .returning();
-      const [feed2] = await tx
-        .insert(feeds)
-        .values({ url: "https://feed2.com/rss" })
-        .returning();
+      const { feed: feed1 } = await seedFeedWithSubscription(tx, testUser.id);
+      const { feed: feed2 } = await seedFeedWithSubscription(tx, testUser.id);
 
-      await tx.insert(subscriptions).values([
-        { userId: testUser.id, feedId: feed1.id },
-        { userId: testUser.id, feedId: feed2.id },
-      ]);
-
-      await tx.insert(feedItems).values([
-        {
-          feedId: feed1.id,
-          guid: "f1-i1",
-          title: "F1",
-          publishedAt: new Date(),
-        },
-        {
-          feedId: feed2.id,
-          guid: "f2-i1",
-          title: "F2",
-          publishedAt: new Date(),
-        },
-      ]);
+      await seedFeedItems(tx, feed1.id, [{ title: "F1 Item" }]);
+      await seedFeedItems(tx, feed2.id, [{ title: "F2 Item" }]);
 
       const result = await getUserFeedItems(tx, testUser.id, options);
+
       expect(result).toHaveLength(2);
     });
   });

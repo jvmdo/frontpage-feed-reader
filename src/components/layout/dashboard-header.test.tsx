@@ -1,68 +1,19 @@
 import { HttpResponse, http } from "msw";
 import { Suspense } from "react";
+import { createMockFeedWithSubscription } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
-import type { FeedWithSubscription } from "@/types";
 import { DashboardBreadcrumb } from "./dashboard-breadcrumb";
 import { DashboardHeader } from "./dashboard-header";
 
-const mockSubscriptions: FeedWithSubscription[] = [
-  {
-    feed: {
-      id: 1,
-      title: "Feed 1",
-      url: "https://feed1.com",
-      description: null,
-      language: null,
-      iconUrl: null,
-      lastFetchedAt: null,
-      lastSuccessAt: null,
-      lastFailureAt: null,
-      healthStatus: "healthy",
-      httpEtag: null,
-      httpLastModified: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    subscription: {
-      id: 1,
-      userId: "user-1",
-      feedId: 1,
-      categoryId: null,
-      customTitle: "My Custom Feed 1",
-      ordering: null,
-      markedAllReadAt: null,
-      createdAt: new Date(),
-    },
-  },
-  {
-    feed: {
-      id: 2,
-      title: "Feed 2",
-      url: "https://feed2.com",
-      description: null,
-      language: null,
-      iconUrl: null,
-      lastFetchedAt: null,
-      lastSuccessAt: null,
-      lastFailureAt: null,
-      healthStatus: "healthy",
-      httpEtag: null,
-      httpLastModified: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    subscription: {
-      id: 2,
-      userId: "user-1",
-      feedId: 2,
-      categoryId: null,
-      customTitle: null,
-      ordering: null,
-      markedAllReadAt: null,
-      createdAt: new Date(),
-    },
-  },
+const mockSubscriptions = [
+  createMockFeedWithSubscription({
+    feed: { id: 1, title: "Feed 1" },
+    subscription: { customTitle: "My Custom Feed 1" },
+  }),
+  createMockFeedWithSubscription({
+    feed: { id: 2, title: "Feed 2" },
+  }),
 ];
 
 describe("DashboardHeader & DashboardBreadcrumb", () => {

@@ -1,4 +1,4 @@
-import { feeds, subscriptions, user } from "@/db/schema";
+import { seedFeedWithSubscription, seedUser } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
 import { getSubscriptionWithFeed } from "./get-subscriptions-with-feed";
 
@@ -7,23 +7,13 @@ describe("getSubscriptionWithFeed", () => {
     tx,
     testUser,
   }) => {
-    // 1. Create a feed
-    const [feed] = await tx
-      .insert(feeds)
-      .values({
+    const { subscription: sub } = await seedFeedWithSubscription(
+      tx,
+      testUser.id,
+      {
         url: "https://example.com/rss",
-        title: "Example Feed",
-      })
-      .returning();
-
-    // 2. Create a subscription
-    const [sub] = await tx
-      .insert(subscriptions)
-      .values({
-        userId: testUser.id,
-        feedId: feed.id,
-      })
-      .returning();
+      },
+    );
 
     const result = await getSubscriptionWithFeed(tx, testUser.id, sub.id);
 
@@ -36,33 +26,13 @@ describe("getSubscriptionWithFeed", () => {
     tx,
     testUser,
   }) => {
-    // 1. Create another user
-    const otherUserId = "other_user_id";
-    await tx.insert(user).values({
-      id: otherUserId,
-      email: "other@example.com",
-      name: "Other User",
-    });
+    const otherUser = await seedUser(tx);
 
-    // 2. Create a feed
-    const [feed] = await tx
-      .insert(feeds)
-      .values({
-        url: "https://example.com/rss",
-        title: "Example Feed",
-      })
-      .returning();
+    const { subscription: sub } = await seedFeedWithSubscription(
+      tx,
+      otherUser.id,
+    );
 
-    // 3. Create a subscription for a different user
-    const [sub] = await tx
-      .insert(subscriptions)
-      .values({
-        userId: otherUserId,
-        feedId: feed.id,
-      })
-      .returning();
-
-    // 4. Attempt to fetch it as the test user
     const result = await getSubscriptionWithFeed(tx, testUser.id, sub.id);
 
     expect(result).toBeUndefined();

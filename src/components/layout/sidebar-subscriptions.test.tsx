@@ -1,9 +1,9 @@
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { createMockFeedWithSubscription } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
-import type { FeedWithSubscription } from "@/types";
 import { SidebarSubscriptions } from "./sidebar-subscriptions";
 
 // Mock next/navigation's usePathname and useSearchParams
@@ -21,63 +21,14 @@ vi.mock("next/link", async () => {
   };
 });
 
-const mockSubscriptions: FeedWithSubscription[] = [
-  {
-    feed: {
-      id: 1,
-      title: "Feed 1",
-      url: "https://feed1.com",
-      description: null,
-      language: null,
-      iconUrl: "https://feed1.com/icon.png",
-      lastFetchedAt: null,
-      lastSuccessAt: null,
-      lastFailureAt: null,
-      healthStatus: "healthy",
-      httpEtag: null,
-      httpLastModified: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    subscription: {
-      id: 1,
-      userId: "user-1",
-      feedId: 1,
-      categoryId: null,
-      customTitle: "My Custom Feed 1",
-      ordering: null,
-      markedAllReadAt: null,
-      createdAt: new Date(),
-    },
-  },
-  {
-    feed: {
-      id: 2,
-      title: "Feed 2",
-      url: "https://feed2.com",
-      description: null,
-      language: null,
-      iconUrl: null,
-      lastFetchedAt: null,
-      lastSuccessAt: null,
-      lastFailureAt: null,
-      healthStatus: "healthy",
-      httpEtag: null,
-      httpLastModified: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    subscription: {
-      id: 2,
-      userId: "user-1",
-      feedId: 2,
-      categoryId: null,
-      customTitle: null,
-      ordering: null,
-      markedAllReadAt: null,
-      createdAt: new Date(),
-    },
-  },
+const mockSubscriptions = [
+  createMockFeedWithSubscription({
+    feed: { id: 1, title: "Feed 1", iconUrl: "https://feed1.com/icon.png" },
+    subscription: { customTitle: "My Custom Feed 1" },
+  }),
+  createMockFeedWithSubscription({
+    feed: { id: 2, title: "Feed 2" },
+  }),
 ];
 
 describe("SidebarSubscriptions", () => {
@@ -110,7 +61,9 @@ describe("SidebarSubscriptions", () => {
       },
     );
 
-    const link1 = await screen.findByRole("link", { name: /my custom feed 1/i });
+    const link1 = await screen.findByRole("link", {
+      name: /my custom feed 1/i,
+    });
     const button1 = link1.closest('[data-slot="sidebar-menu-button"]');
     expect(button1).toHaveAttribute("data-active", "true");
 

@@ -6,10 +6,11 @@ import { ErrorBoundary } from "react-error-boundary";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { PAGINATION_LIMIT } from "@/lib/constants";
+import { createMockFeedItemWithSource } from "@/tests/factories";
 import {
   setupIntersectionObserverMock,
   triggerIntersection,
-} from "@/tests/mocks/intersection-observer";
+} from "@/tests/intersection-observer";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
 import type { FeedItemWithSource } from "@/types";
@@ -20,38 +21,18 @@ const generateMockItems = (
   count: number,
   startId = 1,
 ): FeedItemWithSource[] => {
-  return Array.from({ length: count }).map((_, i) => ({
-    item: {
-      id: startId + i,
-      feedId: 1,
-      guid: `item-${startId + i}`,
-      title: `Test Article ${startId + i}`,
-      description: `Description ${startId + i}`,
-      url: `https://example.com/${startId + i}`,
-      content: null,
-      author: `Author ${startId + i}`,
-      publishedAt: new Date("2024-01-01T10:00:00Z"),
-      updatedAt: new Date("2024-01-01T10:00:00Z"),
-      rawPayload: {},
-      createdAt: new Date("2024-01-01T10:00:00Z"),
-    },
-    feed: {
-      id: 1,
-      url: "https://example.com/feed",
-      title: "Example Feed",
-      description: "A test feed",
-      language: "en",
-      iconUrl: "https://example.com/icon.png",
-      lastFetchedAt: new Date(),
-      lastSuccessAt: new Date(),
-      lastFailureAt: null,
-      healthStatus: "healthy",
-      httpEtag: null,
-      httpLastModified: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  }));
+  return Array.from({ length: count }).map((_, i) =>
+    createMockFeedItemWithSource({
+      item: {
+        id: startId + i,
+        title: `Test Article ${startId + i}`,
+        description: `Description ${startId + i}`,
+      },
+      feed: {
+        title: "Example Feed",
+      },
+    }),
+  );
 };
 
 const mockItems = generateMockItems(PAGINATION_LIMIT * 2 + 5);

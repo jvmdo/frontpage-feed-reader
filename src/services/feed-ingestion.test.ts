@@ -5,6 +5,7 @@ import { HttpResponse, http } from "msw";
 import { feedItems, feeds } from "@/db/schema";
 import { FeedNotFoundError, FeedRecordNotFoundError } from "@/lib/errors";
 import { server } from "@/tests/mocks/server";
+import { seedFeed, seedFeedItems } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
 import { ingestFeedItems } from "./feed-ingestion";
 
@@ -28,13 +29,9 @@ describe("ingestFeedItems integration", () => {
   test("successfully fetches, parses, and upserts RSS 2.0 feed items", async ({
     tx,
   }) => {
-    const [insertedFeed] = await tx
-      .insert(feeds)
-      .values({
-        url: FEED_URL,
-        healthStatus: "unknown",
-      })
-      .returning();
+    const insertedFeed = await seedFeed(tx, {
+      url: FEED_URL,
+    });
 
     server.use(
       http.get(FEED_URL, () => {
@@ -70,13 +67,9 @@ describe("ingestFeedItems integration", () => {
   test("successfully fetches, parses, and upserts RSS Namespaces feed items", async ({
     tx,
   }) => {
-    const [insertedFeed] = await tx
-      .insert(feeds)
-      .values({
-        url: FEED_URL,
-        healthStatus: "unknown",
-      })
-      .returning();
+    const insertedFeed = await seedFeed(tx, {
+      url: FEED_URL,
+    });
 
     server.use(
       http.get(FEED_URL, () => {
@@ -112,13 +105,9 @@ describe("ingestFeedItems integration", () => {
   test("successfully fetches, parses, and upserts Atom 1.0 feed items", async ({
     tx,
   }) => {
-    const [insertedFeed] = await tx
-      .insert(feeds)
-      .values({
-        url: FEED_URL,
-        healthStatus: "unknown",
-      })
-      .returning();
+    const insertedFeed = await seedFeed(tx, {
+      url: FEED_URL,
+    });
 
     server.use(
       http.get(FEED_URL, () => {
@@ -151,17 +140,14 @@ describe("ingestFeedItems integration", () => {
   });
 
   test("handles updates for existing items (upsert)", async ({ tx }) => {
-    const [insertedFeed] = await tx
-      .insert(feeds)
-      .values({ url: FEED_URL })
-      .returning();
+    const insertedFeed = await seedFeed(tx, { url: FEED_URL });
 
     // Insert an initial version of an item from rss-2.xml
-    await tx.insert(feedItems).values({
-      feedId: insertedFeed.id,
-      guid: "https://css-tricks.com/?p=392986",
-      title: "Old Title",
-    });
+    await seedFeedItems(tx, insertedFeed.id, [
+      {
+        guid: "https://css-tricks.com/?p=392986",
+      },
+    ]);
 
     server.use(
       http.get(FEED_URL, () => {
@@ -180,13 +166,9 @@ describe("ingestFeedItems integration", () => {
   });
 
   test("updates health_status to error on failure", async ({ tx }) => {
-    const [insertedFeed] = await tx
-      .insert(feeds)
-      .values({
-        url: FEED_URL,
-        healthStatus: "healthy",
-      })
-      .returning();
+    const insertedFeed = await seedFeed(tx, {
+      url: FEED_URL,
+    });
 
     server.use(
       http.get(FEED_URL, () => {

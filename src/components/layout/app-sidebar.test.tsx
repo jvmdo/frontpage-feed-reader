@@ -6,6 +6,7 @@ import { addFeedAction } from "@/actions/feed/add-feed-action";
 import { removeSubscriptionAction } from "@/actions/feed/remove-subscription-action";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useRemoveSubscription } from "@/hooks/use-remove-subscription";
+import { createMockFeedWithSubscription } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import type { FeedWithSubscription } from "@/types";
@@ -60,34 +61,10 @@ describe("AppSidebar Integration", () => {
   beforeEach(() => {
     // Initial subscriptions state for MSW
     mockSubscriptions = [
-      {
-        feed: {
-          id: 1,
-          title: "Initial Feed",
-          url: "https://initial.com",
-          description: null,
-          language: null,
-          iconUrl: null,
-          lastFetchedAt: null,
-          lastSuccessAt: null,
-          lastFailureAt: null,
-          healthStatus: "healthy",
-          httpEtag: null,
-          httpLastModified: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        subscription: {
-          id: 1,
-          userId: "user-1",
-          feedId: 1,
-          categoryId: null,
-          customTitle: "My Custom Feed 1",
-          ordering: null,
-          markedAllReadAt: null,
-          createdAt: new Date(),
-        },
-      },
+      createMockFeedWithSubscription({
+        feed: { id: 1, title: "Initial Feed" },
+        subscription: { id: 1, customTitle: "My Custom Feed 1" },
+      }),
     ];
 
     // Mock GET /api/feeds/subscriptions
@@ -102,35 +79,10 @@ describe("AppSidebar Integration", () => {
     const user = userEvent.setup();
 
     // Mock successful addFeedAction
-    vi.mocked(addFeedAction).mockImplementation(async (input: { url: string }) => {
-      const newSub: FeedWithSubscription = {
-        feed: {
-          id: 2,
-          title: "New Feed",
-          url: input.url,
-          description: null,
-          language: null,
-          iconUrl: null,
-          lastFetchedAt: null,
-          lastSuccessAt: null,
-          lastFailureAt: null,
-          healthStatus: "healthy",
-          httpEtag: null,
-          httpLastModified: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        subscription: {
-          id: 2,
-          userId: "user-1",
-          feedId: 2,
-          categoryId: null,
-          customTitle: null,
-          ordering: null,
-          markedAllReadAt: null,
-          createdAt: new Date(),
-        },
-      };
+    vi.mocked(addFeedAction).mockImplementation(async () => {
+      const newSub = createMockFeedWithSubscription({
+        feed: { title: "New Feed" },
+      });
 
       // Update mockSubscriptions to simulate backend change
       mockSubscriptions = [...mockSubscriptions, newSub];

@@ -9,6 +9,7 @@ import {
 } from "@/lib/errors";
 import { server } from "@/tests/mocks/server";
 import { test } from "@/tests/test-extend";
+import { seedFeed } from "@/tests/seeding";
 import { addFeedToUser } from "./add-feed-to-user";
 
 describe("addFeedToUser", () => {
@@ -38,14 +39,9 @@ describe("addFeedToUser", () => {
   }) => {
     const userId = testUser.id;
     const url = "https://example.com/feed.xml";
-    const [existingFeed] = await tx
-      .insert(feeds)
-      .values({
-        url,
-        title: "Old Title",
-        healthStatus: "healthy",
-      })
-      .returning();
+    const existingFeed = await seedFeed(tx, {
+      url,
+    });
 
     const { subscription } = await addFeedToUser(tx, userId, url);
     const allFeeds = await tx.select().from(feeds);

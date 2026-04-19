@@ -1,93 +1,31 @@
 import { subDays, subMinutes } from "date-fns";
+import { createMockFeedWithSubscription } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
 import type { FeedWithSubscription } from "@/types";
 import { FeedTable } from "./feed-table";
 
 const mockData: FeedWithSubscription[] = [
-  {
-    subscription: {
-      id: 1,
-      userId: "user-1",
-      feedId: 1,
-      categoryId: null,
-      customTitle: "My Custom Title",
-      ordering: 0,
-      markedAllReadAt: null,
-      createdAt: new Date(),
-    },
+  createMockFeedWithSubscription({
+    subscription: { customTitle: "My Custom Title" },
     feed: {
-      id: 1,
-      url: "https://example.com/1",
       title: "Original Title 1",
-      description: null,
-      language: null,
-      iconUrl: null,
-      lastFetchedAt: new Date(),
       lastSuccessAt: subMinutes(new Date(), 5),
-      lastFailureAt: null,
       healthStatus: "healthy",
-      httpEtag: null,
-      httpLastModified: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     },
-  },
-  {
-    subscription: {
-      id: 2,
-      userId: "user-1",
-      feedId: 2,
-      categoryId: null,
-      customTitle: null,
-      ordering: 1,
-      markedAllReadAt: null,
-      createdAt: new Date(),
-    },
+  }),
+  createMockFeedWithSubscription({
     feed: {
-      id: 2,
-      url: "https://example.com/2",
       title: "Feed Title 2",
-      description: null,
-      language: null,
-      iconUrl: null,
-      lastFetchedAt: new Date(),
       lastSuccessAt: subDays(new Date(), 2),
-      lastFailureAt: new Date(),
       healthStatus: "stale",
-      httpEtag: null,
-      httpLastModified: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     },
-  },
-  {
-    subscription: {
-      id: 3,
-      userId: "user-1",
-      feedId: 3,
-      categoryId: null,
-      customTitle: null,
-      ordering: 2,
-      markedAllReadAt: null,
-      createdAt: new Date(),
-    },
+  }),
+  createMockFeedWithSubscription({
     feed: {
-      id: 3,
-      url: "https://example.com/3",
-      title: "Feed Title 3",
-      description: null,
-      language: null,
-      iconUrl: null,
-      lastFetchedAt: new Date(),
       lastSuccessAt: subDays(new Date(), 5),
-      lastFailureAt: new Date(),
       healthStatus: "error",
-      httpEtag: null,
-      httpLastModified: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     },
-  },
+  }),
 ];
 
 describe("FeedTable", () => {

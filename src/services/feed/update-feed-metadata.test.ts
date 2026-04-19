@@ -1,15 +1,17 @@
 import { eq } from "drizzle-orm";
 import { feeds } from "@/db/schema";
+import { seedFeed } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
 import { updateFeedMetadata } from "./update-feed-metadata";
 
 describe("updateFeedMetadata", () => {
   test("updates the feed fields correctly", async ({ tx }) => {
     // 1. Create a feed
-    const [feed] = await tx
-      .insert(feeds)
-      .values({ url: "https://a.com", title: "A", healthStatus: "unknown" })
-      .returning();
+    const feed = await seedFeed(tx, {
+      url: "https://a.com",
+      title: "A",
+      healthStatus: "unknown",
+    });
 
     // 2. Update
     const now = new Date();

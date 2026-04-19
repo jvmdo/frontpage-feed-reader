@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { feeds, subscriptions } from "@/db/schema";
+import { seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test.describe("Refresh Feed", () => {
@@ -11,19 +11,11 @@ test.describe("Refresh Feed", () => {
     // 1. Setup: Seed a feed that points to a local fixture
     const feedUrl = `http://localhost:3432/rss-2.xml?tenant=${userId}`;
 
-    const [feed] = await db
-      .insert(feeds)
-      .values({
-        url: feedUrl,
-        title: "Original Title",
-        healthStatus: "unknown",
-        // No lastSuccessAt yet
-      })
-      .returning();
-
-    await db.insert(subscriptions).values({
-      userId: userId,
-      feedId: feed.id,
+    await seedFeedWithSubscription(db, userId, {
+      url: feedUrl,
+      title: "Original Title",
+      healthStatus: "unknown",
+      // No lastSuccessAt yet
     });
 
     // 2. Navigate to Manage Feeds

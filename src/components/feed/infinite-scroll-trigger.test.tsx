@@ -2,7 +2,7 @@ import { vi } from "vitest";
 import {
   setupIntersectionObserverMock,
   triggerIntersection,
-} from "@/tests/mocks/intersection-observer";
+} from "@/tests/intersection-observer";
 import { render } from "@/tests/rtl-utils";
 import { InfiniteScrollTrigger } from "./infinite-scroll-trigger";
 

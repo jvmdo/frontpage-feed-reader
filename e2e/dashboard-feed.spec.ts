@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { db } from "@/db";
-import { feedItems, feeds, subscriptions } from "@/db/schema";
 import { parseFeedXml } from "@/lib/feed/parser";
+import { seedFeedItems, seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test.describe("Dashboard Feed", () => {
@@ -27,51 +27,42 @@ test.describe("Dashboard Feed", () => {
       "https://css-tricks.com/feed",
     );
 
-    // 2. Seed Feeds
-    const [atomFeed] = await db
-      .insert(feeds)
-      .values({
-        url: `https://vercel.com/atom?tenant=${userId}`,
-        title: atomFeedData.metadata.title,
-        iconUrl: "https://vercel.com/favicon.ico",
-      })
-      .returning();
+    // 2. Seed Feeds and Subscriptions
+    const { feed: atomFeed } = await seedFeedWithSubscription(db, userId, {
+      url: `https://vercel.com/atom?tenant=${userId}`,
+      title: atomFeedData.metadata.title,
+      iconUrl: "https://vercel.com/favicon.ico",
+    });
 
-    const [rssFeed] = await db
-      .insert(feeds)
-      .values({
-        url: `https://css-tricks.com/feed?tenant=${userId}`,
-        title: rssFeedData.metadata.title,
-        iconUrl: "https://css-tricks.com/favicon.ico",
-      })
-      .returning();
+    const { feed: rssFeed } = await seedFeedWithSubscription(db, userId, {
+      url: `https://css-tricks.com/feed?tenant=${userId}`,
+      title: rssFeedData.metadata.title,
+      iconUrl: "https://css-tricks.com/favicon.ico",
+    });
 
-    // 3. Seed Subscriptions
-    await db.insert(subscriptions).values([
-      { userId, feedId: atomFeed.id },
-      { userId, feedId: rssFeed.id },
-    ]);
-
-    // 4. Seed Feed Items
-    const itemsToInsert = [
-      ...atomFeedData.items.map((item) => ({
+    // 3. Seed Feed Items
+    await seedFeedItems(
+      db,
+      atomFeed.id,
+      atomFeedData.items.map((item) => ({
         ...item,
-        feedId: atomFeed.id,
         guid: `${item.guid}-${userId}`, // Make GUID unique for this test run
       })),
-      ...rssFeedData.items.map((item) => ({
+    );
+
+    await seedFeedItems(
+      db,
+      rssFeed.id,
+      rssFeedData.items.map((item) => ({
         ...item,
-        feedId: rssFeed.id,
         guid: `${item.guid}-${userId}`,
       })),
-    ];
+    );
 
-    await db.insert(feedItems).values(itemsToInsert);
-
-    // 5. Navigate to Dashboard
+    // 4. Navigate to Dashboard
     await page.goto("/dashboard");
 
-    // 6. Verify items from both feeds are visible using semantic roles
+    // 5. Verify items from both feeds are visible using semantic roles
     // From Atom feed
     await expect(
       page.getByRole("link", { name: /Optimizing Vercel Sandbox snapshots/i }),
@@ -88,7 +79,7 @@ test.describe("Dashboard Feed", () => {
     ).toBeVisible();
     await expect(page.getByText("Standard RSS 2.0 Feed").first()).toBeVisible();
 
-    // 7. Verify sorting (RSS feed items are dated 2026 in the fixture, Atom are 2024)
+    // 6. Verify sorting (RSS feed items are dated 2026 in the fixture, Atom are 2024)
     // So RSS items should be at the top. We check the first heading in an article.
     const firstArticleHeading = page
       .getByRole("article")

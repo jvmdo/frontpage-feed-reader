@@ -1,24 +1,16 @@
 import { db } from "@/db";
-import { feeds, subscriptions } from "@/db/schema";
 import { expect, test } from "./fixtures/test-extend";
+import { seedFeedWithSubscription } from "@/tests/seeding";
 
 test.describe("Manage Feeds", () => {
   test("displays a subscribed feed in the list", async ({ authedPage }) => {
     const { page, userId } = authedPage;
 
     // 1. Setup: Seed a feed and subscription directly
-    const [feed] = await db
-      .insert(feeds)
-      .values({
-        url: `https://example.com/rss?tenant=${userId}`,
-        title: "Test Feed Title",
-        healthStatus: "healthy",
-      })
-      .returning();
-
-    await db.insert(subscriptions).values({
-      userId: userId,
-      feedId: feed.id,
+    await seedFeedWithSubscription(db, userId, {
+      url: `https://example.com/rss?tenant=${userId}`,
+      title: "Test Feed Title",
+      healthStatus: "healthy",
     });
 
     // 2. Navigate to Dashboard then to Manage Feeds via sidebar
@@ -110,15 +102,11 @@ test.describe("Manage Feeds", () => {
       const { page, userId } = authedPage;
 
       // Setup: Seed one subscription
-      const [feed] = await db
-        .insert(feeds)
-        .values({
-          url: `https://example.com/to-delete?tenant=${userId}`,
-          title: "Delete Me",
-          healthStatus: "healthy",
-        })
-        .returning();
-      await db.insert(subscriptions).values({ userId, feedId: feed.id });
+      await seedFeedWithSubscription(db, userId, {
+        url: `https://example.com/to-delete?tenant=${userId}`,
+        title: "Delete Me",
+        healthStatus: "healthy",
+      });
 
       // Navigate
       await page.goto("/manage-feeds");
@@ -147,15 +135,11 @@ test.describe("Manage Feeds", () => {
       const { page, userId } = authedPage;
 
       // Setup: Seed one subscription
-      const [feed] = await db
-        .insert(feeds)
-        .values({
-          url: `https://example.com/edit-me?tenant=${userId}`,
-          title: "Original Title",
-          healthStatus: "healthy",
-        })
-        .returning();
-      await db.insert(subscriptions).values({ userId, feedId: feed.id });
+      await seedFeedWithSubscription(db, userId, {
+        url: `https://example.com/edit-me?tenant=${userId}`,
+        title: "Original Title",
+        healthStatus: "healthy",
+      });
 
       // Navigate
       await page.goto("/manage-feeds");
@@ -195,17 +179,12 @@ test.describe("Manage Feeds", () => {
       const { page, userId } = authedPage;
 
       // Setup: Seed one subscription with a recent success timestamp
-      const [feed] = await db
-        .insert(feeds)
-        .values({
-          url: `https://example.com/time-test?tenant=${userId}`,
-          title: "Time Test",
-          healthStatus: "healthy",
-          lastSuccessAt: new Date(),
-        })
-        .returning();
-
-      await db.insert(subscriptions).values({ userId, feedId: feed.id });
+      await seedFeedWithSubscription(db, userId, {
+        url: `https://example.com/time-test?tenant=${userId}`,
+        title: "Time Test",
+        healthStatus: "healthy",
+        lastSuccessAt: new Date(),
+      });
 
       // Navigate and check for the "just now"
       await page.goto("/manage-feeds");
