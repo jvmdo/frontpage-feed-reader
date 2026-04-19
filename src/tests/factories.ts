@@ -1,4 +1,5 @@
 import type {
+  Category,
   Feed,
   FeedItem,
   FeedItemWithSource,
@@ -23,6 +24,18 @@ export function createMockFeed(overrides: Partial<Feed> = {}): Feed {
     httpLastModified: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+export function createMockCategory(overrides: Partial<Category> = {}): Category {
+  const id = overrides.id ?? Math.floor(Math.random() * 1000);
+  return {
+    id,
+    userId: "user-1",
+    name: `Category ${id}`,
+    markedAllReadAt: null,
+    createdAt: new Date(),
     ...overrides,
   };
 }

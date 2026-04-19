@@ -1,7 +1,11 @@
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { createMockFeedWithSubscription } from "@/tests/factories";
+import {
+  createMockCategory,
+  createMockFeedWithSubscription,
+} from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
 import { SidebarSubscriptions } from "./sidebar-subscriptions";
@@ -21,13 +25,23 @@ vi.mock("next/link", async () => {
   };
 });
 
+const mockCategories = [
+  createMockCategory({ id: 10, name: "Tech" }),
+  createMockCategory({ id: 20, name: "Design" }),
+];
+
 const mockSubscriptions = [
   createMockFeedWithSubscription({
-    feed: { id: 1, title: "Feed 1", iconUrl: "https://feed1.com/icon.png" },
-    subscription: { customTitle: "My Custom Feed 1" },
+    feed: { id: 1, title: "Tech Feed" },
+    subscription: { categoryId: 10 },
   }),
   createMockFeedWithSubscription({
-    feed: { id: 2, title: "Feed 2" },
+    feed: { id: 2, title: "Design Feed" },
+    subscription: { categoryId: 20 },
+  }),
+  createMockFeedWithSubscription({
+    feed: { id: 3, title: "Uncategorized Feed" },
+    subscription: { categoryId: null },
   }),
 ];
 
@@ -37,44 +51,97 @@ describe("SidebarSubscriptions", () => {
       http.get("/api/feeds/subscriptions", () => {
         return HttpResponse.json({ success: true, data: mockSubscriptions });
       }),
+      http.get("/api/categories", () => {
+        return HttpResponse.json({ success: true, data: mockCategories });
+      }),
     );
   });
 
-  it("renders all subscription items with correct titles", async () => {
+  it("renders subscriptions grouped by categories", async () => {
+    const user = userEvent.setup();
     render(
       <SidebarProvider>
         <SidebarSubscriptions />
       </SidebarProvider>,
     );
 
-    expect(await screen.findByText(/my custom feed 1/i)).toBeInTheDocument();
-    expect(screen.getByText(/feed 2/i)).toBeInTheDocument();
+    // Categories should be visible as folder buttons
+    const techFolder = await screen.findByRole("button", { name: /^tech$/i });
+    expect(techFolder).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^design$/i })).toBeInTheDocument();
+
+    // Feeds inside categories are in the DOM but might be hidden by Collapsible.
+    // RTL's getByText finds them even if hidden unless we use { visible: true }.
+    // However, wait for them to be present.
+    await user.click(techFolder);
+    expect(await screen.findByText(/tech feed/i)).toBeInTheDocument();
   });
 
-  it("highlights the active feed based on the feedId query parameter", async () => {
+  it("renders uncategorized subscriptions at the root level", async () => {
+    render(
+      <SidebarProvider>
+        <SidebarSubscriptions />
+      </SidebarProvider>,
+    );
+
+    expect(await screen.findByText(/uncategorized feed/i)).toBeInTheDocument();
+  });
+
+  it("handles empty categories by showing 'No feeds' message", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get("/api/categories", () => {
+        return HttpResponse.json({
+          success: true,
+          data: [createMockCategory({ id: 30, name: "Empty Category" })],
+        });
+      }),
+      http.get("/api/feeds/subscriptions", () => {
+        return HttpResponse.json({ success: true, data: [] });
+      }),
+    );
+
+    render(
+      <SidebarProvider>
+        <SidebarSubscriptions />
+      </SidebarProvider>,
+    );
+
+    const emptyFolder = await screen.findByRole("button", { name: /empty category/i });
+    await user.click(emptyFolder);
+    expect(await screen.findByText(/no feeds/i)).toBeInTheDocument();
+  });
+
+  it("highlights the active feed and opens its category collapsible", async () => {
     render(
       <SidebarProvider>
         <SidebarSubscriptions />
       </SidebarProvider>,
       {
-        searchParams: { feedId: "1" },
+        searchParams: { feedId: "1" }, // Tech Feed
       },
     );
 
-    const link1 = await screen.findByRole("link", {
-      name: /my custom feed 1/i,
-    });
-    const button1 = link1.closest('[data-slot="sidebar-menu-button"]');
-    expect(button1).toHaveAttribute("data-active", "true");
+    const link = await screen.findByRole("link", { name: /tech feed/i });
+    const subButton = link.closest('[data-slot="sidebar-menu-sub-button"]');
+    expect(subButton).toHaveAttribute("data-active", "true");
 
-    const link2 = screen.getByRole("link", { name: /feed 2/i });
-    const button2 = link2.closest('[data-slot="sidebar-menu-button"]');
-    expect(button2).toHaveAttribute("data-active", "false");
+    // The parent collapsible should be open automatically
+    const collapsible = screen
+      .getByRole("button", { name: /^tech$/i })
+      .closest('[data-slot="collapsible"]');
+    expect(collapsible).toHaveAttribute("data-state", "open");
   });
 
-  it("shows the pending indicator when navigation is occurring", async () => {
-    const { useLinkStatus } = await import("next/link");
-    vi.mocked(useLinkStatus).mockReturnValue({ pending: true });
+  it("shows 'No subscriptions yet.' when both categories and subscriptions are empty", async () => {
+    server.use(
+      http.get("/api/categories", () => {
+        return HttpResponse.json({ success: true, data: [] });
+      }),
+      http.get("/api/feeds/subscriptions", () => {
+        return HttpResponse.json({ success: true, data: [] });
+      }),
+    );
 
     render(
       <SidebarProvider>
@@ -82,24 +149,6 @@ describe("SidebarSubscriptions", () => {
       </SidebarProvider>,
     );
 
-    // We check for the presence of the indicator in the links
-    // LinkPendingIndicator is a span with animate-pulse
-    const links = await screen.findAllByRole("link");
-    for (const link of links) {
-      // The indicator is a child of the link
-      const indicator = link.querySelector(".animate-pulse");
-      expect(indicator).toBeInTheDocument();
-    }
-  });
-
-  it("renders correctly without an iconUrl (using fallback)", async () => {
-    render(
-      <SidebarProvider>
-        <SidebarSubscriptions />
-      </SidebarProvider>,
-    );
-
-    const feed2Item = await screen.findByText(/feed 2/i);
-    expect(feed2Item).toBeInTheDocument();
+    expect(await screen.findByText(/no subscriptions yet/i)).toBeInTheDocument();
   });
 });
