@@ -12,7 +12,7 @@ import { getFeedScroll } from "@/lib/feed/scroll-store";
 
 export function FeedItemList() {
   const { feedId } = useFeedFilter();
-  const { data, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFeedItems();
 
   // Restore scroll position when switching feeds
@@ -20,16 +20,6 @@ export function FeedItemList() {
     const savedScroll = getFeedScroll(feedId);
     window.scrollTo({ top: savedScroll, behavior: "instant" });
   }, [feedId]);
-
-  if (isError) {
-    return (
-      <EmptyState
-        title="Something went wrong"
-        description="We couldn't load your feed items. Please try refreshing the page."
-        icon={RssIcon}
-      />
-    );
-  }
 
   const allItems = data.pages.flat() || [];
 

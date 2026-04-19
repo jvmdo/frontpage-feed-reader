@@ -1,11 +1,12 @@
 "use client";
 
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
-import { AlertCircleIcon, HomeIcon, Link, RotateCcwIcon } from "lucide-react";
+import { AlertCircleIcon, RotateCcwIcon, RssIcon } from "lucide-react";
+import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
-export default function ManageFeedsError({
+export default function DashboardError({
   error,
   unstable_retry,
 }: {
@@ -15,15 +16,15 @@ export default function ManageFeedsError({
   const { reset: resetQueries } = useQueryErrorResetBoundary();
 
   useEffect(() => {
-    console.error("[Manage Feeds Page]:", error);
+    console.error("[Dashboard Page]:", error);
   }, [error]);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Manage Feeds</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Feed</h1>
         <p className="text-muted-foreground text-sm">
-          There was an error loading your feeds.
+          There was an error loading your articles.
         </p>
       </div>
 
@@ -34,10 +35,10 @@ export default function ManageFeedsError({
 
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-semibold tracking-tight">
-            Unable to load subscriptions
+            Unable to load your feed
           </h2>
           <p className="mx-auto max-w-105 text-sm text-muted-foreground leading-relaxed">
-            We encountered a problem while fetching your subscribed feeds. This
+            We encountered a problem while fetching the latest articles. This
             could be due to a temporary network issue or a server-side error.
           </p>
         </div>
@@ -55,10 +56,12 @@ export default function ManageFeedsError({
             Try again
           </Button>
 
-          <Link href="/dashboard" className="w-full sm:w-auto">
-            <HomeIcon className="size-4" />
-            Return home
-          </Link>
+          <Button variant="outline" asChild className="w-full sm:w-auto">
+            <Link href="/manage-feeds">
+              <RssIcon className="size-4" />
+              Manage subscriptions
+            </Link>
+          </Button>
         </div>
 
         {error.digest && (

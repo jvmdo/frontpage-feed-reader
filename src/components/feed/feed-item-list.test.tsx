@@ -1,14 +1,25 @@
+import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { RssIcon } from "lucide-react";
 import { delay, HttpResponse, http } from "msw";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
+import { PAGINATION_LIMIT } from "@/lib/constants";
+import {
+  setupIntersectionObserverMock,
+  triggerIntersection,
+} from "@/tests/mocks/intersection-observer";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
-import { 
-  setupIntersectionObserverMock, 
-  triggerIntersection 
-} from "@/tests/mocks/intersection-observer";
 import type { FeedItemWithSource } from "@/types";
 import { FeedItemList } from "./feed-item-list";
+import FeedItemListSkeleton from "./feed-item-list-skeleton";
 
-const generateMockItems = (count: number, startId = 1): FeedItemWithSource[] => {
+const generateMockItems = (
+  count: number,
+  startId = 1,
+): FeedItemWithSource[] => {
   return Array.from({ length: count }).map((_, i) => ({
     item: {
       id: startId + i,
@@ -43,7 +54,29 @@ const generateMockItems = (count: number, startId = 1): FeedItemWithSource[] => 
   }));
 };
 
-const mockItems = generateMockItems(25);
+const mockItems = generateMockItems(PAGINATION_LIMIT * 2 + 5);
+
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <QueryErrorResetBoundary>
+    {({ reset }) => (
+      <ErrorBoundary
+        onReset={reset}
+        fallbackRender={({ resetErrorBoundary }) => (
+          <EmptyState
+            title="Something went wrong"
+            description="We couldn't load your feed items. Please try refreshing the page."
+            icon={RssIcon}
+            action={
+              <Button onClick={() => resetErrorBoundary()}>Try again</Button>
+            }
+          />
+        )}
+      >
+        <Suspense fallback={<FeedItemListSkeleton />}>{children}</Suspense>
+      </ErrorBoundary>
+    )}
+  </QueryErrorResetBoundary>
+);
 
 describe("FeedItemList", () => {
   beforeEach(() => {
@@ -58,16 +91,20 @@ describe("FeedItemList", () => {
       }),
     );
 
-    render(<FeedItemList />);
+    render(
+      <TestWrapper>
+        <FeedItemList />
+      </TestWrapper>,
+    );
 
-    const loadingContainer = screen.getByLabelText(/loading feed items/i);
+    // FeedItemListSkeleton uses role="status"
+    const loadingStatus = screen.getByRole("status");
 
-    expect(loadingContainer).toBeInTheDocument();
-    expect(loadingContainer).toHaveAttribute("aria-busy", "true");
+    expect(loadingStatus).toBeInTheDocument();
+    expect(loadingStatus).toHaveTextContent(/loading feed items/i);
 
     // Skeletons should be present but hidden from screen readers
     const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
-
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
@@ -76,13 +113,19 @@ describe("FeedItemList", () => {
       http.get("/api/feeds/items", ({ request }) => {
         const url = new URL(request.url);
         const offset = Number(url.searchParams.get("offset") || "0");
-        const limit = Number(url.searchParams.get("limit") || "20");
+        const limit = Number(
+          url.searchParams.get("limit") || String(PAGINATION_LIMIT),
+        );
 
         return HttpResponse.json(mockItems.slice(offset, offset + limit));
       }),
     );
 
-    render(<FeedItemList />);
+    render(
+      <TestWrapper>
+        <FeedItemList />
+      </TestWrapper>,
+    );
 
     const title = await screen.findByRole("heading", {
       name: /^test article 1$/i,
@@ -98,26 +141,38 @@ describe("FeedItemList", () => {
       http.get("/api/feeds/items", ({ request }) => {
         const url = new URL(request.url);
         const offset = Number(url.searchParams.get("offset") || "0");
-        const limit = Number(url.searchParams.get("limit") || "20");
+        const limit = Number(
+          url.searchParams.get("limit") || String(PAGINATION_LIMIT),
+        );
 
         return HttpResponse.json(mockItems.slice(offset, offset + limit));
       }),
     );
 
-    render(<FeedItemList />);
+    render(
+      <TestWrapper>
+        <FeedItemList />
+      </TestWrapper>,
+    );
+
+    const firstItemTitle = /^test article 1$/i;
+    const nextItemTitle = new RegExp(
+      `^test article ${PAGINATION_LIMIT + 1}$`,
+      "i",
+    );
 
     // Wait for the first page to load
-    await screen.findByRole("heading", { name: /^test article 1$/i });
-    expect(screen.queryByText(/^test article 21$/i)).not.toBeInTheDocument();
+    await screen.findByRole("heading", { name: firstItemTitle });
+    expect(screen.queryByText(nextItemTitle)).not.toBeInTheDocument();
 
     // Trigger intersection via shared utility
     triggerIntersection(true);
 
     // Wait for the second page to load
-    await screen.findByRole("heading", { name: /^test article 21$/i });
+    await screen.findByRole("heading", { name: nextItemTitle });
 
-    expect(screen.getByText(/^test article 1$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^test article 21$/i)).toBeInTheDocument();
+    expect(screen.getByText(firstItemTitle)).toBeInTheDocument();
+    expect(screen.getByText(nextItemTitle)).toBeInTheDocument();
   });
 
   test("renders empty state when no items are returned", async () => {
@@ -127,7 +182,11 @@ describe("FeedItemList", () => {
       }),
     );
 
-    render(<FeedItemList />);
+    render(
+      <TestWrapper>
+        <FeedItemList />
+      </TestWrapper>,
+    );
 
     const emptyTitle = await screen.findByRole("heading", {
       name: /your feed is empty/i,
@@ -144,7 +203,11 @@ describe("FeedItemList", () => {
       }),
     );
 
-    render(<FeedItemList />);
+    render(
+      <TestWrapper>
+        <FeedItemList />
+      </TestWrapper>,
+    );
 
     const errorTitle = await screen.findByRole("heading", {
       name: /something went wrong/i,

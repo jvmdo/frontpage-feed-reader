@@ -20,6 +20,12 @@ Object.defineProperty(window, "ResizeObserver", {
   value: ResizeObserverMock,
 });
 
+Object.defineProperty(window, "scrollTo", {
+  writable: true,
+  configurable: true,
+  value: vi.fn(),
+});
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
