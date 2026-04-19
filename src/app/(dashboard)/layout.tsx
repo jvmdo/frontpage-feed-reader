@@ -20,6 +20,7 @@ import { db } from "@/db";
 import { getQueryClient } from "@/lib/get-query-client";
 import { getCurrentSession } from "@/lib/session";
 import { getUserSubscriptions } from "@/services/feed/get-user-subscriptions";
+import { getUserCategories } from "@/services/category/get-user-categories";
 
 export default async function DashboardLayout({
   children,
@@ -37,6 +38,11 @@ export default async function DashboardLayout({
   queryClient.prefetchQuery({
     queryKey: ["subscriptions"],
     queryFn: () => getUserSubscriptions(db, session.user.id),
+  });
+
+  queryClient.prefetchQuery({
+    queryKey: ["categories"],
+    queryFn: () => getUserCategories(db, session.user.id),
   });
 
   return (

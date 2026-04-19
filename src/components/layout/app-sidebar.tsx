@@ -2,6 +2,7 @@
 
 import {
   BookmarkIcon,
+  FolderPlusIcon,
   InboxIcon,
   PlusIcon,
   RssIcon,
@@ -10,6 +11,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { AddCategoryDialog } from "@/components/category/add-category-dialog";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { DashboardLink } from "@/components/shared/dashboard-link";
 import { LinkPendingIndicator } from "@/components/shared/link-pending-indicator";
@@ -89,6 +91,14 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                     <span>Manage Feeds</span>
                   </Link>
                 </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <AddCategoryDialog asChild>
+                  <SidebarMenuButton tooltip="Add Category">
+                    <FolderPlusIcon />
+                    <span>Add Category</span>
+                  </SidebarMenuButton>
+                </AddCategoryDialog>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <AddFeedDialog asChild>
