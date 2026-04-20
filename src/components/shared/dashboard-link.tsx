@@ -8,6 +8,7 @@ import { saveFeedScroll } from "@/lib/feed/scroll-store";
 
 interface DashboardLinkProps extends LinkProps {
   feedId?: number | null;
+  categoryId?: number | null;
   children: ReactNode;
   className?: string;
 }
@@ -19,19 +20,30 @@ interface DashboardLinkProps extends LinkProps {
  */
 export function DashboardLink({
   feedId = null,
+  categoryId = null,
   children,
   ...props
 }: DashboardLinkProps) {
   const pathname = usePathname();
-  const { feedId: currentFeedId, setFeedId } = useFeedFilter();
+  const {
+    feedId: currentFeedId,
+    categoryId: currentCategoryId,
+    setFeedId,
+    setCategoryId,
+  } = useFeedFilter();
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // If we are already on the dashboard, intercept the click to do a shallow update
     if (pathname === "/dashboard") {
       e.preventDefault();
 
-      saveFeedScroll(currentFeedId);
-      setFeedId(feedId);
+      saveFeedScroll(currentFeedId || currentCategoryId);
+
+      if (categoryId !== null) {
+        setCategoryId(categoryId);
+      } else {
+        setFeedId(feedId);
+      }
     }
     // Otherwise, let the standard Link navigation happen
   };

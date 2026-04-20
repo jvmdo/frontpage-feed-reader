@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/collapsible";
 import {
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -24,7 +25,7 @@ import { useSubscriptions } from "@/hooks/use-subscriptions";
 import type { FeedWithSubscription } from "@/types";
 
 export function SidebarSubscriptions() {
-  const { feedId } = useFeedFilter();
+  const { feedId, categoryId } = useFeedFilter();
   const { data: subscriptions } = useSubscriptions();
   const { data: categories } = useCategories();
 
@@ -62,16 +63,30 @@ export function SidebarSubscriptions() {
           <Collapsible
             key={group.id}
             asChild
-            defaultOpen={hasActiveChild}
+            defaultOpen={hasActiveChild || categoryId === group.id}
             className="group/collapsible"
           >
             <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={group.name}>
+              <SidebarMenuButton
+                asChild
+                tooltip={group.name}
+                isActive={categoryId === group.id}
+              >
+                <DashboardLink
+                  href={`/dashboard?categoryId=${group.id}`}
+                  categoryId={group.id}
+                  prefetch={false}
+                >
                   <FolderIcon />
                   <span>{group.name}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                </SidebarMenuButton>
+                  <LinkPendingIndicator />
+                </DashboardLink>
+              </SidebarMenuButton>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuAction className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90">
+                  <ChevronRight />
+                  <span className="sr-only">Toggle</span>
+                </SidebarMenuAction>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>

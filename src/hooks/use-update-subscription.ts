@@ -41,9 +41,12 @@ export function useUpdateSubscription() {
         },
       );
 
-      // Also invalidate to ensure eventual consistency if needed,
-      // though setQueryData handles the immediate UI update.
+      // Invalidate subscriptions to ensure consistency.
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+
+      // Invalidate all feed items queries. When a categoryId changes,
+      // the existing cached item lists for categories/all-items are no longer valid.
+      queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
     },
   });
 }

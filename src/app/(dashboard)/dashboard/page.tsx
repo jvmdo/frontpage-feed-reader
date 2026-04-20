@@ -33,18 +33,19 @@ export default async function DashboardPage({
 
   const {
     feedId,
+    categoryId,
     limit = PAGINATION_LIMIT,
     offset = PAGINATION_INITIAL_OFFSET,
   } = result.success ? result.data : {};
 
   const queryClient = getQueryClient();
 
-  // Prefetch items for the unified "All Items" feed or specific feed.
+  // Prefetch items for the unified "All Items" feed, specific feed, or category.
   // The key must match the one used in the useFeedItems hook.
   queryClient.prefetchInfiniteQuery({
-    queryKey: ["feeds", "items", { feedId: feedId || null }],
+    queryKey: ["feeds", "items", { feedId: feedId || null, categoryId: categoryId || null }],
     queryFn: () =>
-      getUserFeedItems(db, session.user.id, { limit, offset, feedId }),
+      getUserFeedItems(db, session.user.id, { limit, offset, feedId, categoryId }),
     initialPageParam: PAGINATION_INITIAL_OFFSET,
   });
 

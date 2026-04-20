@@ -19,8 +19,8 @@ import {
 import { db } from "@/db";
 import { getQueryClient } from "@/lib/get-query-client";
 import { getCurrentSession } from "@/lib/session";
-import { getUserSubscriptions } from "@/services/feed/get-user-subscriptions";
 import { getUserCategories } from "@/services/category/get-user-categories";
+import { getUserSubscriptions } from "@/services/feed/get-user-subscriptions";
 
 export default async function DashboardLayout({
   children,
@@ -57,12 +57,12 @@ export default async function DashboardLayout({
         </AppSidebar>
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-8" />
+              <Separator orientation="vertical" className="mr-2 h-8 shrink-0" />
               <QueryErrorBoundary fallback={<BreadcrumbErrorFallback />}>
                 <Suspense fallback={<DashboardBreadcrumbSkeleton />}>
-                  <Breadcrumb>
+                  <Breadcrumb className="min-w-0">
                     <DashboardBreadcrumb />
                   </Breadcrumb>
                 </Suspense>

@@ -33,9 +33,10 @@ import { useFeedFilter } from "@/hooks/use-feed-filter";
 
 export function AppSidebar({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { feedId } = useFeedFilter();
+  const { feedId, categoryId } = useFeedFilter();
 
-  const isDashboardActive = pathname === "/dashboard" && !feedId;
+  const isDashboardActive =
+    pathname === "/dashboard" && !feedId && !categoryId;
 
   return (
     <Sidebar collapsible="icon">

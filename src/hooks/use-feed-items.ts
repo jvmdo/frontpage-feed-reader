@@ -4,16 +4,20 @@ import type { FeedItemWithSource } from "@/types";
 import { useFeedFilter } from "./use-feed-filter";
 
 export function useFeedItems() {
-  const { feedId } = useFeedFilter();
+  const { feedId, categoryId } = useFeedFilter();
 
   return useSuspenseInfiniteQuery<FeedItemWithSource[]>({
-    queryKey: ["feeds", "items", { feedId }],
+    queryKey: ["feeds", "items", { feedId, categoryId }],
     queryFn: async ({ pageParam }) => {
       const offset = pageParam as number;
       let url = `/api/feeds/items?offset=${offset}&limit=${PAGINATION_LIMIT}`;
 
       if (feedId) {
         url += `&feedId=${feedId}`;
+      }
+
+      if (categoryId) {
+        url += `&categoryId=${categoryId}`;
       }
 
       const response = await fetch(url);
