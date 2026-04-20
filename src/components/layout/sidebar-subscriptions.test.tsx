@@ -70,9 +70,8 @@ describe("SidebarSubscriptions", () => {
     expect(techFolder).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /^design$/i })).toBeInTheDocument();
 
-    // To open the category, we need to click the toggle button next to it
-    const techToggle = techFolder.nextElementSibling as HTMLElement;
-    await user.click(techToggle);
+    // Clicking the category row now both navigates and toggles the list
+    await user.click(techFolder);
     expect(await screen.findByText(/tech feed/i)).toBeInTheDocument();
   });
 
@@ -109,8 +108,7 @@ describe("SidebarSubscriptions", () => {
     const emptyFolder = await screen.findByRole("link", {
       name: /empty category/i,
     });
-    const emptyToggle = emptyFolder.nextElementSibling as HTMLElement;
-    await user.click(emptyToggle);
+    await user.click(emptyFolder);
     expect(await screen.findByText(/no feeds/i)).toBeInTheDocument();
   });
 

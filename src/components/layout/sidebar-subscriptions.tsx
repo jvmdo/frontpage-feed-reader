@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/collapsible";
 import {
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -67,26 +66,23 @@ export function SidebarSubscriptions() {
             className="group/collapsible"
           >
             <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                tooltip={group.name}
-                isActive={categoryId === group.id}
-              >
-                <DashboardLink
-                  href={`/dashboard?categoryId=${group.id}`}
-                  categoryId={group.id}
-                  prefetch={false}
-                >
-                  <FolderIcon />
-                  <span>{group.name}</span>
-                  <LinkPendingIndicator />
-                </DashboardLink>
-              </SidebarMenuButton>
               <CollapsibleTrigger asChild>
-                <SidebarMenuAction className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90">
-                  <ChevronRight />
-                  <span className="sr-only">Toggle</span>
-                </SidebarMenuAction>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={group.name}
+                  isActive={categoryId === group.id}
+                >
+                  <DashboardLink
+                    href={`/dashboard?categoryId=${group.id}`}
+                    categoryId={group.id}
+                    prefetch={false}
+                  >
+                    <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 text-text-tertiary group-data-[collapsible=icon]:hidden" />
+                    <FolderIcon />
+                    <span>{group.name}</span>
+                    <LinkPendingIndicator />
+                  </DashboardLink>
+                </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>

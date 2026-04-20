@@ -31,8 +31,7 @@ test.describe("Category Management", () => {
     
     // Verify it shows "No feeds" initially
     // Expand it first
-    const newCatItem = sidebar.locator("li").filter({ has: page.getByRole("link", { name: /^new category$/i }) });
-    await newCatItem.getByRole("button", { name: /toggle/i }).click();
+    await sidebar.getByRole("link", { name: /^new category$/i }).click();
     await expect(sidebar.getByText(/no feeds/i)).toBeVisible();
   });
 
@@ -70,8 +69,7 @@ test.describe("Category Management", () => {
     await expect(sidebar.getByRole("link", { name: /hacker news/i })).not.toBeVisible();
     
     // 5. Open category and verify feed is visible
-    const techNewsItem = sidebar.locator("li").filter({ has: page.getByRole("link", { name: /^tech news$/i }) });
-    await techNewsItem.getByRole("button", { name: /toggle/i }).click();
+    await sidebar.getByRole("link", { name: /^tech news$/i }).click();
     await expect(sidebar.getByRole("link", { name: /hacker news/i })).toBeVisible();
     
     // 6. Verify uncategorized feed is visible at root

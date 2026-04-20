@@ -33,6 +33,9 @@ export function DashboardLink({
   } = useFeedFilter();
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Call the original onClick if it exists (e.g. from a CollapsibleTrigger)
+    props.onClick?.(e);
+
     // If we are already on the dashboard, intercept the click to do a shallow update
     if (pathname === "/dashboard") {
       e.preventDefault();

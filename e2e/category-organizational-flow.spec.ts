@@ -65,11 +65,8 @@ test.describe("Organizational Flow", () => {
     // 4. Step 3: Click "Tech" in sidebar and verify filtering
     await sidebar.getByRole("link", { name: "Tech", exact: true }).click();
 
-    // Expand the category folder
+    // Verify Feed A is visible under Tech (Expansion is triggered by clicking the link)
     const techGroup = sidebar.getByRole("listitem").filter({ hasText: "Tech" });
-    await techGroup.getByRole("button", { name: "Toggle" }).click();
-
-    // Verify Feed A is visible under Tech
     await expect(techGroup.getByRole("link", { name: "Feed A" })).toBeVisible();
 
     // Verify URL
@@ -146,7 +143,15 @@ test.describe("Organizational Flow", () => {
     const emptyGroup = sidebar
       .getByRole("listitem")
       .filter({ hasText: "Empty" });
-    await emptyGroup.getByRole("button", { name: "Toggle" }).click();
+    
+    // We navigate to the category (which should also expand it since it's now active)
+    await sidebar.getByRole("link", { name: "Empty", exact: true }).click();
+    
+    // If not expanded, click the chevron or click again
+    if (!(await emptyGroup.getAttribute("data-state") === "open")) {
+       await sidebar.getByRole("link", { name: "Empty", exact: true }).click();
+    }
+    
     await expect(
       emptyGroup.getByRole("link", { name: "Feed A" }),
     ).toBeVisible();
