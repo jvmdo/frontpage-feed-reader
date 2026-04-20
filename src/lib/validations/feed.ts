@@ -14,7 +14,9 @@ export const updateSubscriptionSchema = z.object({
     .trim()
     .min(1, "Title cannot be empty")
     .max(255)
-    .nullable(),
+    .nullable()
+    .optional(),
+  categoryId: z.number().nullable().optional(),
 });
 
 export type UpdateSubscriptionInput = z.infer<typeof updateSubscriptionSchema>;
@@ -35,6 +37,7 @@ export const feedItemsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(PAGINATION_LIMIT),
   offset: z.coerce.number().int().min(0).default(PAGINATION_INITIAL_OFFSET),
   feedId: z.coerce.number().int().optional(),
+  categoryId: z.coerce.number().int().optional(),
 });
 
 export type FeedItemsQueryInput = z.infer<typeof feedItemsQuerySchema>;

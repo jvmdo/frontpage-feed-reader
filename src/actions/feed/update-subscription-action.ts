@@ -34,11 +34,12 @@ export async function updateSubscriptionAction(input: UpdateSubscriptionInput) {
     };
   }
 
-  const { id, customTitle } = result.data;
+  const { id, customTitle, categoryId } = result.data;
 
   try {
     const updated = await updateSubscription(db, session.user.id, id, {
       customTitle,
+      categoryId,
     });
 
     return {

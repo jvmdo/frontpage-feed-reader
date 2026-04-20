@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     limit: searchParams.get("limit"),
     offset: searchParams.get("offset"),
     feedId: searchParams.get("feedId"),
+    categoryId: searchParams.get("categoryId"),
   });
 
   if (!parseResult.success) {
@@ -25,13 +26,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { limit, offset, feedId } = parseResult.data;
+  const { limit, offset, feedId, categoryId } = parseResult.data;
 
   try {
     const items = await getUserFeedItems(db, session.user.id, {
       limit,
       offset,
       feedId,
+      categoryId,
     });
     return NextResponse.json(items);
   } catch (error) {

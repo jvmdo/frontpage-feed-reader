@@ -7,6 +7,7 @@ interface GetUserFeedItemsOptions {
   limit: number;
   offset: number;
   feedId?: number;
+  categoryId?: number;
 }
 
 /**
@@ -18,7 +19,7 @@ export async function getUserFeedItems(
   userId: string,
   options: GetUserFeedItemsOptions,
 ): Promise<FeedItemWithSource[]> {
-  const { limit, offset, feedId } = options;
+  const { limit, offset, feedId, categoryId } = options;
 
   const results = await db
     .select({
@@ -32,6 +33,7 @@ export async function getUserFeedItems(
       and(
         eq(subscriptions.userId, userId),
         feedId ? eq(feedItems.feedId, feedId) : undefined,
+        categoryId ? eq(subscriptions.categoryId, categoryId) : undefined,
       ),
     )
     .orderBy(desc(feedItems.publishedAt), desc(feedItems.createdAt))
