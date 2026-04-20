@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,14 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCategories } from "@/hooks/use-categories";
 import { useUpdateSubscription } from "@/hooks/use-update-subscription";
 import {
   type UpdateSubscriptionInput,
@@ -41,17 +49,20 @@ export function EditSubscriptionDialog({
   onOpenChange,
 }: EditSubscriptionDialogProps) {
   const { mutate: updateSubscription, isPending } = useUpdateSubscription();
+  const { data: categories } = useCategories();
 
   const {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<UpdateSubscriptionInput>({
     resolver: zodResolver(updateSubscriptionSchema),
     defaultValues: {
       id: subscription.id,
       customTitle: subscription.customTitle ?? feed.title ?? "",
+      categoryId: subscription.categoryId,
     },
   });
 
@@ -81,8 +92,7 @@ export function EditSubscriptionDialog({
         <DialogHeader>
           <DialogTitle>Edit Subscription</DialogTitle>
           <DialogDescription>
-            Update the title for this subscription. This only affects how it
-            appears in your dashboard.
+            Update how this subscription appears in your dashboard.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
@@ -97,6 +107,41 @@ export function EditSubscriptionDialog({
               />
               {errors.customTitle && (
                 <FieldError>{errors.customTitle.message}</FieldError>
+              )}
+            </Field>
+
+            <Field data-invalid={!!errors.categoryId}>
+              <FieldLabel htmlFor="category-id">Category</FieldLabel>
+              <Controller
+                control={control}
+                name="categoryId"
+                render={({ field }) => (
+                  <Select
+                    onValueChange={(value) =>
+                      field.onChange(value === "none" ? null : Number(value))
+                    }
+                    value={field.value?.toString() ?? "none"}
+                    disabled={isPending}
+                  >
+                    <SelectTrigger id="category-id">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Uncategorized</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem
+                          key={category.id}
+                          value={category.id.toString()}
+                        >
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.categoryId && (
+                <FieldError>{errors.categoryId.message}</FieldError>
               )}
             </Field>
           </FieldGroup>
