@@ -27,10 +27,12 @@ test.describe("Category Management", () => {
     await expect(toast).toContainText(/category created successfully/i);
 
     // Verify category folder appears in sidebar
-    await expect(sidebar.getByRole("button", { name: /^new category$/i })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: /^new category$/i })).toBeVisible();
     
     // Verify it shows "No feeds" initially
-    await sidebar.getByRole("button", { name: /^new category$/i }).click();
+    // Expand it first
+    const newCatItem = sidebar.locator("li").filter({ has: page.getByRole("link", { name: /^new category$/i }) });
+    await newCatItem.getByRole("button", { name: /toggle/i }).click();
     await expect(sidebar.getByText(/no feeds/i)).toBeVisible();
   });
 
@@ -62,13 +64,14 @@ test.describe("Category Management", () => {
     const sidebar = page.locator('[data-slot="sidebar"]');
     
     // 3. Verify category folder is visible
-    await expect(sidebar.getByRole("button", { name: /^tech news$/i })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: /^tech news$/i })).toBeVisible();
     
     // 4. Verify feed is NOT visible yet (nested)
     await expect(sidebar.getByRole("link", { name: /hacker news/i })).not.toBeVisible();
     
     // 5. Open category and verify feed is visible
-    await sidebar.getByRole("button", { name: /^tech news$/i }).click();
+    const techNewsItem = sidebar.locator("li").filter({ has: page.getByRole("link", { name: /^tech news$/i }) });
+    await techNewsItem.getByRole("button", { name: /toggle/i }).click();
     await expect(sidebar.getByRole("link", { name: /hacker news/i })).toBeVisible();
     
     // 6. Verify uncategorized feed is visible at root

@@ -161,6 +161,9 @@ describe("FeedItemList", () => {
       http.get("/api/feeds/items", () => {
         return HttpResponse.json([]);
       }),
+      http.get("/api/categories", () => {
+        return HttpResponse.json({ success: true, data: [] });
+      }),
     );
 
     render(
@@ -175,6 +178,41 @@ describe("FeedItemList", () => {
     expect(emptyTitle).toBeInTheDocument();
 
     expect(screen.getByText(/subscribe to more feeds/i)).toBeInTheDocument();
+  });
+
+  test("renders category-specific empty state when categoryId is active", async () => {
+    const mockCategories = [{ id: 10, name: "Tech" }];
+    
+    server.use(
+      http.get("/api/feeds/items", () => {
+        return HttpResponse.json([]);
+      }),
+      http.get("/api/categories", () => {
+        return HttpResponse.json({ success: true, data: mockCategories });
+      }),
+    );
+
+    render(
+      <TestWrapper>
+        <FeedItemList />
+      </TestWrapper>,
+      {
+        searchParams: { categoryId: "10" },
+      },
+    );
+
+    const emptyTitle = await screen.findByRole("heading", {
+      name: /tech has no items yet/i,
+    });
+    expect(emptyTitle).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/assign feeds to this category/i),
+    ).toBeInTheDocument();
+    
+    expect(
+      screen.getByRole("button", { name: /assign feeds/i }),
+    ).toBeInTheDocument();
   });
 
   test("renders error state when fetch fails", async () => {

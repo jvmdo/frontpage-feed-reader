@@ -1,6 +1,7 @@
 import { subMinutes } from "date-fns";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import {
+  seedCategory,
   seedFeed,
   seedFeedItems,
   seedFeedWithSubscription,
@@ -139,6 +140,67 @@ describe("getUserFeedItems", () => {
 
       await seedFeedItems(tx, feed1.id, [{ title: "F1 Item" }]);
       await seedFeedItems(tx, feed2.id, [{ title: "F2 Item" }]);
+
+      const result = await getUserFeedItems(tx, testUser.id, options);
+
+      expect(result).toHaveLength(2);
+    });
+  });
+
+  describe("filtering by categoryId", () => {
+    test("returns only items from the specified categoryId", async ({
+      tx,
+      testUser,
+    }) => {
+      // 1. Create two categories
+      const cat1 = await seedCategory(tx, {
+        userId: testUser.id,
+        name: "Cat 1",
+      });
+      const cat2 = await seedCategory(tx, {
+        userId: testUser.id,
+        name: "Cat 2",
+      });
+
+      // 2. Create two feeds, each in a different category
+      const { feed: feed1 } = await seedFeedWithSubscription(tx, testUser.id, {}, {
+        categoryId: cat1.id,
+      });
+      const { feed: feed2 } = await seedFeedWithSubscription(tx, testUser.id, {}, {
+        categoryId: cat2.id,
+      });
+
+      // 3. Add items to both
+      await seedFeedItems(tx, feed1.id, [{ title: "Cat 1 Item" }]);
+      await seedFeedItems(tx, feed2.id, [{ title: "Cat 2 Item" }]);
+
+      // 4. Request items only for cat1
+      const result = await getUserFeedItems(tx, testUser.id, {
+        ...options,
+        categoryId: cat1.id,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].item.title).toBe("Cat 1 Item");
+      expect(result[0].feed.id).toBe(feed1.id);
+    });
+
+    test("returns items from all subscribed feeds when categoryId is not provided", async ({
+      tx,
+      testUser,
+    }) => {
+      const cat1 = await seedCategory(tx, {
+        userId: testUser.id,
+        name: "Cat 1",
+      });
+
+      const { feed: feed1 } = await seedFeedWithSubscription(tx, testUser.id, {}, {
+        categoryId: cat1.id,
+      });
+      const { feed: feed2 } = await seedFeedWithSubscription(tx, testUser.id);
+
+      await seedFeedItems(tx, feed1.id, [{ title: "C1 Item" }]);
+      await seedFeedItems(tx, feed2.id, [{ title: "Uncategorized Item" }]);
 
       const result = await getUserFeedItems(tx, testUser.id, options);
 

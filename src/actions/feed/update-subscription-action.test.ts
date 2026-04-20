@@ -67,7 +67,52 @@ describe("updateSubscriptionAction", () => {
       expect.anything(),
       "user-123",
       123,
-      { customTitle: "New Title" },
+      { customTitle: "New Title", categoryId: undefined },
+    );
+  });
+
+  it("handles surgical updates correctly (only categoryId)", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    const mockUpdatedSubscription = {
+      id: 123,
+      userId: "user-123",
+      categoryId: 456,
+    };
+
+    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(updateSubscription).mockResolvedValueOnce(
+      mockUpdatedSubscription as any,
+    );
+
+    const result = await updateSubscriptionAction({
+      id: 123,
+      categoryId: 456,
+    });
+
+    expect(result.success).toBe(true);
+    expect(updateSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-123",
+      123,
+      { customTitle: undefined, categoryId: 456 },
+    );
+  });
+
+  it("allows setting categoryId to null (uncategorize)", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(updateSubscription).mockResolvedValueOnce({} as any);
+
+    await updateSubscriptionAction({
+      id: 123,
+      categoryId: null,
+    });
+
+    expect(updateSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-123",
+      123,
+      { customTitle: undefined, categoryId: null },
     );
   });
 

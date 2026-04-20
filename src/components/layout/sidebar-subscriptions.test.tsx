@@ -1,6 +1,6 @@
+import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
-import userEvent from "@testing-library/user-event";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import {
   createMockCategory,
@@ -65,15 +65,14 @@ describe("SidebarSubscriptions", () => {
       </SidebarProvider>,
     );
 
-    // Categories should be visible as folder buttons
-    const techFolder = await screen.findByRole("button", { name: /^tech$/i });
+    // Categories should be visible as links
+    const techFolder = await screen.findByRole("link", { name: /^tech$/i });
     expect(techFolder).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^design$/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^design$/i })).toBeInTheDocument();
 
-    // Feeds inside categories are in the DOM but might be hidden by Collapsible.
-    // RTL's getByText finds them even if hidden unless we use { visible: true }.
-    // However, wait for them to be present.
-    await user.click(techFolder);
+    // To open the category, we need to click the toggle button next to it
+    const techToggle = techFolder.nextElementSibling as HTMLElement;
+    await user.click(techToggle);
     expect(await screen.findByText(/tech feed/i)).toBeInTheDocument();
   });
 
@@ -107,8 +106,11 @@ describe("SidebarSubscriptions", () => {
       </SidebarProvider>,
     );
 
-    const emptyFolder = await screen.findByRole("button", { name: /empty category/i });
-    await user.click(emptyFolder);
+    const emptyFolder = await screen.findByRole("link", {
+      name: /empty category/i,
+    });
+    const emptyToggle = emptyFolder.nextElementSibling as HTMLElement;
+    await user.click(emptyToggle);
     expect(await screen.findByText(/no feeds/i)).toBeInTheDocument();
   });
 
@@ -123,13 +125,11 @@ describe("SidebarSubscriptions", () => {
     );
 
     const link = await screen.findByRole("link", { name: /tech feed/i });
-    const subButton = link.closest('[data-slot="sidebar-menu-sub-button"]');
-    expect(subButton).toHaveAttribute("data-active", "true");
+    expect(link).toHaveAttribute("data-active", "true");
 
     // The parent collapsible should be open automatically
-    const collapsible = screen
-      .getByRole("button", { name: /^tech$/i })
-      .closest('[data-slot="collapsible"]');
+    const techLink = screen.getByRole("link", { name: /^tech$/i });
+    const collapsible = techLink.closest('[data-slot="collapsible"]');
     expect(collapsible).toHaveAttribute("data-state", "open");
   });
 
@@ -149,6 +149,8 @@ describe("SidebarSubscriptions", () => {
       </SidebarProvider>,
     );
 
-    expect(await screen.findByText(/no subscriptions yet/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/no subscriptions yet/i),
+    ).toBeInTheDocument();
   });
 });

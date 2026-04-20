@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import { test as baseTest, expect, type Page } from "@playwright/test";
-import { like } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import { db } from "@/db";
-import { feeds } from "@/db/schema";
+import { categories, feeds } from "@/db/schema";
 import { createPlaywrightSession } from "@/tests/session";
 
 type Fixtures = {
@@ -32,6 +32,7 @@ export const test = baseTest.extend<Fixtures>({
     // TEARDOWN: Clean up ONLY this specific user's data after the test
     await authTest.deleteUser(uniqueId);
     await db.delete(feeds).where(like(feeds.url, `%tenant=${uniqueId}%`));
+    await db.delete(categories).where(eq(categories.userId, uniqueId));
   },
 });
 

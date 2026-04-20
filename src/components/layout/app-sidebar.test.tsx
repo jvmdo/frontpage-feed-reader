@@ -1,15 +1,15 @@
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { Suspense } from "react";
-import { vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { addFeedAction } from "@/actions/feed/add-feed-action";
 import { removeSubscriptionAction } from "@/actions/feed/remove-subscription-action";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useRemoveSubscription } from "@/hooks/use-remove-subscription";
-import { createMockFeedWithSubscription } from "@/tests/factories";
+import { createMockCategory, createMockFeedWithSubscription } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
-import type { FeedWithSubscription } from "@/types";
+import type { Category, FeedWithSubscription } from "@/types";
 import { AppSidebar } from "./app-sidebar";
 import { SidebarSubscriptions } from "./sidebar-subscriptions";
 
@@ -57,21 +57,33 @@ const DeleteTrigger = ({ id }: { id: number }) => {
 
 describe("AppSidebar Integration", () => {
   let mockSubscriptions: FeedWithSubscription[];
+  let mockCategories: Category[];
 
   beforeEach(() => {
-    // Initial subscriptions state for MSW
+    // Initial state for MSW
     mockSubscriptions = [
       createMockFeedWithSubscription({
         feed: { id: 1, title: "Initial Feed" },
-        subscription: { id: 1, customTitle: "My Custom Feed 1" },
+        subscription: { id: 1, customTitle: "My Custom Feed 1", categoryId: null },
+      }),
+      createMockFeedWithSubscription({
+        feed: { id: 2, title: "Categorized Feed" },
+        subscription: { id: 2, customTitle: "My Tech Feed", categoryId: 10 },
       }),
     ];
 
-    // Mock GET /api/feeds/subscriptions
+    mockCategories = [
+      createMockCategory({ id: 10, name: "Tech" }),
+    ];
+
+    // Mock GET handlers
     server.use(
       http.get("/api/feeds/subscriptions", () => {
         return HttpResponse.json({ success: true, data: mockSubscriptions });
       }),
+      http.get("/api/categories", () => {
+        return HttpResponse.json({ success: true, data: mockCategories });
+      })
     );
   });
 
@@ -161,6 +173,91 @@ describe("AppSidebar Integration", () => {
     // Verify that the feed disappears from the sidebar
     await waitFor(() => {
       expect(screen.queryByText(/my custom feed 1/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Active States", () => {
+    it("highlights 'All Items' only when no filters are active", async () => {
+      render(
+        <SidebarProvider>
+          <AppSidebar>
+            <Suspense fallback={<div>Loading...</div>}>
+              <SidebarSubscriptions />
+            </Suspense>
+          </AppSidebar>
+        </SidebarProvider>,
+      );
+
+      const allItemsButton = await screen.findByRole("link", { name: /all items/i });
+      expect(allItemsButton).toHaveAttribute("data-active", "true");
+    });
+
+    it("highlights a category when categoryId filter is active", async () => {
+      render(
+        <SidebarProvider>
+          <AppSidebar>
+            <Suspense fallback={<div>Loading...</div>}>
+              <SidebarSubscriptions />
+            </Suspense>
+          </AppSidebar>
+        </SidebarProvider>,
+        {
+          searchParams: { categoryId: "10" },
+        }
+      );
+
+      const allItemsButton = await screen.findByRole("link", { name: /all items/i });
+      expect(allItemsButton).toHaveAttribute("data-active", "false");
+
+      const categoryButton = await screen.findByRole("link", { name: /^tech$/i });
+      expect(categoryButton).toHaveAttribute("data-active", "true");
+    });
+
+    it("highlights an individual feed when feedId filter is active", async () => {
+      render(
+        <SidebarProvider>
+          <AppSidebar>
+            <Suspense fallback={<div>Loading...</div>}>
+              <SidebarSubscriptions />
+            </Suspense>
+          </AppSidebar>
+        </SidebarProvider>,
+        {
+          searchParams: { feedId: "1" },
+        }
+      );
+
+      const allItemsButton = await screen.findByRole("link", { name: /all items/i });
+      expect(allItemsButton).toHaveAttribute("data-active", "false");
+
+      const feedButton = await screen.findByRole("link", { name: /my custom feed 1/i });
+      expect(feedButton).toHaveAttribute("data-active", "true");
+    });
+
+    it("does not highlight 'All Items' when a categorized feed is active", async () => {
+      render(
+        <SidebarProvider>
+          <AppSidebar>
+            <Suspense fallback={<div>Loading...</div>}>
+              <SidebarSubscriptions />
+            </Suspense>
+          </AppSidebar>
+        </SidebarProvider>,
+        {
+          searchParams: { feedId: "2" },
+        }
+      );
+
+      const allItemsButton = await screen.findByRole("link", { name: /all items/i });
+      expect(allItemsButton).toHaveAttribute("data-active", "false");
+
+      // Categorized feed should be active (it's inside Tech)
+      const feedButton = await screen.findByRole("link", { name: /my tech feed/i });
+      expect(feedButton).toHaveAttribute("data-active", "true");
+      
+      // Parent category Tech should NOT be active (only highlights when specifically filtered by category)
+      const categoryButton = await screen.findByRole("link", { name: /^tech$/i });
+      expect(categoryButton).toHaveAttribute("data-active", "false");
     });
   });
 });
