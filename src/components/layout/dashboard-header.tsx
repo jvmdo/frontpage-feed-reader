@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useCategories } from "@/hooks/use-categories";
 import { useFeedFilter } from "@/hooks/use-feed-filter";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
+import { useUnreadCounts } from "@/hooks/use-unread-counts";
 import type { Category, FeedWithSubscription } from "@/types";
 
 /**
@@ -16,12 +17,14 @@ export function DashboardHeader() {
   const { feedId, categoryId } = useFeedFilter();
   const { data: subscriptions } = useSubscriptions();
   const { data: categories } = useCategories();
+  const { data: unreadCounts } = useUnreadCounts();
 
   const { title, description } = getHeaderContent(
     feedId,
     categoryId,
     subscriptions,
     categories,
+    unreadCounts?.global,
   );
 
   return (
@@ -48,6 +51,7 @@ function getHeaderContent(
   categoryId: number | null,
   subscriptions: FeedWithSubscription[] = [],
   categories: Category[] = [],
+  globalUnreadCount: number,
 ) {
   if (feedId) {
     const sub = subscriptions.find((s) => s.feed.id === feedId);
@@ -69,8 +73,20 @@ function getHeaderContent(
   }
 
   // Default fallback
+  const title =
+    globalUnreadCount > 0 ? (
+      <>
+        All Items{" "}
+        <span className="ml-1 text-base font-normal text-text-tertiary">
+          {globalUnreadCount} unread
+        </span>
+      </>
+    ) : (
+      "All Items"
+    );
+
   return {
-    title: "All Items",
+    title,
     description: "Everything from your subscriptions in one place.",
   };
 }

@@ -31,13 +31,14 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useFeedFilter } from "@/hooks/use-feed-filter";
+import { useUnreadCounts } from "@/hooks/use-unread-counts";
 
 export function AppSidebar({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { feedId, categoryId } = useFeedFilter();
+  const { data: unreadCounts } = useUnreadCounts();
 
-  const isDashboardActive =
-    pathname === "/dashboard" && !feedId && !categoryId;
+  const isDashboardActive = pathname === "/dashboard" && !feedId && !categoryId;
 
   return (
     <Sidebar collapsible="icon">
@@ -67,7 +68,7 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                     <LinkPendingIndicator />
                   </DashboardLink>
                 </SidebarMenuButton>
-                <SidebarMenuBadge>12</SidebarMenuBadge>
+                <SidebarMenuBadge>{unreadCounts?.global}</SidebarMenuBadge>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
