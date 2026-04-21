@@ -33,6 +33,12 @@ export const refreshFeedSchema = z.object({
 
 export type RefreshFeedInput = z.infer<typeof refreshFeedSchema>;
 
+export const markAsReadSchema = z.object({
+  itemId: z.number(),
+});
+
+export type MarkAsReadInput = z.infer<typeof markAsReadSchema>;
+
 export const feedItemsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(PAGINATION_LIMIT),
   offset: z.coerce.number().int().min(0).default(PAGINATION_INITIAL_OFFSET),
