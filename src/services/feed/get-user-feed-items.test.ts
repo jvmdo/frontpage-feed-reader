@@ -1,10 +1,14 @@
 import { subMinutes } from "date-fns";
+import { eq } from "drizzle-orm";
+import { categories, subscriptions } from "@/db/schema";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import {
   seedCategory,
   seedFeed,
   seedFeedItems,
   seedFeedWithSubscription,
+  seedUserItemState,
+  seedUserPreferences,
 } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
 import { getUserFeedItems } from "./get-user-feed-items";
@@ -205,6 +209,104 @@ describe("getUserFeedItems", () => {
       const result = await getUserFeedItems(tx, testUser.id, options);
 
       expect(result).toHaveLength(2);
+    });
+  });
+
+  describe("isRead calculation", () => {
+    test("marks item as read if user has explicit read state", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      const [item] = await seedFeedItems(tx, feed.id, [{ title: "Item 1" }]);
+
+      await seedUserItemState(tx, {
+        userId: testUser.id,
+        itemId: item.id,
+        readAt: new Date(),
+      });
+
+      const result = await getUserFeedItems(tx, testUser.id, options);
+      expect(result[0].isRead).toBe(true);
+    });
+
+    test("marks item as unread if no state or watermarks exist", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      await seedFeedItems(tx, feed.id, [{ title: "Item 1" }]);
+
+      const result = await getUserFeedItems(tx, testUser.id, options);
+      expect(result[0].isRead).toBe(false);
+    });
+
+    test("marks item as read if published before global watermark", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      const now = new Date();
+      const tenMinutesAgo = subMinutes(now, 10);
+      const fiveMinutesAgo = subMinutes(now, 5);
+
+      await seedFeedItems(tx, feed.id, [
+        { title: "Old Item", publishedAt: tenMinutesAgo },
+        { title: "New Item", publishedAt: now },
+      ]);
+
+      await seedUserPreferences(tx, {
+        userId: testUser.id,
+        markedAllReadAt: fiveMinutesAgo,
+      });
+
+      const result = await getUserFeedItems(tx, testUser.id, options);
+      expect(result.find((r) => r.item.title === "Old Item")?.isRead).toBe(true);
+      expect(result.find((r) => r.item.title === "New Item")?.isRead).toBe(false);
+    });
+
+    test("marks item as read if published before category watermark", async ({
+      tx,
+      testUser,
+    }) => {
+      const cat = await seedCategory(tx, { userId: testUser.id, name: "Cat" });
+      const { feed } = await seedFeedWithSubscription(
+        tx,
+        testUser.id,
+        {},
+        { categoryId: cat.id },
+      );
+      const now = new Date();
+      const tenMinutesAgo = subMinutes(now, 10);
+
+      await seedFeedItems(tx, feed.id, [{ title: "Item", publishedAt: tenMinutesAgo }]);
+
+      await tx
+        .update(categories)
+        .set({ markedAllReadAt: now })
+        .where(eq(categories.id, cat.id));
+
+      const result = await getUserFeedItems(tx, testUser.id, options);
+      expect(result[0].isRead).toBe(true);
+    });
+
+    test("marks item as read if published before subscription watermark", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed, subscription } = await seedFeedWithSubscription(tx, testUser.id);
+      const now = new Date();
+      const tenMinutesAgo = subMinutes(now, 10);
+
+      await seedFeedItems(tx, feed.id, [{ title: "Item", publishedAt: tenMinutesAgo }]);
+
+      await tx
+        .update(subscriptions)
+        .set({ markedAllReadAt: now })
+        .where(eq(subscriptions.id, subscription.id));
+
+      const result = await getUserFeedItems(tx, testUser.id, options);
+      expect(result[0].isRead).toBe(true);
     });
   });
 });

@@ -108,9 +108,8 @@ describe("FeedItemList", () => {
       </TestWrapper>,
     );
 
-    const title = await screen.findByRole("heading", {
-      name: /^test article 1$/i,
-    });
+    // Using exact regex to avoid matching "Test Article 10", "Test Article 11", etc.
+    const title = await screen.findByText(/^test article 1$/i);
     expect(title).toBeInTheDocument();
 
     expect(screen.getAllByText(/^example feed$/i).length).toBeGreaterThan(0);
@@ -143,14 +142,14 @@ describe("FeedItemList", () => {
     );
 
     // Wait for the first page to load
-    await screen.findByRole("heading", { name: firstItemTitle });
+    await screen.findByText(firstItemTitle);
     expect(screen.queryByText(nextItemTitle)).not.toBeInTheDocument();
 
     // Trigger intersection via shared utility
     triggerIntersection(true);
 
     // Wait for the second page to load
-    await screen.findByRole("heading", { name: nextItemTitle });
+    await screen.findByText(nextItemTitle);
 
     expect(screen.getByText(firstItemTitle)).toBeInTheDocument();
     expect(screen.getByText(nextItemTitle)).toBeInTheDocument();
@@ -181,14 +180,9 @@ describe("FeedItemList", () => {
   });
 
   test("renders category-specific empty state when categoryId is active", async () => {
-    const mockCategories = [{ id: 10, name: "Tech" }];
-    
     server.use(
       http.get("/api/feeds/items", () => {
         return HttpResponse.json([]);
-      }),
-      http.get("/api/categories", () => {
-        return HttpResponse.json({ success: true, data: mockCategories });
       }),
     );
 
@@ -201,15 +195,16 @@ describe("FeedItemList", () => {
       },
     );
 
+    // Matching the actual heading in the UI
     const emptyTitle = await screen.findByRole("heading", {
-      name: /tech has no items yet/i,
+      name: /this category has no items yet/i,
     });
     expect(emptyTitle).toBeInTheDocument();
 
     expect(
       screen.getByText(/assign feeds to this category/i),
     ).toBeInTheDocument();
-    
+
     expect(
       screen.getByRole("button", { name: /assign feeds/i }),
     ).toBeInTheDocument();

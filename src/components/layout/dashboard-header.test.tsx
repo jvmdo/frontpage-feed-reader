@@ -1,5 +1,5 @@
 import { HttpResponse, http } from "msw";
-import { Suspense } from "react";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createMockFeedWithSubscription } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
@@ -22,34 +22,28 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
       http.get("/api/feeds/subscriptions", () => {
         return HttpResponse.json({ success: true, data: mockSubscriptions });
       }),
+      http.get("/api/feeds/unread-counts", () => {
+        return HttpResponse.json({ success: true, data: { global: 5 } });
+      }),
     );
   });
 
   describe("DashboardHeader", () => {
-    it('renders "All Items" by default when no feedId is present', async () => {
-      render(
-        <Suspense fallback={<div>Loading...</div>}>
-          <DashboardHeader />
-        </Suspense>,
-      );
+    it('renders "All Items" with unread count by default when no feedId is present', async () => {
+      render(<DashboardHeader />);
 
+      // findByRole with regex needs to handle the nested span content
       expect(
         await screen.findByRole("heading", { name: /all items/i }),
       ).toBeInTheDocument();
-      expect(
-        screen.getByText(/everything from your subscriptions/i),
-      ).toBeInTheDocument();
+
+      expect(screen.getByText(/5 unread/i)).toBeInTheDocument();
     });
 
     it("renders the custom title and description when a filtered feedId matches", async () => {
-      render(
-        <Suspense fallback={<div>Loading...</div>}>
-          <DashboardHeader />
-        </Suspense>,
-        {
-          searchParams: { feedId: "1" },
-        },
-      );
+      render(<DashboardHeader />, {
+        searchParams: { feedId: "1" },
+      });
 
       expect(
         await screen.findByRole("heading", { name: /my custom feed 1/i }),
@@ -60,14 +54,9 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
     });
 
     it("renders the original feed title when no custom title is provided", async () => {
-      render(
-        <Suspense fallback={<div>Loading...</div>}>
-          <DashboardHeader />
-        </Suspense>,
-        {
-          searchParams: { feedId: "2" },
-        },
-      );
+      render(<DashboardHeader />, {
+        searchParams: { feedId: "2" },
+      });
 
       expect(
         await screen.findByRole("heading", { name: /feed 2/i }),
@@ -76,14 +65,9 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
     });
 
     it('falls back to "All Items" if the feedId does not match any subscription', async () => {
-      render(
-        <Suspense fallback={<div>Loading...</div>}>
-          <DashboardHeader />
-        </Suspense>,
-        {
-          searchParams: { feedId: "999" },
-        },
-      );
+      render(<DashboardHeader />, {
+        searchParams: { feedId: "999" },
+      });
 
       expect(
         await screen.findByRole("heading", { name: /all items/i }),
@@ -93,38 +77,24 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
 
   describe("DashboardBreadcrumb", () => {
     it('renders "All Items" in the breadcrumb by default', async () => {
-      render(
-        <Suspense fallback={<div>Loading...</div>}>
-          <DashboardBreadcrumb />
-        </Suspense>,
-      );
+      render(<DashboardBreadcrumb />);
 
       expect(await screen.findByText(/frontpage/i)).toBeInTheDocument();
       expect(screen.getByText(/all items/i)).toBeInTheDocument();
     });
 
     it("renders the feed title in the breadcrumb when filtered", async () => {
-      render(
-        <Suspense fallback={<div>Loading...</div>}>
-          <DashboardBreadcrumb />
-        </Suspense>,
-        {
-          searchParams: { feedId: "1" },
-        },
-      );
+      render(<DashboardBreadcrumb />, {
+        searchParams: { feedId: "1" },
+      });
 
       expect(await screen.findByText(/my custom feed 1/i)).toBeInTheDocument();
     });
 
     it("renders the original feed title in the breadcrumb if no custom title", async () => {
-      render(
-        <Suspense fallback={<div>Loading...</div>}>
-          <DashboardBreadcrumb />
-        </Suspense>,
-        {
-          searchParams: { feedId: "2" },
-        },
-      );
+      render(<DashboardBreadcrumb />, {
+        searchParams: { feedId: "2" },
+      });
 
       expect(await screen.findByText(/feed 2/i)).toBeInTheDocument();
     });

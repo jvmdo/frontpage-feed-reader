@@ -83,8 +83,27 @@ describe("AppSidebar Integration", () => {
       }),
       http.get("/api/categories", () => {
         return HttpResponse.json({ success: true, data: mockCategories });
+      }),
+      http.get("/api/feeds/unread-counts", () => {
+        return HttpResponse.json({ success: true, data: { global: 42 } });
       })
     );
+  });
+
+  it("displays the global unread count from the API", async () => {
+    render(
+      <SidebarProvider>
+        <AppSidebar>
+          <Suspense fallback={<div>Loading...</div>}>
+            <SidebarSubscriptions />
+          </Suspense>
+        </AppSidebar>
+      </SidebarProvider>,
+    );
+
+    // Find the badge containing the global unread count
+    const allItemsBadge = await screen.findByText("42");
+    expect(allItemsBadge).toBeInTheDocument();
   });
 
   it("updates the subscription list when a new feed is added", async () => {

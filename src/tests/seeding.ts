@@ -85,6 +85,42 @@ export async function seedCategory(tx: DB, overrides: NewCategory) {
 }
 
 /**
+ * Seeds user preferences into the database.
+ */
+export async function seedUserPreferences(
+  tx: DB,
+  overrides: schema.NewUserPreferences,
+) {
+  const [inserted] = await tx
+    .insert(schema.userPreferences)
+    .values(overrides)
+    .onConflictDoUpdate({
+      target: schema.userPreferences.userId,
+      set: overrides,
+    })
+    .returning();
+  return inserted;
+}
+
+/**
+ * Seeds a user item state into the database.
+ */
+export async function seedUserItemState(
+  tx: DB,
+  overrides: schema.NewUserItemState,
+) {
+  const [inserted] = await tx
+    .insert(schema.userItemStates)
+    .values(overrides)
+    .onConflictDoUpdate({
+      target: [schema.userItemStates.userId, schema.userItemStates.itemId],
+      set: overrides,
+    })
+    .returning();
+  return inserted;
+}
+
+/**
  * Seeds multiple feed items for a specific feed.
  */
 export async function seedFeedItems(

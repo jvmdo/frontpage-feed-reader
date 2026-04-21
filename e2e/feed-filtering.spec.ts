@@ -38,14 +38,18 @@ test.describe("Feed Filtering", () => {
     await page.goto(`/dashboard?feedId=${feed1.id}`);
 
     // 4. Verify immediate content (no loading flash)
-    const firstFeedItem = page.getByRole("heading", { name: "Article from First Feed" });
+    const firstFeedItem = page.getByRole("heading", {
+      name: "Article from First Feed",
+    });
     const skeleton = page.getByLabel("Loading feed items...");
 
     await expect(firstFeedItem).toBeVisible();
     await expect(skeleton).not.toBeVisible();
 
     // 5. Verify isolation
-    const secondFeedItem = page.getByRole("heading", { name: "Article from Second Feed" });
+    const secondFeedItem = page.getByRole("heading", {
+      name: "Article from Second Feed",
+    });
     await expect(secondFeedItem).not.toBeVisible();
 
     // 6. Verify header title
@@ -85,7 +89,9 @@ test.describe("Feed Filtering", () => {
 
     // 2. Start at All Items
     await page.goto("/dashboard");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("All Items");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      /All Items/i,
+    );
     await expect(page.getByRole("heading", { name: "Item A" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Item B" })).toBeVisible();
 
@@ -96,14 +102,18 @@ test.describe("Feed Filtering", () => {
     await expect(page).toHaveURL(new RegExp(`feedId=${feedA.id}`));
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Feed A");
     await expect(page.getByRole("heading", { name: "Item A" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Item B" })).not.toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Item B" }),
+    ).not.toBeVisible();
 
     // 5. Click All Items to reset
     await page.getByRole("link", { name: "All Items" }).click();
 
     // 6. Verify reset
     await expect(page).toHaveURL("/dashboard");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("All Items");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      /All Items/i,
+    );
     await expect(page.getByRole("heading", { name: "Item A" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Item B" })).toBeVisible();
   });

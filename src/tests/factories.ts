@@ -92,7 +92,7 @@ export function createMockFeedItem(overrides: Partial<FeedItem> = {}): FeedItem 
 }
 
 export function createMockFeedItemWithSource(
-  overrides: Partial<{ item: Partial<FeedItem>; feed: Partial<Feed> }> = {},
+  overrides: Partial<{ item: Partial<FeedItem>; feed: Partial<Feed>; isRead: boolean }> = {},
 ): FeedItemWithSource {
   const feed = createMockFeed(overrides.feed);
   const item = createMockFeedItem({
@@ -103,5 +103,6 @@ export function createMockFeedItemWithSource(
   return {
     item,
     feed,
+    isRead: overrides.isRead ?? false,
   };
 }
