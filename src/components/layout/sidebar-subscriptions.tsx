@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/collapsible";
 import {
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -21,12 +22,14 @@ import {
 import { useCategories } from "@/hooks/use-categories";
 import { useFeedFilter } from "@/hooks/use-feed-filter";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
+import { useUnreadCounts } from "@/hooks/use-unread-counts";
 import type { FeedWithSubscription } from "@/types";
 
 export function SidebarSubscriptions() {
   const { feedId, categoryId } = useFeedFilter();
   const { data: subscriptions } = useSubscriptions();
   const { data: categories } = useCategories();
+  const { data: unreadCounts } = useUnreadCounts();
 
   const { groups, uncategorized } = React.useMemo(() => {
     const groups = categories.map((category) => ({
@@ -34,6 +37,7 @@ export function SidebarSubscriptions() {
       items: subscriptions.filter(
         (s) => s.subscription.categoryId === category.id,
       ),
+      unreadCount: unreadCounts?.categories?.[category.id] || 0,
     }));
 
     const uncategorized = subscriptions.filter(
@@ -41,7 +45,7 @@ export function SidebarSubscriptions() {
     );
 
     return { groups, uncategorized };
-  }, [categories, subscriptions]);
+  }, [categories, subscriptions, unreadCounts]);
 
   if (subscriptions.length === 0 && categories.length === 0) {
     return (
@@ -84,6 +88,11 @@ export function SidebarSubscriptions() {
                   </DashboardLink>
                 </SidebarMenuButton>
               </CollapsibleTrigger>
+              {group.unreadCount > 0 && (
+                <SidebarMenuBadge className="text-text-tertiary">
+                  {group.unreadCount}
+                </SidebarMenuBadge>
+              )}
               <CollapsibleContent>
                 <SidebarMenuSub>
                   {group.items.length === 0 ? (
@@ -98,6 +107,7 @@ export function SidebarSubscriptions() {
                         key={item.feed.id}
                         item={item}
                         isActive={feedId === item.feed.id}
+                        unreadCount={unreadCounts?.feeds?.[item.feed.id] || 0}
                       />
                     ))
                   )}
@@ -113,6 +123,7 @@ export function SidebarSubscriptions() {
           key={item.feed.id}
           item={item}
           isActive={feedId === item.feed.id}
+          unreadCount={unreadCounts?.feeds?.[item.feed.id] || 0}
         />
       ))}
     </SidebarMenu>
@@ -122,9 +133,11 @@ export function SidebarSubscriptions() {
 function SubscriptionItem({
   item,
   isActive,
+  unreadCount,
 }: {
   item: FeedWithSubscription;
   isActive: boolean;
+  unreadCount: number;
 }) {
   const { subscription, feed } = item;
   const title = subscription.customTitle || feed.title || "Untitled Feed";
@@ -151,6 +164,11 @@ function SubscriptionItem({
           <LinkPendingIndicator />
         </DashboardLink>
       </SidebarMenuButton>
+      {unreadCount > 0 && (
+        <SidebarMenuBadge className="text-text-tertiary">
+          {unreadCount}
+        </SidebarMenuBadge>
+      )}
     </SidebarMenuItem>
   );
 }
@@ -158,16 +176,18 @@ function SubscriptionItem({
 function SubscriptionSubItem({
   item,
   isActive,
+  unreadCount,
 }: {
   item: FeedWithSubscription;
   isActive: boolean;
+  unreadCount: number;
 }) {
   const { subscription, feed } = item;
   const title = subscription.customTitle || feed.title || "Untitled Feed";
 
   return (
     <SidebarMenuSubItem>
-      <SidebarMenuSubButton asChild isActive={isActive}>
+      <SidebarMenuSubButton asChild isActive={isActive} className="relative">
         <DashboardLink
           href={`/dashboard?feedId=${feed.id}`}
           feedId={feed.id}
@@ -182,6 +202,11 @@ function SubscriptionSubItem({
           <LinkPendingIndicator />
         </DashboardLink>
       </SidebarMenuSubButton>
+      {unreadCount > 0 && (
+        <SidebarMenuBadge className="text-text-tertiary">
+          {unreadCount}
+        </SidebarMenuBadge>
+      )}
     </SidebarMenuSubItem>
   );
 }

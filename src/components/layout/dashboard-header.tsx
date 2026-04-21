@@ -7,6 +7,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { useFeedFilter } from "@/hooks/use-feed-filter";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
 import { useUnreadCounts } from "@/hooks/use-unread-counts";
+import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 import type { Category, FeedWithSubscription } from "@/types";
 
 /**
@@ -24,7 +25,7 @@ export function DashboardHeader() {
     categoryId,
     subscriptions,
     categories,
-    unreadCounts?.global,
+    unreadCounts,
   );
 
   return (
@@ -51,34 +52,59 @@ function getHeaderContent(
   categoryId: number | null,
   subscriptions: FeedWithSubscription[] = [],
   categories: Category[] = [],
-  globalUnreadCount: number,
+  unreadCounts?: UnreadCounts,
 ) {
   if (feedId) {
     const sub = subscriptions.find((s) => s.feed.id === feedId);
     if (sub) {
-      const title =
+      const baseTitle =
         sub.subscription.customTitle || sub.feed.title || "Untitled Feed";
-      return { title, description: `Articles from ${title}.` };
+      const count = unreadCounts?.feeds[feedId] || 0;
+      const title =
+        count > 0 ? (
+          <>
+            {baseTitle}{" "}
+            <span className="ml-1 text-base font-normal text-text-tertiary">
+              {count} unread
+            </span>
+          </>
+        ) : (
+          baseTitle
+        );
+      return { title, description: `Articles from ${baseTitle}.` };
     }
   }
 
   if (categoryId) {
     const category = categories.find((cat) => cat.id === categoryId);
     if (category) {
+      const count = unreadCounts?.categories[categoryId] || 0;
+      const title =
+        count > 0 ? (
+          <>
+            {category.name}{" "}
+            <span className="ml-1 text-base font-normal text-text-tertiary">
+              {count} unread
+            </span>
+          </>
+        ) : (
+          category.name
+        );
       return {
-        title: category.name,
+        title,
         description: "Your feeds in this category.",
       };
     }
   }
 
-  // Default fallback
+  // Default fallback (All Items)
+  const globalCount = unreadCounts?.global || 0;
   const title =
-    globalUnreadCount > 0 ? (
+    globalCount > 0 ? (
       <>
         All Items{" "}
         <span className="ml-1 text-base font-normal text-text-tertiary">
-          {globalUnreadCount} unread
+          {globalCount} unread
         </span>
       </>
     ) : (
