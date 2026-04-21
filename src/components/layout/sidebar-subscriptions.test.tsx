@@ -54,7 +54,60 @@ describe("SidebarSubscriptions", () => {
       http.get("/api/categories", () => {
         return HttpResponse.json({ success: true, data: mockCategories });
       }),
+      http.get("/api/feeds/unread-counts", () => {
+        return HttpResponse.json({
+          success: true,
+          data: {
+            global: 10,
+            categories: { 10: 5, 20: 3 },
+            feeds: { 1: 2, 2: 3, 3: 5 },
+          },
+        });
+      }),
     );
+  });
+
+  it("renders unread count badges for categories", async () => {
+    render(
+      <SidebarProvider>
+        <SidebarSubscriptions />
+      </SidebarProvider>,
+    );
+
+    // Category 10 (Tech) should have 5 unread items
+    const techFolder = await screen.findByRole("link", { name: /^tech$/i });
+    const techItem = techFolder.closest('[data-sidebar="menu-item"]');
+    expect(techItem).toHaveTextContent("5");
+
+    // Category 20 (Design) should have 3 unread items
+    const designFolder = screen.getByRole("link", { name: /^design$/i });
+    const designItem = designFolder.closest('[data-sidebar="menu-item"]');
+    expect(designItem).toHaveTextContent("3");
+  });
+
+  it("renders unread count badges for individual subscriptions", async () => {
+    const user = userEvent.setup();
+    render(
+      <SidebarProvider>
+        <SidebarSubscriptions />
+      </SidebarProvider>,
+    );
+
+    // Open Tech category to see Tech Feed
+    const techFolder = await screen.findByRole("link", { name: /^tech$/i });
+    await user.click(techFolder);
+
+    // Tech Feed (ID 1) should have 2 unread
+    const techFeedLink = await screen.findByRole("link", { name: /tech feed/i });
+    const techFeedItem = techFeedLink.closest('[data-sidebar="menu-sub-item"]');
+    expect(techFeedItem).toHaveTextContent("2");
+
+    // Uncategorized Feed (ID 3) should have 5 unread
+    const uncatFeedLink = screen.getByRole("link", {
+      name: /uncategorized feed/i,
+    });
+    const uncatFeedItem = uncatFeedLink.closest('[data-sidebar="menu-item"]');
+    expect(uncatFeedItem).toHaveTextContent("5");
   });
 
   it("renders subscriptions grouped by categories", async () => {

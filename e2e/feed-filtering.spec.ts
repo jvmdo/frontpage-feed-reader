@@ -54,7 +54,7 @@ test.describe("Feed Filtering", () => {
 
     // 6. Verify header title
     const headerTitle = page.getByRole("heading", { level: 1 });
-    await expect(headerTitle).toHaveText("First Tech Feed");
+    await expect(headerTitle).toHaveText(/First Tech Feed/i);
   });
 
   test("full flow: click feed -> updates UI -> click All Items -> resets UI", async ({
@@ -100,7 +100,7 @@ test.describe("Feed Filtering", () => {
 
     // 4. Verify updates
     await expect(page).toHaveURL(new RegExp(`feedId=${feedA.id}`));
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Feed A");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Feed A/i);
     await expect(page.getByRole("heading", { name: "Item A" })).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Item B" }),

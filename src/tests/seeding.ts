@@ -6,6 +6,8 @@ import type {
   NewFeedItem,
   NewSubscription,
   NewUser,
+  NewUserItemState,
+  NewUserPreferences,
 } from "@/types";
 
 /**
@@ -89,7 +91,7 @@ export async function seedCategory(tx: DB, overrides: NewCategory) {
  */
 export async function seedUserPreferences(
   tx: DB,
-  overrides: schema.NewUserPreferences,
+  overrides: NewUserPreferences,
 ) {
   const [inserted] = await tx
     .insert(schema.userPreferences)
@@ -107,7 +109,7 @@ export async function seedUserPreferences(
  */
 export async function seedUserItemState(
   tx: DB,
-  overrides: schema.NewUserItemState,
+  overrides: NewUserItemState,
 ) {
   const [inserted] = await tx
     .insert(schema.userItemStates)

@@ -62,6 +62,20 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 describe("FeedItemList", () => {
   beforeEach(() => {
     setupIntersectionObserverMock();
+    server.use(
+      http.get("/api/categories", () => {
+        return HttpResponse.json({ success: true, data: [] });
+      }),
+      http.get("/api/feeds/subscriptions", () => {
+        return HttpResponse.json({ success: true, data: [] });
+      }),
+      http.get("/api/feeds/unread-counts", () => {
+        return HttpResponse.json({
+          success: true,
+          data: { global: 0, categories: {}, feeds: {} },
+        });
+      }),
+    );
   });
 
   test("renders loading skeletons while fetching", async () => {

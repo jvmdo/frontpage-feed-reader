@@ -15,6 +15,8 @@ describe("getUnreadCounts", () => {
   test("returns 0 when user has no subscriptions", async ({ tx, testUser }) => {
     const result = await getUnreadCounts(tx, testUser.id);
     expect(result.global).toBe(0);
+    expect(result.categories).toEqual({});
+    expect(result.feeds).toEqual({});
   });
 
   test("counts unread items from subscribed feeds", async ({ tx, testUser }) => {
@@ -23,6 +25,62 @@ describe("getUnreadCounts", () => {
 
     const result = await getUnreadCounts(tx, testUser.id);
     expect(result.global).toBe(2);
+    expect(result.feeds[feed.id]).toBe(2);
+  });
+
+  test("calculates breakdown for multiple categories and feeds", async ({ tx, testUser }) => {
+    const cat1 = await seedCategory(tx, { userId: testUser.id, name: "Tech" });
+    const cat2 = await seedCategory(tx, { userId: testUser.id, name: "News" });
+
+    // Feed 1 in Cat 1
+    const { feed: f1 } = await seedFeedWithSubscription(
+      tx,
+      testUser.id,
+      {},
+      { categoryId: cat1.id },
+    );
+    await seedFeedItems(tx, f1.id, [{ title: "F1 I1" }, { title: "F1 I2" }]);
+
+    // Feed 2 in Cat 1
+    const { feed: f2 } = await seedFeedWithSubscription(
+      tx,
+      testUser.id,
+      {},
+      { categoryId: cat1.id },
+    );
+    await seedFeedItems(tx, f2.id, [{ title: "F2 I1" }]);
+
+    // Feed 3 in Cat 2
+    const { feed: f3 } = await seedFeedWithSubscription(
+      tx,
+      testUser.id,
+      {},
+      { categoryId: cat2.id },
+    );
+    await seedFeedItems(tx, f3.id, [
+      { title: "F3 I1" },
+      { title: "F3 I2" },
+      { title: "F3 I3" },
+    ]);
+
+    // Feed 4 (Uncategorized)
+    const { feed: f4 } = await seedFeedWithSubscription(
+      tx,
+      testUser.id,
+      {},
+      { categoryId: null },
+    );
+    await seedFeedItems(tx, f4.id, [{ title: "F4 I1" }]);
+
+    const result = await getUnreadCounts(tx, testUser.id);
+
+    expect(result.global).toBe(7);
+    expect(result.categories[cat1.id]).toBe(3);
+    expect(result.categories[cat2.id]).toBe(3);
+    expect(result.feeds[f1.id]).toBe(2);
+    expect(result.feeds[f2.id]).toBe(1);
+    expect(result.feeds[f3.id]).toBe(3);
+    expect(result.feeds[f4.id]).toBe(1);
   });
 
   test("excludes items marked as read explicitly", async ({ tx, testUser }) => {
@@ -40,6 +98,7 @@ describe("getUnreadCounts", () => {
 
     const result = await getUnreadCounts(tx, testUser.id);
     expect(result.global).toBe(1);
+    expect(result.feeds[feed.id]).toBe(1);
   });
 
   test("respects global watermark", async ({ tx, testUser }) => {

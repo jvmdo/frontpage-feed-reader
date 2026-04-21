@@ -22,8 +22,21 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
       http.get("/api/feeds/subscriptions", () => {
         return HttpResponse.json({ success: true, data: mockSubscriptions });
       }),
+      http.get("/api/categories", () => {
+        return HttpResponse.json({
+          success: true,
+          data: [{ id: 10, name: "Tech" }],
+        });
+      }),
       http.get("/api/feeds/unread-counts", () => {
-        return HttpResponse.json({ success: true, data: { global: 5 } });
+        return HttpResponse.json({
+          success: true,
+          data: {
+            global: 5,
+            categories: { 10: 3 },
+            feeds: { 1: 2, 2: 0 },
+          },
+        });
       }),
     );
   });
@@ -40,7 +53,7 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
       expect(screen.getByText(/5 unread/i)).toBeInTheDocument();
     });
 
-    it("renders the custom title and description when a filtered feedId matches", async () => {
+    it("renders the custom title and unread count when a filtered feedId matches", async () => {
       render(<DashboardHeader />, {
         searchParams: { feedId: "1" },
       });
@@ -48,9 +61,33 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
       expect(
         await screen.findByRole("heading", { name: /my custom feed 1/i }),
       ).toBeInTheDocument();
+      expect(screen.getByText(/2 unread/i)).toBeInTheDocument();
       expect(
         screen.getByText(/articles from my custom feed 1/i),
       ).toBeInTheDocument();
+    });
+
+    it("renders the category title and unread count when filtered", async () => {
+      render(<DashboardHeader />, {
+        searchParams: { categoryId: "10" },
+      });
+
+      expect(
+        await screen.findByRole("heading", { name: /tech/i }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/3 unread/i)).toBeInTheDocument();
+    });
+
+    it("does not show unread count if it is 0", async () => {
+      render(<DashboardHeader />, {
+        searchParams: { feedId: "2" },
+      });
+
+      const heading = await screen.findByRole("heading", { name: /feed 2/i });
+      expect(heading).toBeInTheDocument();
+      expect(screen.queryByText(/0 unread/i)).not.toBeInTheDocument();
+      // "unread" should NOT be present at all for Feed 2 as its count is 0
+      expect(screen.queryByText(/unread/i)).not.toBeInTheDocument();
     });
 
     it("renders the original feed title when no custom title is provided", async () => {
