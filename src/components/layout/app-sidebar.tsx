@@ -20,6 +20,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
@@ -117,6 +118,11 @@ export function AppSidebar({ children }: { children: ReactNode }) {
 
         <SidebarGroup>
           <SidebarGroupLabel>Subscriptions</SidebarGroupLabel>
+          <SidebarGroupAction asChild title="Manage Categories">
+            <Link href="/manage-categories">
+              <SettingsIcon />
+            </Link>
+          </SidebarGroupAction>
           <SidebarGroupContent>{children}</SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

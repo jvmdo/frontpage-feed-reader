@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import { DashboardLink } from "@/components/shared/dashboard-link";
 import {
   BreadcrumbItem,
@@ -22,6 +23,7 @@ type BreadcrumbInfo = {
 };
 
 export function DashboardBreadcrumb() {
+  const pathname = usePathname();
   const { feedId, categoryId } = useFeedFilter();
   const { data: subscriptions } = useSubscriptions();
   const { data: categories } = useCategories();
@@ -42,6 +44,11 @@ export function DashboardBreadcrumb() {
     const items: Array<BreadcrumbInfo> = [
       { label: "Frontpage", href: "/dashboard", feedId: null },
     ];
+
+    if (pathname === "/manage-categories") {
+      items.push({ label: "Manage Categories", isPage: true });
+      return items;
+    }
 
     if (activeCategory) {
       items.push({
@@ -71,7 +78,7 @@ export function DashboardBreadcrumb() {
     }
 
     return items;
-  }, [feedId, categoryId, subscriptions, categories]);
+  }, [pathname, feedId, categoryId, subscriptions, categories]);
 
   return (
     <BreadcrumbList className="flex-nowrap">
