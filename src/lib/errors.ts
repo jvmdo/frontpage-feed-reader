@@ -80,3 +80,14 @@ export class DuplicateCategoryError extends Error {
     this.name = "DuplicateCategoryError";
   }
 }
+
+/**
+ * Thrown when a category record could not be found in the database.
+ */
+export class CategoryNotFoundError extends Error {
+  code = "CATEGORY_NOT_FOUND" as const;
+  constructor(message = "The category could not be found.") {
+    super(message);
+    this.name = "CategoryNotFoundError";
+  }
+}
