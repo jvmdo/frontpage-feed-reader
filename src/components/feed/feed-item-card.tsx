@@ -1,5 +1,8 @@
+"use client";
+
 import { ExternalLinkIcon } from "lucide-react";
 import { RelativeDate } from "@/components/shared/relative-date";
+import { useMarkAsRead } from "@/hooks/use-mark-as-read";
 import { cn } from "@/lib/utils";
 import type { FeedItemWithSource } from "@/types";
 import { FeedIcon } from "./feed-icon";
@@ -10,47 +13,95 @@ interface FeedItemCardProps {
 }
 
 export function FeedItemCard({ data, className }: FeedItemCardProps) {
-  const { item, feed } = data;
+  const { item, feed, isRead } = data;
+  const { mutate: markAsRead } = useMarkAsRead();
+
+  const handleLinkClick = () => {
+    if (!isRead) {
+      markAsRead({ itemId: item.id });
+    }
+  };
+
+  const containerStyles = cn(
+    "group relative flex flex-col gap-3 p-4 rounded-lg border bg-surface transition-all",
+    "hover:shadow-md hover:border-border-strong",
+    isRead
+      ? "opacity-70 border-border-subtle"
+      : "border-l-4 border-l-unread-indicator",
+    className,
+  );
+
+  const titleStyles = cn(
+    "text-lg font-medium leading-tight transition-colors",
+    isRead
+      ? "text-text-secondary group-hover:text-text-primary"
+      : "text-text-primary group-hover:text-accent-hover",
+  );
+
+  const excerptStyles = cn(
+    "text-base line-clamp-2 md:line-clamp-3 leading-relaxed",
+    isRead ? "text-text-tertiary" : "text-text-secondary",
+  );
 
   return (
     <article
-      className={cn(
-        "group flex flex-col gap-3 p-4 rounded-lg border border-border-subtle bg-surface transition-all hover:shadow-sm hover:border-border",
-        className,
-      )}
+      className={containerStyles}
+      aria-labelledby={`article-title-${item.id}`} // 1. Label the article region
     >
-      <header className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 text-xs text-text-tertiary">
-          <FeedIcon url={feed.iconUrl} title={feed.title} size={16} />
-          <span className="font-medium text-text-secondary truncate max-w-30 md:max-w-none">
+      <header className="flex flex-col gap-2">
+        {/* Metadata row */}
+        <div className="flex items-center gap-2 text-xs font-medium text-text-tertiary">
+          {!isRead && (
+            <div
+              className="size-2 rounded-full bg-unread-indicator shrink-0"
+              aria-hidden="true"
+            />
+          )}
+
+          <FeedIcon url={feed.iconUrl} size={16} />
+
+          <span
+            className={cn(
+              "truncate max-w-30 md:max-w-none",
+              !isRead && "text-text-secondary",
+            )}
+          >
             {feed.title || "Untitled Feed"}
           </span>
-          <span className="opacity-50">•</span>
-          <div className="flex items-center gap-1">
-            <RelativeDate date={item.publishedAt || item.createdAt} />
-          </div>
+
+          <span className="opacity-40" aria-hidden="true">
+            •
+          </span>
+
+          <RelativeDate date={item.publishedAt || item.createdAt} />
         </div>
+
+        {/* Title row */}
         <div className="flex items-start justify-between gap-4">
-          <h3 className="text-lg font-medium leading-normal text-text-primary group-hover:text-accent-hover transition-colors">
+          <h3 className={titleStyles}>
             <a
+              id={`article-title-${item.id}`}
               href={item.url || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
+              onClick={handleLinkClick}
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm after:absolute after:inset-0"
             >
+              {!isRead && <span className="sr-only">Unread: </span>}
               {item.title || "Untitled Article"}
+              <span className="sr-only"> (Opens in a new tab)</span>
             </a>
           </h3>
-          <div className="text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
-            <ExternalLinkIcon className="size-4" />
-          </div>
+
+          <ExternalLinkIcon
+            className="size-4 shrink-0 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity hidden md:block"
+            aria-hidden="true"
+          />
         </div>
       </header>
-      {item.description && (
-        <p className="text-base text-text-secondary line-clamp-2 md:line-clamp-3 leading-loose">
-          {item.description}
-        </p>
-      )}
+
+      {/* Excerpt */}
+      {item.description && <p className={excerptStyles}>{item.description}</p>}
     </article>
   );
 }

@@ -20,23 +20,31 @@ export function FeedIcon({ url, title, className, size = 16 }: FeedIconProps) {
 
   if (!url || error) {
     return (
-      <div 
-        className={cn("flex items-center justify-center bg-muted rounded-sm shrink-0", className)}
+      <div
+        className={cn(
+          "flex items-center justify-center bg-muted rounded-sm shrink-0",
+          className,
+        )}
         style={{ width: size, height: size }}
+        aria-hidden="true"
       >
-        <RssIcon style={{ width: size * 0.7, height: size * 0.7 }} className="text-muted-foreground/50" />
+        <RssIcon
+          style={{ width: size * 0.7, height: size * 0.7 }}
+          className="text-muted-foreground/50"
+        />
       </div>
     );
   }
 
   return (
-    <div 
+    <div
       className={cn("relative overflow-hidden rounded-sm shrink-0", className)}
       style={{ width: size, height: size }}
+      aria-hidden="true"
     >
       <Image
         src={url}
-        alt={title || ""}
+        alt=""
         fill
         sizes={`${size}px`}
         className="object-contain"
