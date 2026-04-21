@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   bigint,
   bigserial,
@@ -7,6 +7,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -25,6 +26,46 @@ export const user = pgTable("user", {
     .notNull(),
   isAnonymous: boolean("is_anonymous").default(false),
 });
+
+export const userPreferences = pgTable("user_preferences", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+
+  layout: text("layout").default("list"),
+  refreshInterval: integer("refresh_interval").default(300),
+  ordering: text("ordering").default("newest"),
+  extraSettings: jsonb("extra_settings"),
+
+  // Watermark for global "Mark all as read"
+  markedAllReadAt: timestamp("marked_all_read_at"),
+
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const userItemStates = pgTable(
+  "user_item_states",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    itemId: bigint("item_id", { mode: "number" })
+      .notNull()
+      .references(() => feedItems.id, { onDelete: "cascade" }),
+
+    readAt: timestamp("read_at"), // If not null, it's explicitly read
+    bookmarkedAt: timestamp("bookmarked_at"), // If not null, it's saved for later
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.itemId] }),
+    index("idx_user_item_states_bookmarks")
+      .on(table.userId)
+      .where(sql`${table.bookmarkedAt} IS NOT NULL`),
+  ],
+);
 
 export const feeds = pgTable("feeds", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
@@ -123,7 +164,10 @@ export const feedItems = pgTable(
   },
   (table) => [
     unique("feed_items_feed_id_guid_unique").on(table.feedId, table.guid),
-    index("idx_feed_items_feed_published").on(table.feedId, table.publishedAt.desc()),
+    index("idx_feed_items_feed_published").on(
+      table.feedId,
+      table.publishedAt.desc(),
+    ),
   ],
 );
 
@@ -186,9 +230,34 @@ export const verification = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ many, one }) => ({
   sessions: many(session),
   accounts: many(account),
+  preferences: one(userPreferences, {
+    fields: [user.id],
+    references: [userPreferences.userId],
+  }),
+  itemStates: many(userItemStates),
+  categories: many(categories),
+  subscriptions: many(subscriptions),
+}));
+
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+  user: one(user, {
+    fields: [userPreferences.userId],
+    references: [user.id],
+  }),
+}));
+
+export const userItemStatesRelations = relations(userItemStates, ({ one }) => ({
+  user: one(user, {
+    fields: [userItemStates.userId],
+    references: [user.id],
+  }),
+  item: one(feedItems, {
+    fields: [userItemStates.itemId],
+    references: [feedItems.id],
+  }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -203,4 +272,40 @@ export const accountRelations = relations(account, ({ one }) => ({
     fields: [account.userId],
     references: [user.id],
   }),
+}));
+
+export const feedRelations = relations(feeds, ({ many }) => ({
+  items: many(feedItems),
+  subscriptions: many(subscriptions),
+}));
+
+export const categoryRelations = relations(categories, ({ one, many }) => ({
+  user: one(user, {
+    fields: [categories.userId],
+    references: [user.id],
+  }),
+  subscriptions: many(subscriptions),
+}));
+
+export const subscriptionRelations = relations(subscriptions, ({ one }) => ({
+  user: one(user, {
+    fields: [subscriptions.userId],
+    references: [user.id],
+  }),
+  feed: one(feeds, {
+    fields: [subscriptions.feedId],
+    references: [feeds.id],
+  }),
+  category: one(categories, {
+    fields: [subscriptions.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+export const feedItemRelations = relations(feedItems, ({ one, many }) => ({
+  feed: one(feeds, {
+    fields: [feedItems.feedId],
+    references: [feeds.id],
+  }),
+  userStates: many(userItemStates),
 }));

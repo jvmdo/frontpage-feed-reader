@@ -22,6 +22,13 @@
       "when": 1775587713641,
       "tag": "0002_quick_mister_fear",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776748086225,
+      "tag": "0003_hard_captain_america",
+      "breakpoints": true
     }
   ]
 }

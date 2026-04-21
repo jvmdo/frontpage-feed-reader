@@ -6,11 +6,19 @@ import type {
   session,
   subscriptions,
   user,
+  userItemStates,
+  userPreferences,
   verification,
 } from "@/db/schema";
 
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
+
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type NewUserPreferences = typeof userPreferences.$inferInsert;
+
+export type UserItemState = typeof userItemStates.$inferSelect;
+export type NewUserItemState = typeof userItemStates.$inferInsert;
 
 export type Feed = typeof feeds.$inferSelect;
 export type NewFeed = typeof feeds.$inferInsert;
@@ -40,4 +48,5 @@ export type FeedWithSubscription = {
 export type FeedItemWithSource = {
   item: FeedItem;
   feed: Feed;
+  isRead: boolean;
 };
