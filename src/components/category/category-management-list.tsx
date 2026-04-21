@@ -46,7 +46,8 @@ export function CategoryManagementList() {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label={`Move feeds to ${category.name}`}
+                aria-label={`Add or remove feeds in ${category.name}`}
+                title={`Add or remove feeds in ${category.name}`}
               >
                 <Plus className="size-6" />
               </Button>
@@ -57,6 +58,7 @@ export function CategoryManagementList() {
                 variant="ghost"
                 size="icon"
                 aria-label={`Rename ${category.name}`}
+                title={`Rename ${category.name}`}
               >
                 <Edit2 className="size-6" />
               </Button>
@@ -66,8 +68,9 @@ export function CategoryManagementList() {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label={`Delete ${category.name}`}
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                aria-label={`Delete ${category.name}`}
+                title={`Delete ${category.name}`}
               >
                 <Trash2 className="size-6" />
               </Button>

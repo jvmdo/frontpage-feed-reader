@@ -1,9 +1,9 @@
 "use client";
 
-import { CheckIcon, Loader2Icon, MoveRightIcon } from "lucide-react";
+import { Loader2Icon, MoveRightIcon, XIcon } from "lucide-react";
+import * as React from "react";
 import { toast } from "sonner";
 import { FeedIcon } from "@/components/feed/feed-icon";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,16 +13,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useCategories } from "@/hooks/use-categories";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
 import { useUpdateSubscription } from "@/hooks/use-update-subscription";
 import { cn } from "@/lib/utils";
+import type { Category, FeedWithSubscription } from "@/types";
 
 interface AssignFeedsDialogProps {
   categoryId: number;
@@ -33,25 +28,41 @@ export function AssignFeedsDialog({
   categoryId,
   children,
 }: AssignFeedsDialogProps) {
-  const { data: subscriptions } = useSubscriptions();
-  const { data: categories } = useCategories();
+  const { data: subscriptions = [] } = useSubscriptions();
+  const { data: categories = [] } = useCategories();
   const { mutate: updateSubscription, isPending } = useUpdateSubscription();
 
   const targetCategory = categories.find((c) => c.id === categoryId);
   const targetCategoryName = targetCategory?.name || "this category";
 
-  const handleMove = (subscriptionId: number) => {
+  const { currentCategoryFeeds, availableFeeds } = React.useMemo(() => {
+    return {
+      currentCategoryFeeds: subscriptions.filter(
+        (s) => s.subscription.categoryId === categoryId,
+      ),
+      availableFeeds: subscriptions.filter(
+        (s) => s.subscription.categoryId !== categoryId,
+      ),
+    };
+  }, [subscriptions, categoryId]);
+
+  const handleAction = (subscriptionId: number, targetCatId?: number) => {
+    const isUnassign = targetCatId === undefined;
+
     updateSubscription(
-      {
-        id: subscriptionId,
-        categoryId,
-      },
+      { id: subscriptionId, categoryId: targetCatId },
       {
         onSuccess: () => {
-          toast.success("Feed moved to category");
+          toast.success(
+            isUnassign
+              ? "Feed removed from category"
+              : "Feed moved to category",
+          );
         },
         onError: (error) => {
-          toast.error(error.message || "Failed to move feed");
+          toast.error(
+            error.message || `Failed to ${isUnassign ? "remove" : "move"} feed`,
+          );
         },
       },
     );
@@ -60,93 +71,171 @@ export function AssignFeedsDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="flex flex-col max-h-[80vh] min-h-75 sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-lg">
-            Assign feeds to {targetCategoryName}
+            Manage feeds in {targetCategoryName}
           </DialogTitle>
           <DialogDescription>
-            Select which feeds you want to move into this category.
+            Add feeds to this category or remove them to move them to
+            Uncategorized.
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-80">
-          <div className="flex flex-col gap-2">
-            {subscriptions.map((subscription) => {
-              const { subscription: sub, feed } = subscription;
-              const isAlreadyIn = sub.categoryId === categoryId;
-              const currentCategory = categories.find(
-                (c) => c.id === sub.categoryId,
-              );
-              const title = sub.customTitle || feed.title || "Untitled Feed";
+        <div className="flex flex-col gap-6 flex-1 min-h-0 pr-4 overflow-y-auto">
+          {currentCategoryFeeds.length > 0 && (
+            <FeedListSection
+              id="current-feeds-list"
+              title="In this category"
+              items={currentCategoryFeeds}
+              isPending={isPending}
+              onAction={(id) => handleAction(id)}
+              actionType="unassign"
+            />
+          )}
 
-              return (
-                <div
-                  key={sub.id}
-                  className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg border border-border/50 p-3"
-                >
-                  <FeedIcon
-                    url={feed.iconUrl || feed.url}
-                    title={title}
-                    size={24}
-                  />
-                  <div className="flex flex-col min-w-0">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="truncate text-sm font-medium">
-                          {title}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>{title}</TooltipContent>
-                    </Tooltip>
-                    <span
-                      className={cn(
-                        "mt-0.5 text-xs",
-                        currentCategory
-                          ? "truncate max-w-50"
-                          : "text-muted-foreground",
-                      )}
-                    >
-                      {currentCategory ? currentCategory.name : "Uncategorized"}
-                    </span>
-                  </div>
-
-                  {isAlreadyIn ? (
-                    <Badge variant="outline" className="h-6">
-                      <CheckIcon className="mr-1 size-3 mt-0.5" />
-                      In Category
-                    </Badge>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="whitespace-nowrap"
-                      onClick={() => handleMove(sub.id)}
-                      disabled={isPending}
-                      aria-label={`Move ${title} to ${targetCategoryName}`}
-                    >
-                      {isPending ? (
-                        <>
-                          <Loader2Icon
-                            className="size-4 animate-spin"
-                            aria-hidden="true"
-                          />
-                          <span className="sr-only">Moving {title}...</span>
-                        </>
-                      ) : (
-                        <>
-                          Move
-                          <MoveRightIcon className="ml-2 size-3" />
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
+          <FeedListSection
+            id="available-feeds-list"
+            title="Available feeds"
+            items={availableFeeds}
+            isPending={isPending}
+            onAction={(id) => handleAction(id, categoryId)}
+            actionType="assign"
+            emptyMessage="No other feeds available."
+            categories={categories}
+          />
+        </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface FeedListSectionProps {
+  title: string;
+  id: string;
+  items: FeedWithSubscription[];
+  isPending: boolean;
+  onAction: (id: number) => void;
+  actionType: "assign" | "unassign";
+  emptyMessage?: string;
+  categories?: Category[];
+}
+
+function FeedListSection({
+  title,
+  id,
+  items,
+  isPending,
+  onAction,
+  actionType,
+  emptyMessage,
+  categories,
+}: FeedListSectionProps) {
+  const headerId = `${id}-header`;
+
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby={headerId}>
+      <h3
+        id={headerId}
+        className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+      >
+        {title}
+      </h3>
+
+      {items.length === 0 && emptyMessage ? (
+        <p className="text-sm text-muted-foreground italic px-1">
+          {emptyMessage}
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {items.map((item) => {
+            const currentCat = categories?.find(
+              (c) => c.id === item.subscription.categoryId,
+            );
+            return (
+              <li key={item.subscription.id}>
+                <FeedItemRow
+                  item={item}
+                  isPending={isPending}
+                  onAction={() => onAction(item.subscription.id)}
+                  actionType={actionType}
+                  currentCategoryName={currentCat?.name}
+                />
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function FeedItemRow({
+  item,
+  isPending,
+  onAction,
+  actionType,
+  currentCategoryName,
+}: {
+  item: FeedWithSubscription;
+  isPending: boolean;
+  onAction: () => void;
+  actionType: "assign" | "unassign";
+  currentCategoryName?: string;
+}) {
+  const { subscription: sub, feed } = item;
+  const title = sub.customTitle || feed.title || "Untitled Feed";
+
+  return (
+    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-lg border border-border/50 p-3 hover:bg-muted/30 transition-colors">
+      <FeedIcon url={feed.iconUrl || feed.url} title={title} size={24} />
+
+      <div className="flex flex-col min-w-0">
+        <span className="truncate text-sm font-medium cursor-default">
+          {title}
+        </span>
+        <span className="mt-0.5 truncate text-xs text-muted-foreground">
+          {actionType === "unassign"
+            ? "Currently in this category"
+            : currentCategoryName || "Uncategorized"}
+        </span>
+      </div>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className={cn(
+          "whitespace-nowrap h-8",
+          actionType === "unassign" &&
+            "hover:text-destructive hover:bg-destructive/10",
+        )}
+        onClick={onAction}
+        disabled={isPending}
+        aria-label={
+          actionType === "unassign"
+            ? `Remove ${title} from category`
+            : `Move ${title} to category`
+        }
+      >
+        {isPending ? (
+          <div className="flex items-center gap-2">
+            <Loader2Icon className="size-4 animate-spin" aria-hidden="true" />
+            <span className="sr-only">
+              {actionType === "unassign" ? "Removing..." : "Moving..."}
+            </span>
+          </div>
+        ) : actionType === "unassign" ? (
+          <>
+            Remove
+            <XIcon className="ml-2 size-3" />
+          </>
+        ) : (
+          <>
+            Move
+            <MoveRightIcon className="ml-2 size-3" />
+          </>
+        )}
+      </Button>
+    </div>
   );
 }

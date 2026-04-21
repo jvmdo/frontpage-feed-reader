@@ -118,12 +118,12 @@ test.describe("Organizational Flow", () => {
 
     // 7. Step 6: Assign Feed A to "Empty" via empty state button
     const assignDialog = page.getByRole("dialog", {
-      name: /assign feeds to empty/i,
+      name: /manage feeds in empty/i,
     });
 
     // Move Feed A to Empty
     await assignDialog
-      .getByRole("button", { name: /move feed a to empty/i })
+      .getByRole("button", { name: /move feed a to category/i })
       .click();
     await expect(
       page

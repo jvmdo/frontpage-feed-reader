@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: test assets */
+
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { toast } from "sonner";
@@ -8,7 +10,7 @@ import {
   createMockFeedWithSubscription,
 } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
-import { render, screen, waitFor } from "@/tests/rtl-utils";
+import { render, screen, waitFor, within } from "@/tests/rtl-utils";
 import { AssignFeedsDialog } from "./assign-feeds-dialog";
 
 // Mock the server action
@@ -43,7 +45,7 @@ describe("AssignFeedsDialog", () => {
     }),
     createMockFeedWithSubscription({
       feed: { title: "Feed 3" },
-      subscription: { id: 3, categoryId: 10 }, // Already in Tech
+      subscription: { id: 3, categoryId: targetCategoryId }, // Already in Tech
     }),
   ];
 
@@ -73,7 +75,7 @@ describe("AssignFeedsDialog", () => {
     return { user };
   };
 
-  it("opens the dialog and lists subscriptions with their current categories", async () => {
+  it("opens the dialog and groups subscriptions correctly", async () => {
     const { user } = setup();
 
     await user.click(
@@ -81,28 +83,67 @@ describe("AssignFeedsDialog", () => {
     );
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText(/assign feeds to tech/i)).toBeInTheDocument();
+    expect(screen.getByText(/manage feeds in tech/i)).toBeInTheDocument();
+
+    // Check "In this category" section
+    expect(
+      screen.getByRole("heading", { name: /in this category/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Feed 3")).toBeInTheDocument();
+    expect(screen.getByText("Currently in this category")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /remove feed 3 from category/i }),
+    ).toBeInTheDocument();
+
+    // Check "Available feeds" section
+    expect(
+      screen.getByRole("heading", { name: /available feeds/i }),
+    ).toBeInTheDocument();
 
     // Check Feed 1 (Uncategorized)
     expect(screen.getByText("Feed 1")).toBeInTheDocument();
     expect(screen.getByText("Uncategorized")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /move feed 1 to tech/i }),
+      screen.getByRole("button", { name: /move feed 1 to category/i }),
     ).toBeInTheDocument();
 
     // Check Feed 2 (Design)
     expect(screen.getByText("Feed 2")).toBeInTheDocument();
     expect(screen.getByText("Design")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /move feed 2 to tech/i }),
+      screen.getByRole("button", { name: /move feed 2 to category/i }),
     ).toBeInTheDocument();
+  });
 
-    // Check Feed 3 (Already in Tech)
-    expect(screen.getByText("Feed 3")).toBeInTheDocument();
-    expect(screen.getByText("In Category")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /move feed 3 to tech/i }),
-    ).not.toBeInTheDocument();
+  it("calls updateSubscriptionAction with null when 'Remove' is clicked", async () => {
+    const { user } = setup();
+    vi.mocked(updateSubscriptionAction).mockResolvedValue({
+      success: true,
+      data: { id: 3, categoryId: null } as any,
+    });
+
+    await user.click(
+      await screen.findByRole("button", { name: /open dialog/i }),
+    );
+
+    const removeButton = await screen.findByRole("button", {
+      name: /remove feed 3 from category/i,
+    });
+    await user.click(removeButton);
+
+    expect(updateSubscriptionAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 3,
+      }),
+    );
+    // categoryId might be undefined or null depending on how the action is called
+    const callArgs = vi.mocked(updateSubscriptionAction).mock
+      .calls[0][0] as any;
+    expect(callArgs.categoryId == null).toBe(true);
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Feed removed from category");
+    });
   });
 
   it("calls updateSubscriptionAction when 'Move' is clicked", async () => {
@@ -117,7 +158,7 @@ describe("AssignFeedsDialog", () => {
     );
 
     const moveButton = await screen.findByRole("button", {
-      name: /move feed 1 to tech/i,
+      name: /move feed 1 to category/i,
     });
     await user.click(moveButton);
 
@@ -144,7 +185,7 @@ describe("AssignFeedsDialog", () => {
     );
 
     const moveButton = await screen.findByRole("button", {
-      name: /move feed 1 to tech/i,
+      name: /move feed 1 to category/i,
     });
     await user.click(moveButton);
 
@@ -167,12 +208,12 @@ describe("AssignFeedsDialog", () => {
     );
 
     const moveButton = await screen.findByRole("button", {
-      name: /move feed 1 to tech/i,
+      name: /move feed 1 to category/i,
     });
     await user.click(moveButton);
 
     expect(moveButton).toBeDisabled();
-    expect(screen.getByText(/moving feed 1.../i)).toBeInTheDocument();
+    expect(within(moveButton).getByText(/moving\.\.\./i)).toBeInTheDocument();
 
     resolveAction({
       success: true,
@@ -181,6 +222,39 @@ describe("AssignFeedsDialog", () => {
 
     await waitFor(() => {
       expect(moveButton).toBeEnabled();
+    });
+  });
+
+  it("displays loading state while removing a feed", async () => {
+    const { user } = setup();
+
+    let resolveAction!: (value: any) => void;
+    const pendingPromise = new Promise((resolve) => {
+      resolveAction = resolve;
+    });
+    vi.mocked(updateSubscriptionAction).mockReturnValue(pendingPromise as any);
+
+    await user.click(
+      await screen.findByRole("button", { name: /open dialog/i }),
+    );
+
+    const removeButton = await screen.findByRole("button", {
+      name: /remove feed 3 from category/i,
+    });
+    await user.click(removeButton);
+
+    expect(removeButton).toBeDisabled();
+    expect(
+      within(removeButton).getByText(/removing\.\.\./i),
+    ).toBeInTheDocument();
+
+    resolveAction({
+      success: true,
+      data: { id: 3, categoryId: null },
+    });
+
+    await waitFor(() => {
+      expect(removeButton).toBeEnabled();
     });
   });
 });
