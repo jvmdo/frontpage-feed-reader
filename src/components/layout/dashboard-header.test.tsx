@@ -1,8 +1,9 @@
+import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockFeedWithSubscription } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
-import { render, screen } from "@/tests/rtl-utils";
+import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { DashboardBreadcrumb } from "./dashboard-breadcrumb";
 import { DashboardHeader } from "./dashboard-header";
 
@@ -16,8 +17,17 @@ const mockSubscriptions = [
   }),
 ];
 
+const { markAllReadActionMock } = vi.hoisted(() => ({
+  markAllReadActionMock: vi.fn(),
+}));
+
+vi.mock("@/actions/feed/mark-all-read-action", () => ({
+  markAllReadAction: markAllReadActionMock,
+}));
+
 describe("DashboardHeader & DashboardBreadcrumb", () => {
   beforeEach(() => {
+    markAllReadActionMock.mockResolvedValue({ success: true });
     server.use(
       http.get("/api/feeds/subscriptions", () => {
         return HttpResponse.json({ success: true, data: mockSubscriptions });
@@ -109,6 +119,85 @@ describe("DashboardHeader & DashboardBreadcrumb", () => {
       expect(
         await screen.findByRole("heading", { name: /all items/i }),
       ).toBeInTheDocument();
+    });
+
+    describe("Bulk Mark Read", () => {
+      const user = userEvent.setup();
+
+      it('shows "Mark all as read" button when unread items exist', async () => {
+        render(<DashboardHeader />);
+
+        expect(
+          await screen.findByRole("button", { name: /mark all as read/i }),
+        ).toBeInTheDocument();
+      });
+
+      it('does not show "Mark all as read" button when unread count is 0', async () => {
+        server.use(
+          http.get("/api/feeds/unread-counts", () => {
+            return HttpResponse.json({
+              success: true,
+              data: { global: 0, categories: {}, feeds: {} },
+            });
+          }),
+        );
+
+        render(<DashboardHeader />);
+
+        // Heading should appear first
+        expect(
+          await screen.findByRole("heading", { name: /all items/i }),
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByRole("button", { name: /mark all as read/i }),
+        ).not.toBeInTheDocument();
+      });
+
+      it("opens confirmation dialog when clicking the button", async () => {
+        render(<DashboardHeader />);
+
+        const markReadBtn = await screen.findByRole("button", {
+          name: /mark all as read/i,
+        });
+        await user.click(markReadBtn);
+
+        expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+        expect(
+          screen.getByText(/mark everything as read\?/i),
+        ).toBeInTheDocument();
+      });
+
+      it("optimistically updates unread count when confirmed", async () => {
+        let resolveAction!: (val: any) => void;
+        const actionPromise = new Promise((resolve) => {
+          resolveAction = resolve;
+        });
+        markAllReadActionMock.mockReturnValue(actionPromise);
+
+        render(<DashboardHeader />);
+
+        // Initial count
+        expect(await screen.findByText(/5 unread/i)).toBeInTheDocument();
+
+        const markReadBtn = await screen.findByRole("button", {
+          name: /mark all as read/i,
+        });
+        await user.click(markReadBtn);
+
+        const confirmBtn = screen.getByRole("button", {
+          name: /^mark all as read$/i,
+        });
+        await user.click(confirmBtn);
+
+        // OPTIMISTIC UPDATE: Count should be gone instantly
+        expect(screen.queryByText(/5 unread/i)).not.toBeInTheDocument();
+
+        // Resolve the action and wait for the dialog to close
+        resolveAction({ success: true });
+        await waitFor(() => {
+          expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+        });
+      });
     });
   });
 
