@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { FeedItemList } from "@/components/feed/feed-item-list";
 import FeedItemListSkeleton from "@/components/feed/feed-item-list-skeleton";
 import { DashboardHeader } from "@/components/layout/dashboard-header";
+import { FeedReaderSheet } from "@/components/reader/feed-reader-sheet";
 import { db } from "@/db";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import { getQueryClient } from "@/lib/get-query-client";
@@ -59,6 +60,7 @@ export default async function DashboardPage({
           </Suspense>
         </HydrationBoundary>
       </section>
+      <FeedReaderSheet />
     </div>
   );
 }

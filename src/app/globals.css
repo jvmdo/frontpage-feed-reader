@@ -203,6 +203,76 @@
   --shadow-lg-val: 0 10px 15px -3px #00000080, 0 4px 6px -4px #0000004d;
 }
 
+@layer components {
+  .article-content {
+    @apply font-serif text-base leading-loose text-text-secondary;
+
+    h1, h2, h3, h4, h5, h6 {
+      @apply font-sans font-semibold text-text-primary mt-8 mb-4 leading-tight;
+    }
+
+    h1 { @apply text-2xl; }
+    h2 { @apply text-xl; }
+    h3 { @apply text-lg; }
+
+    p {
+      @apply mb-6;
+    }
+
+    a {
+      @apply text-accent underline underline-offset-4 decoration-accent/30 hover:decoration-accent transition-colors;
+    }
+
+    blockquote {
+      @apply pl-6 border-l-4 border-border-subtle italic text-text-tertiary mb-6 py-1;
+    }
+
+    ul, ol {
+      @apply mb-6 pl-6;
+    }
+
+    ul {
+      @apply list-disc;
+    }
+
+    ol {
+      @apply list-decimal;
+    }
+
+    li {
+      @apply mb-2;
+    }
+
+    pre {
+      @apply bg-bg-secondary p-4 rounded-lg overflow-x-auto mb-6 border border-border-subtle font-mono text-sm;
+    }
+
+    code {
+      @apply font-mono bg-bg-secondary px-1.5 py-0.5 rounded border border-border-subtle text-[0.9em];
+    }
+
+    pre code {
+      @apply p-0 bg-transparent border-0 text-inherit;
+    }
+
+    img, figure {
+      @apply my-8 rounded-lg border border-border-subtle mx-auto max-w-full h-auto;
+    }
+
+    figcaption {
+      @apply text-center text-xs text-text-tertiary mt-2 font-sans;
+    }
+
+    hr {
+      @apply my-10 border-border-subtle;
+    }
+
+    iframe {
+      @apply w-full aspect-video rounded-lg border border-border-subtle my-8;
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

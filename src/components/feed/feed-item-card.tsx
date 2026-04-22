@@ -1,7 +1,7 @@
 "use client";
 
-import { ExternalLinkIcon } from "lucide-react";
 import { RelativeDate } from "@/components/shared/relative-date";
+import { useActiveItem } from "@/hooks/use-active-item";
 import { useMarkAsRead } from "@/hooks/use-mark-as-read";
 import { cn } from "@/lib/utils";
 import type { FeedItemWithSource } from "@/types";
@@ -15,16 +15,19 @@ interface FeedItemCardProps {
 export function FeedItemCard({ data, className }: FeedItemCardProps) {
   const { item, feed, isRead } = data;
   const { mutate: markAsRead } = useMarkAsRead();
+  const { setActiveItemId } = useActiveItem();
 
-  const handleLinkClick = () => {
+  const handleOpenReader = () => {
     if (!isRead) {
       markAsRead({ itemId: item.id });
     }
+    setActiveItemId(item.id);
   };
 
   const containerStyles = cn(
-    "group relative flex flex-col gap-3 p-4 rounded-lg border bg-surface transition-all",
+    "group relative flex flex-col gap-3 p-4 rounded-lg border bg-surface transition-all text-left",
     "hover:shadow-md hover:border-border-strong",
+    "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:outline-none",
     isRead
       ? "opacity-70 border-border-subtle"
       : "border-l-4 border-l-unread-indicator",
@@ -32,7 +35,7 @@ export function FeedItemCard({ data, className }: FeedItemCardProps) {
   );
 
   const titleStyles = cn(
-    "text-lg font-medium leading-tight transition-colors",
+    "text-lg font-medium leading-tight transition-colors text-left",
     isRead
       ? "text-text-secondary group-hover:text-text-primary"
       : "text-text-primary group-hover:text-accent-hover",
@@ -46,7 +49,7 @@ export function FeedItemCard({ data, className }: FeedItemCardProps) {
   return (
     <article
       className={containerStyles}
-      aria-labelledby={`article-title-${item.id}`} // 1. Label the article region
+      aria-labelledby={`article-title-${item.id}`}
     >
       <header className="flex flex-col gap-2">
         {/* Metadata row */}
@@ -79,24 +82,17 @@ export function FeedItemCard({ data, className }: FeedItemCardProps) {
         {/* Title row */}
         <div className="flex items-start justify-between gap-4">
           <h3 className={titleStyles}>
-            <a
+            <button
               id={`article-title-${item.id}`}
-              href={item.url || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={handleLinkClick}
-              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm after:absolute after:inset-0"
+              type="button"
+              onClick={handleOpenReader}
+              className="cursor-pointer focus:outline-none rounded-sm after:absolute after:inset-0 after:z-10 text-left"
             >
               {!isRead && <span className="sr-only">Unread: </span>}
               {item.title || "Untitled Article"}
-              <span className="sr-only"> (Opens in a new tab)</span>
-            </a>
+              <span className="sr-only"> (Opens reader)</span>
+            </button>
           </h3>
-
-          <ExternalLinkIcon
-            className="size-4 shrink-0 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity hidden md:block"
-            aria-hidden="true"
-          />
         </div>
       </header>
 
