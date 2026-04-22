@@ -91,3 +91,26 @@ export class CategoryNotFoundError extends Error {
     this.name = "CategoryNotFoundError";
   }
 }
+
+/**
+ * Thrown when an invalid scope is provided to markAllRead.
+ */
+export class InvalidMarkAllReadScopeError extends Error {
+  code = "INVALID_MARK_ALL_READ_SCOPE" as const;
+  constructor(scope: string) {
+    super(`Invalid scope: ${scope}`);
+    this.name = "InvalidMarkAllReadScopeError";
+  }
+}
+
+/**
+ * Thrown when an ID is required but missing for a specific scope in markAllRead.
+ */
+export class MarkAllReadIdRequiredError extends Error {
+  code = "MARK_ALL_READ_ID_REQUIRED" as const;
+  constructor(scope: "category" | "feed") {
+    const formattedScope = scope.charAt(0).toUpperCase() + scope.slice(1);
+    super(`${formattedScope} ID is required for ${scope} scope`);
+    this.name = "MarkAllReadIdRequiredError";
+  }
+}

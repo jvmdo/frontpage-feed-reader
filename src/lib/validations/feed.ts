@@ -39,6 +39,13 @@ export const markAsReadSchema = z.object({
 
 export type MarkAsReadInput = z.infer<typeof markAsReadSchema>;
 
+export const markAllReadSchema = z.object({
+  scope: z.enum(["global", "category", "feed"]),
+  id: z.coerce.number().optional(),
+});
+
+export type MarkAllReadInput = z.infer<typeof markAllReadSchema>;
+
 export const feedItemsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(PAGINATION_LIMIT),
   offset: z.coerce.number().int().min(0).default(PAGINATION_INITIAL_OFFSET),
