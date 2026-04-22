@@ -41,8 +41,8 @@ test.describe("Unread Flow", () => {
     await expect(itemCard).toHaveClass(/border-l-unread-indicator/);
 
     // 6. Click the item link to mark as read
-    // We target the link specifically
-    const itemLink = itemCard.getByRole("link", { name: itemTitle });
+    // We target the button specifically
+    const itemLink = itemCard.getByRole("button", { name: new RegExp(itemTitle, "i") });
 
     // Before clicking, let's ensure we are tracking the network request if possible,
     // but Playwright's expect.poll or just awaiting the state change is usually better.
@@ -59,7 +59,7 @@ test.describe("Unread Flow", () => {
     await expect(allItemsBadge).toHaveText("4");
 
     // 10. Verify Dashboard Header also shows the count
-    const header = page.locator("header");
+    const header = page.locator("main header");
     await expect(header.locator("h1")).toHaveText(/All Items 4 unread/i);
   });
 });

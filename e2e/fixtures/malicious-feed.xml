@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Malicious Feed</title>
+    <link>https://evil.com</link>
+    <description>A feed containing XSS payloads.</description>
+    <item>
+      <title>XSS Article</title>
+      <link>https://evil.com/xss</link>
+      <pubDate>Thu, 02 Apr 2026 13:58:24 +0000</pubDate>
+      <guid>malicious-guid-1</guid>
+      <description>
+        This is a malicious description.
+        &lt;img src="invalid" onerror="window.XSS_EXECUTED = true"&gt;
+        &lt;script&gt;window.XSS_EXECUTED = true&lt;/script&gt;
+      </description>
+      <content:encoded>
+        &lt;div&gt;Malicious content.&lt;/div&gt;
+        &lt;img src="invalid" onerror="window.XSS_EXECUTED = true"&gt;
+        &lt;script&gt;window.XSS_EXECUTED = true&lt;/script&gt;
+        &lt;iframe src="javascript:alert(1)"&gt;&lt;/iframe&gt;
+      </content:encoded>
+    </item>
+  </channel>
+</rss>

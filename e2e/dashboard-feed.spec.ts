@@ -65,7 +65,7 @@ test.describe("Dashboard Feed", () => {
     // 5. Verify items from both feeds are visible using semantic roles
     // From Atom feed
     await expect(
-      page.getByRole("link", { name: /Optimizing Vercel Sandbox snapshots/i }),
+      page.getByRole("button", { name: /Optimizing Vercel Sandbox snapshots/i }),
     ).toBeVisible();
     await expect(
       page.getByText("Standard Atom 1.0 Feed").first(),
@@ -73,7 +73,7 @@ test.describe("Dashboard Feed", () => {
 
     // From RSS feed
     await expect(
-      page.getByRole("link", {
+      page.getByRole("button", {
         name: /Making Complex CSS Shapes Using shape\(\)/i,
       }),
     ).toBeVisible();

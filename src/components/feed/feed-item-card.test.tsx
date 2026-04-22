@@ -46,28 +46,28 @@ describe("FeedItemCard", () => {
     expect(dot).not.toBeInTheDocument();
   });
 
-  it("calls markAsRead when clicking the link of an unread item", async () => {
+  it("calls markAsRead when clicking an unread item card", async () => {
     const user = userEvent.setup();
     const data = createMockFeedItemWithSource({ isRead: false });
     render(<FeedItemCard data={data} />);
 
-    const link = screen.getByRole("link", {
+    const button = screen.getByRole("button", {
       name: RegExp(data.item.title!, "i"),
     });
-    await user.click(link);
+    await user.click(button);
 
     expect(mockMutate).toHaveBeenCalledWith({ itemId: data.item.id });
   });
 
-  it("does not call markAsRead when clicking the link of an already read item", async () => {
+  it("does not call markAsRead when clicking an already read item card", async () => {
     const user = userEvent.setup();
     const data = createMockFeedItemWithSource({ isRead: true });
     render(<FeedItemCard data={data} />);
 
-    const link = screen.getByRole("link", {
+    const button = screen.getByRole("button", {
       name: RegExp(data.item.title!, "i"),
     });
-    await user.click(link);
+    await user.click(button);
 
     expect(mockMutate).not.toHaveBeenCalled();
   });
