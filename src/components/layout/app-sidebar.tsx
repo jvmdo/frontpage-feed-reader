@@ -68,7 +68,9 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                     <LinkPendingIndicator />
                   </DashboardLink>
                 </SidebarMenuButton>
-                <SidebarMenuBadge>{unreadCounts?.global}</SidebarMenuBadge>
+                {unreadCounts?.global && unreadCounts.global > 0 ? (
+                  <SidebarMenuBadge>{unreadCounts.global}</SidebarMenuBadge>
+                ) : null}
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -81,7 +83,6 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                     <span>Saved</span>
                   </Link>
                 </SidebarMenuButton>
-                <SidebarMenuBadge>3</SidebarMenuBadge>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
