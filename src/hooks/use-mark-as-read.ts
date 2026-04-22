@@ -33,9 +33,10 @@ export function useMarkAsRead() {
       await queryClient.cancelQueries({ queryKey: ["feeds", "unread-counts"] });
 
       // 2. Snapshot current state for rollback
-      const previousQueries = queryClient.getQueriesData<
-        InfiniteData<FeedItemWithSource[]>
-      >({
+      // Data can be either an Infinite list or a single Item detail
+      type CacheData = InfiniteData<FeedItemWithSource[]> | FeedItemWithSource;
+      
+      const previousQueries = queryClient.getQueriesData<CacheData>({
         queryKey: ["feeds", "items"],
       });
       const previousCounts = queryClient.getQueryData<UnreadCounts>([
@@ -46,24 +47,36 @@ export function useMarkAsRead() {
       let itemWasUnread = false;
 
       // 3. Optimistically update items in all related feeds
-      queryClient.setQueriesData<InfiniteData<FeedItemWithSource[]>>(
+      queryClient.setQueriesData<CacheData>(
         { queryKey: ["feeds", "items"] },
         (old) => {
           if (!old) return old;
 
-          const newPages = old.pages.map((page) =>
-            page.map((itemWithSource) => {
-              if (itemWithSource.item.id === itemId) {
-                if (!itemWithSource.isRead) {
-                  itemWasUnread = true;
+          // Handle Infinite Query (List)
+          if ("pages" in old) {
+            const newPages = old.pages.map((page) =>
+              page.map((itemWithSource) => {
+                if (itemWithSource.item.id === itemId) {
+                  if (!itemWithSource.isRead) {
+                    itemWasUnread = true;
+                  }
+                  return { ...itemWithSource, isRead: true };
                 }
-                return { ...itemWithSource, isRead: true };
-              }
-              return itemWithSource;
-            }),
-          );
+                return itemWithSource;
+              }),
+            );
+            return { ...old, pages: newPages };
+          }
 
-          return { ...old, pages: newPages };
+          // Handle Single Query (Detail)
+          if ("item" in old && old.item.id === itemId) {
+            if (!old.isRead) {
+              itemWasUnread = true;
+            }
+            return { ...old, isRead: true };
+          }
+
+          return old;
         },
       );
 
@@ -94,6 +107,10 @@ export function useMarkAsRead() {
     onSettled: () => {
       // Invalidate to ensure consistency with server
       queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+      queryClient.invalidateQueries({
+        queryKey: ["feeds", "items"],
+        refetchType: "active",
+      });
     },
   });
 }
