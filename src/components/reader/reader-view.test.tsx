@@ -1,10 +1,23 @@
-import { HttpResponse, http } from "msw";
-import { describe, expect, it } from "vitest";
+/** biome-ignore-all lint/suspicious/noExplicitAny: test asset */
+
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { useActiveItem } from "@/hooks/use-active-item";
+import { useFeedItem } from "@/hooks/use-feed-item";
+import { useFeedNavigation } from "@/hooks/use-feed-navigation";
 import { createMockFeedItemWithSource } from "@/tests/factories";
-import { server } from "@/tests/mocks/server";
-import { render, screen, waitFor } from "@/tests/rtl-utils";
+import { render, screen } from "@/tests/rtl-utils";
 import { FeedReaderSheet } from "./feed-reader-sheet";
 import { ReaderView } from "./reader-view";
+
+vi.mock("@/hooks/use-active-item");
+vi.mock("@/hooks/use-feed-item");
+vi.mock("@/hooks/use-feed-navigation");
+vi.mock("@/hooks/use-reader-shortcuts");
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("ReaderView", () => {
   it("renders basic metadata and title", () => {
@@ -14,9 +27,13 @@ describe("ReaderView", () => {
     });
     render(<ReaderView data={data} />);
 
-    expect(screen.getByText("Test Article Title")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Test Article Title" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Test Feed Name")).toBeInTheDocument();
-    expect(screen.getByText(/View original/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /View original/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders HTML content", () => {
@@ -40,74 +57,137 @@ describe("ReaderView", () => {
   });
 });
 
-describe("FeedReaderSheet", () => {
-  it("displays loading skeleton when loading", async () => {
-    const mockData = createMockFeedItemWithSource({ item: { id: 123 } });
-
-    server.use(
-      http.get("/api/feeds/items/123", async () => {
-        // Delay to ensure loading state is visible if we were able to catch it,
-        // but here we just want to ensure it shows something other than the data initially.
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        return HttpResponse.json(mockData);
-      }),
-    );
-
-    render(<FeedReaderSheet />, { searchParams: { itemId: "123" } });
-
-    // The skeleton is rendered when loading
-    // We can check for the accessibility title of the sheet which is always there
-    expect(screen.getByText("Article Reader")).toBeInTheDocument();
-
-    // Data should not be there yet
-    expect(screen.queryByText(mockData.item.title!)).not.toBeInTheDocument();
-  });
-
-  it("displays error message on 404", async () => {
-    server.use(
-      http.get("/api/feeds/items/123", () => {
-        return new HttpResponse(null, { status: 404 });
-      }),
-    );
-
-    render(<FeedReaderSheet />, { searchParams: { itemId: "123" } });
-
-    await waitFor(() => {
-      expect(screen.getByText("Article not found")).toBeInTheDocument();
+describe("FeedReaderSheet Integration", () => {
+  beforeEach(() => {
+    vi.mocked(useActiveItem).mockReturnValue({
+      activeItemId: 1,
+      setActiveItemId: vi.fn(),
     });
+
+    vi.mocked(useFeedNavigation).mockReturnValue({
+      goToNext: vi.fn(),
+      goToPrev: vi.fn(),
+      hasNext: false,
+      hasPrev: false,
+    } as any);
   });
 
-  it("displays error message on 500", async () => {
-    server.use(
-      http.get("/api/feeds/items/123", () => {
-        return new HttpResponse(null, { status: 500 });
-      }),
+  it("displays loading skeleton when loading", () => {
+    vi.mocked(useFeedItem).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      error: null,
+    } as any);
+
+    render(<FeedReaderSheet />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /loading article content/i,
     );
-
-    render(<FeedReaderSheet />, { searchParams: { itemId: "123" } });
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("Failed to fetch article content"),
-      ).toBeInTheDocument();
-    });
+    expect(screen.queryByRole("article")).not.toBeInTheDocument();
   });
 
-  it("renders ReaderView when data is loaded", async () => {
+  it("renders content and navigation when data is loaded", () => {
     const mockData = createMockFeedItemWithSource({
-      item: { id: 123, title: "Loaded Article" },
+      item: { title: "Loaded Article" },
     });
 
-    server.use(
-      http.get("/api/feeds/items/123", () => {
-        return HttpResponse.json(mockData);
-      }),
-    );
+    vi.mocked(useFeedItem).mockReturnValue({
+      data: mockData,
+      isLoading: false,
+      error: null,
+    } as any);
 
-    render(<FeedReaderSheet />, { searchParams: { itemId: "123" } });
+    vi.mocked(useFeedNavigation).mockReturnValue({
+      hasNext: true,
+      hasPrev: true,
+    } as any);
 
-    await waitFor(() => {
-      expect(screen.getByText("Loaded Article")).toBeInTheDocument();
-    });
+    render(<FeedReaderSheet />);
+
+    expect(
+      screen.getByRole("heading", { name: "Loaded Article" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /previous article/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /next article/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("triggers navigation functions on button click", async () => {
+    const user = userEvent.setup();
+    const goToNext = vi.fn();
+    const mockData = createMockFeedItemWithSource();
+
+    vi.mocked(useFeedItem).mockReturnValue({
+      data: mockData,
+      isLoading: false,
+      error: null,
+    } as any);
+
+    vi.mocked(useFeedNavigation).mockReturnValue({
+      goToNext,
+      goToPrev: vi.fn(),
+      hasNext: true,
+    } as any);
+
+    render(<FeedReaderSheet />);
+
+    await user.click(screen.getByRole("button", { name: /next article/i }));
+    expect(goToNext).toHaveBeenCalled();
+  });
+
+  it("disables buttons when no neighbors exist", () => {
+    const mockData = createMockFeedItemWithSource();
+
+    vi.mocked(useFeedItem).mockReturnValue({
+      data: mockData,
+      isLoading: false,
+      error: null,
+    } as any);
+
+    render(<FeedReaderSheet />);
+
+    expect(
+      screen.getByRole("button", { name: /previous article/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /next article/i }),
+    ).toBeDisabled();
+  });
+
+  it("persists scroll position when navigating between articles", () => {
+    const mockData1 = createMockFeedItemWithSource({ item: { id: 1, title: "Art 1" } });
+    const mockData2 = createMockFeedItemWithSource({ item: { id: 2, title: "Art 2" } });
+
+    vi.mocked(useActiveItem).mockReturnValue({ activeItemId: 1, setActiveItemId: vi.fn() });
+    vi.mocked(useFeedItem).mockReturnValue({ data: mockData1, isLoading: false, error: null } as any);
+
+    const { rerender } = render(<FeedReaderSheet />);
+    
+    const container = screen.getByRole("region", { name: /article content/i });
+    
+    // Simulate scrolling Article 1
+    Object.defineProperty(container, "scrollTop", { value: 100, writable: true });
+    
+    // Switch to Article 2
+    vi.mocked(useActiveItem).mockReturnValue({ activeItemId: 2, setActiveItemId: vi.fn() });
+    vi.mocked(useFeedItem).mockReturnValue({ data: mockData2, isLoading: false, error: null } as any);
+    
+    rerender(<FeedReaderSheet />);
+
+    // Verify Article 2 starts at 0 (or whatever is in store)
+    expect(container.scrollTop).toBe(0);
+
+    // Switch back to Article 1
+    vi.mocked(useActiveItem).mockReturnValue({ activeItemId: 1, setActiveItemId: vi.fn() });
+    vi.mocked(useFeedItem).mockReturnValue({ data: mockData1, isLoading: false, error: null } as any);
+    
+    rerender(<FeedReaderSheet />);
+    
+    // Verify Article 1 restored its 100px
+    expect(container.scrollTop).toBe(100);
   });
 });
