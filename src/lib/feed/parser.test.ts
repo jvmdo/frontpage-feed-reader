@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { FeedInvalidFormatError } from "@/lib/errors";
 import { parseFeedXml } from "./parser";
 
@@ -95,7 +95,9 @@ describe("parseFeedXml", () => {
 
     expect(result.metadata.title).toBe("Test & Feed");
     expect(result.items[0].title).toBe("Title 'with' entities & stuff");
-    expect(result.items[0].description).toContain("with tags and & entities");
+    expect(result.items[0].description).toContain(
+      "<p>Description <b>with</b> tags and &amp; entities</p>",
+    );
   });
 
   it("normalizes relative URLs", async () => {
@@ -191,7 +193,7 @@ describe("parseFeedXml", () => {
     const result = await parseFeedXml(xml);
     const item = result.items[0];
 
-    expect(item.description).toBe("Safe alert(1) text");
+    expect(item.description).toBe("<p>Safe  text</p>\n");
     expect(item.content).toBe("<div>Safe</div>");
   });
 

@@ -1,15 +1,21 @@
 import createDOMPurify from "dompurify";
 import { JSDOM } from "jsdom";
+import { marked } from "marked";
 
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window as any);
 
 /**
  * Sanitizes an HTML string to prevent XSS and other malicious content.
+ * Also handles Markdown-style formatting common in some feeds.
  */
-export function sanitizeHtml(html: string | undefined | null): string {
-  if (!html) return "";
+export function sanitizeHtml(text: string | undefined | null): string {
+  if (!text) return "";
 
+  // 1. Convert Markdown/Plain-text to HTML using marked.
+  const html = marked.parse(text, { gfm: true, breaks: true }) as string;
+
+  // 2. Clean the resulting HTML with DOMPurify
   return DOMPurify.sanitize(html, {
     // Default allowed tags plus figure/figcaption which are common in tech blogs
     ALLOWED_TAGS: [

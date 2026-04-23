@@ -97,7 +97,13 @@ export function FeedItemCard({ data, className }: FeedItemCardProps) {
       </header>
 
       {/* Excerpt */}
-      {item.description && <p className={excerptStyles}>{item.description}</p>}
+      {item.description && (
+        <div
+          className={excerptStyles}
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: It's all good man
+          dangerouslySetInnerHTML={{ __html: item.description }}
+        />
+      )}
     </article>
   );
 }

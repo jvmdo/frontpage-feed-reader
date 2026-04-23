@@ -6,21 +6,21 @@ describe("sanitizeHtml", () => {
     const malicious =
       '<script>alert("xss")</script><p>Safe content</p><form><input type="text"></form>';
     const sanitized = sanitizeHtml(malicious);
-    expect(sanitized).toBe("<p>Safe content</p>");
+    expect(sanitized.trim()).toBe("<p>Safe content</p>");
   });
 
   it("should strip dangerous attributes", () => {
     const malicious =
       '<img src="x" onerror="alert(1)"> <a href="javascript:alert(1)">Link</a>';
     const sanitized = sanitizeHtml(malicious);
-    expect(sanitized).toBe('<img src="x"> <a>Link</a>');
+    expect(sanitized.trim()).toBe('<p><img src="x"> <a>Link</a></p>');
   });
 
   it("should allow safe tags and attributes", () => {
     const safe =
       '<h1 title="title">Header</h1><p>Paragraph with <strong>strong</strong> and <em>em</em>.</p><ul><li>Item</li></ul>';
     const sanitized = sanitizeHtml(safe);
-    expect(sanitized).toBe(safe);
+    expect(sanitized.trim()).toBe(safe);
   });
 
   it("should handle allowed video embeds", () => {
@@ -40,12 +40,18 @@ describe("sanitizeHtml", () => {
   it("should strip malicious iframes", () => {
     const malicious = '<iframe src="https://evil.com/malware"></iframe>';
     const sanitized = sanitizeHtml(malicious);
-    expect(sanitized).toBe("");
+    expect(sanitized.trim()).toBe("");
   });
 
   it("should handle empty or null input", () => {
     expect(sanitizeHtml("")).toBe("");
     expect(sanitizeHtml(undefined)).toBe("");
     expect(sanitizeHtml(null)).toBe("");
+  });
+
+  it("should convert Markdown bold to HTML bold", () => {
+    const markdown = "This is **bold** text";
+    const sanitized = sanitizeHtml(markdown);
+    expect(sanitized).toContain("<strong>bold</strong>");
   });
 });

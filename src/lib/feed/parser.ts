@@ -15,6 +15,7 @@ import { sanitizeHtml } from "./sanitizer";
  */
 interface CustomItem {
   contentEncoded?: string;
+  descriptionRaw?: string;
   id?: string;
   author?: string;
 }
@@ -26,7 +27,10 @@ interface CustomFeed {
 
 const parser: Parser<CustomFeed, CustomItem> = new Parser({
   customFields: {
-    item: [["content:encoded", "contentEncoded"]],
+    item: [
+      ["content:encoded", "contentEncoded"],
+      ["description", "descriptionRaw"],
+    ],
   },
 });
 
@@ -80,7 +84,9 @@ export async function parseFeedXml(
     const items: FeedItem[] = feed.items.map((item) => {
       const rawTitle = decodeEntities(item.title) || "Untitled Article";
       const title = cleanText(rawTitle);
-      const rawDescription = decodeEntities(item.contentSnippet || item.summary);
+      const rawDescription = decodeEntities(
+        item.descriptionRaw || item.summary || item.contentSnippet,
+      );
       const description = sanitizeHtml(cleanText(rawDescription));
       const content = sanitizeHtml(item.contentEncoded || item.content);
       const url = normalizeUrl(item.link, feedLink || sourceUrl);
