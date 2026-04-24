@@ -45,6 +45,7 @@ describe("ReaderView", () => {
           <a href="https://example.com">Link</a>
         `,
       },
+      isExcerpt: false,
     });
     render(<ReaderView data={data} />);
 
@@ -54,6 +55,38 @@ describe("ReaderView", () => {
       "href",
       "https://example.com",
     );
+  });
+
+  it("identifies and renders excerpt UI", () => {
+    const data = createMockFeedItemWithSource({
+      item: {
+        content: "<p>Excerpt content</p>",
+        url: "https://example.com/full",
+      },
+      feed: { title: "Test Feed" },
+      isExcerpt: true,
+    });
+    render(<ReaderView data={data} />);
+
+    expect(screen.getByText("Excerpt")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Read full article on Test Feed/i }),
+    ).toHaveAttribute("href", "https://example.com/full");
+  });
+
+  it("does not show excerpt UI for full articles", () => {
+    const data = createMockFeedItemWithSource({
+      item: {
+        content: "<p>Full content</p>",
+      },
+      isExcerpt: false,
+    });
+    render(<ReaderView data={data} />);
+
+    expect(screen.queryByText("Excerpt")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /Read full article/i }),
+    ).not.toBeInTheDocument();
   });
 });
 

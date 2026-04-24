@@ -50,8 +50,11 @@ test.describe("Reader View", () => {
     // 6. Verify Sheet slides in
     const sheet = page.getByRole("dialog");
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByText("Test Article For Reader")).toBeVisible();
-    await expect(sheet.getByText("Reader Test Feed")).toBeVisible();
+    await expect(sheet.getByRole("heading", { name: "Test Article For Reader" })).toBeVisible();
+    
+    // Use a more specific locator for the source title to avoid conflict with the "Read full article" button
+    await expect(sheet.locator("header").getByText("Reader Test Feed", { exact: true })).toBeVisible();
+    
     await expect(
       sheet.getByText("This is the test content for the reader view."),
     ).toBeVisible();

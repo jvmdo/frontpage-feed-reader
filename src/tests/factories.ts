@@ -1,3 +1,4 @@
+import { checkIsExcerpt } from "@/lib/feed/utils";
 import type {
   Category,
   Feed,
@@ -92,7 +93,12 @@ export function createMockFeedItem(overrides: Partial<FeedItem> = {}): FeedItem 
 }
 
 export function createMockFeedItemWithSource(
-  overrides: Partial<{ item: Partial<FeedItem>; feed: Partial<Feed>; isRead: boolean }> = {},
+  overrides: Partial<{
+    item: Partial<FeedItem>;
+    feed: Partial<Feed>;
+    isRead: boolean;
+    isExcerpt?: boolean;
+  }> = {},
 ): FeedItemWithSource {
   const feed = createMockFeed(overrides.feed);
   const item = createMockFeedItem({
@@ -104,5 +110,6 @@ export function createMockFeedItemWithSource(
     item,
     feed,
     isRead: overrides.isRead ?? false,
+    isExcerpt: overrides.isExcerpt ?? checkIsExcerpt(item),
   };
 }
