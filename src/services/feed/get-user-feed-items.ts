@@ -8,6 +8,7 @@ import {
   userItemStates,
   userPreferences,
 } from "@/db/schema";
+import { checkIsExcerpt } from "@/lib/feed/utils";
 import type { FeedItemWithSource } from "@/types";
 
 interface GetUserFeedItemsOptions {
@@ -73,10 +74,13 @@ export async function getUserFeedItems(
       (row.subscriptionMarkedReadAt && publishedAt <= row.subscriptionMarkedReadAt)
     );
 
+    const isExcerpt = checkIsExcerpt(row.item);
+
     return {
       item: row.item,
       feed: row.feed,
       isRead,
+      isExcerpt,
     };
   });
 }

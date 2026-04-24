@@ -8,6 +8,7 @@ import {
   userItemStates,
   userPreferences,
 } from "@/db/schema";
+import { checkIsExcerpt } from "@/lib/feed/utils";
 import type { FeedItemWithSource } from "@/types";
 
 /**
@@ -58,9 +59,12 @@ export async function getFeedItem(
       publishedAt <= result.subscriptionMarkedReadAt)
   );
 
+  const isExcerpt = checkIsExcerpt(result.item);
+
   return {
     item: result.item,
     feed: result.feed,
     isRead,
+    isExcerpt,
   };
 }

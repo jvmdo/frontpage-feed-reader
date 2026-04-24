@@ -49,4 +49,5 @@ export type FeedItemWithSource = {
   item: FeedItem;
   feed: Feed;
   isRead: boolean;
+  isExcerpt: boolean;
 };
