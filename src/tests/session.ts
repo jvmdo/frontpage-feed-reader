@@ -11,21 +11,27 @@ async function ensureUserExists(
     where: (t, { eq }) => eq(t.id, user.id),
   });
   if (!existing) {
-    await authTest.saveUser(authTest.createUser(user));
+    try {
+      await authTest.saveUser(authTest.createUser(user));
+    } catch {
+      // Ignore errors if user was created by a concurrent request (very common during Playwright tests)
+      // We don't rethrow because as long as the user exists, the test can proceed
+    }
   }
 }
 
-export async function getDevSession() {
+export async function getDevSession(userId?: string | null) {
   const { test: authTest } = await auth.$context;
-  const DEV_USER_ID = "dev-user-id";
+  const targetUserId = userId ?? "dev-user-id";
+  const isDevUser = targetUserId === "dev-user-id";
 
   await ensureUserExists(authTest, {
-    id: DEV_USER_ID,
-    email: "dev@localhost",
-    name: "Dev User",
+    id: targetUserId,
+    email: isDevUser ? "dev@localhost" : `test-${targetUserId}@example.com`,
+    name: isDevUser ? "Dev User" : "Playwright User",
   });
 
-  const headers = await authTest.getAuthHeaders({ userId: DEV_USER_ID });
+  const headers = await authTest.getAuthHeaders({ userId: targetUserId });
   return auth.api.getSession({ headers });
 }
 

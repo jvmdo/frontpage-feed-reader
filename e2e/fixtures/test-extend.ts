@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import { test as baseTest, expect, type Page } from "@playwright/test";
-import { eq, like } from "drizzle-orm";
+import { like } from "drizzle-orm";
 import { db } from "@/db";
-import { categories, feeds } from "@/db/schema";
+import { feeds } from "@/db/schema";
 import { createPlaywrightSession } from "@/tests/session";
 
 type Fixtures = {
@@ -14,7 +14,12 @@ export const test = baseTest.extend<Fixtures>({
     const uniqueId = crypto.randomUUID();
     const { sessionToken, authTest } = await createPlaywrightSession(uniqueId);
 
-    // Inject the cookie directly into Playwright's browser context
+    // Set header for robust isolation in development
+    await context.setExtraHTTPHeaders({
+      "x-test-user-id": uniqueId,
+    });
+
+    // Inject the cookie directly into Playwright's browser context (for prod compatibility)
     if (sessionToken) {
       await context.addCookies([
         {
@@ -32,7 +37,6 @@ export const test = baseTest.extend<Fixtures>({
     // TEARDOWN: Clean up ONLY this specific user's data after the test
     await authTest.deleteUser(uniqueId);
     await db.delete(feeds).where(like(feeds.url, `%tenant=${uniqueId}%`));
-    await db.delete(categories).where(eq(categories.userId, uniqueId));
   },
 });
 
