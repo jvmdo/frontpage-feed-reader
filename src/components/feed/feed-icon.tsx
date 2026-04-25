@@ -1,8 +1,6 @@
 "use client";
 
-import { RssIcon } from "lucide-react";
-import Image from "next/image";
-import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 interface FeedIconProps {
@@ -13,43 +11,28 @@ interface FeedIconProps {
 }
 
 /**
- * Renders a feed icon with a fallback to a default RssIcon if the URL is missing or broken.
+ * Renders a feed icon using shadcn Avatar with a letter-box fallback.
  */
 export function FeedIcon({ url, title, className, size = 16 }: FeedIconProps) {
-  const [error, setError] = useState(false);
-
-  if (!url || error) {
-    return (
-      <div
-        className={cn(
-          "flex items-center justify-center bg-muted rounded-sm shrink-0",
-          className,
-        )}
-        style={{ width: size, height: size }}
-        aria-hidden="true"
-      >
-        <RssIcon
-          style={{ width: size * 0.7, height: size * 0.7 }}
-          className="text-muted-foreground/50"
-        />
-      </div>
-    );
-  }
+  const initial = (title || "U").charAt(0).toUpperCase();
 
   return (
-    <div
-      className={cn("relative overflow-hidden rounded-sm shrink-0", className)}
+    <Avatar
+      className={cn("rounded-sm border-0 after:hidden shrink-0", className)}
       style={{ width: size, height: size }}
-      aria-hidden="true"
     >
-      <Image
-        src={url}
-        alt=""
-        fill
-        sizes={`${size}px`}
-        className="object-contain"
-        onError={() => setError(true)}
+      <AvatarImage
+        src={url || undefined}
+        alt={title || ""}
+        className="rounded-sm object-contain"
       />
-    </div>
+      <AvatarFallback
+        className="bg-primary text-primary-foreground rounded-sm font-bold select-none"
+        style={{ fontSize: Math.max(8, Math.floor(size * 0.5)) }}
+        delayMs={600}
+      >
+        {initial}
+      </AvatarFallback>
+    </Avatar>
   );
 }

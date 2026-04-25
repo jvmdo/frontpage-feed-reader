@@ -2,20 +2,13 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { BreadcrumbErrorFallback } from "@/components/layout/breadcrumb-error-fallback";
-import { DashboardBreadcrumb } from "@/components/layout/dashboard-breadcrumb";
-import { DashboardBreadcrumbSkeleton } from "@/components/layout/dashboard-breadcrumb-skeleton";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { SidebarErrorFallback } from "@/components/layout/sidebar-error-fallback";
 import { SidebarSubscriptions } from "@/components/layout/sidebar-subscriptions";
 import { SidebarSubscriptionsSkeleton } from "@/components/layout/sidebar-subscriptions-skeleton";
+import { TopNav } from "@/components/layout/top-nav";
 import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { db } from "@/db";
 import { getQueryClient } from "@/lib/get-query-client";
 import { getCurrentSession } from "@/lib/session";
@@ -53,33 +46,25 @@ export default async function DashboardLayout({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <SidebarProvider>
-        <AppSidebar>
-          <QueryErrorBoundary fallback={<SidebarErrorFallback />}>
-            <Suspense fallback={<SidebarSubscriptionsSkeleton />}>
-              <SidebarSubscriptions />
-            </Suspense>
-          </QueryErrorBoundary>
-        </AppSidebar>
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 min-w-0">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-8 shrink-0" />
-              <QueryErrorBoundary fallback={<BreadcrumbErrorFallback />}>
-                <Suspense fallback={<DashboardBreadcrumbSkeleton />}>
-                  <Breadcrumb className="min-w-0">
-                    <DashboardBreadcrumb />
-                  </Breadcrumb>
-                </Suspense>
-              </QueryErrorBoundary>
-            </div>
-          </header>
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-            {children}
-          </main>
-        </SidebarInset>
-      </SidebarProvider>
+      <div className="flex h-screen flex-col">
+        <TopNav />
+        <SidebarProvider className="overflow-hidden">
+          <AppSidebar>
+            <QueryErrorBoundary fallback={<SidebarErrorFallback />}>
+              <Suspense fallback={<SidebarSubscriptionsSkeleton />}>
+                <SidebarSubscriptions />
+              </Suspense>
+            </QueryErrorBoundary>
+          </AppSidebar>
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <SidebarInset className="flex flex-col overflow-hidden">
+              <main className="flex-1 min-h-0">{children}</main>
+            </SidebarInset>
+
+            <BottomNav />
+          </div>
+        </SidebarProvider>
+      </div>
     </HydrationBoundary>
   );
 }

@@ -158,7 +158,7 @@
   --ring: #2563eb;
   --radius: 0.5rem;
 
-  --sidebar: var(--bg-secondary);
+  --sidebar: var(--bg-primary);
   --sidebar-foreground: var(--text-primary);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
@@ -280,10 +280,12 @@
 
   body {
     @apply bg-background text-foreground;
+    min-width: 320px;
   }
 
   html {
     @apply font-sans;
+    min-width: 320px;
   }
 
   button:not(:disabled),

@@ -35,7 +35,7 @@ export function FeedItemList() {
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-8">
+    <div className="flex flex-col pb-8">
       {allItems.map((itemWithSource) => (
         <FeedItemCard key={itemWithSource.item.id} data={itemWithSource} />
       ))}

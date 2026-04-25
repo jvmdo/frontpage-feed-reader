@@ -75,29 +75,33 @@ export function SidebarSubscriptions() {
                   asChild
                   tooltip={group.name}
                   isActive={categoryId === group.id}
+                  className="h-9 px-3"
                 >
                   <DashboardLink
                     href={`/dashboard?categoryId=${group.id}`}
                     categoryId={group.id}
                     prefetch={false}
+                    className="grid grid-cols-[1fr_auto]"
                   >
-                    <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 text-text-tertiary group-data-[collapsible=icon]:hidden" />
-                    <FolderIcon />
-                    <span>{group.name}</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="size-2 rounded-full bg-primary" />
+                      <span className="truncate">{group.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground">
+                        {group.unreadCount}
+                      </span>
+                      <ChevronRight className="size-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 text-muted-foreground shrink-0" />
+                    </div>
                     <LinkPendingIndicator />
                   </DashboardLink>
                 </SidebarMenuButton>
               </CollapsibleTrigger>
-              {group.unreadCount > 0 && (
-                <SidebarMenuBadge className="text-text-tertiary">
-                  {group.unreadCount}
-                </SidebarMenuBadge>
-              )}
               <CollapsibleContent>
-                <SidebarMenuSub>
+                <SidebarMenuSub className="ml-0 mr-0 border-l-0">
                   {group.items.length === 0 ? (
                     <SidebarMenuSubItem>
-                      <div className="px-2 py-1.5 text-xs text-text-tertiary italic">
+                      <div className="px-3 py-1.5 text-xs text-text-tertiary italic">
                         No feeds
                       </div>
                     </SidebarMenuSubItem>
@@ -148,27 +152,32 @@ function SubscriptionItem({
         asChild
         isActive={isActive}
         tooltip={title}
-        className="relative"
+        className="h-9 px-3 relative"
       >
         <DashboardLink
           href={`/dashboard?feedId=${feed.id}`}
           feedId={feed.id}
           prefetch={false}
+          className="grid grid-cols-[1fr_auto] items-center w-full min-w-0 overflow-hidden"
         >
-          <FeedIcon
-            url={feed.iconUrl || feed.url}
-            title={title}
-            className="size-4 shrink-0"
-          />
-          <span className="truncate">{title}</span>
+          <div className="flex items-center gap-2.5 min-w-0 overflow-hidden">
+            <div className="size-5 shrink-0 flex items-center justify-center">
+              <FeedIcon
+                url={feed.iconUrl || feed.url}
+                title={title}
+                size={20}
+              />
+            </div>
+            <span className="truncate">{title}</span>
+          </div>
+          {unreadCount > 0 && (
+            <span className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden shrink-0 ml-2 whitespace-nowrap">
+              {unreadCount}
+            </span>
+          )}
           <LinkPendingIndicator />
         </DashboardLink>
       </SidebarMenuButton>
-      {unreadCount > 0 && (
-        <SidebarMenuBadge className="text-text-tertiary">
-          {unreadCount}
-        </SidebarMenuBadge>
-      )}
     </SidebarMenuItem>
   );
 }
@@ -187,26 +196,24 @@ function SubscriptionSubItem({
 
   return (
     <SidebarMenuSubItem>
-      <SidebarMenuSubButton asChild isActive={isActive} className="relative">
+      <SidebarMenuSubButton asChild isActive={isActive} className="h-8 px-3">
         <DashboardLink
           href={`/dashboard?feedId=${feed.id}`}
           feedId={feed.id}
           prefetch={false}
+          className="grid grid-cols-[1fr_auto]"
         >
-          <FeedIcon
-            url={feed.iconUrl || feed.url}
-            title={title}
-            className="size-4 shrink-0"
-          />
-          <span className="truncate">{title}</span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <FeedIcon url={feed.iconUrl || feed.url} title={title} size={20} />
+
+            <span className="truncate">{title}</span>
+          </div>
+          {unreadCount > 0 && (
+            <span className="text-xs text-muted-foreground">{unreadCount}</span>
+          )}
           <LinkPendingIndicator />
         </DashboardLink>
       </SidebarMenuSubButton>
-      {unreadCount > 0 && (
-        <SidebarMenuBadge className="text-text-tertiary">
-          {unreadCount}
-        </SidebarMenuBadge>
-      )}
     </SidebarMenuSubItem>
   );
 }

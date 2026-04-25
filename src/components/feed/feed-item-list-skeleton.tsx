@@ -12,7 +12,7 @@ function FeedItemListSkeleton({
         {children}
       </span>
 
-      <div aria-hidden="true" className="flex flex-col gap-4">
+      <div aria-hidden="true" className="flex flex-col">
         {Array.from({ length: 5 }).map((_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: Static list
           <FeedItemSkeleton key={`skeleton-${i}`} />
@@ -30,31 +30,42 @@ export default FeedItemListSkeleton;
  */
 export function FeedItemSkeleton() {
   return (
-    <div className="flex flex-col gap-3 p-4 rounded-lg border border-border-subtle bg-surface">
-      <div className="flex flex-col gap-1.5">
-        {/* Meta info (Source, Time) */}
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-4 rounded-sm" />
-          <Skeleton className="h-3 w-24" />
-          <span className="text-muted-foreground/20 text-xs">•</span>
-          <Skeleton className="h-3 w-16" />
+    <div className="px-4 py-4 border-b border-border sm:px-6 sm:py-5">
+      <div className="flex gap-4">
+        {/* Unread dot placeholder */}
+        <div className="pt-2 w-3 shrink-0">
+          <Skeleton className="size-2 rounded-full" />
         </div>
 
-        {/* Title */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-2 flex-1">
-            <Skeleton className="h-5 w-[90%]" />
-            <Skeleton className="h-5 w-[40%] md:hidden" />
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Source line */}
+          <div className="flex items-center gap-2 mb-1.5">
+            <Skeleton className="size-5 shrink-0 rounded-sm" />
+            <Skeleton className="h-4 w-24" />
+            <span className="text-muted-foreground opacity-40">·</span>
+            <Skeleton className="h-4 w-16" />
           </div>
-          <Skeleton className="size-4 rounded-sm hidden md:block shrink-0" />
-        </div>
-      </div>
 
-      {/* Excerpt */}
-      <div className="flex flex-col gap-2">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-[60%] hidden md:block" />
+          {/* Title */}
+          <div className="mb-1.5">
+            <Skeleton className="h-5 w-[90%] sm:w-[70%]" />
+          </div>
+
+          {/* Excerpt */}
+          <div className="space-y-2 mb-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-[85%]" />
+          </div>
+
+          {/* Tag placeholder */}
+          <Skeleton className="h-6 w-20 rounded-md" />
+        </div>
+
+        {/* Save button placeholder */}
+        <div className="mt-2 shrink-0">
+          <Skeleton className="size-8 rounded-md" />
+        </div>
       </div>
     </div>
   );

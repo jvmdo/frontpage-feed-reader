@@ -33,6 +33,7 @@ export async function getUserFeedItems(
     .select({
       item: feedItems,
       feed: feeds,
+      categoryName: categories.name,
       readAt: userItemStates.readAt,
       globalMarkedReadAt: userPreferences.markedAllReadAt,
       categoryMarkedReadAt: categories.markedAllReadAt,
@@ -79,6 +80,7 @@ export async function getUserFeedItems(
     return {
       item: row.item,
       feed: row.feed,
+      categoryName: row.categoryName,
       isRead,
       isExcerpt,
     };

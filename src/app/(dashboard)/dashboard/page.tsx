@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { FeedItemList } from "@/components/feed/feed-item-list";
 import FeedItemListSkeleton from "@/components/feed/feed-item-list-skeleton";
-import { DashboardHeader } from "@/components/layout/dashboard-header";
+import { FeedToolbar } from "@/components/layout/feed-toolbar";
 import { FeedReaderSheet } from "@/components/reader/feed-reader-sheet";
 import { db } from "@/db";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
@@ -44,16 +44,25 @@ export default async function DashboardPage({
   // Prefetch items for the unified "All Items" feed, specific feed, or category.
   // The key must match the one used in the useFeedItems hook.
   queryClient.prefetchInfiniteQuery({
-    queryKey: ["feeds", "items", { feedId: feedId || null, categoryId: categoryId || null }],
+    queryKey: [
+      "feeds",
+      "items",
+      { feedId: feedId || null, categoryId: categoryId || null },
+    ],
     queryFn: () =>
-      getUserFeedItems(db, session.user.id, { limit, offset, feedId, categoryId }),
+      getUserFeedItems(db, session.user.id, {
+        limit,
+        offset,
+        feedId,
+        categoryId,
+      }),
     initialPageParam: PAGINATION_INITIAL_OFFSET,
   });
 
   return (
-    <div className="flex flex-col gap-6">
-      <DashboardHeader />
-      <section className="flex-1" aria-label="Feed">
+    <div className="flex flex-col h-full">
+      <FeedToolbar />
+      <section className="flex-1 overflow-y-auto" aria-label="Feed">
         <HydrationBoundary state={dehydrate(queryClient)}>
           <Suspense fallback={<FeedItemListSkeleton />}>
             <FeedItemList />
