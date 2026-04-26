@@ -13,6 +13,7 @@ import {
   SearchIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +43,7 @@ export function BottomNav() {
         size="icon"
         className="size-10 text-muted-foreground hover:text-foreground"
         onClick={toggleSidebar}
-        aria-label="Open menu"
+        aria-label="Open sidebar menu"
       >
         <MenuIcon className="size-5" />
       </Button>
@@ -51,19 +52,21 @@ export function BottomNav() {
         variant="ghost"
         size="icon"
         className="size-10 text-muted-foreground hover:text-foreground"
-        aria-label="Search"
+        aria-label="Search items"
       >
         <SearchIcon className="size-5" />
       </Button>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-10 text-muted-foreground hover:text-foreground"
-        aria-label="Add feed"
-      >
-        <PlusIcon className="size-5" />
-      </Button>
+      <AddFeedDialog asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-10 text-muted-foreground hover:text-foreground"
+          aria-label="Add new feed"
+        >
+          <PlusIcon className="size-5" />
+        </Button>
+      </AddFeedDialog>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -116,7 +119,7 @@ export function BottomNav() {
         variant="ghost"
         size="icon"
         className="size-10"
-        aria-label="Profile"
+        aria-label="User profile"
       >
         <Avatar className="size-7">
           <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">

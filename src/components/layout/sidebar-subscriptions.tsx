@@ -84,13 +84,21 @@ export function SidebarSubscriptions() {
                     className="grid grid-cols-[1fr_auto]"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="size-2 rounded-full bg-primary" />
+                      <span
+                        className="size-2 rounded-full bg-primary"
+                        aria-hidden="true"
+                      />
                       <span className="truncate">{group.name}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground">
-                        {group.unreadCount}
-                      </span>
+                      {group.unreadCount > 0 && (
+                        <output
+                          className="text-xs text-muted-foreground"
+                          aria-label={`${group.unreadCount} unread items`}
+                        >
+                          {group.unreadCount}
+                        </output>
+                      )}
                       <ChevronRight className="size-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 text-muted-foreground shrink-0" />
                     </div>
                     <LinkPendingIndicator />
@@ -171,9 +179,12 @@ function SubscriptionItem({
             <span className="truncate">{title}</span>
           </div>
           {unreadCount > 0 && (
-            <span className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden shrink-0 ml-2 whitespace-nowrap">
+            <output
+              className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden shrink-0 ml-2 whitespace-nowrap"
+              aria-label={`${unreadCount} unread items`}
+            >
               {unreadCount}
-            </span>
+            </output>
           )}
           <LinkPendingIndicator />
         </DashboardLink>
@@ -209,7 +220,12 @@ function SubscriptionSubItem({
             <span className="truncate">{title}</span>
           </div>
           {unreadCount > 0 && (
-            <span className="text-xs text-muted-foreground">{unreadCount}</span>
+            <output
+              className="text-xs text-muted-foreground"
+              aria-label={`${unreadCount} unread items`}
+            >
+              {unreadCount}
+            </output>
           )}
           <LinkPendingIndicator />
         </DashboardLink>

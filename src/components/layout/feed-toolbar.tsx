@@ -89,9 +89,9 @@ export function FeedToolbar() {
             {title}
           </h1>
           {currentCount > 0 && (
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
+            <output className="text-sm text-muted-foreground whitespace-nowrap">
               {currentCount} unread
-            </span>
+            </output>
           )}
         </div>
 
@@ -262,6 +262,8 @@ export function FeedToolbar() {
       {/* New items banner placeholder */}
       <button
         type="button"
+        aria-live="polite"
+        aria-label="Load 5 new items since your last visit"
         className="w-full flex items-center justify-center gap-1.5 py-2 bg-primary/5 text-primary text-xs font-medium hover:bg-primary/10 transition-colors border-t border-border/50"
       >
         <ArrowUpAZIcon className="size-3.5" />5 new items since your last visit

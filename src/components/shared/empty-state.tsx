@@ -9,13 +9,16 @@ import {
 } from "@/components/ui/empty";
 
 interface EmptyStateProps {
-  title: string;
-  description?: string;
+  title: React.ReactNode;
+  description?: React.ReactNode;
   icon?: LucideIcon;
   action?: React.ReactNode;
   className?: string;
 }
 
+/**
+ * A reusable empty state component with semantic headings and optional actions.
+ */
 export function EmptyState({
   title,
   description,
@@ -24,19 +27,19 @@ export function EmptyState({
   className,
 }: EmptyStateProps) {
   return (
-    <Empty className={className}>
+    <Empty className={className} aria-labelledby="empty-state-title">
       <EmptyHeader>
         {Icon && (
           <EmptyMedia variant="icon">
-            <Icon />
+            <Icon className="text-muted-foreground" />
           </EmptyMedia>
         )}
-        <EmptyTitle>
-          <h2>{title}</h2>
+        <EmptyTitle id="empty-state-title">
+          {title}
         </EmptyTitle>
         {description && (
           <EmptyDescription>
-            <p>{description}</p>
+            {description}
           </EmptyDescription>
         )}
       </EmptyHeader>

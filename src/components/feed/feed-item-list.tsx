@@ -76,7 +76,7 @@ function FeedEmptyState({
 
   return (
     <EmptyState
-      title={`${categoryName} has no items yet`}
+      title={<h3>{categoryName} has no items yet</h3>}
       description="There are no feeds assigned to this category or the assigned feeds haven't published anything yet."
       icon={FolderIcon}
       action={
