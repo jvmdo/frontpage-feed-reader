@@ -98,6 +98,7 @@ export function createMockFeedItemWithSource(
     feed: Partial<Feed>;
     isRead: boolean;
     isExcerpt?: boolean;
+    categoryName?: string | null;
   }> = {},
 ): FeedItemWithSource {
   const feed = createMockFeed(overrides.feed);
@@ -111,5 +112,6 @@ export function createMockFeedItemWithSource(
     feed,
     isRead: overrides.isRead ?? false,
     isExcerpt: overrides.isExcerpt ?? checkIsExcerpt(item),
+    categoryName: overrides.categoryName ?? null,
   };
 }

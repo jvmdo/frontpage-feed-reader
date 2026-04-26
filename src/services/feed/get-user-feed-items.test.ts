@@ -60,6 +60,29 @@ describe("getUserFeedItems", () => {
     expect(result[0].feed.title).toBe("Example Feed");
   });
 
+  test("returns categoryName when feed belongs to a category", async ({
+    tx,
+    testUser,
+  }) => {
+    const cat = await seedCategory(tx, {
+      userId: testUser.id,
+      name: "Technology",
+    });
+    const { feed } = await seedFeedWithSubscription(
+      tx,
+      testUser.id,
+      {},
+      { categoryId: cat.id },
+    );
+
+    await seedFeedItems(tx, feed.id, [{ title: "Tech News" }]);
+
+    const result = await getUserFeedItems(tx, testUser.id, options);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].categoryName).toBe("Technology");
+  });
+
   test("only returns items for feeds the user is subscribed to", async ({
     tx,
     testUser,

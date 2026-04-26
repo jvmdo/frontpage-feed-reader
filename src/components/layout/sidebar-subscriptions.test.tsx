@@ -67,25 +67,23 @@ describe("SidebarSubscriptions", () => {
     );
   });
 
-  it("renders unread count badges for categories", async () => {
+  it("renders unread count for categories", async () => {
     render(
       <SidebarProvider>
         <SidebarSubscriptions />
       </SidebarProvider>,
     );
 
-    // Category 10 (Tech) should have 5 unread items
-    const techFolder = await screen.findByRole("link", { name: /^tech$/i });
-    const techItem = techFolder.closest('[data-sidebar="menu-item"]');
-    expect(techItem).toHaveTextContent("5");
-
-    // Category 20 (Design) should have 3 unread items
-    const designFolder = screen.getByRole("link", { name: /^design$/i });
-    const designItem = designFolder.closest('[data-sidebar="menu-item"]');
-    expect(designItem).toHaveTextContent("3");
+    // The unread count is now part of the link's accessible name in the grid
+    expect(
+      await screen.findByRole("link", { name: /tech 5 unread items/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /design 3 unread items/i }),
+    ).toBeInTheDocument();
   });
 
-  it("renders unread count badges for individual subscriptions", async () => {
+  it("renders unread count for individual subscriptions", async () => {
     const user = userEvent.setup();
     render(
       <SidebarProvider>
@@ -94,20 +92,20 @@ describe("SidebarSubscriptions", () => {
     );
 
     // Open Tech category to see Tech Feed
-    const techFolder = await screen.findByRole("link", { name: /^tech$/i });
+    const techFolder = await screen.findByRole("link", {
+      name: /tech 5 unread items/i,
+    });
     await user.click(techFolder);
 
     // Tech Feed (ID 1) should have 2 unread
-    const techFeedLink = await screen.findByRole("link", { name: /tech feed/i });
-    const techFeedItem = techFeedLink.closest('[data-sidebar="menu-sub-item"]');
-    expect(techFeedItem).toHaveTextContent("2");
+    expect(
+      await screen.findByRole("link", { name: /tech feed 2 unread items/i }),
+    ).toBeInTheDocument();
 
     // Uncategorized Feed (ID 3) should have 5 unread
-    const uncatFeedLink = screen.getByRole("link", {
-      name: /uncategorized feed/i,
-    });
-    const uncatFeedItem = uncatFeedLink.closest('[data-sidebar="menu-item"]');
-    expect(uncatFeedItem).toHaveTextContent("5");
+    expect(
+      screen.getByRole("link", { name: /uncategorized feed 5 unread items/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders subscriptions grouped by categories", async () => {
@@ -119,9 +117,13 @@ describe("SidebarSubscriptions", () => {
     );
 
     // Categories should be visible as links
-    const techFolder = await screen.findByRole("link", { name: /^tech$/i });
+    const techFolder = await screen.findByRole("link", {
+      name: /tech 5 unread items/i,
+    });
     expect(techFolder).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /^design$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /design 3 unread items/i }),
+    ).toBeInTheDocument();
 
     // Clicking the category row now both navigates and toggles the list
     await user.click(techFolder);
@@ -150,6 +152,16 @@ describe("SidebarSubscriptions", () => {
       http.get("/api/feeds/subscriptions", () => {
         return HttpResponse.json({ success: true, data: [] });
       }),
+      http.get("/api/feeds/unread-counts", () => {
+        return HttpResponse.json({
+          success: true,
+          data: {
+            global: 0,
+            categories: { 30: 0 },
+            feeds: {},
+          },
+        });
+      }),
     );
 
     render(
@@ -175,11 +187,11 @@ describe("SidebarSubscriptions", () => {
       },
     );
 
-    const link = await screen.findByRole("link", { name: /tech feed/i });
+    const link = await screen.findByRole("link", { name: /tech feed 2/i });
     expect(link).toHaveAttribute("data-active", "true");
 
     // The parent collapsible should be open automatically
-    const techLink = screen.getByRole("link", { name: /^tech$/i });
+    const techLink = screen.getByRole("link", { name: /tech 5 unread items/i });
     const collapsible = techLink.closest('[data-slot="collapsible"]');
     expect(collapsible).toHaveAttribute("data-state", "open");
   });

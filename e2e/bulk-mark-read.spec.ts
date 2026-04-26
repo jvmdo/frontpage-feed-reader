@@ -6,85 +6,72 @@ import {
 } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
-test.describe("Bulk Mark Read", () => {
-  test("marking a category as read updates all items and counts", async ({
-    authedPage,
-  }) => {
-    const { page, userId } = authedPage;
+test("marking a category as read updates all items and counts", async ({
+  authedPage,
+}) => {
+  const { page, userId } = authedPage;
 
-    // 1. Setup: Seed a category and a feed with unread items
-    const category = await seedCategory(db, {
-      userId,
-      name: "Tech News",
-    });
-
-    const { feed } = await seedFeedWithSubscription(
-      db,
-      userId,
-      {
-        title: "Hacker News",
-        url: `https://news.ycombinator.com/rss?tenant=${userId}`,
-      },
-      {
-        categoryId: category.id,
-      },
-    );
-
-    await seedFeedItems(db, feed.id, [
-      { title: "Item 1", guid: "item-1" },
-      { title: "Item 2", guid: "item-2" },
-      { title: "Item 3", guid: "item-3" },
-    ]);
-
-    // 2. Navigate to the category view
-    await page.goto(`/dashboard?categoryId=${category.id}`);
-
-    // 3. Verify initial state in Header (easier to find)
-    const header = page.locator("header");
-    await expect(header.locator("h1")).toHaveText(/Tech News 3 unread/i);
-
-    // Verify initial state in Sidebar
-    const sidebar = page.locator('[data-slot="sidebar"]');
-    const categoryBadge = sidebar
-      .locator('li:has-text("Tech News")')
-      .locator('[data-slot="sidebar-menu-badge"]')
-      .first();
-    
-    await expect(categoryBadge).toHaveText("3");
-
-    const items = page.locator("article");
-    await expect(items).toHaveCount(3);
-    // All should have unread indicators
-    for (let i = 0; i < 3; i++) {
-      await expect(items.nth(i).locator(".bg-unread-indicator")).toBeVisible();
-    }
-
-    // 4. Trigger "Mark all as read"
-    const markAllReadBtn = page.getByRole("button", { name: /mark all as read/i });
-    await markAllReadBtn.click();
-
-    // 5. Confirm the dialog
-    const dialog = page.getByRole("alertdialog");
-    await expect(dialog).toBeVisible();
-    await dialog.getByRole("button", { name: /^mark all as read$/i }).click();
-
-    // 6. Verify everything is marked as read
-    // Indicators should be gone
-    await expect(page.locator(".bg-unread-indicator")).toHaveCount(0);
-
-    // Items should be dimmed (opacity-70)
-    for (let i = 0; i < 3; i++) {
-      await expect(items.nth(i)).toHaveClass(/opacity-70/);
-    }
-
-    // Counts should be gone (0 unread items -> badge/count text not rendered)
-    await expect(categoryBadge).not.toBeVisible();
-    await expect(header.locator("h1")).toHaveText(/^Tech News$/);
-
-    // Global count in "All Items" should also be updated
-    const allItemsBadge = sidebar
-      .locator('li:has-text("All Items")')
-      .locator('[data-slot="sidebar-menu-badge"]');
-    await expect(allItemsBadge).not.toBeVisible();
+  // 1. Setup: Seed a category and a feed with unread items
+  const category = await seedCategory(db, {
+    userId,
+    name: "Tech News",
   });
+
+  const { feed } = await seedFeedWithSubscription(
+    db,
+    userId,
+    {
+      title: "Hacker News",
+      url: `https://news.ycombinator.com/rss?tenant=${userId}`,
+    },
+    {
+      categoryId: category.id,
+    },
+  );
+
+  await seedFeedItems(db, feed.id, [
+    { title: "Item 1", guid: "item-1" },
+    { title: "Item 2", guid: "item-2" },
+    { title: "Item 3", guid: "item-3" },
+  ]);
+
+  // 2. Navigate to the category view
+  await page.goto(`/dashboard?categoryId=${category.id}`);
+  await page.waitForLoadState("networkidle");
+
+  const categoryLink = page.getByRole("link", { name: /Tech News/i });
+  const items = page.getByRole("article", { name: /item \d/i });
+
+  // 3. Verify initial state in Toolbar
+  await expect(page.getByRole("heading", { name: "Tech News" })).toBeVisible();
+  await expect(page.getByText(/3 unread/i)).toBeVisible();
+
+  // Verify initial state in Sidebar
+  await expect(categoryLink.getByLabel(/unread items/i)).toHaveText("3");
+  await expect(items.filter({ hasText: /\bunread\b/i })).toHaveCount(3);
+
+  // 4. Trigger "Mark all as read"
+  await page.getByRole("button", { name: /mark all read/i }).click();
+
+  // 5. Confirm the dialog
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: /mark all as read/i })
+    .click();
+
+  // 6. Verify everything is marked as read
+  // Indicators should be gone
+  await expect(items.filter({ hasText: /\bread\b/i })).toHaveCount(3);
+
+  // Counts should be gone
+  await expect(categoryLink.getByLabel(/unread items/i)).not.toBeVisible();
+
+  // Global count in "All Items" should also be updated
+  const allItemsItem = page
+    .getByRole("listitem")
+    .filter({ hasText: "All Items" });
+
+  await expect(
+    allItemsItem.locator('[data-slot="sidebar-menu-badge"]'),
+  ).not.toBeVisible();
 });

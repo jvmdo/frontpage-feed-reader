@@ -97,12 +97,14 @@ test.describe("Dashboard Feed", () => {
 
     await page.goto("/dashboard");
 
-    // Verify empty state with semantic heading level
+    // 3. Verify empty state is visible in the main feed section
+    const feedSection = page.getByLabel('Feed', { exact: true });
     await expect(
-      page.getByRole("heading", { level: 2, name: /your feed is empty/i }),
+      feedSection.getByText(/your feed is empty/i),
     ).toBeVisible();
     await expect(
-      page.getByText(/subscribe to more feeds or refresh your current ones/i),
+      feedSection.getByText(/subscribe to more feeds or refresh your current ones/i),
     ).toBeVisible();
+
   });
 });

@@ -16,13 +16,13 @@ test.describe("Manage Feeds", () => {
     // 2. Navigate to Dashboard then to Manage Feeds via sidebar
     await page.goto("/dashboard");
 
-    const sidebar = page.locator('[data-slot="sidebar"]');
-    await sidebar.getByRole("link", { name: /manage feeds/i }).click();
+    const sidebar = page.locator('[data-slot="sidebar"]').filter({ visible: true });
+    await sidebar.getByRole("link", { name: /feeds healthy/i }).click();
 
     // 3. Verify we are on the correct page and the feed is visible
     await expect(page).toHaveURL("/manage-feeds");
     await expect(
-      page.getByRole("heading", { name: /manage feeds/i }),
+      page.getByRole("heading", { name: "Manage Feeds" }),
     ).toBeVisible();
 
     // Wait for streaming hydration to complete
@@ -51,12 +51,13 @@ test.describe("Manage Feeds", () => {
       page.getByRole("status", { name: /loading feeds/i }),
     ).toBeHidden();
 
-    // Verify empty state
+    // Verify empty state - use main role to avoid duplication
+    const main = page.getByRole("main");
     await expect(
-      page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
+      main.getByText(/no feeds yet/i),
     ).toBeVisible();
     await expect(
-      page.getByText(/you haven't subscribed to any rss feeds/i),
+      main.getByText(/you haven't subscribed to any rss feeds/i),
     ).toBeVisible();
   });
 
@@ -74,25 +75,26 @@ test.describe("Manage Feeds", () => {
         page.getByRole("status", { name: /loading feeds/i }),
       ).toBeHidden();
 
+      const main = page.getByRole("main");
       // Verify initial empty state
       await expect(
-        page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
+        main.getByText(/no feeds yet/i),
       ).toBeVisible();
 
       // Add a feed
-      await page.getByRole("button", { name: /add your first feed/i }).click();
+      await main.getByRole("button", { name: /add your first feed/i }).click();
 
-      const dialog = page.getByRole("dialog");
+      const dialog = page.getByRole("dialog", { name: /add feed/i });
 
       await dialog.getByLabel(/feed url/i).fill(feedUrl);
-      await dialog.getByRole("button", { name: /add/i }).click();
+      await dialog.getByRole("button", { name: /add/i, exact: true }).click();
 
       // Verify transition to table
       const table = page.getByRole("table");
 
       await expect(table.getByText("Standard RSS 2.0 Feed")).toBeVisible();
       await expect(
-        page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
+        main.getByText(/no feeds yet/i),
       ).not.toBeVisible();
     });
 
@@ -124,9 +126,10 @@ test.describe("Manage Feeds", () => {
       const alertDialog = page.getByRole("alertdialog");
       await alertDialog.getByRole("button", { name: /remove/i }).click();
 
+      const main = page.getByRole("main");
       // Verify transition back to empty state
       await expect(
-        page.getByRole("heading", { level: 2, name: /no feeds yet/i }),
+        main.getByText(/no feeds yet/i),
       ).toBeVisible();
       await expect(table).not.toBeVisible();
     });
@@ -158,7 +161,7 @@ test.describe("Manage Feeds", () => {
       await table.getByRole("button", { name: /open menu/i }).click();
       await page.getByRole("menuitem", { name: /edit/i }).click();
 
-      const dialog = page.getByRole("dialog");
+      const dialog = page.getByRole("dialog", { name: /edit subscription/i });
 
       await dialog.getByLabel(/^title$/i).fill("New Better Title");
       await dialog.getByRole("button", { name: /save changes/i }).click();

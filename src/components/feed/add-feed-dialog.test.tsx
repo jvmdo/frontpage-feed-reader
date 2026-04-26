@@ -44,7 +44,7 @@ describe("AddFeedDialog", () => {
     ).toBeInTheDocument();
   });
 
-  it.skip("shows validation error for invalid URL", async () => {
+  it("shows validation error for invalid URL", async () => {
     const { user } = setup();
     await user.click(screen.getByRole("button", { name: /open dialog/i }));
 

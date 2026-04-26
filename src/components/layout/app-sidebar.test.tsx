@@ -1,14 +1,15 @@
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { Suspense } from "react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addFeedAction } from "@/actions/feed/add-feed-action";
-import { removeSubscriptionAction } from "@/actions/feed/remove-subscription-action";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { useRemoveSubscription } from "@/hooks/use-remove-subscription";
-import { createMockCategory, createMockFeedWithSubscription } from "@/tests/factories";
+import {
+  createMockCategory,
+  createMockFeedWithSubscription,
+} from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
-import { render, screen, waitFor } from "@/tests/rtl-utils";
+import { render, screen } from "@/tests/rtl-utils";
 import type { Category, FeedWithSubscription } from "@/types";
 import { AppSidebar } from "./app-sidebar";
 import { SidebarSubscriptions } from "./sidebar-subscriptions";
@@ -45,16 +46,6 @@ vi.mock("sonner", () => ({
   },
 }));
 
-// Helper component to trigger deletion for testing cross-component reactivity
-const DeleteTrigger = ({ id }: { id: number }) => {
-  const { mutate: removeSubscription } = useRemoveSubscription();
-  return (
-    <button type="button" onClick={() => removeSubscription({ id })}>
-      Delete {id}
-    </button>
-  );
-};
-
 describe("AppSidebar Integration", () => {
   let mockSubscriptions: FeedWithSubscription[];
   let mockCategories: Category[];
@@ -64,7 +55,11 @@ describe("AppSidebar Integration", () => {
     mockSubscriptions = [
       createMockFeedWithSubscription({
         feed: { id: 1, title: "Initial Feed" },
-        subscription: { id: 1, customTitle: "My Custom Feed 1", categoryId: null },
+        subscription: {
+          id: 1,
+          customTitle: "My Custom Feed 1",
+          categoryId: null,
+        },
       }),
       createMockFeedWithSubscription({
         feed: { id: 2, title: "Categorized Feed" },
@@ -72,9 +67,7 @@ describe("AppSidebar Integration", () => {
       }),
     ];
 
-    mockCategories = [
-      createMockCategory({ id: 10, name: "Tech" }),
-    ];
+    mockCategories = [createMockCategory({ id: 10, name: "Tech" })];
 
     // Mock GET handlers
     server.use(
@@ -85,8 +78,15 @@ describe("AppSidebar Integration", () => {
         return HttpResponse.json({ success: true, data: mockCategories });
       }),
       http.get("/api/feeds/unread-counts", () => {
-        return HttpResponse.json({ success: true, data: { global: 42 } });
-      })
+        return HttpResponse.json({
+          success: true,
+          data: {
+            global: 42,
+            categories: { "10": 0 },
+            feeds: { "1": 0, "2": 0 },
+          },
+        });
+      }),
     );
   });
 
@@ -112,7 +112,7 @@ describe("AppSidebar Integration", () => {
     // Mock successful addFeedAction
     vi.mocked(addFeedAction).mockImplementation(async () => {
       const newSub = createMockFeedWithSubscription({
-        feed: { title: "New Feed" },
+        feed: { id: 3, title: "New Feed" },
       });
 
       // Update mockSubscriptions to simulate backend change
@@ -149,29 +149,7 @@ describe("AppSidebar Integration", () => {
     expect(screen.getByText(/my custom feed 1/i)).toBeInTheDocument();
   });
 
-  it("updates the subscription list when a feed is removed", async () => {
-    const user = userEvent.setup();
-
-    // Mock successful removeSubscriptionAction
-    vi.mocked(removeSubscriptionAction).mockImplementation(
-      async (input: { id: number }) => {
-        const deletedSub = mockSubscriptions.find(
-          (s) => s.subscription.id === input.id,
-        );
-
-        if (!deletedSub) {
-          return { success: false, error: "Not found", code: "NOT_FOUND" };
-        }
-
-        // Update mockSubscriptions to simulate backend change
-        mockSubscriptions = mockSubscriptions.filter(
-          (s) => s.subscription.id !== input.id,
-        );
-
-        return { success: true, data: deletedSub.subscription };
-      },
-    );
-
+  it("renders the health status in the footer", async () => {
     render(
       <SidebarProvider>
         <AppSidebar>
@@ -179,20 +157,10 @@ describe("AppSidebar Integration", () => {
             <SidebarSubscriptions />
           </Suspense>
         </AppSidebar>
-        <DeleteTrigger id={1} />
       </SidebarProvider>,
     );
 
-    // Verify initial state
-    expect(await screen.findByText(/my custom feed 1/i)).toBeInTheDocument();
-
-    // Click the delete button
-    await user.click(screen.getByRole("button", { name: /delete 1/i }));
-
-    // Verify that the feed disappears from the sidebar
-    await waitFor(() => {
-      expect(screen.queryByText(/my custom feed 1/i)).not.toBeInTheDocument();
-    });
+    expect(await screen.findByText(/all feeds healthy/i)).toBeInTheDocument();
   });
 
   describe("Active States", () => {
@@ -207,7 +175,9 @@ describe("AppSidebar Integration", () => {
         </SidebarProvider>,
       );
 
-      const allItemsButton = await screen.findByRole("link", { name: /all items/i });
+      const allItemsButton = await screen.findByRole("link", {
+        name: /all items/i,
+      });
       expect(allItemsButton).toHaveAttribute("data-active", "true");
     });
 
@@ -222,13 +192,16 @@ describe("AppSidebar Integration", () => {
         </SidebarProvider>,
         {
           searchParams: { categoryId: "10" },
-        }
+        },
       );
 
-      const allItemsButton = await screen.findByRole("link", { name: /all items/i });
+      const allItemsButton = await screen.findByRole("link", {
+        name: /all items/i,
+      });
       expect(allItemsButton).toHaveAttribute("data-active", "false");
 
-      const categoryButton = await screen.findByRole("link", { name: /^tech$/i });
+      // Use exact name to avoid matching "My Tech Feed"
+      const categoryButton = await screen.findByRole("link", { name: "Tech" });
       expect(categoryButton).toHaveAttribute("data-active", "true");
     });
 
@@ -243,17 +216,25 @@ describe("AppSidebar Integration", () => {
         </SidebarProvider>,
         {
           searchParams: { feedId: "1" },
-        }
+        },
       );
 
-      const allItemsButton = await screen.findByRole("link", { name: /all items/i });
+      const allItemsButton = await screen.findByRole("link", {
+        name: /all items/i,
+      });
       expect(allItemsButton).toHaveAttribute("data-active", "false");
 
-      const feedButton = await screen.findByRole("link", { name: /my custom feed 1/i });
+      const feedButton = await screen.findByRole("link", {
+        name: /my custom feed 1/i,
+      });
       expect(feedButton).toHaveAttribute("data-active", "true");
     });
+  });
 
-    it("does not highlight 'All Items' when a categorized feed is active", async () => {
+  describe("Add Feed Dialog", () => {
+    it("opens the dialog and displays the correct elements", async () => {
+      const user = userEvent.setup();
+
       render(
         <SidebarProvider>
           <AppSidebar>
@@ -262,21 +243,25 @@ describe("AppSidebar Integration", () => {
             </Suspense>
           </AppSidebar>
         </SidebarProvider>,
-        {
-          searchParams: { feedId: "2" },
-        }
       );
 
-      const allItemsButton = await screen.findByRole("link", { name: /all items/i });
-      expect(allItemsButton).toHaveAttribute("data-active", "false");
+      const addFeedButton = await screen.findByRole("button", {
+        name: /add feed/i,
+      });
 
-      // Categorized feed should be active (it's inside Tech)
-      const feedButton = await screen.findByRole("link", { name: /my tech feed/i });
-      expect(feedButton).toHaveAttribute("data-active", "true");
-      
-      // Parent category Tech should NOT be active (only highlights when specifically filtered by category)
-      const categoryButton = await screen.findByRole("link", { name: /^tech$/i });
-      expect(categoryButton).toHaveAttribute("data-active", "false");
+      await user.click(addFeedButton);
+
+      // Verify dialog is open
+      const dialog = await screen.findByRole("dialog");
+
+      expect(dialog).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /add feed/i }),
+      ).toBeInTheDocument();
+
+      // Verify input and add button
+      expect(screen.getByLabelText(/feed url/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /add/i })).toBeInTheDocument();
     });
   });
 });

@@ -44,7 +44,7 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
         onReset={reset}
         fallbackRender={({ resetErrorBoundary }) => (
           <EmptyState
-            title="Something went wrong"
+            title={<h3>Something went wrong</h3>}
             description="We couldn't load your feed items. Please try refreshing the page."
             icon={RssIcon}
             action={

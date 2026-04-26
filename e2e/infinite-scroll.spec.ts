@@ -46,8 +46,11 @@ test.describe("Infinite Scroll", () => {
 
     // 5. Scroll to the bottom to trigger the next fetches
     // We scroll multiple times to ensure we trigger all pages
+    const container = page.locator("#feed-container");
     for (let i = 0; i < 5; i++) {
-      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await container.evaluate((el) => {
+        el.scrollTo(0, el.scrollHeight);
+      });
       await page.waitForTimeout(200);
     }
 
