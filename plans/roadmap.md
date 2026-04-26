@@ -47,26 +47,27 @@
 
 - Step 1: Create the reader view layout for displaying full article content with consistent typography and clean formatting.
 - Step 2: Implement navigation controls (Next/Previous) to move between items directly within the reader view.
-- Step 3: Add article metadata and a clear link to the original source at the top of the reading experience.
+- Step 3: Define a different reader UI for feeds that don't provide their full articles content. Make it clear that the user should go to the original source.
 
 ## Phase 7 — User Authentication
 
 *Dependency Reasoning: Now that the core app is functional, we add personal account infrastructure to persist data across sessions.*
 
-- Step 1: Implement the sign-up and sign-in pages using Better Auth.
-- Step 2: Secure all dashboard routes with middleware to redirect unauthenticated users.
-- Step 3: Update the persistence layer to ensure all feeds, categories, and item states are scoped strictly to the authenticated user.
+- Step 1: Implement the sign-up and sign-in pages and logout using Better Auth.
+- Step 2: Setup social login with Github
+- Step 3: Implement password recovery
+- Step 4: Secure all dashboard routes with middleware to redirect unauthenticated users.
+- Step 5: Audit the persistence layer to ensure all feeds, categories, and item states are scoped strictly to the authenticated user.
 
 ## Phase 8 — "Try as Guest" Experience
 
 *Dependency Reasoning: This provides an entry point for exploration without account creation, using pre-loaded curated content.*
 
-- Step 1: Implement a guest session handler that bypasses the database and serves items from a local JSON fixture.
-- Step 2: Add a persistent "Guest Banner" that encourages signing up while allowing full access to the reader features.
+- Step 1: Implement guest session and conversion to member logic to allow seamless guest experience.
+- Step 2: Integrate conversion UX and feature gating within the dashboard to transition guests into permanent members.
 
 ## Phase 9 — Landing Page
 
 - *Dependency Reasoning: The final step is building the public-facing entry point to market and transition users into the app.*
 
 - Step 1: Create the landing page shell with a professional hero section and feature highlights.
-- Step 2: Implement prominent "Sign Up" and "Try as Guest" call-to-action buttons that route users correctly.
