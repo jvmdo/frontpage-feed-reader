@@ -8,34 +8,81 @@ import {
 import { markAsReadAction } from "@/actions/feed-item/mark-as-read-action";
 import type { MarkAsReadInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
-import type { FeedItemWithSource } from "@/types";
+import type { FeedItemWithSource, FeedWithSubscription } from "@/types";
 
-/**
- * Custom hook for marking a feed item as read.
- * Optimistically updates the feed items and unread counts caches for instant feedback.
- */
+type CacheData = InfiniteData<FeedItemWithSource[]> | FeedItemWithSource;
+
+function findItemInCache(
+  queries: [readonly unknown[], CacheData | undefined][],
+  itemId: number,
+): { isUnread: boolean; feedId: number | null } {
+  for (const [_, data] of queries) {
+    if (!data) continue;
+
+    if ("pages" in data) {
+      for (const page of data.pages) {
+        if (!Array.isArray(page)) continue;
+        const found = page.find((i) => i.item.id === itemId);
+        if (found) return { isUnread: !found.isRead, feedId: found.feed.id };
+      }
+    } else if (
+      data &&
+      typeof data === "object" &&
+      "item" in data &&
+      data.item &&
+      data.item.id === itemId
+    ) {
+      return { isUnread: !data.isRead, feedId: data.feed.id };
+    }
+  }
+
+  return { isUnread: false, feedId: null };
+}
+
+function markItemAsReadInCache(old: CacheData | undefined, itemId: number) {
+  if (!old) return old;
+
+  if ("pages" in old) {
+    return {
+      ...old,
+      pages: old.pages.map((page) => {
+        if (!Array.isArray(page)) return page;
+        return page.map((i) =>
+          i.item.id === itemId ? { ...i, isRead: true } : i,
+        );
+      }),
+    };
+  }
+
+  if (
+    old &&
+    typeof old === "object" &&
+    "item" in old &&
+    old.item &&
+    old.item.id === itemId
+  ) {
+    return { ...old, isRead: true };
+  }
+
+  return old;
+}
+
 export function useMarkAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (input: MarkAsReadInput) => {
       const response = await markAsReadAction(input);
-      if (!response.success) {
-        throw new Error(response.error);
-      }
+      if (!response.success) throw new Error(response.error);
       return response.data;
     },
-    onMutate: async (variables) => {
-      const { itemId } = variables;
 
+    onMutate: async ({ itemId }) => {
       // 1. Cancel outgoing refetches to avoid overwriting optimistic state
       await queryClient.cancelQueries({ queryKey: ["feeds", "items"] });
       await queryClient.cancelQueries({ queryKey: ["feeds", "unread-counts"] });
 
       // 2. Snapshot current state for rollback
-      // Data can be either an Infinite list or a single Item detail
-      type CacheData = InfiniteData<FeedItemWithSource[]> | FeedItemWithSource;
-      
       const previousQueries = queryClient.getQueriesData<CacheData>({
         queryKey: ["feeds", "items"],
       });
@@ -43,59 +90,53 @@ export function useMarkAsRead() {
         "feeds",
         "unread-counts",
       ]);
+      const subscriptions = queryClient.getQueryData<FeedWithSubscription[]>([
+        "subscriptions",
+      ]);
 
-      let itemWasUnread = false;
+      // 3. Identify the item context
+      const { isUnread, feedId } = findItemInCache(previousQueries, itemId);
 
-      // 3. Optimistically update items in all related feeds
+      // 4. Update items across all cached queries
       queryClient.setQueriesData<CacheData>(
         { queryKey: ["feeds", "items"] },
-        (old) => {
-          if (!old) return old;
-
-          // Handle Infinite Query (List)
-          if ("pages" in old) {
-            const newPages = old.pages.map((page) =>
-              page.map((itemWithSource) => {
-                if (itemWithSource.item.id === itemId) {
-                  if (!itemWithSource.isRead) {
-                    itemWasUnread = true;
-                  }
-                  return { ...itemWithSource, isRead: true };
-                }
-                return itemWithSource;
-              }),
-            );
-            return { ...old, pages: newPages };
-          }
-
-          // Handle Single Query (Detail)
-          if ("item" in old && old.item.id === itemId) {
-            if (!old.isRead) {
-              itemWasUnread = true;
-            }
-            return { ...old, isRead: true };
-          }
-
-          return old;
-        },
+        (old) => markItemAsReadInCache(old, itemId),
       );
 
-      // 4. Optimistically decrement unread count if applicable
-      if (itemWasUnread && previousCounts) {
-        queryClient.setQueryData<UnreadCounts>(["feeds", "unread-counts"], {
+      // 5. Update unread counts if the item was unread
+      if (isUnread && previousCounts) {
+        const next: UnreadCounts = {
           ...previousCounts,
-          global: Math.max(0, previousCounts.global - 1),
-        });
+          categories: { ...(previousCounts.categories || {}) },
+          feeds: { ...(previousCounts.feeds || {}) },
+          global: typeof previousCounts.global === "number" ? previousCounts.global : 0,
+        };
+
+        // Decrement global
+        next.global = Math.max(0, next.global - 1);
+
+        // Decrement feed and category if applicable
+        if (feedId) {
+          const currentFeedCount = next.feeds[feedId] || 0;
+          next.feeds[feedId] = Math.max(0, currentFeedCount - 1);
+
+          const sub = (subscriptions || []).find((s) => s.feed.id === feedId);
+          if (sub?.subscription.categoryId) {
+            const catId = sub.subscription.categoryId;
+            const currentCatCount = next.categories[catId] || 0;
+            next.categories[catId] = Math.max(0, currentCatCount - 1);
+          }
+        }
+
+        queryClient.setQueryData(["feeds", "unread-counts"], next);
       }
 
       return { previousQueries, previousCounts };
     },
+
     onError: (_err, _variables, context) => {
-      // Rollback on error
-      if (context?.previousQueries) {
-        for (const [queryKey, data] of context.previousQueries) {
-          queryClient.setQueryData(queryKey, data);
-        }
+      for (const [queryKey, data] of context?.previousQueries ?? []) {
+        queryClient.setQueryData(queryKey, data);
       }
       if (context?.previousCounts) {
         queryClient.setQueryData(
@@ -104,8 +145,8 @@ export function useMarkAsRead() {
         );
       }
     },
+
     onSettled: () => {
-      // Invalidate to ensure consistency with server
       queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
       queryClient.invalidateQueries({
         queryKey: ["feeds", "items"],
