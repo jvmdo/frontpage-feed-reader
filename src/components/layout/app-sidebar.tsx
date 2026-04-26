@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { AddCategoryDialog } from "@/components/category/add-category-dialog";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { DashboardLink } from "@/components/shared/dashboard-link";
@@ -38,7 +38,6 @@ import { useUnreadCounts } from "@/hooks/use-unread-counts";
 export function AppSidebar({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { feedId, categoryId } = useFeedFilter();
-  const { data: unreadCounts } = useUnreadCounts();
 
   const isDashboardActive = pathname === "/dashboard" && !feedId && !categoryId;
 
@@ -77,11 +76,9 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                       <LinkPendingIndicator />
                     </DashboardLink>
                   </SidebarMenuButton>
-                  {unreadCounts?.global && unreadCounts.global > 0 ? (
-                    <SidebarMenuBadge className="bg-primary/10 text-primary font-semibold border-0">
-                      {unreadCounts.global}
-                    </SidebarMenuBadge>
-                  ) : null}
+                  <Suspense fallback={null}>
+                    <AllItemsBadge />
+                  </Suspense>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
@@ -145,11 +142,26 @@ export function AppSidebar({ children }: { children: ReactNode }) {
         <Link
           href="/manage-feeds"
           className="flex items-center gap-2 px-4 h-12 text-xs text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
+          aria-label="Feed status: All feeds healthy. Click to manage feeds."
         >
           <CircleCheckIcon className="size-3.5 text-success" />
           <span>All feeds healthy</span>
         </Link>
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function AllItemsBadge() {
+  const { data: unreadCounts } = useUnreadCounts();
+
+  if (!unreadCounts?.global || unreadCounts.global <= 0) {
+    return null;
+  }
+
+  return (
+    <SidebarMenuBadge className="bg-primary/10 text-primary font-semibold border-0">
+      {unreadCounts.global}
+    </SidebarMenuBadge>
   );
 }

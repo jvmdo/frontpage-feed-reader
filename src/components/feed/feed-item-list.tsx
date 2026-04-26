@@ -22,10 +22,13 @@ export function FeedItemList() {
 
   // Restore scroll position when switching feeds/categories
   useLayoutEffect(() => {
-    window.scrollTo({
-      top: getFeedScroll(feedId || categoryId),
-      behavior: "instant",
-    });
+    const container = document.getElementById("feed-container");
+    if (container) {
+      container.scrollTo({
+        top: getFeedScroll(feedId || categoryId),
+        behavior: "instant",
+      });
+    }
   }, [feedId, categoryId]);
 
   const allItems = data?.pages?.flat() ?? [];
@@ -64,7 +67,7 @@ function FeedEmptyState({
   if (!categoryId) {
     return (
       <EmptyState
-        title="Your feed is empty"
+        title={<h3>Your feed is empty</h3>}
         description="Subscribe to more feeds or refresh your current ones to see new articles here."
         icon={RssIcon}
       />

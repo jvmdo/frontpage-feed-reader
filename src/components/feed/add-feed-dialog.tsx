@@ -1,14 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -19,12 +20,8 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { useAddFeed } from "@/hooks/use-add-feed";
 import { type AddFeedInput, addFeedSchema } from "@/lib/validations/feed";
 
@@ -72,38 +69,38 @@ export function AddFeedDialog({ children, asChild }: AddFeedDialogProps) {
             Enter the URL of the RSS or Atom feed you want to subscribe to.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="py-4">
+        <form onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
             <Field data-invalid={!!errors.url}>
               <FieldLabel htmlFor="feed-url">Feed URL</FieldLabel>
-              <InputGroup>
-                <InputGroupInput
-                  id="feed-url"
-                  type="url"
-                  placeholder="https://example.com/feed.xml"
-                  disabled={isPending}
-                  {...register("url")}
-                />
-                <InputGroupAddon align="inline-end">
-                  <InputGroupButton
-                    type="submit"
-                    variant="default"
-                    disabled={isPending}
-                  >
-                    {isPending ? (
-                      <>
-                        <Loader2Icon className="mr-2 animate-spin" />
-                        Adding...
-                      </>
-                    ) : (
-                      "Add"
-                    )}
-                  </InputGroupButton>
-                </InputGroupAddon>
-              </InputGroup>
-              {errors.url && <FieldError>{errors.url.message}</FieldError>}
+              <Input
+                id="feed-url"
+                placeholder="https://example.com/feed.xml"
+                disabled={isPending}
+                {...register("url")}
+                aria-invalid={!!errors.url}
+                aria-describedby={errors.url ? "field-error" : undefined}
+              />
+              {errors.url && (
+                <FieldError id="field-error">{errors.url.message}</FieldError>
+              )}
             </Field>
           </FieldGroup>
+
+          <DialogFooter className="mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Spinner className="mr-2" />}
+              {isPending ? "Adding..." : "Add Feed"}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
