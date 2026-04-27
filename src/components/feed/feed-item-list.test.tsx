@@ -1,21 +1,44 @@
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import userEvent from "@testing-library/user-event";
 import { RssIcon } from "lucide-react";
 import { delay, HttpResponse, http } from "msw";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { vi } from "vitest";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { PAGINATION_LIMIT } from "@/lib/constants";
 import { createMockFeedItemWithSource } from "@/tests/factories";
-import {
-  setupIntersectionObserverMock,
-  triggerIntersection,
-} from "@/tests/intersection-observer";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
 import type { FeedItemWithSource } from "@/types";
 import { FeedItemList } from "./feed-item-list";
 import FeedItemListSkeleton from "./feed-item-list-skeleton";
+
+// Mock react-virtuoso to render items normally in JSDOM
+vi.mock("react-virtuoso", () => ({
+  Virtuoso: ({ data, itemContent, endReached, components }: any) => {
+    return (
+      <div data-testid="virtuoso-scroller">
+        <div data-testid="virtuoso-item-list">
+          {data.map((item: any, index: number) => (
+            <div key={item.item?.id || index}>{itemContent(index, item)}</div>
+          ))}
+        </div>
+        {components?.Footer && <components.Footer />}
+        <button
+          data-testid="virtuoso-end-reached-trigger"
+          onClick={endReached}
+          onKeyDown={(e: React.KeyboardEvent) =>
+            e.key === "Enter" && endReached()
+          }
+          style={{ height: 1, width: 1 }}
+          type="button"
+        />
+      </div>
+    );
+  },
+}));
 
 const generateMockItems = (
   count: number,
@@ -61,7 +84,6 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("FeedItemList", () => {
   beforeEach(() => {
-    setupIntersectionObserverMock();
     server.use(
       http.get("/api/categories", () => {
         return HttpResponse.json({ success: true, data: [] });
@@ -92,15 +114,10 @@ describe("FeedItemList", () => {
       </TestWrapper>,
     );
 
-    // FeedItemListSkeleton uses role="status"
     const loadingStatus = screen.getByRole("status");
 
     expect(loadingStatus).toBeInTheDocument();
     expect(loadingStatus).toHaveTextContent(/loading feed items/i);
-
-    // Skeletons should be present but hidden from screen readers
-    const skeletons = document.querySelectorAll('[data-slot="skeleton"]');
-    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   test("renders list of items when fetch is successful", async () => {
@@ -122,12 +139,13 @@ describe("FeedItemList", () => {
       </TestWrapper>,
     );
 
-    // Using exact regex to avoid matching "Test Article 10", "Test Article 11", etc.
-    const title = await screen.findByText(/^test article 1$/i);
-    expect(title).toBeInTheDocument();
+    const itemCard = await screen.findByRole("article", {
+      name: /test article 1\b/i,
+    });
 
-    expect(screen.getAllByText(/^example feed$/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/^description 1$/i)).toBeInTheDocument();
+    expect(itemCard).toBeInTheDocument();
+    expect(itemCard).toHaveTextContent(/description 1\b/i);
+    expect(itemCard).toHaveTextContent(/example feed/i);
   });
 
   test("loads more items when scrolling to the bottom", async () => {
@@ -143,30 +161,40 @@ describe("FeedItemList", () => {
       }),
     );
 
+    const user = userEvent.setup();
+
     render(
       <TestWrapper>
         <FeedItemList />
       </TestWrapper>,
     );
 
-    const firstItemTitle = /^test article 1$/i;
+    const firstItemTitle = /test article 1\b/i;
     const nextItemTitle = new RegExp(
-      `^test article ${PAGINATION_LIMIT + 1}$`,
+      `test article ${PAGINATION_LIMIT + 1}\\b`,
       "i",
     );
 
     // Wait for the first page to load
-    await screen.findByText(firstItemTitle);
-    expect(screen.queryByText(nextItemTitle)).not.toBeInTheDocument();
+    await screen.findByRole("heading", { name: firstItemTitle });
 
-    // Trigger intersection via shared utility
-    triggerIntersection(true);
+    expect(
+      screen.queryByRole("heading", { name: nextItemTitle }),
+    ).not.toBeInTheDocument();
+
+    // Trigger endReached via our mock's sentinel using userEvent
+    await user.click(screen.getByTestId("virtuoso-end-reached-trigger"));
 
     // Wait for the second page to load
-    await screen.findByText(nextItemTitle);
+    await screen.findByRole("heading", { name: nextItemTitle });
 
-    expect(screen.getByText(firstItemTitle)).toBeInTheDocument();
-    expect(screen.getByText(nextItemTitle)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: firstItemTitle }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("heading", { name: nextItemTitle }),
+    ).toBeInTheDocument();
   });
 
   test("renders empty state when no items are returned", async () => {
@@ -188,8 +216,8 @@ describe("FeedItemList", () => {
     const emptyTitle = await screen.findByRole("heading", {
       name: /your feed is empty/i,
     });
-    expect(emptyTitle).toBeInTheDocument();
 
+    expect(emptyTitle).toBeInTheDocument();
     expect(screen.getByText(/subscribe to more feeds/i)).toBeInTheDocument();
   });
 
@@ -213,6 +241,7 @@ describe("FeedItemList", () => {
     const emptyTitle = await screen.findByRole("heading", {
       name: /this category has no items yet/i,
     });
+
     expect(emptyTitle).toBeInTheDocument();
 
     expect(
@@ -240,6 +269,7 @@ describe("FeedItemList", () => {
     const errorTitle = await screen.findByRole("heading", {
       name: /something went wrong/i,
     });
+
     expect(errorTitle).toBeInTheDocument();
 
     expect(

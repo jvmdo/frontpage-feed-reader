@@ -1,11 +1,11 @@
 "use client";
 
 import { FolderIcon, RssIcon } from "lucide-react";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
 import { FeedItemCard } from "@/components/feed/feed-item-card";
 import FeedItemListSkeleton from "@/components/feed/feed-item-list-skeleton";
-import { InfiniteScrollTrigger } from "@/components/feed/infinite-scroll-trigger";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { useCategories } from "@/hooks/use-categories";
@@ -20,13 +20,19 @@ export function FeedItemList() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFeedItems();
 
-  // Restore scroll position when switching feeds/categories
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
+
+  // Identify the scroll container on mount
   useLayoutEffect(() => {
-    const container = document.getElementById("feed-container");
-    if (container) {
-      container.scrollTo({
+    setScrollParent(document.getElementById("feed-container"));
+  }, []);
+
+  // Handle scroll restoration when filter changes
+  useLayoutEffect(() => {
+    if (virtuosoRef.current) {
+      virtuosoRef.current.scrollTo({
         top: getFeedScroll(feedId || categoryId),
-        behavior: "instant",
       });
     }
   }, [feedId, categoryId]);
@@ -38,22 +44,30 @@ export function FeedItemList() {
   }
 
   return (
-    <div className="flex flex-col pb-8">
-      {allItems.map((itemWithSource) => (
+    <Virtuoso
+      ref={virtuosoRef}
+      customScrollParent={scrollParent || undefined}
+      initialScrollTop={getFeedScroll(feedId || categoryId)}
+      data={allItems}
+      itemContent={(_index, itemWithSource) => (
         <FeedItemCard key={itemWithSource.item.id} data={itemWithSource} />
-      ))}
-
-      {isFetchingNextPage && (
-        <FeedItemListSkeleton>Loading more items...</FeedItemListSkeleton>
       )}
-
-      {hasNextPage && (
-        <InfiniteScrollTrigger
-          onIntersect={fetchNextPage}
-          enabled={!isFetchingNextPage}
-        />
-      )}
-    </div>
+      endReached={() => {
+        if (hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      }}
+      components={{
+        Footer: () =>
+          isFetchingNextPage ? (
+            <div className="pb-8 pt-4">
+              <FeedItemListSkeleton>Loading more items...</FeedItemListSkeleton>
+            </div>
+          ) : (
+            <div className="h-8" />
+          ),
+      }}
+    />
   );
 }
 

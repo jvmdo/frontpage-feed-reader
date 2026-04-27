@@ -9,13 +9,13 @@ test.describe("Infinite Scroll", () => {
   }) => {
     const { page, userId } = authedPage;
 
-    // 1. Seed a feed and subscription
+    // Setup: Seed a feed and subscription
     const { feed } = await seedFeedWithSubscription(db, userId, {
       url: `https://example.com/scrolling-feed?tenant=${userId}`,
       title: "Scrolling Feed",
     });
 
-    // 2. Seed enough items to ensure 3 pages
+    // Seed enough items to ensure 3 pages
     // We use a fixed date and decrement it to ensure reverse-chronological order
     const totalItems = PAGINATION_LIMIT * 2 + 5;
     const now = Date.now();
@@ -28,56 +28,39 @@ test.describe("Infinite Scroll", () => {
 
     await seedFeedItems(db, feed.id, items);
 
-    // 3. Go to dashboard
+    // 1. Go to dashboard
     await page.goto("/dashboard");
 
-    // Wait for initial hydration/loading to complete by checking for first article
-    const firstArticle = page.getByRole("heading", {
+    // 2. Verify first page items are present
+    const firstItem = page.getByRole("heading", {
       name: "Infinite Scroll Article 0",
     });
-    await expect(firstArticle).toBeVisible();
+    await expect(firstItem).toBeVisible();
 
-    // 4. Verify first page items are present
-    await expect(
-      page.getByRole("heading", {
-        name: `Infinite Scroll Article ${PAGINATION_LIMIT - 1}`,
-      }),
-    ).toBeVisible();
-
-    // 5. Scroll to the bottom to trigger the next fetches
-    // We scroll multiple times to ensure we trigger all pages
-    const container = page.locator("#feed-container");
-    for (let i = 0; i < 5; i++) {
-      await container.evaluate((el) => {
-        el.scrollTo(0, el.scrollHeight);
+    // 3. Scroll to the last visible item to trigger more loading
+    // We scroll several times since virtualization means not all items are in DOM
+    for (let i = 0; i < 3; i++) {
+      await page.evaluate(() => {
+        const container = document.getElementById("feed-container");
+        if (container) container.scrollBy(0, container.scrollHeight);
       });
-      await page.waitForTimeout(200);
+      // Give Virtuoso/Query some time to fetch and render
+      await page.waitForTimeout(500);
     }
 
-    // 6. Verify all articles are loaded
-    await expect(page.getByRole("article")).toHaveCount(totalItems);
+    // 4. Verify that an item from a later page is now visible
+    const laterItem = page.getByRole("heading", {
+      name: `Infinite Scroll Article ${totalItems - 1}`,
+    });
+    await expect(laterItem).toBeVisible();
 
-    // 7. Verify specific items from each page
-    await expect(
-      page.getByRole("heading", {
-        name: `Infinite Scroll Article ${PAGINATION_LIMIT}`,
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", {
-        name: `Infinite Scroll Article ${PAGINATION_LIMIT * 2}`,
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", {
-        name: `Infinite Scroll Article ${totalItems - 1}`,
-      }),
-    ).toBeVisible();
+    // 5. Scroll back to top and verify Article 0 is there (and only once)
+    await page.evaluate(() => {
+      const container = document.getElementById("feed-container");
+      if (container) container.scrollTo(0, 0);
+    });
 
-    // 8. Verify uniqueness: ensure Article 0 only appears once
-    const article0Count = await page
-      .getByRole("heading", { name: "Infinite Scroll Article 0" })
-      .count();
-    expect(article0Count).toBe(1);
+    await expect(firstItem).toBeVisible();
+    await expect(firstItem).toHaveCount(1);
   });
 });
