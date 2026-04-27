@@ -52,6 +52,7 @@ export function ReaderView({ data, className }: ReaderViewProps) {
           >
             View original
             <ExternalLinkIcon className="size-3.5" />
+            <span className="sr-only"> (Opens in a new tab)</span>
           </a>
         )}
       </header>

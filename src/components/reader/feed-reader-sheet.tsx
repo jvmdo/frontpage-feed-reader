@@ -86,6 +86,8 @@ export function FeedReaderSheet() {
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto outline-none"
           aria-label="Article content"
+          aria-busy={isLoading}
+          aria-live="polite"
         >
           {isLoading ? (
             <ReaderSkeleton />

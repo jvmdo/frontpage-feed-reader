@@ -7,7 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function SidebarSubscriptionsSkeleton() {
   return (
-    <SidebarMenu>
+    <SidebarMenu aria-busy="true">
+      <span className="sr-only" role="status">
+        Loading subscriptions...
+      </span>
       {Array.from({ length: 10 }).map((_, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: static list
         <SidebarMenuItem key={i}>

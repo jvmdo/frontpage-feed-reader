@@ -70,7 +70,7 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                     tooltip="All Items"
                     className="relative font-medium"
                   >
-                    <DashboardLink href="/dashboard" feedId={null}>
+                    <DashboardLink href="/dashboard">
                       <InboxIcon className="size-4" />
                       <span>All Items</span>
                       <LinkPendingIndicator />
@@ -161,7 +161,7 @@ function AllItemsBadge() {
 
   return (
     <SidebarMenuBadge className="bg-primary/10 text-primary font-semibold border-0">
-      {unreadCounts.global}
+      <output>{unreadCounts.global}</output>
     </SidebarMenuBadge>
   );
 }
