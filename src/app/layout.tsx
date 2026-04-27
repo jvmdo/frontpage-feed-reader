@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import HydrationFlagProvider from "@/components/providers/hydration-flag-provider";
 import { ReactQueryClientProvider } from "@/components/providers/query-client-provider";
 import { ServerTimeProvider } from "@/components/providers/server-time-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -40,7 +41,9 @@ export default function RootLayout({
         <ReactQueryClientProvider>
           <NuqsAdapter>
             <ServerTimeProvider serverNow={new Date().toISOString()}>
-              <TooltipProvider>{children}</TooltipProvider>
+              <TooltipProvider>
+                <HydrationFlagProvider>{children}</HydrationFlagProvider>
+              </TooltipProvider>
             </ServerTimeProvider>
           </NuqsAdapter>
         </ReactQueryClientProvider>

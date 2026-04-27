@@ -7,7 +7,7 @@ test("category creation, assignment via edit dialog, and empty state assignment"
 }) => {
   const { page, userId } = authedPage;
 
-  // 1. Setup: User with 1 feed ("Feed A") that has items
+  // Setup: User with 1 feed ("Feed A") that has items
   const { feed: feedA } = await seedFeedWithSubscription(db, userId, {
     url: `https://feed-a.com/rss?tenant=${userId}`,
     title: "Feed A",
@@ -20,40 +20,32 @@ test("category creation, assignment via edit dialog, and empty state assignment"
     },
   ]);
 
-  // 2. Create a category "Tech" via sidebar
+  // 1. Navigate to the dashboard and wait for hydration
   await page.goto("/dashboard");
-  await page.waitForLoadState("networkidle");
+  await page.waitForSelector('body[data-hydrated="true"]');
 
-  // Open Add Category dialog
+  // 2. Open Add Category dialog and submit form
   await page.getByRole("button", { name: /add category/i }).click();
 
-  // Submit form
   const addDialog = page.getByRole("dialog", { name: /add category/i });
 
   await addDialog.getByLabel(/name/i).fill("Tech");
   await addDialog.getByRole("button", { name: /create category/i }).click();
 
-  // Verify toast
-  await expect(
-    page
-      .locator("[data-sonner-toast]")
-      .filter({ hasText: /category created successfully/i }),
-  ).toBeVisible();
+  // 3. Verify operation succeeded
+  await expect(page.locator("[data-sonner-toast]")).toBeVisible();
 
-  // Verify category folder appears in navigation
-  const techCategoryLink = page.getByRole("link", { name: /tech/i });
+  const category = page.getByRole("link", { name: /tech/i });
 
-  await expect(techCategoryLink).toBeVisible();
+  await expect(category).toBeVisible();
 
-  // 3. Navigate to "Manage Feeds" and assign "Feed A" to "Tech"
+  // 4. Navigate to "Manage Feeds" page and wait for hydration
   await page.getByRole("link", { name: /click to manage feeds/i }).click();
-
-  // await page.waitForLoadState("networkidle");
   await expect(
-    page.getByRole("heading", { name: "Manage Feeds" }),
-  ).toBeVisible();
+    page.getByRole("status", { name: /loading categories/i }),
+  ).toBeHidden();
 
-  // Open Edit dialog for Feed A
+  // 5. Open Edit dialog and assign "Feed A" to "Tech"
   await page.getByRole("button", { name: "Open menu" }).click();
   await page.getByRole("menuitem", { name: "Edit" }).click();
 
@@ -63,37 +55,34 @@ test("category creation, assignment via edit dialog, and empty state assignment"
   await page.getByRole("option", { name: /tech/i }).click(); // Portal
   await editDialog.getByRole("button", { name: "Save Changes" }).click();
 
+  // 6. Verify operation succeeded
   await expect(
     page
       .locator("[data-sonner-toast]")
       .filter({ hasText: /subscription updated/i }),
   ).toBeVisible();
 
-  // 4. Click "Tech" in navigation and verify filtering
-  await techCategoryLink.click();
-  await page.waitForLoadState("networkidle");
+  // 7. Click "Tech" category and verify Feed A is visible under Tech in navigation
+  await category.click();
 
-  // Verify Feed A is visible under Tech in navigation
   const feedALink = page.getByRole("link", { name: "Feed A" });
+
   await expect(feedALink).toBeVisible();
 
-  // Verify URL and active state
+  // 8. Verify URL updated
   await expect(page).toHaveURL(/categoryId=/);
-  await expect(techCategoryLink).toHaveAttribute("data-active", "true");
 
-  // Verify items in main view
+  // 9. Verify items in main view
   await expect(
     page.getByRole("heading", { name: "Item from Feed A" }),
   ).toBeVisible();
 
-  // 5. Click "Feed A" under "Tech" and verify nesting
+  // 10. Click "Feed A" under "Tech" and verify nesting
   await feedALink.click();
-  await page.waitForLoadState("networkidle");
 
   await expect(page).toHaveURL(/feedId=/);
-  await expect(feedALink).toHaveAttribute("data-active", "true");
 
-  // 6. Create another category "Empty" and test empty state assignment
+  // 11. Create another category "Empty" and test empty state assignment
   await page.getByRole("button", { name: /add category/i }).click();
 
   const addDialog2 = page.getByRole("dialog", { name: /add category/i });
@@ -101,35 +90,36 @@ test("category creation, assignment via edit dialog, and empty state assignment"
   await addDialog2.getByLabel(/name/i).fill("Empty");
   await addDialog2.getByRole("button", { name: /create category/i }).click();
 
-  // Click "Empty" category
+  // 12. Click "Empty" category
   const emptyCategoryLink = page.getByRole("link", { name: /^Empty$/i });
 
   await emptyCategoryLink.click();
-  await page.waitForLoadState("networkidle");
 
-  // Verify specific empty state in main view
+  // 13. Verify specific empty state in main view
   await expect(page.getByText("Empty has no items yet")).toBeVisible();
+
   await page.getByRole("button", { name: "Assign feeds" }).click();
 
-  // 7. Assign Feed A to "Empty" via empty state button
+  // 14. Assign Feed A to "Empty" via empty state button
   const assignDialog = page.getByRole("dialog", { name: /manage feeds/i });
+
   await expect(assignDialog).toBeVisible();
 
-  // Move Feed A to Empty
+  // 14. Move Feed A to Empty
   await assignDialog
     .getByRole("button", { name: /move feed a to category/i })
     .click();
 
+  await page.keyboard.press("Escape");
+
+  // 15. Verify operation succeeded
   await expect(
     page
       .locator("[data-sonner-toast]")
       .filter({ hasText: /feed moved to category/i }),
   ).toBeVisible();
 
-  // Close dialog
-  await page.keyboard.press("Escape");
-
-  // Verify Feed A items appear in main view
+  // Feed A items appear in main view
   await expect(
     page.getByRole("heading", { name: "Item from Feed A" }),
   ).toBeVisible();

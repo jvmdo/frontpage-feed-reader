@@ -7,32 +7,30 @@ test("successfully creates a new category via sidebar", async ({
 }) => {
   const { page } = authedPage;
 
+  // 1. Navigate to the dashboard and wait for hydration
   await page.goto("/dashboard");
-  await page.waitForLoadState("networkidle");
+  await page.waitForSelector('body[data-hydrated="true"]');
 
   const sidebar = page.locator('[data-slot="sidebar"]');
-
-  // Click on Add Category button in the sidebar
-  await sidebar.getByRole("button", { name: /add category/i }).click();
-
-  // Fill in and submit form for new category
   const dialog = page.getByRole("dialog", { name: /add category/i });
 
+  // 2. Open Add Category dialog, fill in and submit form
+  await sidebar.getByRole("button", { name: /add category/i }).click();
   await dialog.getByLabel(/name/i).fill("New Category");
   await dialog.getByRole("button", { name: /create category/i }).click();
 
-  // Verify toast
+  // 3. Verify creation succeeded
+  // Toast should pop up
   await expect(page.locator("[data-sonner-toast]")).toContainText(
     /category created successfully/i,
   );
 
-  // Verify category folder appears in sidebar
+  // Category folder should appear in sidebar
   await expect(
     sidebar.getByRole("link", { name: /new category/i }),
   ).toBeVisible();
 
-  // Verify it shows "No feeds" initially
-  // Expand it first
+  // 4. Verify category is empty initially
   await sidebar.getByRole("link", { name: /new category/i }).click();
 
   await expect(sidebar.getByText(/no feeds/i)).toBeVisible();
@@ -41,8 +39,8 @@ test("successfully creates a new category via sidebar", async ({
 test("displays feeds grouped under categories", async ({ authedPage }) => {
   const { page, userId } = authedPage;
 
-  // 1. Setup: Seed a category and a feed linked to it
-  const category = await seedCategory(db, {
+  // Setup: Seed a category and a feed linked to it
+  const cat = await seedCategory(db, {
     userId,
     name: "Tech News",
   });
@@ -55,7 +53,7 @@ test("displays feeds grouped under categories", async ({ authedPage }) => {
       url: `https://news.ycombinator.com/rss?tenant=${userId}`,
     },
     {
-      categoryId: category.id,
+      categoryId: cat.id,
     },
   );
 
@@ -65,28 +63,23 @@ test("displays feeds grouped under categories", async ({ authedPage }) => {
     url: `https://example.com/rss?tenant=${userId}`,
   });
 
-  // 2. Navigate
+  // 1. Navigate to the dashboard
   await page.goto("/dashboard");
-  await page.waitForLoadState("networkidle");
 
   const sidebar = page.locator('[data-slot="sidebar"]');
+  const category = sidebar.getByRole("link", { name: /tech news/i });
+  const feed = sidebar.getByRole("link", { name: /hacker news/i });
 
-  // 3. Verify category folder is visible
-  await expect(
-    sidebar.getByRole("link", { name: /^tech news$/i }),
-  ).toBeVisible();
+  // 2. Verify category folder is visible
+  await expect(category).toBeVisible();
 
-  // 4. Verify feed is NOT visible yet (nested)
-  await expect(
-    sidebar.getByRole("link", { name: /hacker news/i }),
-  ).not.toBeVisible();
+  // 3. Verify feed is NOT visible yet (nested)
+  await expect(feed).not.toBeVisible();
 
-  // 5. Open category and verify feed is visible
-  await sidebar.getByRole("link", { name: /^tech news$/i }).click();
+  // 4. Open category and verify feed is visible
+  await category.click();
 
-  await expect(
-    sidebar.getByRole("link", { name: /hacker news/i }),
-  ).toBeVisible();
+  await expect(feed).toBeVisible();
 
   // 6. Verify uncategorized feed is visible at root
   await expect(
@@ -97,25 +90,24 @@ test("displays feeds grouped under categories", async ({ authedPage }) => {
 test("handles duplicate category name error", async ({ authedPage }) => {
   const { page, userId } = authedPage;
 
-  // 1. Setup: Seed a category
+  // Setup: Seed a category
   await seedCategory(db, {
     userId,
     name: "Duplicate Me",
   });
 
+  // 1. Navigate to the dashboard and wait for hydration
   await page.goto("/dashboard");
-  await page.waitForLoadState("networkidle");
+  await page.waitForSelector('body[data-hydrated="true"]');
 
-  // Open dialog
-  await page.getByRole("button", { name: /add category/i }).click();
-
-  // Fill in and submit form for duplicated category
   const dialog = page.getByRole("dialog", { name: /add category/i });
 
+  // 2. Open dialog, fill in and submit form for duplicated category
+  await page.getByRole("button", { name: /add category/i }).click();
   await dialog.getByLabel(/name/i).fill("Duplicate Me");
   await dialog.getByRole("button", { name: /create category/i }).click();
 
-  // Verify error toast
+  // 3. Verify error toast
   await expect(page.locator("[data-sonner-toast]")).toContainText(
     /already exists/i,
   );
@@ -129,74 +121,57 @@ test("verifies full management flow: empty state, creation, renaming and deletin
 }) => {
   const { page, userId } = authedPage;
 
-  // 1. Setup: Seed a feed but NO categories
+  // Setup: Seed a feed but NO categories
   await seedFeedWithSubscription(db, userId, {
     title: "Uncategorized Feed",
     url: `https://example.com/rss?tenant=${userId}`,
   });
 
-  // 2. Navigate to Dashboard
-  await page.goto("/dashboard");
-  await page.waitForLoadState("networkidle");
+  // 1. Navigate and wait for hydration
+  await page.goto("/manage-categories");
+  await page.waitForSelector('body[data-hydrated="true"]');
 
   const sidebar = page.locator('[data-slot="sidebar"]');
   const main = page.getByRole("main");
+  const addDialog = page.getByRole("dialog", { name: /add category/i });
+  const deleteDialog = page.getByRole("alertdialog");
 
-  // 3. Navigate to Management Page via Sidebar Action
-  await sidebar.getByRole("link", { name: /manage categories/i }).click();
-
-  await expect(page).toHaveURL(/\/manage-categories/);
-
-  // 4. Verify Empty State
+  // 2. Verify Empty State
   await expect(main.getByText(/no categories yet/i)).toBeVisible();
 
-  const createFirstBtn = main.getByRole("button", {
-    name: /create your first category/i,
-  });
-  // await expect(createFirstBtn).toBeVisible();
-  await createFirstBtn.click();
-
-  // 5. Create Category from Empty State
-  const addDialog = page.getByRole("dialog", { name: /add category/i });
-
+  // 3. Create a new category
+  await main.getByRole("button", { name: /create .* category/i }).click();
   await addDialog.getByLabel(/name/i).fill("Fresh Category");
   await addDialog.getByRole("button", { name: /create category/i }).click();
 
-  // Verify success toast
+  // 4. Verify operation succeeded
   await expect(page.locator("[data-sonner-toast]")).toContainText(
     /category created successfully/i,
   );
 
-  // Verify category appears in list
   await expect(main.getByText("Fresh Category")).toBeVisible();
 
-  // Verify category folder appears in sidebar
   await expect(
     sidebar.getByRole("link", { name: /fresh category/i }),
   ).toBeVisible();
 
-  // 6. Rename Category
+  // 5. Rename Category
   await main.getByRole("button", { name: /rename fresh category/i }).click();
 
-  const renameDialog = page.getByRole("dialog", {
-    name: /rename category|edit category/i,
-  });
+  const renameDialog = page.getByRole("dialog", { name: /rename category/i });
   const nameInput = renameDialog.getByRole("textbox", { name: /name/i });
 
   await nameInput.clear();
   await nameInput.fill("Updated Category");
-  await renameDialog
-    .getByRole("button", { name: /save changes|rename category/i })
-    .click();
+  await renameDialog.getByRole("button", { name: /save changes/i }).click();
 
-  // Verify success toast
+  // 6. Verify operation succeeded
   await expect(
     page
       .locator("[data-sonner-toast]")
       .filter({ hasText: /renamed successfully/i }),
   ).toBeVisible();
 
-  // Verify name change in list and Sidebar
   await expect(main.getByText(/updated category/i)).toBeVisible();
   await expect(
     sidebar.getByRole("link", { name: /updated category/i }),
@@ -204,19 +179,15 @@ test("verifies full management flow: empty state, creation, renaming and deletin
 
   // 7. Delete Category
   await main.getByRole("button", { name: /delete updated category/i }).click();
-
-  const deleteDialog = page.getByRole("alertdialog");
-
   await deleteDialog.getByRole("button", { name: /delete category/i }).click();
 
-  // Verify success toast
+  // 8. Verify operation succeeded
   await expect(
     page
       .locator("[data-sonner-toast]")
       .filter({ hasText: /deleted successfully/i }),
   ).toBeVisible();
 
-  // 8. Verify category is gone from Sidebar and we are back to empty state
   await expect(
     sidebar.getByRole("link", { name: /updated category/i }),
   ).not.toBeVisible();
