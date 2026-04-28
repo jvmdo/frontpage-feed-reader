@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, FolderIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import * as React from "react";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { DashboardLink } from "@/components/shared/dashboard-link";
@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/collapsible";
 import {
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -23,6 +22,7 @@ import { useCategories } from "@/hooks/use-categories";
 import { useFeedFilter } from "@/hooks/use-feed-filter";
 import { useSubscriptions } from "@/hooks/use-subscriptions";
 import { useUnreadCounts } from "@/hooks/use-unread-counts";
+import { cn } from "@/lib/utils";
 import type { FeedWithSubscription } from "@/types";
 
 export function SidebarSubscriptions() {
@@ -77,32 +77,21 @@ export function SidebarSubscriptions() {
                   isActive={categoryId === group.id}
                   className="h-9 px-3"
                 >
-                  <DashboardLink
+                  <SubscriptionLink
                     href={`/dashboard?categoryId=${group.id}`}
                     categoryId={group.id}
-                    prefetch={false}
-                    className="grid grid-cols-[1fr_auto]"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    label={group.name}
+                    unreadCount={group.unreadCount}
+                    icon={
                       <span
-                        className="size-2 rounded-full bg-primary"
+                        className="size-2 rounded-full bg-primary shrink-0"
                         aria-hidden="true"
                       />
-                      <span className="truncate">{group.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {group.unreadCount > 0 && (
-                        <output
-                          className="text-xs text-muted-foreground"
-                          aria-label={`${group.unreadCount} unread items`}
-                        >
-                          {group.unreadCount}
-                        </output>
-                      )}
+                    }
+                    suffix={
                       <ChevronRight className="size-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 text-muted-foreground shrink-0" />
-                    </div>
-                    <LinkPendingIndicator />
-                  </DashboardLink>
+                    }
+                  />
                 </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -115,11 +104,12 @@ export function SidebarSubscriptions() {
                     </SidebarMenuSubItem>
                   ) : (
                     group.items.map((item) => (
-                      <SubscriptionSubItem
+                      <SubscriptionItem
                         key={item.feed.id}
                         item={item}
                         isActive={feedId === item.feed.id}
                         unreadCount={unreadCounts?.feeds?.[item.feed.id] || 0}
+                        isSubItem
                       />
                     ))
                   )}
@@ -146,90 +136,81 @@ function SubscriptionItem({
   item,
   isActive,
   unreadCount,
+  isSubItem = false,
 }: {
   item: FeedWithSubscription;
   isActive: boolean;
   unreadCount: number;
+  isSubItem?: boolean;
 }) {
   const { subscription, feed } = item;
   const title = subscription.customTitle || feed.title || "Untitled Feed";
+  const ItemWrapper = isSubItem ? SidebarMenuSubItem : SidebarMenuItem;
+  const ButtonWrapper = isSubItem ? SidebarMenuSubButton : SidebarMenuButton;
 
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
+    <ItemWrapper>
+      <ButtonWrapper
         asChild
         isActive={isActive}
         tooltip={title}
-        className="h-9 px-3 relative"
+        className={cn("px-3", isSubItem ? "h-8" : "h-9 relative")}
       >
-        <DashboardLink
+        <SubscriptionLink
           href={`/dashboard?feedId=${feed.id}`}
           feedId={feed.id}
-          prefetch={false}
-          className="grid grid-cols-[1fr_auto] items-center w-full min-w-0 overflow-hidden"
-        >
-          <div className="flex items-center gap-2.5 min-w-0 overflow-hidden">
-            <div className="size-5 shrink-0 flex items-center justify-center">
-              <FeedIcon
-                url={feed.iconUrl || feed.url}
-                title={title}
-                size={20}
-              />
-            </div>
-            <span className="truncate">{title}</span>
-          </div>
-          {unreadCount > 0 && (
-            <output
-              className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden shrink-0 ml-2 whitespace-nowrap"
-              aria-label={`${unreadCount} unread items`}
-            >
-              {unreadCount}
-            </output>
-          )}
-          <LinkPendingIndicator />
-        </DashboardLink>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+          label={title}
+          unreadCount={unreadCount}
+          icon={
+            <FeedIcon url={feed.iconUrl || feed.url} title={title} size={20} />
+          }
+        />
+      </ButtonWrapper>
+    </ItemWrapper>
   );
 }
 
-function SubscriptionSubItem({
-  item,
-  isActive,
-  unreadCount,
-}: {
-  item: FeedWithSubscription;
-  isActive: boolean;
-  unreadCount: number;
-}) {
-  const { subscription, feed } = item;
-  const title = subscription.customTitle || feed.title || "Untitled Feed";
+interface SubscriptionLinkProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof DashboardLink>,
+    "children"
+  > {
+  label: string;
+  icon: React.ReactNode;
+  unreadCount?: number;
+  suffix?: React.ReactNode;
+}
 
+function SubscriptionLink({
+  label,
+  icon,
+  unreadCount = 0,
+  suffix,
+  className,
+  ...props
+}: SubscriptionLinkProps) {
   return (
-    <SidebarMenuSubItem>
-      <SidebarMenuSubButton asChild isActive={isActive} className="h-8 px-3">
-        <DashboardLink
-          href={`/dashboard?feedId=${feed.id}`}
-          feedId={feed.id}
-          prefetch={false}
-          className="grid grid-cols-[1fr_auto]"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <FeedIcon url={feed.iconUrl || feed.url} title={title} size={20} />
-
-            <span className="truncate">{title}</span>
-          </div>
-          {unreadCount > 0 && (
-            <output
-              className="text-xs text-muted-foreground"
-              aria-label={`${unreadCount} unread items`}
-            >
-              {unreadCount}
-            </output>
-          )}
-          <LinkPendingIndicator />
-        </DashboardLink>
-      </SidebarMenuSubButton>
-    </SidebarMenuSubItem>
+    <DashboardLink
+      {...props}
+      prefetch={false}
+      className={cn(className, "grid grid-cols-[1fr_auto]")}
+    >
+      <div className="flex items-center gap-2.5 min-w-0">
+        {icon}
+        <span className="truncate">{label}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        {unreadCount > 0 && (
+          <output
+            className="text-xs text-muted-foreground group-data-[active=true]/menu-button:text-sidebar-accent-foreground"
+            aria-label={`${unreadCount} unread items`}
+          >
+            {unreadCount}
+          </output>
+        )}
+        {suffix}
+      </div>
+      <LinkPendingIndicator />
+    </DashboardLink>
   );
 }

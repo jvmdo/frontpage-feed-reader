@@ -160,7 +160,7 @@ function AllItemsBadge() {
   }
 
   return (
-    <SidebarMenuBadge className="bg-primary/10 text-primary font-semibold border-0">
+    <SidebarMenuBadge className="font-semibold border-0">
       <output>{unreadCounts.global}</output>
     </SidebarMenuBadge>
   );
