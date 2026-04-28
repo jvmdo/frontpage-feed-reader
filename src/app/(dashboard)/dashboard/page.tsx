@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { FeedItemList } from "@/components/feed/feed-item-list";
 import FeedItemListSkeleton from "@/components/feed/feed-item-list-skeleton";
 import { FeedToolbar } from "@/components/layout/feed-toolbar";
+import { FeedToolbarSkeleton } from "@/components/layout/feed-toolbar-skeleton";
 import { FeedReaderSheet } from "@/components/reader/feed-reader-sheet";
 import { db } from "@/db";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
@@ -61,28 +62,20 @@ export default async function DashboardPage({
 
   return (
     <div className="flex flex-col h-full">
-      <Suspense
-        fallback={
-          <div aria-busy="true">
-            <span className="sr-only" role="status">
-              Loading toolbar...
-            </span>
-          </div>
-        }
-      >
-        <FeedToolbar />
-      </Suspense>
-      <section
-        id="feed-container"
-        className="flex-1 overflow-y-auto"
-        aria-label="Feed"
-      >
-        <HydrationBoundary state={dehydrate(queryClient)}>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <Suspense fallback={<FeedToolbarSkeleton />}>
+          <FeedToolbar />
+        </Suspense>
+        <section
+          id="feed-container"
+          className="flex-1 overflow-y-auto"
+          aria-label="Feed"
+        >
           <Suspense fallback={<FeedItemListSkeleton />}>
             <FeedItemList />
           </Suspense>
-        </HydrationBoundary>
-      </section>
+        </section>
+      </HydrationBoundary>
       <FeedReaderSheet />
     </div>
   );
