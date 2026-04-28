@@ -2,7 +2,6 @@
 
 import {
   BookmarkIcon,
-  CircleCheckIcon,
   FolderPlusIcon,
   InboxIcon,
   PlusIcon,
@@ -14,6 +13,10 @@ import { usePathname } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 import { AddCategoryDialog } from "@/components/category/add-category-dialog";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
+import {
+  FeedStatus,
+  FeedStatusFallback,
+} from "@/components/layout/feed-status";
 import { DashboardLink } from "@/components/shared/dashboard-link";
 import { LinkPendingIndicator } from "@/components/shared/link-pending-indicator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -139,14 +142,9 @@ export function AppSidebar({ children }: { children: ReactNode }) {
       </SidebarContent>
 
       <SidebarFooter className="p-0 border-t border-border">
-        <Link
-          href="/manage-feeds"
-          className="flex items-center gap-2 px-4 h-12 text-xs text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors group-data-[collapsible=icon]:hidden"
-          aria-label="Feed status: All feeds healthy. Click to manage feeds."
-        >
-          <CircleCheckIcon className="size-3.5 text-success" />
-          <span>All feeds healthy</span>
-        </Link>
+        <Suspense fallback={<FeedStatusFallback />}>
+          <FeedStatus />
+        </Suspense>
       </SidebarFooter>
     </Sidebar>
   );
@@ -161,7 +159,9 @@ function AllItemsBadge() {
 
   return (
     <SidebarMenuBadge className="font-semibold border-0">
-      <output>{unreadCounts.global}</output>
+      <output aria-label={`${unreadCounts} unread items`}>
+        {unreadCounts.global}
+      </output>
     </SidebarMenuBadge>
   );
 }

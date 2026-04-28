@@ -61,7 +61,17 @@ export default async function DashboardPage({
 
   return (
     <div className="flex flex-col h-full">
-      <FeedToolbar />
+      <Suspense
+        fallback={
+          <div aria-busy="true">
+            <span className="sr-only" role="status">
+              Loading toolbar...
+            </span>
+          </div>
+        }
+      >
+        <FeedToolbar />
+      </Suspense>
       <section
         id="feed-container"
         className="flex-1 overflow-y-auto"
