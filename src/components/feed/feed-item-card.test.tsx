@@ -94,4 +94,40 @@ describe("FeedItemCard", () => {
     const badges = screen.queryByText(/Technology/i);
     expect(badges).not.toBeInTheDocument();
   });
+
+  it("skips all potentially focusable elements in excerpt during keyboard navigation", async () => {
+    const user = userEvent.setup();
+    const data = createMockFeedItemWithSource({
+      item: {
+        title: "Test Article",
+        description:
+          'Excerpt with <a tabindex="-1" href="#">link</a> and <button tabindex="-1">btn</button>',
+      },
+    } as any);
+
+    render(<FeedItemCard data={data} />);
+
+    const openBtn = screen.getByRole("button", { name: /open reader/i });
+    const saveBtn = screen.getByRole("button", { name: /save for later/i });
+
+    openBtn.focus();
+    expect(openBtn).toHaveFocus();
+
+    // Tab should skip excerpt and land on save button
+    await user.tab();
+    expect(saveBtn).toHaveFocus();
+  });
+
+  it("isolates bookmark button clicks from the main card action", async () => {
+    const user = userEvent.setup();
+    const data = createMockFeedItemWithSource();
+    render(<FeedItemCard data={data} />);
+
+    const saveBtn = screen.getByRole("button", { name: /save for later/i });
+    await user.click(saveBtn);
+
+    // Verify bookmark click didn't trigger the reader view
+    expect(mockSetActiveItem).not.toHaveBeenCalled();
+    expect(mockMarkAsRead).not.toHaveBeenCalled();
+  });
 });

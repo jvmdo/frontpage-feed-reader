@@ -87,8 +87,12 @@ export async function parseFeedXml(
       const rawDescription = decodeEntities(
         item.descriptionRaw || item.summary || item.contentSnippet,
       );
-      const description = sanitizeHtml(cleanText(rawDescription));
-      const content = sanitizeHtml(item.contentEncoded || item.content);
+      const rawContent = item.contentEncoded || item.content;
+
+      const description = neutralizeFocusableElements(
+        sanitizeHtml(cleanText(rawDescription || rawContent)),
+      );
+      const content = sanitizeHtml(rawContent);
       const url = normalizeUrl(item.link, feedLink || sourceUrl);
       const guid =
         item.guid || item.id || generateDeterministicGuid(url || "", title);
@@ -100,7 +104,7 @@ export async function parseFeedXml(
         description,
         content,
         author: cleanText(decodeEntities(item.creator || item.author)),
-        publishedAt: normalizeDate(item.pubDate),
+        publishedAt: normalizeDate(item.pubDate || item.isoDate),
         updatedAt: normalizeDate(item.isoDate),
         rawPayload: item,
       };
@@ -120,6 +124,16 @@ export async function parseFeedXml(
       error instanceof Error && error.message ? error.message : undefined;
     throw new FeedInvalidFormatError(message);
   }
+}
+
+/**
+ * Neutralizes all focusable elements in HTML by adding tabindex="-1" to all tags.
+ * This is used for descriptions (excerpts) used in the feed list to prevent
+ * accidental focus during tabbing while keeping content accessible to AT.
+ */
+function neutralizeFocusableElements(html: string): string {
+  if (!html) return "";
+  return html.replace(/<([a-z0-9-]+)(?=[ >/])/gi, '<$1 tabindex="-1"');
 }
 
 /**

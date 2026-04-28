@@ -30,7 +30,7 @@ export function FeedItemCard({ data, className }: FeedItemCardProps) {
   return (
     <article
       className={cn(
-        "group relative px-4 py-4 border-b border-border transition-colors hover:bg-accent/40 cursor-pointer sm:px-6 sm:py-5",
+        "group relative px-4 py-4 border-b border-border transition-colors hover:bg-accent/60 cursor-pointer sm:px-6 sm:py-5",
         isRead && "opacity-60",
         className,
       )}
@@ -73,7 +73,7 @@ export function FeedItemCard({ data, className }: FeedItemCardProps) {
           </h3>
           <button
             type="button"
-            className="absolute inset-0 focus:outline-none z-10"
+            className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset z-10"
             aria-label={`Open reader for ${item.title || "article"}`}
             onClick={handleOpenReader}
           />
@@ -83,7 +83,7 @@ export function FeedItemCard({ data, className }: FeedItemCardProps) {
             <div
               // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted content from parser
               dangerouslySetInnerHTML={{ __html: item.description }}
-              className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3"
+              className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3 pointer-events-none"
             />
           )}
 
@@ -107,11 +107,9 @@ export function FeedItemCard({ data, className }: FeedItemCardProps) {
             // Toggle save logic would go here
           }}
           aria-label="Save for later"
-          className="md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0 size-8 p-0 mt-2 hover:bg-transparent"
+          className="relative z-20 transition-all shrink-0 size-8 p-0 mt-2 hover:bg-primary/50"
         >
-          <BookmarkIcon
-            className={cn("size-4 text-muted-foreground hover:text-foreground")}
-          />
+          <BookmarkIcon className="size-4 text-muted-foreground" />
         </Button>
       </div>
     </article>

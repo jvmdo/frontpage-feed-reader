@@ -96,7 +96,7 @@ describe("parseFeedXml", () => {
     expect(result.metadata.title).toBe("Test & Feed");
     expect(result.items[0].title).toBe("Title 'with' entities & stuff");
     expect(result.items[0].description).toContain(
-      "<p>Description <b>with</b> tags and &amp; entities</p>",
+      '<p tabindex="-1">Description <b tabindex="-1">with</b> tags and &amp; entities</p>',
     );
   });
 
@@ -193,8 +193,27 @@ describe("parseFeedXml", () => {
     const result = await parseFeedXml(xml);
     const item = result.items[0];
 
-    expect(item.description).toBe("<p>Safe  text</p>\n");
+    expect(item.description).toBe('<p tabindex="-1">Safe  text</p>\n');
     expect(item.content).toBe("<div>Safe</div>");
+  });
+
+  it("uses content as fallback for description and neutralizes it", async () => {
+    const xml = `
+      <rss version="2.0">
+        <channel>
+          <item>
+            <title>No Description</title>
+            <link>http://example.com/no-desc</link>
+            <content:encoded>&lt;p&gt;This is the content.&lt;/p&gt;</content:encoded>
+          </item>
+        </channel>
+      </rss>
+    `;
+    const result = await parseFeedXml(xml);
+    const item = result.items[0];
+
+    expect(item.description).toBe('<p tabindex="-1">This is the content.</p>');
+    expect(item.content).toBe("<p>This is the content.</p>");
   });
 
   it("throws FeedInvalidFormatError for invalid XML", async () => {
