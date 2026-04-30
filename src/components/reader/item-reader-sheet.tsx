@@ -14,10 +14,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useActiveItem } from "@/hooks/use-active-item";
-import { useItem } from "@/hooks/use-item";
-import { useItemReaderNavigation } from "@/hooks/use-item-reader-navigation";
-import { useReaderShortcuts } from "@/hooks/use-reader-shortcuts";
+import { useActiveItem } from "@/hooks/item/use-active-item";
+import { useItem } from "@/hooks/item/use-item";
+import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
+import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
 import { getItemReaderScroll, saveItemReaderScroll } from "@/lib/scroll-store";
 import { ReaderNavigation } from "./reader-navigation";
 

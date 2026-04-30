@@ -2,18 +2,18 @@
 
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { useActiveItem } from "@/hooks/use-active-item";
-import { useItem } from "@/hooks/use-item";
-import { useItemReaderNavigation } from "@/hooks/use-item-reader-navigation";
+import { useActiveItem } from "@/hooks/item/use-active-item";
+import { useItem } from "@/hooks/item/use-item";
+import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { createMockItemWithSource } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
 import { ItemReaderSheet } from "./item-reader-sheet";
 import { ReaderView } from "./reader-view";
 
-vi.mock("@/hooks/use-active-item");
-vi.mock("@/hooks/use-item");
-vi.mock("@/hooks/use-item-reader-navigation");
-vi.mock("@/hooks/use-reader-shortcuts");
+vi.mock("@/hooks/item/use-active-item");
+vi.mock("@/hooks/item/use-item");
+vi.mock("@/hooks/item/use-item-reader-navigation");
+vi.mock("@/hooks/ui/use-reader-shortcuts");
 
 afterEach(() => {
   vi.clearAllMocks();

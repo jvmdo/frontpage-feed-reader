@@ -3,7 +3,7 @@
 import { Plus, Rss } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { useFeeds } from "@/hooks/use-feeds";
+import { useFeeds } from "@/hooks/feed/use-feeds";
 import { AddFeedDialog } from "./add-feed-dialog";
 import { FeedTable } from "./feed-table";
 

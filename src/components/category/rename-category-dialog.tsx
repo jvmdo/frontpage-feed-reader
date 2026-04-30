@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { useUpdateCategory } from "@/hooks/use-update-category";
+import { useUpdateCategory } from "@/hooks/category/use-update-category";
 import {
   type UpdateCategoryInput,
   updateCategorySchema,

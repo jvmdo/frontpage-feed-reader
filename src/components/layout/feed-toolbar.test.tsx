@@ -1,17 +1,17 @@
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useMarkAllRead } from "@/hooks/use-mark-all-read";
-import { useRefreshFeed } from "@/hooks/use-refresh-feed";
+import { useMarkAllRead } from "@/hooks/feed/use-mark-all-read";
+import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
 import { FeedToolbar } from "./feed-toolbar";
 
-vi.mock("@/hooks/use-mark-all-read", () => ({
+vi.mock("@/hooks/feed/use-mark-all-read", () => ({
   useMarkAllRead: vi.fn(),
 }));
 
-vi.mock("@/hooks/use-refresh-feed", () => ({
+vi.mock("@/hooks/feed/use-refresh-feed", () => ({
   useRefreshFeed: vi.fn(),
 }));
 

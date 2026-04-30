@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { useAddFeed } from "@/hooks/use-add-feed";
+import { useAddFeed } from "@/hooks/feed/use-add-feed";
 import { type AddFeedInput, addFeedSchema } from "@/lib/validations/feed";
 
 interface AddFeedDialogProps {

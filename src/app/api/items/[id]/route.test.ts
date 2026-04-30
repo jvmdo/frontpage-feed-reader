@@ -6,11 +6,11 @@ import { GET } from "./route";
 vi.mock("@/lib/session");
 vi.mock("@/services/item/get-item");
 
-describe("GET /api/feeds/items/[id]", () => {
+describe("GET /api/items/[id]", () => {
   it("returns 401 if unauthorized", async () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce(null);
 
-    const request = new Request("http://localhost/api/feeds/items/123");
+    const request = new Request("http://localhost/api/items/123");
     const response = await GET(request as any, { params: Promise.resolve({ id: "123" }) });
     const body = await response.json();
 
@@ -21,7 +21,7 @@ describe("GET /api/feeds/items/[id]", () => {
   it("returns 400 if ID is not a number", async () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce({ user: { id: "user-1" } } as any);
 
-    const request = new Request("http://localhost/api/feeds/items/abc");
+    const request = new Request("http://localhost/api/items/abc");
     const response = await GET(request as any, { params: Promise.resolve({ id: "abc" }) });
     const body = await response.json();
 
@@ -33,7 +33,7 @@ describe("GET /api/feeds/items/[id]", () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce({ user: { id: "user-1" } } as any);
     vi.mocked(getItem).mockResolvedValueOnce(null);
 
-    const request = new Request("http://localhost/api/feeds/items/123");
+    const request = new Request("http://localhost/api/items/123");
     const response = await GET(request as any, { params: Promise.resolve({ id: "123" }) });
     const body = await response.json();
 
@@ -46,7 +46,7 @@ describe("GET /api/feeds/items/[id]", () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce({ user: { id: "user-1" } } as any);
     vi.mocked(getItem).mockResolvedValueOnce(mockItem as any);
 
-    const request = new Request("http://localhost/api/feeds/items/123");
+    const request = new Request("http://localhost/api/items/123");
     const response = await GET(request as any, { params: Promise.resolve({ id: "123" }) });
     const body = await response.json();
 
@@ -59,7 +59,7 @@ describe("GET /api/feeds/items/[id]", () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce({ user: { id: "user-1" } } as any);
     vi.mocked(getItem).mockRejectedValueOnce(new Error("DB error"));
 
-    const request = new Request("http://localhost/api/feeds/items/123");
+    const request = new Request("http://localhost/api/items/123");
     const response = await GET(request as any, { params: Promise.resolve({ id: "123" }) });
     const body = await response.json();
 

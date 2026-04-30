@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useFeedFilter } from "@/hooks/use-feed-filter";
-import { AssignAction } from "./assign-action";
-import { LayoutToggles } from "./layout-toggles";
-import { MarkAllReadAction } from "./mark-all-read-action";
-import { RefreshAction } from "./refresh-action";
-import { ToolbarActionsMenu } from "./toolbar-actions-menu";
-import { ToolbarTitle } from "./toolbar-title";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
+import { AssignAction } from "./components/assign-action";
+import { LayoutToggles } from "./components/layout-toggles";
+import { MarkAllReadAction } from "./components/mark-all-read-action";
+import { RefreshAction } from "./components/refresh-action";
+import { ToolbarActionsMenu } from "./components/toolbar-actions-menu";
+import { ToolbarTitle } from "./components/toolbar-title";
 
 export function FeedToolbar() {
   const { feedId, categoryId } = useFeedFilter();

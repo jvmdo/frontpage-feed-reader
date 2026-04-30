@@ -1,7 +1,7 @@
 import { RssIcon } from "lucide-react";
 import Link from "next/link";
-import { TopNavActions } from "@/components/layout/top-nav-actions";
-import { TopNavItems } from "@/components/layout/top-nav-items";
+import { TopNavActions } from "@/components/layout/components/top-nav-actions";
+import { TopNavItems } from "@/components/layout/components/top-nav-items";
 
 export function TopNav() {
   return (

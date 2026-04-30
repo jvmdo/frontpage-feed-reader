@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { useCreateCategory } from "@/hooks/use-create-category";
+import { useCreateCategory } from "@/hooks/category/use-create-category";
 import {
   type CreateCategoryInput,
   createCategorySchema,

@@ -9,7 +9,7 @@ export function useItem(itemId: number | null) {
     queryFn: async () => {
       if (!itemId) throw new Error("Item ID is required");
 
-      const response = await fetch(`/api/feeds/items/${itemId}`);
+      const response = await fetch(`/api/items/${itemId}`);
 
       if (!response.ok) {
         if (response.status === 404) {

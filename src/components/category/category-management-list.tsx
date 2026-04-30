@@ -7,7 +7,7 @@ import { DeleteCategoryDialog } from "@/components/category/delete-category-dial
 import { RenameCategoryDialog } from "@/components/category/rename-category-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { useCategories } from "@/hooks/use-categories";
+import { useCategories } from "@/hooks/category/use-categories";
 
 export function CategoryManagementList() {
   const { data } = useCategories();

@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json(items);
   } catch (error) {
-    console.error("[GET /api/feeds/items] Error:", error);
+    console.error("[GET /api/items] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch feed items" },
       { status: 500 },

@@ -12,7 +12,7 @@ import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
 import type { Category, FeedWithSubscription } from "@/types";
 import { AppSidebar } from "./app-sidebar";
-import { SidebarFeeds } from "./sidebar-feeds";
+import { SidebarFeeds } from "./components/sidebar-feeds";
 
 // Mock next/navigation's usePathname
 vi.mock("next/navigation", () => ({

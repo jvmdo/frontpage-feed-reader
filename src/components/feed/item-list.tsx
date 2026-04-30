@@ -8,9 +8,9 @@ import { ItemCard } from "@/components/feed/item-card";
 import ItemListSkeleton from "@/components/feed/item-list-skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { useCategories } from "@/hooks/use-categories";
-import { useFeedFilter } from "@/hooks/use-feed-filter";
-import { useItems } from "@/hooks/use-items";
+import { useCategories } from "@/hooks/category/use-categories";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
+import { useItems } from "@/hooks/item/use-items";
 import { getItemsListScroll } from "@/lib/scroll-store";
 import type { Category } from "@/types";
 

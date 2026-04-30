@@ -30,7 +30,7 @@ export async function GET(
 
     return NextResponse.json(item);
   } catch (error) {
-    console.error(`[GET /api/feeds/items/${id}] Error:`, error);
+    console.error(`[GET /api/items/${id}] Error:`, error);
     return NextResponse.json(
       { error: "Failed to fetch feed item" },
       { status: 500 },

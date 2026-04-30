@@ -1,17 +1,17 @@
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { useActiveItem } from "@/hooks/use-active-item";
-import { useMarkRead } from "@/hooks/use-mark-read";
+import { useActiveItem } from "@/hooks/item/use-active-item";
+import { useMarkRead } from "@/hooks/item/use-mark-read";
 import { createMockItemWithSource } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
 import { ItemCard } from "./item-card";
 
 // Mock the hooks
-vi.mock("@/hooks/use-mark-read", () => ({
+vi.mock("@/hooks/item/use-mark-read", () => ({
   useMarkRead: vi.fn(),
 }));
 
-vi.mock("@/hooks/use-active-item", () => ({
+vi.mock("@/hooks/item/use-active-item", () => ({
   useActiveItem: vi.fn(),
 }));
 

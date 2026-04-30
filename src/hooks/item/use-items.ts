@@ -1,7 +1,7 @@
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import type { ItemWithSource } from "@/types";
-import { useFeedFilter } from "./use-feed-filter";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 
 export function useItems() {
   const { feedId, categoryId } = useFeedFilter();
@@ -10,7 +10,7 @@ export function useItems() {
     queryKey: ["feeds", "items", { feedId, categoryId }],
     queryFn: async ({ pageParam }) => {
       const offset = pageParam as number;
-      let url = `/api/feeds/items?offset=${offset}&limit=${PAGINATION_LIMIT}`;
+      let url = `/api/items?offset=${offset}&limit=${PAGINATION_LIMIT}`;
 
       if (feedId) {
         url += `&feedId=${feedId}`;

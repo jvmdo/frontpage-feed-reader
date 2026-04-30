@@ -13,7 +13,7 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useRemoveFeed } from "@/hooks/use-remove-feed";
+import { useRemoveFeed } from "@/hooks/feed/use-remove-feed";
 import type { Feed, Subscription } from "@/types";
 
 interface RemoveFeedDialogProps {

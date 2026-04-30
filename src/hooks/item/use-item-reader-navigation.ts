@@ -1,6 +1,6 @@
-import { useActiveItem } from "./use-active-item";
-import { useItems } from "./use-items";
-import { useMarkRead } from "./use-mark-read";
+import { useActiveItem } from "@/hooks/item/use-active-item";
+import { useItems } from "@/hooks/item/use-items";
+import { useMarkRead } from "@/hooks/item/use-mark-read";
 
 /**
  * Hook to handle navigation between feed items in the Reader View.

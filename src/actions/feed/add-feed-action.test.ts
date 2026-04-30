@@ -9,11 +9,11 @@ import {
 } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
 import { createSubscription } from "@/services/subscription/create-subscription";
-import { ingestItems } from "@/services/feed-ingestion";
+import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { addFeedAction } from "./add-feed-action";
 
 vi.mock("@/services/subscription/create-subscription");
-vi.mock("@/services/feed-ingestion");
+vi.mock("@/services/ingestion/feed-ingestion");
 vi.mock("@/lib/session");
 
 describe("addFeedAction", () => {

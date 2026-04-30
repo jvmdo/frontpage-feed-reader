@@ -13,9 +13,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCategories } from "@/hooks/use-categories";
-import { useFeeds } from "@/hooks/use-feeds";
-import { useUpdateFeed } from "@/hooks/use-update-feed";
+import { useCategories } from "@/hooks/category/use-categories";
+import { useFeeds } from "@/hooks/feed/use-feeds";
+import { useUpdateFeed } from "@/hooks/feed/use-update-feed";
 import { cn } from "@/lib/utils";
 import type { Category, FeedWithSubscription } from "@/types";
 

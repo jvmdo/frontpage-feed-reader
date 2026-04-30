@@ -4,11 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeedNotFoundError } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
 import { getSubscription } from "@/services/subscription/get-subscription";
-import { ingestItems } from "@/services/feed-ingestion";
+import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { refreshFeedAction } from "./refresh-feed-action";
 
 vi.mock("@/services/subscription/get-subscription");
-vi.mock("@/services/feed-ingestion");
+vi.mock("@/services/ingestion/feed-ingestion");
 vi.mock("@/lib/session");
 
 describe("refreshFeedAction", () => {

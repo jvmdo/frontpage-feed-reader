@@ -13,8 +13,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useMarkAllRead } from "@/hooks/use-mark-all-read";
-import { useUnreadCounts } from "@/hooks/use-unread-counts";
+import { useMarkAllRead } from "@/hooks/feed/use-mark-all-read";
+import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
 import { cn } from "@/lib/utils";
 
 export function MarkAllReadAction({

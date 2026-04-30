@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { useRefreshFeed } from "@/hooks/use-refresh-feed";
+import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
 import type { Feed, Subscription } from "@/types";
 import { EditFeedDialog } from "./edit-feed-dialog";
 import { FeedIcon } from "./feed-icon";

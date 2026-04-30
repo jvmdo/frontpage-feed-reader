@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import type { DB } from "@/db";
 import { feeds, subscriptions } from "@/db/schema";
 import { parseFeedXml } from "@/lib/feed/parser";
-import { fetchFeedXml } from "@/services/fetch-feed-xml";
+import { fetchFeedXml } from "@/services/ingestion/fetch-feed-xml";
 
 /**
  * Create a feed subscription for a user.

@@ -102,7 +102,7 @@ describe("ItemList", () => {
 
   test("renders loading skeletons while fetching", async () => {
     server.use(
-      http.get("/api/feeds/items", async () => {
+      http.get("/api/items", async () => {
         await delay("infinite");
         return HttpResponse.json([]);
       }),
@@ -122,7 +122,7 @@ describe("ItemList", () => {
 
   test("renders list of items when fetch is successful", async () => {
     server.use(
-      http.get("/api/feeds/items", ({ request }) => {
+      http.get("/api/items", ({ request }) => {
         const url = new URL(request.url);
         const offset = Number(url.searchParams.get("offset") || "0");
         const limit = Number(
@@ -150,7 +150,7 @@ describe("ItemList", () => {
 
   test("loads more items when scrolling to the bottom", async () => {
     server.use(
-      http.get("/api/feeds/items", ({ request }) => {
+      http.get("/api/items", ({ request }) => {
         const url = new URL(request.url);
         const offset = Number(url.searchParams.get("offset") || "0");
         const limit = Number(
@@ -199,7 +199,7 @@ describe("ItemList", () => {
 
   test("renders empty state when no items are returned", async () => {
     server.use(
-      http.get("/api/feeds/items", () => {
+      http.get("/api/items", () => {
         return HttpResponse.json([]);
       }),
       http.get("/api/categories", () => {
@@ -223,7 +223,7 @@ describe("ItemList", () => {
 
   test("renders category-specific empty state when categoryId is active", async () => {
     server.use(
-      http.get("/api/feeds/items", () => {
+      http.get("/api/items", () => {
         return HttpResponse.json([]);
       }),
     );
@@ -255,7 +255,7 @@ describe("ItemList", () => {
 
   test("renders error state when fetch fails", async () => {
     server.use(
-      http.get("/api/feeds/items", () => {
+      http.get("/api/items", () => {
         return new HttpResponse(null, { status: 500 });
       }),
     );

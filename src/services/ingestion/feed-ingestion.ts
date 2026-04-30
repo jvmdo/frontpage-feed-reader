@@ -3,7 +3,7 @@ import type { DB } from "@/db";
 import { feedItems, feeds } from "@/db/schema";
 import { FeedRecordNotFoundError } from "@/lib/errors";
 import { parseFeedXml } from "@/lib/feed/parser";
-import { fetchFeedXml } from "@/services/fetch-feed-xml";
+import { fetchFeedXml } from "@/services/ingestion/fetch-feed-xml";
 
 /**
  * Orchestrates fetching, parsing, and storing items for a single feed.

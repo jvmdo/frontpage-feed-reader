@@ -3,14 +3,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { createMockItemWithSource } from "@/tests/factories";
 import { renderHook } from "@/tests/rtl-utils";
-import { useActiveItem } from "./use-active-item";
-import { useItemReaderNavigation } from "./use-item-reader-navigation";
-import { useItems } from "./use-items";
-import { useMarkRead } from "./use-mark-read";
+import { useActiveItem } from "@/hooks/item/use-active-item";
+import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
+import { useItems } from "@/hooks/item/use-items";
+import { useMarkRead } from "@/hooks/item/use-mark-read";
 
-vi.mock("./use-items");
-vi.mock("./use-active-item");
-vi.mock("./use-mark-read");
+vi.mock("@/hooks/item/use-items");
+vi.mock("@/hooks/item/use-active-item");
+vi.mock("@/hooks/item/use-mark-read");
 
 describe("useFeedNavigation", () => {
   const mockItems = [

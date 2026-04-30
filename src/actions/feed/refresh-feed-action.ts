@@ -12,7 +12,7 @@ import {
   type RefreshFeedInput,
   refreshFeedSchema,
 } from "@/lib/validations/feed";
-import { ingestItems } from "@/services/feed-ingestion";
+import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { getSubscription } from "@/services/subscription/get-subscription";
 
 /**

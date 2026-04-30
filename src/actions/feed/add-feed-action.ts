@@ -9,7 +9,7 @@ import {
 } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
 import { type AddFeedInput, addFeedSchema } from "@/lib/validations/feed";
-import { ingestItems } from "@/services/feed-ingestion";
+import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { createSubscription } from "@/services/subscription/create-subscription";
 
 /**

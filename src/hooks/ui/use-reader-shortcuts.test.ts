@@ -1,6 +1,6 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { useReaderShortcuts } from "./use-reader-shortcuts";
+import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
 
 describe("useReaderShortcuts", () => {
   const createMockRef = () => ({

@@ -1,6 +1,6 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useItemReaderNavigation } from "@/hooks/use-item-reader-navigation";
+import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { cn } from "@/lib/utils";
 
 interface ReaderNavigationProps {

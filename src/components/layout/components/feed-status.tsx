@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useFeeds } from "@/hooks/use-feeds";
+import { useFeeds } from "@/hooks/feed/use-feeds";
 import { cn } from "@/lib/utils";
 import type { FeedWithSubscription } from "@/types";
 

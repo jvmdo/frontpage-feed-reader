@@ -2,7 +2,7 @@
 
 import { RotateCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRefreshFeed } from "@/hooks/use-refresh-feed";
+import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
 import { cn } from "@/lib/utils";
 
 export function RefreshAction({ feedId }: { feedId: number | null }) {

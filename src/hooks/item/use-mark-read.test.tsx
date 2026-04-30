@@ -4,7 +4,7 @@ import type React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { markReadAction } from "@/actions/item/mark-read-action";
 import { renderHook, waitFor } from "@/tests/rtl-utils";
-import { useMarkRead } from "./use-mark-read";
+import { useMarkRead } from "@/hooks/item/use-mark-read";
 
 vi.mock("@/actions/item/mark-read-action");
 

@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { markAllReadAction } from "@/actions/feed/mark-all-read-action";
-import { useFeeds } from "@/hooks/use-feeds";
+import { useFeeds } from "@/hooks/feed/use-feeds";
 import type { MarkAllReadInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 import type { ItemWithSource } from "@/types";

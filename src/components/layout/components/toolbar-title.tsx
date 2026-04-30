@@ -1,8 +1,8 @@
 "use client";
 
-import { useCategories } from "@/hooks/use-categories";
-import { useFeeds } from "@/hooks/use-feeds";
-import { useUnreadCounts } from "@/hooks/use-unread-counts";
+import { useCategories } from "@/hooks/category/use-categories";
+import { useFeeds } from "@/hooks/feed/use-feeds";
+import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
 import type { Category, FeedWithSubscription } from "@/types";
 
 /**

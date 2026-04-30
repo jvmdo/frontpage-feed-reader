@@ -13,7 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { useDeleteCategory } from "@/hooks/use-delete-category";
+import { useDeleteCategory } from "@/hooks/category/use-delete-category";
 import type { Category } from "@/types";
 
 interface DeleteCategoryDialogProps {

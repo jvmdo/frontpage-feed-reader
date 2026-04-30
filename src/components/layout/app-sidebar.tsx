@@ -16,7 +16,7 @@ import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import {
   FeedStatus,
   FeedStatusFallback,
-} from "@/components/layout/feed-status";
+} from "@/components/layout/components/feed-status";
 import { DashboardLink } from "@/components/shared/dashboard-link";
 import { LinkPendingIndicator } from "@/components/shared/link-pending-indicator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,8 +35,8 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { useFeedFilter } from "@/hooks/use-feed-filter";
-import { useUnreadCounts } from "@/hooks/use-unread-counts";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
+import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
 
 export function AppSidebar({ children }: { children: ReactNode }) {
   const pathname = usePathname();

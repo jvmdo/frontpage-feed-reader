@@ -18,10 +18,10 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { useCategories } from "@/hooks/use-categories";
-import { useFeedFilter } from "@/hooks/use-feed-filter";
-import { useFeeds } from "@/hooks/use-feeds";
-import { useUnreadCounts } from "@/hooks/use-unread-counts";
+import { useCategories } from "@/hooks/category/use-categories";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
+import { useFeeds } from "@/hooks/feed/use-feeds";
+import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
 import { cn } from "@/lib/utils";
 import type { Category, FeedWithSubscription } from "@/types";
 

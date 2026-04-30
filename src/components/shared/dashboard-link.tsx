@@ -3,7 +3,7 @@
 import Link, { type LinkProps } from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { useFeedFilter } from "@/hooks/use-feed-filter";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { saveItemsListScroll } from "@/lib/scroll-store";
 
 interface DashboardLinkProps extends LinkProps {

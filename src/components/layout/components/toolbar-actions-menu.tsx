@@ -23,8 +23,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useMarkAllRead } from "@/hooks/use-mark-all-read";
-import { useUnreadCounts } from "@/hooks/use-unread-counts";
+import { useMarkAllRead } from "@/hooks/feed/use-mark-all-read";
+import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
 
 export function ToolbarActionsMenu({
   feedId,

@@ -27,8 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCategories } from "@/hooks/use-categories";
-import { useUpdateFeed } from "@/hooks/use-update-feed";
+import { useCategories } from "@/hooks/category/use-categories";
+import { useUpdateFeed } from "@/hooks/feed/use-update-feed";
 import {
   type UpdateFeedInput,
   updateFeedSchema,
