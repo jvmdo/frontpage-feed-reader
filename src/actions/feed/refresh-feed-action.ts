@@ -12,8 +12,8 @@ import {
   type RefreshFeedInput,
   refreshFeedSchema,
 } from "@/lib/validations/feed";
-import { getSubscriptionWithFeed } from "@/services/feed/get-subscriptions-with-feed";
-import { ingestFeedItems } from "@/services/feed-ingestion";
+import { ingestItems } from "@/services/feed-ingestion";
+import { getSubscription } from "@/services/subscription/get-subscription";
 
 /**
  * Server action to refresh a feed.
@@ -30,55 +30,71 @@ export async function refreshFeedAction(input: RefreshFeedInput) {
     };
   }
 
-  const session = await getCurrentSession();
-
-  if (!session?.user) {
-    return {
-      success: false,
-      error: "You must be signed in to refresh a feed.",
-      code: "UNAUTHORIZED",
-    };
-  }
-
   const { id } = result.data;
 
-  const row = await getSubscriptionWithFeed(db, session.user.id, id);
-
-  if (!row) {
-    return {
-      success: false,
-      error: "We couldn't find this subscription.",
-      code: "SUBSCRIPTION_NOT_FOUND",
-    };
-  }
-
-  const { subscription, feed } = row;
+  let userId: string | undefined;
+  let currentSubscription = null;
+  let currentFeed = null;
 
   try {
-    await ingestFeedItems(db, feed.id);
+    const session = await getCurrentSession();
 
-    // Fetch the updated feed data to return to the UI
-    const updatedRow = await getSubscriptionWithFeed(db, session.user.id, id);
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "You must be signed in to refresh a feed.",
+        code: "UNAUTHORIZED",
+      };
+    }
+
+    userId = session.user.id;
+
+    const row = await getSubscription(db, userId, id);
+
+    if (!row) {
+      return {
+        success: false,
+        error: "We couldn't find this subscription.",
+        code: "SUBSCRIPTION_NOT_FOUND",
+      };
+    }
+
+    currentSubscription = row.subscription;
+    currentFeed = row.feed;
+
+    await ingestItems(db, currentFeed.id);
+
+    const updatedRow = await getSubscription(db, userId, id);
 
     return {
       success: true,
       data: {
-        subscription: updatedRow?.subscription || subscription,
-        feed: updatedRow?.feed || feed,
+        subscription: updatedRow?.subscription || currentSubscription,
+        feed: updatedRow?.feed || currentFeed,
       },
     };
   } catch (error) {
     console.error("[refreshFeedAction]", error);
 
-    // Fetch the updated feed data (with error status) to return to the UI
-    const updatedRow = await getSubscriptionWithFeed(db, session.user.id, id);
+    let updatedRow = null;
+
+    // We can only fetch the updated row if we successfully got the user ID before the error occurred.
+    if (userId) {
+      try {
+        updatedRow = await getSubscription(db, userId, id);
+      } catch (fallbackError) {
+        console.error(
+          "[refreshFeedAction] Failed to get fallback subscription:",
+          fallbackError,
+        );
+      }
+    }
 
     const baseResponse = {
       success: false as const,
-      // We return the updated feed data even on failure so the UI can show the error status
       data: {
-        subscription: updatedRow?.subscription || subscription,
-        feed: updatedRow?.feed || feed,
+        subscription: updatedRow?.subscription || currentSubscription,
+        feed: updatedRow?.feed || currentFeed,
       },
     };
 

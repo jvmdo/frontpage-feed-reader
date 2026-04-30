@@ -5,11 +5,11 @@ import { HttpResponse, http } from "msw";
 import { feedItems, feeds } from "@/db/schema";
 import { FeedNotFoundError, FeedRecordNotFoundError } from "@/lib/errors";
 import { server } from "@/tests/mocks/server";
-import { seedFeed, seedFeedItems } from "@/tests/seeding";
+import { seedFeed, seedItems } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
-import { ingestFeedItems } from "./feed-ingestion";
+import { ingestItems } from "./feed-ingestion";
 
-describe("ingestFeedItems integration", () => {
+describe("ingestItems integration", () => {
   const fixturesPath = path.join(process.cwd(), "e2e/fixtures");
   const RSS_CONTENT = fs.readFileSync(
     path.join(fixturesPath, "rss-2.xml"),
@@ -39,7 +39,7 @@ describe("ingestFeedItems integration", () => {
       }),
     );
 
-    const result = await ingestFeedItems(tx, insertedFeed.id);
+    const result = await ingestItems(tx, insertedFeed.id);
     expect(result.success).toBe(true);
 
     const [updatedFeed] = await tx
@@ -77,7 +77,7 @@ describe("ingestFeedItems integration", () => {
       }),
     );
 
-    const result = await ingestFeedItems(tx, insertedFeed.id);
+    const result = await ingestItems(tx, insertedFeed.id);
     expect(result.success).toBe(true);
 
     const [updatedFeed] = await tx
@@ -115,7 +115,7 @@ describe("ingestFeedItems integration", () => {
       }),
     );
 
-    const result = await ingestFeedItems(tx, insertedFeed.id);
+    const result = await ingestItems(tx, insertedFeed.id);
     expect(result.success).toBe(true);
 
     const [updatedFeed] = await tx
@@ -143,7 +143,7 @@ describe("ingestFeedItems integration", () => {
     const insertedFeed = await seedFeed(tx, { url: FEED_URL });
 
     // Insert an initial version of an item from rss-2.xml
-    await seedFeedItems(tx, insertedFeed.id, [
+    await seedItems(tx, insertedFeed.id, [
       {
         guid: "https://css-tricks.com/?p=392986",
       },
@@ -155,7 +155,7 @@ describe("ingestFeedItems integration", () => {
       }),
     );
 
-    await ingestFeedItems(tx, insertedFeed.id);
+    await ingestItems(tx, insertedFeed.id);
 
     const [updatedItem] = await tx
       .select()
@@ -176,7 +176,7 @@ describe("ingestFeedItems integration", () => {
       }),
     );
 
-    await expect(ingestFeedItems(tx, insertedFeed.id)).rejects.toThrow(
+    await expect(ingestItems(tx, insertedFeed.id)).rejects.toThrow(
       FeedNotFoundError,
     );
 
@@ -190,7 +190,7 @@ describe("ingestFeedItems integration", () => {
   });
 
   test("handles non existing feed in db", async ({ tx }) => {
-    await expect(ingestFeedItems(tx, 123)).rejects.toThrow(
+    await expect(ingestItems(tx, 123)).rejects.toThrow(
       FeedRecordNotFoundError,
     );
   });

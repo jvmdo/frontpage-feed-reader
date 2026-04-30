@@ -12,7 +12,7 @@ import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
 import type { Category, FeedWithSubscription } from "@/types";
 import { AppSidebar } from "./app-sidebar";
-import { SidebarSubscriptions } from "./sidebar-subscriptions";
+import { SidebarFeeds } from "./sidebar-feeds";
 
 // Mock next/navigation's usePathname
 vi.mock("next/navigation", () => ({
@@ -34,8 +34,8 @@ vi.mock("@/actions/feed/add-feed-action", () => ({
   addFeedAction: vi.fn(),
 }));
 
-vi.mock("@/actions/feed/remove-subscription-action", () => ({
-  removeSubscriptionAction: vi.fn(),
+vi.mock("@/actions/feed/remove-feed-action", () => ({
+  removeFeedAction: vi.fn(),
 }));
 
 // Mock Sonner toast
@@ -95,7 +95,7 @@ describe("AppSidebar Integration", () => {
       <SidebarProvider>
         <AppSidebar>
           <Suspense fallback={<div>Loading...</div>}>
-            <SidebarSubscriptions />
+            <SidebarFeeds />
           </Suspense>
         </AppSidebar>
       </SidebarProvider>,
@@ -125,7 +125,7 @@ describe("AppSidebar Integration", () => {
       <SidebarProvider>
         <AppSidebar>
           <Suspense fallback={<div>Loading...</div>}>
-            <SidebarSubscriptions />
+            <SidebarFeeds />
           </Suspense>
         </AppSidebar>
       </SidebarProvider>,
@@ -154,7 +154,7 @@ describe("AppSidebar Integration", () => {
       <SidebarProvider>
         <AppSidebar>
           <Suspense fallback={<div>Loading...</div>}>
-            <SidebarSubscriptions />
+            <SidebarFeeds />
           </Suspense>
         </AppSidebar>
       </SidebarProvider>,
@@ -169,7 +169,7 @@ describe("AppSidebar Integration", () => {
         <SidebarProvider>
           <AppSidebar>
             <Suspense fallback={<div>Loading...</div>}>
-              <SidebarSubscriptions />
+              <SidebarFeeds />
             </Suspense>
           </AppSidebar>
         </SidebarProvider>,
@@ -186,7 +186,7 @@ describe("AppSidebar Integration", () => {
         <SidebarProvider>
           <AppSidebar>
             <Suspense fallback={<div>Loading...</div>}>
-              <SidebarSubscriptions />
+              <SidebarFeeds />
             </Suspense>
           </AppSidebar>
         </SidebarProvider>,
@@ -210,7 +210,7 @@ describe("AppSidebar Integration", () => {
         <SidebarProvider>
           <AppSidebar>
             <Suspense fallback={<div>Loading...</div>}>
-              <SidebarSubscriptions />
+              <SidebarFeeds />
             </Suspense>
           </AppSidebar>
         </SidebarProvider>,
@@ -239,7 +239,7 @@ describe("AppSidebar Integration", () => {
         <SidebarProvider>
           <AppSidebar>
             <Suspense fallback={<div>Loading...</div>}>
-              <SidebarSubscriptions />
+              <SidebarFeeds />
             </Suspense>
           </AppSidebar>
         </SidebarProvider>,

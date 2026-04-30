@@ -41,7 +41,7 @@ export interface FeedMetadata {
   iconUrl?: string;
 }
 
-export interface FeedItem {
+export interface Item {
   guid: string;
   url?: string;
   title: string;
@@ -55,7 +55,7 @@ export interface FeedItem {
 
 export interface FullFeed {
   metadata: FeedMetadata;
-  items: FeedItem[];
+  items: Item[];
 }
 
 /**
@@ -81,15 +81,15 @@ export async function parseFeedXml(
       }
     }
 
-    const items: FeedItem[] = feed.items.map((item) => {
-      const rawTitle = decodeEntities(item.title) || "Untitled Article";
+    const items: Item[] = feed.items.map((item) => {
+      const rawTitle = decodeEntities(item.title) || "Untitled Item";
       const title = cleanText(rawTitle);
       const rawDescription = decodeEntities(
         item.descriptionRaw || item.summary || item.contentSnippet,
       );
       const rawContent = item.contentEncoded || item.content;
 
-      const description = neutralizeFocusableElements(
+      const description = neutralizeHtml(
         sanitizeHtml(cleanText(rawDescription || rawContent)),
       );
       const content = sanitizeHtml(rawContent);
@@ -131,7 +131,7 @@ export async function parseFeedXml(
  * This is used for descriptions (excerpts) used in the feed list to prevent
  * accidental focus during tabbing while keeping content accessible to AT.
  */
-function neutralizeFocusableElements(html: string): string {
+function neutralizeHtml(html: string): string {
   if (!html) return "";
   return html.replace(/<([a-z0-9-]+)(?=[ >/])/gi, '<$1 tabindex="-1"');
 }

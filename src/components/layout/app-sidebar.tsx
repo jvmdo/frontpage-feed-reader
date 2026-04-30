@@ -129,7 +129,7 @@ export function AppSidebar({ children }: { children: ReactNode }) {
 
           <SidebarGroup>
             <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Subscriptions
+              Feeds
             </SidebarGroupLabel>
             <SidebarGroupAction asChild title="Manage Categories">
               <Link href="/manage-categories">

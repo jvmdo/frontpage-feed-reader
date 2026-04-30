@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { updateSubscriptionAction } from "@/actions/feed/update-subscription-action";
+import { updateFeedAction } from "@/actions/feed/update-feed-action";
 import {
   createMockCategory,
   createMockFeedWithSubscription,
@@ -14,8 +14,8 @@ import { render, screen, waitFor, within } from "@/tests/rtl-utils";
 import { AssignFeedsDialog } from "./assign-feeds-dialog";
 
 // Mock the server action
-vi.mock("@/actions/feed/update-subscription-action", () => ({
-  updateSubscriptionAction: vi.fn(),
+vi.mock("@/actions/feed/update-feed-action", () => ({
+  updateFeedAction: vi.fn(),
 }));
 
 // Mock sonner toast
@@ -115,9 +115,9 @@ describe("AssignFeedsDialog", () => {
     ).toBeInTheDocument();
   });
 
-  it("calls updateSubscriptionAction with null when 'Remove' is clicked", async () => {
+  it("calls updateFeedAction with null when 'Remove' is clicked", async () => {
     const { user } = setup();
-    vi.mocked(updateSubscriptionAction).mockResolvedValue({
+    vi.mocked(updateFeedAction).mockResolvedValue({
       success: true,
       data: { id: 3, categoryId: null } as any,
     });
@@ -131,13 +131,13 @@ describe("AssignFeedsDialog", () => {
     });
     await user.click(removeButton);
 
-    expect(updateSubscriptionAction).toHaveBeenCalledWith(
+    expect(updateFeedAction).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 3,
       }),
     );
     // categoryId might be undefined or null depending on how the action is called
-    const callArgs = vi.mocked(updateSubscriptionAction).mock
+    const callArgs = vi.mocked(updateFeedAction).mock
       .calls[0][0] as any;
     expect(callArgs.categoryId == null).toBe(true);
 
@@ -146,9 +146,9 @@ describe("AssignFeedsDialog", () => {
     });
   });
 
-  it("calls updateSubscriptionAction when 'Move' is clicked", async () => {
+  it("calls updateFeedAction when 'Move' is clicked", async () => {
     const { user } = setup();
-    vi.mocked(updateSubscriptionAction).mockResolvedValue({
+    vi.mocked(updateFeedAction).mockResolvedValue({
       success: true,
       data: { id: 1, categoryId: targetCategoryId } as any,
     });
@@ -162,7 +162,7 @@ describe("AssignFeedsDialog", () => {
     });
     await user.click(moveButton);
 
-    expect(updateSubscriptionAction).toHaveBeenCalledWith({
+    expect(updateFeedAction).toHaveBeenCalledWith({
       id: 1,
       categoryId: targetCategoryId,
     });
@@ -174,7 +174,7 @@ describe("AssignFeedsDialog", () => {
 
   it("shows error toast when movement fails", async () => {
     const { user } = setup();
-    vi.mocked(updateSubscriptionAction).mockResolvedValue({
+    vi.mocked(updateFeedAction).mockResolvedValue({
       success: false,
       error: "Something went wrong",
       code: "ERROR",
@@ -201,7 +201,7 @@ describe("AssignFeedsDialog", () => {
     const pendingPromise = new Promise((resolve) => {
       resolveAction = resolve;
     });
-    vi.mocked(updateSubscriptionAction).mockReturnValue(pendingPromise as any);
+    vi.mocked(updateFeedAction).mockReturnValue(pendingPromise as any);
 
     await user.click(
       await screen.findByRole("button", { name: /open dialog/i }),
@@ -232,7 +232,7 @@ describe("AssignFeedsDialog", () => {
     const pendingPromise = new Promise((resolve) => {
       resolveAction = resolve;
     });
-    vi.mocked(updateSubscriptionAction).mockReturnValue(pendingPromise as any);
+    vi.mocked(updateFeedAction).mockReturnValue(pendingPromise as any);
 
     await user.click(
       await screen.findByRole("button", { name: /open dialog/i }),

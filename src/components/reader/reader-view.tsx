@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import type { FeedItemWithSource } from "@/types";
+import type { ItemWithSource } from "@/types";
 
 interface ReaderViewProps {
-  data: FeedItemWithSource;
+  data: ItemWithSource;
   className?: string;
 }
 
@@ -59,7 +59,7 @@ export function ReaderView({ data, className }: ReaderViewProps) {
 
       <Separator />
 
-      {/* Article Content */}
+      {/* Item Content */}
       <div className="flex flex-col gap-8">
         <ReaderViewContent content={item.content || item.description || ""} />
 
@@ -67,7 +67,7 @@ export function ReaderView({ data, className }: ReaderViewProps) {
           <div className="pt-4 border-t border-border-subtle">
             <Button asChild className="w-full sm:w-auto" size="lg">
               <a href={item.url} target="_blank" rel="noopener noreferrer">
-                Read full article on {feed.title}
+                Read full item on {feed.title}
                 <ExternalLinkIcon data-icon="inline-end" />
               </a>
             </Button>
@@ -82,14 +82,14 @@ function ReaderViewContent({ content }: { content: string }) {
   if (!content) {
     return (
       <div className="text-center py-20 text-text-tertiary italic">
-        No content available for this article.
+        No content available for this item.
       </div>
     );
   }
 
   return (
     <article
-      className="article-content max-w-none"
+      className="item-content max-w-none"
       // biome-ignore lint/security/noDangerouslySetInnerHtml: No alternatives
       dangerouslySetInnerHTML={{ __html: content }}
     />

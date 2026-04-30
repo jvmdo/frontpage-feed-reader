@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { getCurrentSession } from "@/lib/session";
-import { feedItemsQuerySchema } from "@/lib/validations/feed";
-import { getUserFeedItems } from "@/services/feed/get-user-feed-items";
+import { itemsQuerySchema } from "@/lib/validations/feed";
+import { getItems } from "@/services/item/get-items";
 
 export async function GET(request: NextRequest) {
   const session = await getCurrentSession();
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
 
   const searchParams = request.nextUrl.searchParams;
-  const parseResult = feedItemsQuerySchema.safeParse({
+  const parseResult = itemsQuerySchema.safeParse({
     limit: searchParams.get("limit"),
     offset: searchParams.get("offset"),
     feedId: searchParams.get("feedId"),
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   const { limit, offset, feedId, categoryId } = parseResult.data;
 
   try {
-    const items = await getUserFeedItems(db, session.user.id, {
+    const items = await getItems(db, session.user.id, {
       limit,
       offset,
       feedId,

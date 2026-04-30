@@ -32,9 +32,9 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type NewSubscription = typeof subscriptions.$inferInsert;
 export type UpdateSubscription = Partial<NewSubscription>;
 
-export type FeedItem = typeof feedItems.$inferSelect;
-export type NewFeedItem = typeof feedItems.$inferInsert;
-export type UpdateFeedItem = Partial<NewFeedItem>;
+export type Item = typeof feedItems.$inferSelect;
+export type NewItem = typeof feedItems.$inferInsert;
+export type UpdateItem = Partial<NewItem>;
 
 export type Session = typeof session.$inferSelect;
 export type Account = typeof account.$inferSelect;
@@ -45,8 +45,8 @@ export type FeedWithSubscription = {
   subscription: Subscription;
 };
 
-export type FeedItemWithSource = {
-  item: FeedItem;
+export type ItemWithSource = {
+  item: Item;
   feed: Feed;
   isRead: boolean;
   isExcerpt: boolean;

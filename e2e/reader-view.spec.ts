@@ -1,8 +1,8 @@
 import { db } from "@/db";
-import { seedFeedItems, seedFeedWithSubscription } from "@/tests/seeding";
+import { seedFeedWithSubscription, seedItems } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
-test("open article, read its content, and dismiss", async ({ authedPage }) => {
+test("open item, read its content, and dismiss", async ({ authedPage }) => {
   const { page, userId } = authedPage;
 
   // Setup: Seed a feed with an item
@@ -10,10 +10,10 @@ test("open article, read its content, and dismiss", async ({ authedPage }) => {
     title: "Reader Test Feed",
   });
 
-  const [item] = await seedFeedItems(db, feed.id, [
+  const [item] = await seedItems(db, feed.id, [
     {
-      title: "Test Article For Reader",
-      url: "https://example.com/test-article",
+      title: "Test Item For Reader",
+      url: "https://example.com/test-item",
       content: "<p>This is the test content for the reader view.</p>",
       publishedAt: new Date(),
     },
@@ -22,25 +22,25 @@ test("open article, read its content, and dismiss", async ({ authedPage }) => {
   // 1. Navigate to dashboard and wait for hydration
   await page.goto("/dashboard");
 
-  const article = page.getByRole("article", {
-    name: /test article for reader/i,
+  const itemCard = page.getByRole("article", {
+    name: /test item for reader/i,
   });
 
-  await expect(article).toBeVisible();
+  await expect(itemCard).toBeVisible();
 
-  // 2. Click the article card and verify URL updates (confirms click registered)
-  await article.click();
+  // 2. Click the item card and verify URL updates (confirms click registered)
+  await itemCard.click();
 
   await expect(page).toHaveURL(new RegExp(`itemId=${item.id}`));
 
   // 3. Verify Sheet slides in
-  const sheet = page.getByRole("dialog", { name: /article reader/i });
+  const sheet = page.getByRole("dialog", { name: /item reader/i });
 
   await expect(sheet).toBeVisible();
 
-  // 5. Verify article content is visible
+  // 5. Verify item content is visible
   await expect(
-    sheet.getByRole("heading", { name: "Test Article For Reader" }),
+    sheet.getByRole("heading", { name: "Test Item For Reader" }),
   ).toBeVisible();
 
   await expect(
@@ -59,7 +59,7 @@ test("open article, read its content, and dismiss", async ({ authedPage }) => {
   await expect(page).not.toHaveURL(/itemId=/);
 });
 
-test("navigation between articles and read status tracking", async ({
+test("navigation between items and read status tracking", async ({
   authedPage,
 }) => {
   const { page, userId } = authedPage;
@@ -70,59 +70,54 @@ test("navigation between articles and read status tracking", async ({
   });
 
   const now = new Date();
-  await seedFeedItems(db, feed.id, [
+  await seedItems(db, feed.id, [
     {
-      title: "Article 1 (Newest)",
+      title: "Item 1 (Newest)",
       publishedAt: new Date(now.getTime() - 1000),
     },
     {
-      title: "Article 2 (Middle)",
+      title: "Item 2 (Middle)",
       publishedAt: new Date(now.getTime() - 2000),
     },
     {
-      title: "Article 3 (Oldest)",
+      title: "Item 3 (Oldest)",
       publishedAt: new Date(now.getTime() - 3000),
     },
   ]);
 
   // 1. Navigate to dashboard and wait for hydration
   await page.goto("/dashboard");
-  await expect(page.getByRole("article", { name: /article 1/i })).toBeVisible();
-
-  const main = page.getByRole("main");
+  await expect(page.getByRole("article", { name: /item 1/i })).toBeVisible();
 
   // 2. Verify all are unread initially
   // Using locator because a11y tree is unreachable when modal is later opened
-  const items = main.locator("article", { hasText: /article \d/i });
+  const main = page.locator("main");
+  const items = main.locator("article").filter({ hasText: /item \d/i });
   const count = await items.count();
 
   for (let i = 0; i < count; i++) {
     await expect(items.nth(i)).toContainText(/\bunread\b/i);
   }
 
-  // 3. Open the first article. Article 1 should now be read.
+  // 3. Open the first item. Item 1 should now be read.
   await items.nth(0).click();
   await expect(items.nth(0)).toContainText(/\bread\b/i);
 
-  // 4. Navigate to Next (Article 2) via Button
-  const sheet = page.getByRole("dialog", { name: /article reader/i });
+  // 4. Navigate to Next (Item 2) via Button
+  const sheet = page.getByRole("dialog", { name: /item reader/i });
 
-  await sheet.getByRole("button", { name: /next article/i }).click();
+  await sheet.getByRole("button", { name: /next item/i }).click();
 
-  // Verify Article 2 is now marked read in dashboard
-  await expect(
-    sheet.getByRole("heading", { name: /article 2/i }),
-  ).toBeVisible();
+  // Verify Item 2 is now marked read in dashboard
+  await expect(sheet.getByRole("heading", { name: /item 2/i })).toBeVisible();
 
   await expect(items.nth(1)).toContainText(/\bread\b/i);
 
-  // 5. Navigate to Next (Article 3) via Keyboard 'j'
+  // 5. Navigate to Next (Item 3) via Keyboard 'j'
   await page.keyboard.press("j");
 
-  // Verify Article 3 is now marked read in dashboard
-  await expect(
-    sheet.getByRole("heading", { name: /article 3/i }),
-  ).toBeVisible();
+  // Verify Item 3 is now marked read in dashboard
+  await expect(sheet.getByRole("heading", { name: /item 3/i })).toBeVisible();
 
   await expect(items.nth(2)).toContainText(/\bread\b/i);
 });
@@ -139,7 +134,7 @@ test("malicious feeds are sanitized before rendering", async ({
 
   const sidebar = page.locator('[data-slot="sidebar"]');
   const dialog = page.getByRole("dialog", { name: /add feed/i });
-  const sheet = page.getByRole("dialog", { name: /article reader/i });
+  const sheet = page.getByRole("dialog", { name: /item reader/i });
 
   // 2. Open the dialog and fill in the form
   await sidebar.getByRole("button", { name: /add feed/i }).click();
@@ -155,8 +150,8 @@ test("malicious feeds are sanitized before rendering", async ({
   await expect(toast).toContainText("Feed added successfully");
   await expect(dialog).not.toBeVisible();
 
-  // 5. Open the malicious article
-  await page.getByRole("article", { name: /XSS Article/i }).click();
+  // 5. Open the malicious item
+  await page.getByRole("article", { name: /XSS Item/i }).click();
 
   await expect(sheet).toBeVisible();
   await expect(sheet.getByText("Malicious content.")).toBeVisible();
@@ -174,16 +169,14 @@ test("opening direct URL with itemId", async ({ authedPage }) => {
   const { page, userId } = authedPage;
 
   const { feed } = await seedFeedWithSubscription(db, userId);
-  const [item] = await seedFeedItems(db, feed.id, [
-    { title: "Direct Article" },
-  ]);
+  const [item] = await seedItems(db, feed.id, [{ title: "Direct Item" }]);
 
   // 1. Go directly to the URL with itemId
   await page.goto(`/dashboard?itemId=${item.id}`);
 
   // 2.Verify reader is open immediately
-  const sheet = page.getByRole("dialog", { name: /article reader/i });
+  const sheet = page.getByRole("dialog", { name: /item reader/i });
 
   await expect(sheet).toBeVisible();
-  await expect(sheet.getByText("Direct Article")).toBeVisible();
+  await expect(sheet.getByText("Direct Item")).toBeVisible();
 });

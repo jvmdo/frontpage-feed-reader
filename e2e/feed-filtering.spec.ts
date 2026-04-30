@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { seedFeedItems, seedFeedWithSubscription } from "@/tests/seeding";
+import { seedItems, seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test("loads filtered state directly from URL with prefetched data", async ({
@@ -19,14 +19,14 @@ test("loads filtered state directly from URL with prefetched data", async ({
   });
 
   // Seed Items for both
-  await seedFeedItems(db, feed1.id, [
+  await seedItems(db, feed1.id, [
     {
       guid: `item-f1-${userId}`,
       title: "Article from First Feed",
     },
   ]);
 
-  await seedFeedItems(db, feed2.id, [
+  await seedItems(db, feed2.id, [
     {
       guid: `item-f2-${userId}`,
       title: "Article from Second Feed",
@@ -37,20 +37,20 @@ test("loads filtered state directly from URL with prefetched data", async ({
   await page.goto(`/dashboard?feedId=${feed1.id}`);
 
   // 2. Verify immediate content (no loading flash)
-  const skeleton = page.getByLabel(/loading feed items/i);
-  const firstFeedItem = page.getByRole("heading", {
+  const skeleton = page.getByRole("status", { name: /loading items/i });
+  const firstItem = page.getByRole("heading", {
     name: "Article from First Feed",
   });
 
-  await expect(firstFeedItem).toBeVisible();
+  await expect(firstItem).toBeVisible();
   await expect(skeleton).not.toBeVisible();
 
   // 3. Verify isolation
-  const secondFeedItem = page.getByRole("heading", {
+  const secondItem = page.getByRole("heading", {
     name: "Article from Second Feed",
   });
 
-  await expect(secondFeedItem).not.toBeVisible();
+  await expect(secondItem).not.toBeVisible();
 
   // 4. Verify header title
   const headerTitle = page.getByRole("heading", { level: 1 });
@@ -74,14 +74,14 @@ test("full flow: click feed -> updates UI -> click All Items -> resets UI", asyn
     title: "Feed B",
   });
 
-  await seedFeedItems(db, feedA.id, [
+  await seedItems(db, feedA.id, [
     {
       guid: `item-a-${userId}`,
       title: "Item A",
     },
   ]);
 
-  await seedFeedItems(db, feedB.id, [
+  await seedItems(db, feedB.id, [
     {
       guid: `item-b-${userId}`,
       title: "Item B",

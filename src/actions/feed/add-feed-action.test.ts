@@ -8,11 +8,11 @@ import {
   FeedUnavailableError,
 } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
-import { addFeedToUser } from "@/services/feed/add-feed-to-user";
-import { ingestFeedItems } from "@/services/feed-ingestion";
+import { createSubscription } from "@/services/subscription/create-subscription";
+import { ingestItems } from "@/services/feed-ingestion";
 import { addFeedAction } from "./add-feed-action";
 
-vi.mock("@/services/feed/add-feed-to-user");
+vi.mock("@/services/subscription/create-subscription");
 vi.mock("@/services/feed-ingestion");
 vi.mock("@/lib/session");
 
@@ -57,8 +57,8 @@ describe("addFeedAction", () => {
     };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(addFeedToUser).mockResolvedValueOnce(mockResult as any);
-    vi.mocked(ingestFeedItems).mockResolvedValueOnce({ success: true } as any);
+    vi.mocked(createSubscription).mockResolvedValueOnce(mockResult as any);
+    vi.mocked(ingestItems).mockResolvedValueOnce({ success: true } as any);
 
     const result = await addFeedAction({ url: "https://example.com/feed.xml" });
 
@@ -66,18 +66,18 @@ describe("addFeedAction", () => {
       success: true,
       data: mockResult,
     });
-    expect(addFeedToUser).toHaveBeenCalledWith(
+    expect(createSubscription).toHaveBeenCalledWith(
       expect.anything(),
       "user-123",
       "https://example.com/feed.xml",
     );
-    expect(ingestFeedItems).toHaveBeenCalledWith(expect.anything(), "feed-123");
+    expect(ingestItems).toHaveBeenCalledWith(expect.anything(), "feed-123");
   });
 
   it("returns friendly error when FeedNotFoundError is thrown", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(addFeedToUser).mockRejectedValueOnce(new FeedNotFoundError());
+    vi.mocked(createSubscription).mockRejectedValueOnce(new FeedNotFoundError());
 
     const result = await addFeedAction({ url: "https://example.com/404.xml" });
 
@@ -91,7 +91,7 @@ describe("addFeedAction", () => {
   it("returns friendly error when FeedUnavailableError is thrown", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(addFeedToUser).mockRejectedValueOnce(new FeedUnavailableError());
+    vi.mocked(createSubscription).mockRejectedValueOnce(new FeedUnavailableError());
 
     const result = await addFeedAction({ url: "https://example.com/500.xml" });
 
@@ -106,7 +106,7 @@ describe("addFeedAction", () => {
   it("returns friendly error when FeedInvalidFormatError is thrown", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(addFeedToUser).mockRejectedValueOnce(
+    vi.mocked(createSubscription).mockRejectedValueOnce(
       new FeedInvalidFormatError(),
     );
 
@@ -125,7 +125,7 @@ describe("addFeedAction", () => {
   it("returns friendly error when FeedNetworkError is thrown", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(addFeedToUser).mockRejectedValueOnce(new FeedNetworkError());
+    vi.mocked(createSubscription).mockRejectedValueOnce(new FeedNetworkError());
 
     const result = await addFeedAction({
       url: "https://example.com/network.xml",
@@ -142,7 +142,7 @@ describe("addFeedAction", () => {
   it("returns internal error on unexpected errors", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(addFeedToUser).mockRejectedValueOnce(new Error("Unexpected"));
+    vi.mocked(createSubscription).mockRejectedValueOnce(new Error("Unexpected"));
 
     const result = await addFeedAction({ url: "https://example.com/feed.xml" });
 

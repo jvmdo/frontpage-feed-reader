@@ -3,7 +3,7 @@ import * as schema from "@/db/schema";
 import type {
   NewCategory,
   NewFeed,
-  NewFeedItem,
+  NewItem,
   NewSubscription,
   NewUser,
   NewUserItemState,
@@ -125,10 +125,10 @@ export async function seedUserItemState(
 /**
  * Seeds multiple feed items for a specific feed.
  */
-export async function seedFeedItems(
+export async function seedItems(
   tx: DB,
   feedId: number,
-  items: Partial<NewFeedItem>[],
+  items: Partial<NewItem>[],
 ) {
   const values = items.map((item, index) => ({
     feedId,

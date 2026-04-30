@@ -3,16 +3,16 @@
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useActiveItem } from "@/hooks/use-active-item";
-import { useFeedItem } from "@/hooks/use-feed-item";
-import { useFeedNavigation } from "@/hooks/use-feed-navigation";
-import { createMockFeedItemWithSource } from "@/tests/factories";
+import { useItem } from "@/hooks/use-item";
+import { useItemReaderNavigation } from "@/hooks/use-item-reader-navigation";
+import { createMockItemWithSource } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
-import { FeedReaderSheet } from "./feed-reader-sheet";
+import { ItemReaderSheet } from "./item-reader-sheet";
 import { ReaderView } from "./reader-view";
 
 vi.mock("@/hooks/use-active-item");
-vi.mock("@/hooks/use-feed-item");
-vi.mock("@/hooks/use-feed-navigation");
+vi.mock("@/hooks/use-item");
+vi.mock("@/hooks/use-item-reader-navigation");
 vi.mock("@/hooks/use-reader-shortcuts");
 
 afterEach(() => {
@@ -21,14 +21,14 @@ afterEach(() => {
 
 describe("ReaderView", () => {
   it("renders basic metadata and title", () => {
-    const data = createMockFeedItemWithSource({
-      item: { title: "Test Article Title" },
+    const data = createMockItemWithSource({
+      item: { title: "Test Item Title" },
       feed: { title: "Test Feed Name" },
     });
     render(<ReaderView data={data} />);
 
     expect(
-      screen.getByRole("heading", { name: "Test Article Title" }),
+      screen.getByRole("heading", { name: "Test Item Title" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Test Feed Name")).toBeInTheDocument();
     expect(
@@ -37,7 +37,7 @@ describe("ReaderView", () => {
   });
 
   it("renders HTML content", () => {
-    const data = createMockFeedItemWithSource({
+    const data = createMockItemWithSource({
       item: {
         content: `
           <p>Paragraph 1</p>
@@ -58,7 +58,7 @@ describe("ReaderView", () => {
   });
 
   it("identifies and renders excerpt UI", () => {
-    const data = createMockFeedItemWithSource({
+    const data = createMockItemWithSource({
       item: {
         content: "<p>Excerpt content</p>",
         url: "https://example.com/full",
@@ -70,12 +70,12 @@ describe("ReaderView", () => {
 
     expect(screen.getByText("Excerpt")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /Read full article on Test Feed/i }),
+      screen.getByRole("link", { name: /Read full item on Test Feed/i }),
     ).toHaveAttribute("href", "https://example.com/full");
   });
 
   it("does not show excerpt UI for full articles", () => {
-    const data = createMockFeedItemWithSource({
+    const data = createMockItemWithSource({
       item: {
         content: "<p>Full content</p>",
       },
@@ -97,7 +97,7 @@ describe("FeedReaderSheet Integration", () => {
       setActiveItemId: vi.fn(),
     });
 
-    vi.mocked(useFeedNavigation).mockReturnValue({
+    vi.mocked(useItemReaderNavigation).mockReturnValue({
       goToNext: vi.fn(),
       goToPrev: vi.fn(),
       hasNext: false,
@@ -106,121 +106,147 @@ describe("FeedReaderSheet Integration", () => {
   });
 
   it("displays loading skeleton when loading", () => {
-    vi.mocked(useFeedItem).mockReturnValue({
+    vi.mocked(useItem).mockReturnValue({
       data: undefined,
       isLoading: true,
       error: null,
     } as any);
 
-    render(<FeedReaderSheet />);
+    render(<ItemReaderSheet />);
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      /loading article content/i,
+      /loading item content/i,
     );
     expect(screen.queryByRole("article")).not.toBeInTheDocument();
   });
 
   it("renders content and navigation when data is loaded", () => {
-    const mockData = createMockFeedItemWithSource({
-      item: { title: "Loaded Article" },
+    const mockData = createMockItemWithSource({
+      item: { title: "Loaded Item" },
     });
 
-    vi.mocked(useFeedItem).mockReturnValue({
+    vi.mocked(useItem).mockReturnValue({
       data: mockData,
       isLoading: false,
       error: null,
     } as any);
 
-    vi.mocked(useFeedNavigation).mockReturnValue({
+    vi.mocked(useItemReaderNavigation).mockReturnValue({
       hasNext: true,
       hasPrev: true,
     } as any);
 
-    render(<FeedReaderSheet />);
+    render(<ItemReaderSheet />);
 
     expect(
-      screen.getByRole("heading", { name: "Loaded Article" }),
+      screen.getByRole("heading", { name: "Loaded Item" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /previous article/i }),
+      screen.getByRole("button", { name: /previous item/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /next article/i }),
+      screen.getByRole("button", { name: /next item/i }),
     ).toBeInTheDocument();
   });
 
   it("triggers navigation functions on button click", async () => {
     const user = userEvent.setup();
     const goToNext = vi.fn();
-    const mockData = createMockFeedItemWithSource();
+    const mockData = createMockItemWithSource();
 
-    vi.mocked(useFeedItem).mockReturnValue({
+    vi.mocked(useItem).mockReturnValue({
       data: mockData,
       isLoading: false,
       error: null,
     } as any);
 
-    vi.mocked(useFeedNavigation).mockReturnValue({
+    vi.mocked(useItemReaderNavigation).mockReturnValue({
       goToNext,
       goToPrev: vi.fn(),
       hasNext: true,
     } as any);
 
-    render(<FeedReaderSheet />);
+    render(<ItemReaderSheet />);
 
-    await user.click(screen.getByRole("button", { name: /next article/i }));
+    await user.click(screen.getByRole("button", { name: /next item/i }));
     expect(goToNext).toHaveBeenCalled();
   });
 
   it("disables buttons when no neighbors exist", () => {
-    const mockData = createMockFeedItemWithSource();
+    const mockData = createMockItemWithSource();
 
-    vi.mocked(useFeedItem).mockReturnValue({
+    vi.mocked(useItem).mockReturnValue({
       data: mockData,
       isLoading: false,
       error: null,
     } as any);
 
-    render(<FeedReaderSheet />);
+    render(<ItemReaderSheet />);
 
     expect(
-      screen.getByRole("button", { name: /previous article/i }),
+      screen.getByRole("button", { name: /previous item/i }),
     ).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: /next article/i }),
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: /next item/i })).toBeDisabled();
   });
 
   it("persists scroll position when navigating between articles", () => {
-    const mockData1 = createMockFeedItemWithSource({ item: { id: 1, title: "Art 1" } });
-    const mockData2 = createMockFeedItemWithSource({ item: { id: 2, title: "Art 2" } });
+    const mockData1 = createMockItemWithSource({
+      item: { id: 1, title: "Art 1" },
+    });
+    const mockData2 = createMockItemWithSource({
+      item: { id: 2, title: "Art 2" },
+    });
 
-    vi.mocked(useActiveItem).mockReturnValue({ activeItemId: 1, setActiveItemId: vi.fn() });
-    vi.mocked(useFeedItem).mockReturnValue({ data: mockData1, isLoading: false, error: null } as any);
+    vi.mocked(useActiveItem).mockReturnValue({
+      activeItemId: 1,
+      setActiveItemId: vi.fn(),
+    });
+    vi.mocked(useItem).mockReturnValue({
+      data: mockData1,
+      isLoading: false,
+      error: null,
+    } as any);
 
-    const { rerender } = render(<FeedReaderSheet />);
-    
-    const container = screen.getByRole("region", { name: /article content/i });
-    
-    // Simulate scrolling Article 1
-    Object.defineProperty(container, "scrollTop", { value: 100, writable: true });
-    
-    // Switch to Article 2
-    vi.mocked(useActiveItem).mockReturnValue({ activeItemId: 2, setActiveItemId: vi.fn() });
-    vi.mocked(useFeedItem).mockReturnValue({ data: mockData2, isLoading: false, error: null } as any);
-    
-    rerender(<FeedReaderSheet />);
+    const { rerender } = render(<ItemReaderSheet />);
 
-    // Verify Article 2 starts at 0 (or whatever is in store)
+    const container = screen.getByRole("region", { name: /item content/i });
+
+    // Simulate scrolling Item 1
+    Object.defineProperty(container, "scrollTop", {
+      value: 100,
+      writable: true,
+    });
+
+    // Switch to Item 2
+    vi.mocked(useActiveItem).mockReturnValue({
+      activeItemId: 2,
+      setActiveItemId: vi.fn(),
+    });
+    vi.mocked(useItem).mockReturnValue({
+      data: mockData2,
+      isLoading: false,
+      error: null,
+    } as any);
+
+    rerender(<ItemReaderSheet />);
+
+    // Verify Item 2 starts at 0 (or whatever is in store)
     expect(container.scrollTop).toBe(0);
 
-    // Switch back to Article 1
-    vi.mocked(useActiveItem).mockReturnValue({ activeItemId: 1, setActiveItemId: vi.fn() });
-    vi.mocked(useFeedItem).mockReturnValue({ data: mockData1, isLoading: false, error: null } as any);
-    
-    rerender(<FeedReaderSheet />);
-    
-    // Verify Article 1 restored its 100px
+    // Switch back to Item 1
+    vi.mocked(useActiveItem).mockReturnValue({
+      activeItemId: 1,
+      setActiveItemId: vi.fn(),
+    });
+    vi.mocked(useItem).mockReturnValue({
+      data: mockData1,
+      isLoading: false,
+      error: null,
+    } as any);
+
+    rerender(<ItemReaderSheet />);
+
+    // Verify Item 1 restored its 100px
     expect(container.scrollTop).toBe(100);
   });
 });

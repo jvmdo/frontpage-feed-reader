@@ -4,10 +4,10 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { markAllReadAction } from "@/actions/feed/mark-all-read-action";
-import { useSubscriptions } from "@/hooks/use-subscriptions";
+import { useFeeds } from "@/hooks/use-feeds";
 import type { MarkAllReadInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
-import type { FeedItemWithSource } from "@/types";
+import type { ItemWithSource } from "@/types";
 
 /**
  * Custom hook for marking all items in a scope as read.
@@ -15,7 +15,7 @@ import type { FeedItemWithSource } from "@/types";
  */
 export function useMarkAllRead() {
   const queryClient = useQueryClient();
-  const { data: subscriptions } = useSubscriptions();
+  const { data: subscriptions } = useFeeds();
 
   return useMutation({
     mutationFn: async (input: MarkAllReadInput) => {
@@ -88,7 +88,7 @@ export function useMarkAllRead() {
       }
 
       // 4. Optimistically update items in all queries
-      queryClient.setQueriesData<InfiniteData<FeedItemWithSource[]>>(
+      queryClient.setQueriesData<InfiniteData<ItemWithSource[]>>(
         { queryKey: ["feeds", "items"] },
         (old) => {
           if (!old?.pages) return old;

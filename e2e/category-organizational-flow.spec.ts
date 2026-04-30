@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { seedFeedItems, seedFeedWithSubscription } from "@/tests/seeding";
+import { seedItems, seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test("category creation, assignment via edit dialog, and empty state assignment", async ({
@@ -13,7 +13,7 @@ test("category creation, assignment via edit dialog, and empty state assignment"
     title: "Feed A",
   });
 
-  await seedFeedItems(db, feedA.id, [
+  await seedItems(db, feedA.id, [
     {
       guid: `item-a-${userId}`,
       title: "Item from Feed A",

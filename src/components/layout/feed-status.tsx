@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useSubscriptions } from "@/hooks/use-subscriptions";
+import { useFeeds } from "@/hooks/use-feeds";
 import { cn } from "@/lib/utils";
 import type { FeedWithSubscription } from "@/types";
 
@@ -75,7 +75,7 @@ interface FeedStatusProps {
  * FeedStatus component that displays the aggregate health of all user subscriptions.
  */
 export function FeedStatus({ rules = DEFAULT_RULES }: FeedStatusProps) {
-  const { data: subscriptions } = useSubscriptions();
+  const { data: subscriptions } = useFeeds();
 
   // First predicate to match wins (error has precedence)
   const activeRule = rules.find((rule) => rule.predicate(subscriptions));

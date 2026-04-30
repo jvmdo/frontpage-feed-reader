@@ -204,7 +204,7 @@
 }
 
 @layer components {
-  .article-content {
+  .item-content {
     @apply font-serif text-base leading-loose text-text-secondary;
 
     h1, h2, h3, h4, h5, h6 {

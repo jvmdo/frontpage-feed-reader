@@ -25,19 +25,19 @@ export async function deleteCategoryAction(input: DeleteCategoryInput) {
     };
   }
 
-  const session = await getCurrentSession();
-
-  if (!session?.user) {
-    return {
-      success: false,
-      error: "You must be signed in to delete a category.",
-      code: "UNAUTHORIZED",
-    };
-  }
-
-  const { id } = result.data;
-
   try {
+    const session = await getCurrentSession();
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "You must be signed in to delete a category.",
+        code: "UNAUTHORIZED",
+      };
+    }
+
+    const { id } = result.data;
+
     await deleteCategory(db, session.user.id, id);
 
     return {

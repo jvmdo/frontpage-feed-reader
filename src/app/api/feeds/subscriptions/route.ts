@@ -1,31 +1,27 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { getCurrentSession } from "@/lib/session";
-import { getUserSubscriptions } from "@/services/feed/get-user-subscriptions";
+import { getSubscriptions } from "@/services/subscription/get-subscriptions";
 
-/**
- * GET /api/feeds/subscriptions
- * Returns all subscriptions for the currently authenticated user.
- */
 export async function GET() {
-  const session = await getCurrentSession();
-
-  if (!session?.user) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized", code: "UNAUTHORIZED" },
-      { status: 401 },
-    );
-  }
-
   try {
-    const subscriptions = await getUserSubscriptions(db, session.user.id);
+    const session = await getCurrentSession();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized", code: "UNAUTHORIZED" },
+        { status: 401 },
+      );
+    }
+
+    const subscriptions = await getSubscriptions(db, session.user.id);
 
     return NextResponse.json({
       success: true,
       data: subscriptions,
     });
   } catch (error) {
-    console.error("Error fetching subscriptions:", error);
+    console.error("[API_FEEDS_SUBSCRIPTIONS_GET]", error);
     return NextResponse.json(
       {
         success: false,

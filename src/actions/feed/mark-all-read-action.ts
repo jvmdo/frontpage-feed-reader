@@ -29,17 +29,17 @@ export async function markAllReadAction(input: MarkAllReadInput) {
     };
   }
 
-  const session = await getCurrentSession();
-
-  if (!session?.user) {
-    return {
-      success: false,
-      error: "You must be signed in to mark items as read.",
-      code: "UNAUTHORIZED",
-    };
-  }
-
   try {
+    const session = await getCurrentSession();
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "You must be signed in to mark items as read.",
+        code: "UNAUTHORIZED",
+      };
+    }
+
     await markAllRead(db, session.user.id, result.data);
 
     return {

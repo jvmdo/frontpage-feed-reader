@@ -1,7 +1,7 @@
 "use client";
 
 import { useCategories } from "@/hooks/use-categories";
-import { useSubscriptions } from "@/hooks/use-subscriptions";
+import { useFeeds } from "@/hooks/use-feeds";
 import { useUnreadCounts } from "@/hooks/use-unread-counts";
 import type { Category, FeedWithSubscription } from "@/types";
 
@@ -38,7 +38,7 @@ export function ToolbarTitle({
   feedId: number | null;
   categoryId: number | null;
 }) {
-  const { data: subscriptions } = useSubscriptions();
+  const { data: subscriptions } = useFeeds();
   const { data: categories } = useCategories();
   const { data: unreadCounts } = useUnreadCounts();
 

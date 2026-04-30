@@ -21,9 +21,9 @@ import {
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useRefreshFeed } from "@/hooks/use-refresh-feed";
 import type { Feed, Subscription } from "@/types";
-import { EditSubscriptionDialog } from "./edit-subscription-dialog";
+import { EditFeedDialog } from "./edit-feed-dialog";
 import { FeedIcon } from "./feed-icon";
-import { RemoveSubscriptionDialog } from "./remove-subscription-dialog";
+import { RemoveFeedDialog } from "./remove-feed-dialog";
 
 interface FeedRowProps {
   subscription: Subscription;
@@ -140,14 +140,14 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
         </TableCell>
       </TableRow>
 
-      <EditSubscriptionDialog
+      <EditFeedDialog
         subscription={subscription}
         feed={feed}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
       />
 
-      <RemoveSubscriptionDialog
+      <RemoveFeedDialog
         subscription={subscription}
         feed={feed}
         open={isRemoveDialogOpen}

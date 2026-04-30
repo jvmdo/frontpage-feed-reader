@@ -7,7 +7,7 @@ export const addFeedSchema = z.object({
 
 export type AddFeedInput = z.infer<typeof addFeedSchema>;
 
-export const updateSubscriptionSchema = z.object({
+export const updateFeedSchema = z.object({
   id: z.number(),
   customTitle: z
     .string()
@@ -19,13 +19,13 @@ export const updateSubscriptionSchema = z.object({
   categoryId: z.number().nullable().optional(),
 });
 
-export type UpdateSubscriptionInput = z.infer<typeof updateSubscriptionSchema>;
+export type UpdateFeedInput = z.infer<typeof updateFeedSchema>;
 
-export const removeSubscriptionSchema = z.object({
+export const removeFeedSchema = z.object({
   id: z.number(),
 });
 
-export type RemoveSubscriptionInput = z.infer<typeof removeSubscriptionSchema>;
+export type RemoveFeedInput = z.infer<typeof removeFeedSchema>;
 
 export const refreshFeedSchema = z.object({
   id: z.number(),
@@ -33,11 +33,11 @@ export const refreshFeedSchema = z.object({
 
 export type RefreshFeedInput = z.infer<typeof refreshFeedSchema>;
 
-export const markAsReadSchema = z.object({
+export const markReadSchema = z.object({
   itemId: z.number(),
 });
 
-export type MarkAsReadInput = z.infer<typeof markAsReadSchema>;
+export type MarkReadInput = z.infer<typeof markReadSchema>;
 
 export const markAllReadSchema = z.object({
   scope: z.enum(["global", "category", "feed"]),
@@ -46,11 +46,11 @@ export const markAllReadSchema = z.object({
 
 export type MarkAllReadInput = z.infer<typeof markAllReadSchema>;
 
-export const feedItemsQuerySchema = z.object({
+export const itemsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(PAGINATION_LIMIT),
   offset: z.coerce.number().int().min(0).default(PAGINATION_INITIAL_OFFSET),
   feedId: z.coerce.number().int().optional(),
   categoryId: z.coerce.number().int().optional(),
 });
 
-export type FeedItemsQueryInput = z.infer<typeof feedItemsQuerySchema>;
+export type ItemsQueryInput = z.infer<typeof itemsQuerySchema>;

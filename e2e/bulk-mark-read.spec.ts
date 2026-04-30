@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import {
   seedCategory,
-  seedFeedItems,
+  seedItems,
   seedFeedWithSubscription,
 } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
@@ -29,7 +29,7 @@ test("marking a category as read updates all items and counts", async ({
     },
   );
 
-  await seedFeedItems(db, feed.id, [
+  await seedItems(db, feed.id, [
     { title: "Item 1", guid: "item-1" },
     { title: "Item 2", guid: "item-2" },
     { title: "Item 3", guid: "item-3" },

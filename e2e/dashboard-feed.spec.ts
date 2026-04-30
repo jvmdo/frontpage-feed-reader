@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { db } from "@/db";
 import { parseFeedXml } from "@/lib/feed/parser";
-import { seedFeedItems, seedFeedWithSubscription } from "@/tests/seeding";
+import { seedItems, seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test("renders items from real-world feed fixtures", async ({ authedPage }) => {
@@ -35,7 +35,7 @@ test("renders items from real-world feed fixtures", async ({ authedPage }) => {
   });
 
   // Seed Feed Items
-  await seedFeedItems(
+  await seedItems(
     db,
     atomFeed.id,
     atomFeedData.items.map((item) => ({
@@ -44,7 +44,7 @@ test("renders items from real-world feed fixtures", async ({ authedPage }) => {
     })),
   );
 
-  await seedFeedItems(
+  await seedItems(
     db,
     rssFeed.id,
     rssFeedData.items.map((item) => ({

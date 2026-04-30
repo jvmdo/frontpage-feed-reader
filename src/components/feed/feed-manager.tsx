@@ -3,12 +3,12 @@
 import { Plus, Rss } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { useSubscriptions } from "@/hooks/use-subscriptions";
+import { useFeeds } from "@/hooks/use-feeds";
 import { AddFeedDialog } from "./add-feed-dialog";
 import { FeedTable } from "./feed-table";
 
 export function FeedManager() {
-  const { data } = useSubscriptions();
+  const { data } = useFeeds();
 
   if (data.length === 0) {
     return (

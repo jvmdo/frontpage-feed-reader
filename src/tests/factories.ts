@@ -1,9 +1,9 @@
-import { checkIsExcerpt } from "@/lib/feed/utils";
+import { isExcerpt } from "@/lib/feed/utils";
 import type {
   Category,
   Feed,
-  FeedItem,
-  FeedItemWithSource,
+  Item,
+  ItemWithSource,
   FeedWithSubscription,
   Subscription,
 } from "@/types";
@@ -73,7 +73,7 @@ export function createMockFeedWithSubscription(
   };
 }
 
-export function createMockFeedItem(overrides: Partial<FeedItem> = {}): FeedItem {
+export function createMockItem(overrides: Partial<Item> = {}): Item {
   const id = overrides.id ?? Math.floor(Math.random() * 1000);
   return {
     id,
@@ -92,17 +92,17 @@ export function createMockFeedItem(overrides: Partial<FeedItem> = {}): FeedItem 
   };
 }
 
-export function createMockFeedItemWithSource(
+export function createMockItemWithSource(
   overrides: Partial<{
-    item: Partial<FeedItem>;
+    item: Partial<Item>;
     feed: Partial<Feed>;
     isRead: boolean;
     isExcerpt?: boolean;
     categoryName?: string | null;
   }> = {},
-): FeedItemWithSource {
+): ItemWithSource {
   const feed = createMockFeed(overrides.feed);
-  const item = createMockFeedItem({
+  const item = createMockItem({
     feedId: feed.id,
     ...overrides.item,
   });
@@ -111,7 +111,7 @@ export function createMockFeedItemWithSource(
     item,
     feed,
     isRead: overrides.isRead ?? false,
-    isExcerpt: overrides.isExcerpt ?? checkIsExcerpt(item),
+    isExcerpt: overrides.isExcerpt ?? isExcerpt(item),
     categoryName: overrides.categoryName ?? null,
   };
 }

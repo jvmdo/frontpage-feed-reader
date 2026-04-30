@@ -4,17 +4,17 @@ import { Suspense } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { SidebarErrorFallback } from "@/components/layout/sidebar-error-fallback";
-import { SidebarSubscriptions } from "@/components/layout/sidebar-subscriptions";
-import { SidebarSubscriptionsSkeleton } from "@/components/layout/sidebar-subscriptions-skeleton";
+import { SidebarFeeds } from "@/components/layout/sidebar-feeds";
+import { SidebarFeedsSkeleton } from "@/components/layout/sidebar-feeds-skeleton";
 import { TopNav } from "@/components/layout/top-nav";
 import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { db } from "@/db";
 import { getQueryClient } from "@/lib/get-query-client";
 import { getCurrentSession } from "@/lib/session";
-import { getUserCategories } from "@/services/category/get-user-categories";
+import { getCategories } from "@/services/category/get-categories";
 import { getUnreadCounts } from "@/services/feed/get-unread-counts";
-import { getUserSubscriptions } from "@/services/feed/get-user-subscriptions";
+import { getSubscriptions } from "@/services/subscription/get-subscriptions";
 
 export default async function DashboardLayout({
   children,
@@ -31,12 +31,12 @@ export default async function DashboardLayout({
 
   queryClient.prefetchQuery({
     queryKey: ["subscriptions"],
-    queryFn: () => getUserSubscriptions(db, session.user.id),
+    queryFn: () => getSubscriptions(db, session.user.id),
   });
 
   queryClient.prefetchQuery({
     queryKey: ["categories"],
-    queryFn: () => getUserCategories(db, session.user.id),
+    queryFn: () => getCategories(db, session.user.id),
   });
 
   queryClient.prefetchQuery({
@@ -51,8 +51,8 @@ export default async function DashboardLayout({
         <SidebarProvider className="overflow-hidden">
           <AppSidebar>
             <QueryErrorBoundary fallback={<SidebarErrorFallback />}>
-              <Suspense fallback={<SidebarSubscriptionsSkeleton />}>
-                <SidebarSubscriptions />
+              <Suspense fallback={<SidebarFeedsSkeleton />}>
+                <SidebarFeeds />
               </Suspense>
             </QueryErrorBoundary>
           </AppSidebar>

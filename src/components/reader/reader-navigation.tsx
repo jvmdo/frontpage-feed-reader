@@ -1,6 +1,6 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useFeedNavigation } from "@/hooks/use-feed-navigation";
+import { useItemReaderNavigation } from "@/hooks/use-item-reader-navigation";
 import { cn } from "@/lib/utils";
 
 interface ReaderNavigationProps {
@@ -11,7 +11,7 @@ interface ReaderNavigationProps {
  * Navigation controls for the Reader View (Next/Previous).
  */
 export function ReaderNavigation({ className }: ReaderNavigationProps) {
-  const { goToNext, goToPrev, hasNext, hasPrev } = useFeedNavigation();
+  const { goToNext, goToPrev, hasNext, hasPrev } = useItemReaderNavigation();
 
   return (
     <div
@@ -25,7 +25,7 @@ export function ReaderNavigation({ className }: ReaderNavigationProps) {
         size="sm"
         onClick={goToPrev}
         disabled={!hasPrev}
-        aria-label="Previous article"
+        aria-label="Previous item"
       >
         <ChevronLeftIcon data-icon="inline-start" />
         Previous
@@ -35,7 +35,7 @@ export function ReaderNavigation({ className }: ReaderNavigationProps) {
         size="sm"
         onClick={goToNext}
         disabled={!hasNext}
-        aria-label="Next article"
+        aria-label="Next item"
       >
         Next
         <ChevronRightIcon data-icon="inline-end" />

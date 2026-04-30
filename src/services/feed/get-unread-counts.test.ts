@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { categories, subscriptions } from "@/db/schema";
 import {
   seedCategory,
-  seedFeedItems,
+  seedItems,
   seedFeedWithSubscription,
   seedUserItemState,
   seedUserPreferences,
@@ -21,7 +21,7 @@ describe("getUnreadCounts", () => {
 
   test("counts unread items from subscribed feeds", async ({ tx, testUser }) => {
     const { feed } = await seedFeedWithSubscription(tx, testUser.id);
-    await seedFeedItems(tx, feed.id, [{ title: "Item 1" }, { title: "Item 2" }]);
+    await seedItems(tx, feed.id, [{ title: "Item 1" }, { title: "Item 2" }]);
 
     const result = await getUnreadCounts(tx, testUser.id);
     expect(result.global).toBe(2);
@@ -39,7 +39,7 @@ describe("getUnreadCounts", () => {
       {},
       { categoryId: cat1.id },
     );
-    await seedFeedItems(tx, f1.id, [{ title: "F1 I1" }, { title: "F1 I2" }]);
+    await seedItems(tx, f1.id, [{ title: "F1 I1" }, { title: "F1 I2" }]);
 
     // Feed 2 in Cat 1
     const { feed: f2 } = await seedFeedWithSubscription(
@@ -48,7 +48,7 @@ describe("getUnreadCounts", () => {
       {},
       { categoryId: cat1.id },
     );
-    await seedFeedItems(tx, f2.id, [{ title: "F2 I1" }]);
+    await seedItems(tx, f2.id, [{ title: "F2 I1" }]);
 
     // Feed 3 in Cat 2
     const { feed: f3 } = await seedFeedWithSubscription(
@@ -57,7 +57,7 @@ describe("getUnreadCounts", () => {
       {},
       { categoryId: cat2.id },
     );
-    await seedFeedItems(tx, f3.id, [
+    await seedItems(tx, f3.id, [
       { title: "F3 I1" },
       { title: "F3 I2" },
       { title: "F3 I3" },
@@ -70,7 +70,7 @@ describe("getUnreadCounts", () => {
       {},
       { categoryId: null },
     );
-    await seedFeedItems(tx, f4.id, [{ title: "F4 I1" }]);
+    await seedItems(tx, f4.id, [{ title: "F4 I1" }]);
 
     const result = await getUnreadCounts(tx, testUser.id);
 
@@ -85,7 +85,7 @@ describe("getUnreadCounts", () => {
 
   test("excludes items marked as read explicitly", async ({ tx, testUser }) => {
     const { feed } = await seedFeedWithSubscription(tx, testUser.id);
-    const [item1, item2] = await seedFeedItems(tx, feed.id, [
+    const [item1, item2] = await seedItems(tx, feed.id, [
       { title: "Item 1" },
       { title: "Item 2" },
     ]);
@@ -107,7 +107,7 @@ describe("getUnreadCounts", () => {
     const tenMinutesAgo = subMinutes(now, 10);
     const fiveMinutesAgo = subMinutes(now, 5);
 
-    await seedFeedItems(tx, feed.id, [
+    await seedItems(tx, feed.id, [
       { title: "Old", publishedAt: tenMinutesAgo },
       { title: "New", publishedAt: now },
     ]);
@@ -132,7 +132,7 @@ describe("getUnreadCounts", () => {
     const now = new Date();
     const tenMinutesAgo = subMinutes(now, 10);
 
-    await seedFeedItems(tx, feed.id, [{ title: "Old", publishedAt: tenMinutesAgo }]);
+    await seedItems(tx, feed.id, [{ title: "Old", publishedAt: tenMinutesAgo }]);
 
     await tx
       .update(categories)
@@ -148,7 +148,7 @@ describe("getUnreadCounts", () => {
     const now = new Date();
     const tenMinutesAgo = subMinutes(now, 10);
 
-    await seedFeedItems(tx, feed.id, [{ title: "Old", publishedAt: tenMinutesAgo }]);
+    await seedItems(tx, feed.id, [{ title: "Old", publishedAt: tenMinutesAgo }]);
 
     await tx
       .update(subscriptions)

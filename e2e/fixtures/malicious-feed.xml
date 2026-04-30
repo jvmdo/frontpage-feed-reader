@@ -5,7 +5,7 @@
     <link>https://evil.com</link>
     <description>A feed containing XSS payloads.</description>
     <item>
-      <title>XSS Article</title>
+      <title>XSS Item</title>
       <link>https://evil.com/xss</link>
       <pubDate>Thu, 02 Apr 2026 13:58:24 +0000</pubDate>
       <guid>malicious-guid-1</guid>

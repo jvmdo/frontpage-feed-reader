@@ -24,19 +24,19 @@ export async function createCategoryAction(input: CreateCategoryInput) {
     };
   }
 
-  const session = await getCurrentSession();
-
-  if (!session?.user) {
-    return {
-      success: false,
-      error: "You must be signed in to create a category.",
-      code: "UNAUTHORIZED",
-    };
-  }
-
-  const { name } = result.data;
-
   try {
+    const session = await getCurrentSession();
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "You must be signed in to create a category.",
+        code: "UNAUTHORIZED",
+      };
+    }
+
+    const { name } = result.data;
+
     const category = await createCategory(db, session.user.id, name);
 
     return {

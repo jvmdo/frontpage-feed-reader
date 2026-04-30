@@ -24,19 +24,19 @@ export async function updateCategoryAction(input: UpdateCategoryInput) {
     };
   }
 
-  const session = await getCurrentSession();
-
-  if (!session?.user) {
-    return {
-      success: false,
-      error: "You must be signed in to update a category.",
-      code: "UNAUTHORIZED",
-    };
-  }
-
-  const { id, name } = result.data;
-
   try {
+    const session = await getCurrentSession();
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "You must be signed in to update a category.",
+        code: "UNAUTHORIZED",
+      };
+    }
+
+    const { id, name } = result.data;
+
     const category = await updateCategory(db, session.user.id, id, name);
 
     return {

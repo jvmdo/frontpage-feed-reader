@@ -4,7 +4,7 @@ import Link, { type LinkProps } from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useFeedFilter } from "@/hooks/use-feed-filter";
-import { saveFeedScroll } from "@/lib/feed/scroll-store";
+import { saveItemsListScroll } from "@/lib/scroll-store";
 
 interface DashboardLinkProps extends LinkProps {
   feedId?: number | null;
@@ -40,7 +40,7 @@ export function DashboardLink({
     if (pathname === "/dashboard") {
       e.preventDefault();
 
-      saveFeedScroll(currentFeedId || currentCategoryId);
+      saveItemsListScroll(currentFeedId || currentCategoryId);
 
       if (categoryId !== null) {
         setCategoryId(categoryId);

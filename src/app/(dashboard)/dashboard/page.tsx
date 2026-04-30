@@ -1,17 +1,17 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { FeedItemList } from "@/components/feed/feed-item-list";
-import FeedItemListSkeleton from "@/components/feed/feed-item-list-skeleton";
+import { ItemList } from "@/components/feed/item-list";
+import ItemListSkeleton from "@/components/feed/item-list-skeleton";
 import { FeedToolbar } from "@/components/layout/feed-toolbar";
 import { FeedToolbarSkeleton } from "@/components/layout/feed-toolbar-skeleton";
-import { FeedReaderSheet } from "@/components/reader/feed-reader-sheet";
+import { ItemReaderSheet } from "@/components/reader/item-reader-sheet";
 import { db } from "@/db";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import { getQueryClient } from "@/lib/get-query-client";
 import { getCurrentSession } from "@/lib/session";
-import { feedItemsQuerySchema } from "@/lib/validations/feed";
-import { getUserFeedItems } from "@/services/feed/get-user-feed-items";
+import { itemsQuerySchema } from "@/lib/validations/feed";
+import { getItems } from "@/services/item/get-items";
 
 interface DashboardPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -31,7 +31,7 @@ export default async function DashboardPage({
   }
 
   const params = await searchParams;
-  const result = feedItemsQuerySchema.safeParse(params);
+  const result = itemsQuerySchema.safeParse(params);
 
   const {
     feedId,
@@ -43,7 +43,7 @@ export default async function DashboardPage({
   const queryClient = getQueryClient();
 
   // Prefetch items for the unified "All Items" feed, specific feed, or category.
-  // The key must match the one used in the useFeedItems hook.
+  // The key must match the one used in the useItems hook.
   queryClient.prefetchInfiniteQuery({
     queryKey: [
       "feeds",
@@ -51,7 +51,7 @@ export default async function DashboardPage({
       { feedId: feedId || null, categoryId: categoryId || null },
     ],
     queryFn: () =>
-      getUserFeedItems(db, session.user.id, {
+      getItems(db, session.user.id, {
         limit,
         offset,
         feedId,
@@ -71,12 +71,12 @@ export default async function DashboardPage({
           className="flex-1 overflow-y-auto"
           aria-label="Feed"
         >
-          <Suspense fallback={<FeedItemListSkeleton />}>
-            <FeedItemList />
+          <Suspense fallback={<ItemListSkeleton />}>
+            <ItemList />
           </Suspense>
         </section>
       </HydrationBoundary>
-      <FeedReaderSheet />
+      <ItemReaderSheet />
     </div>
   );
 }

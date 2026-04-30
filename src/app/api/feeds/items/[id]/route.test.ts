@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { getCurrentSession } from "@/lib/session";
-import { getFeedItem } from "@/services/feed/get-feed-item";
+import { getItem } from "@/services/item/get-item";
 import { GET } from "./route";
 
 vi.mock("@/lib/session");
-vi.mock("@/services/feed/get-feed-item");
+vi.mock("@/services/item/get-item");
 
 describe("GET /api/feeds/items/[id]", () => {
   it("returns 401 if unauthorized", async () => {
@@ -31,7 +31,7 @@ describe("GET /api/feeds/items/[id]", () => {
 
   it("returns 404 if item not found or unsubscribed", async () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce({ user: { id: "user-1" } } as any);
-    vi.mocked(getFeedItem).mockResolvedValueOnce(null);
+    vi.mocked(getItem).mockResolvedValueOnce(null);
 
     const request = new Request("http://localhost/api/feeds/items/123");
     const response = await GET(request as any, { params: Promise.resolve({ id: "123" }) });
@@ -44,7 +44,7 @@ describe("GET /api/feeds/items/[id]", () => {
   it("returns 200 and item if found", async () => {
     const mockItem = { item: { id: 123, title: "Title" }, feed: {}, isRead: false };
     vi.mocked(getCurrentSession).mockResolvedValueOnce({ user: { id: "user-1" } } as any);
-    vi.mocked(getFeedItem).mockResolvedValueOnce(mockItem as any);
+    vi.mocked(getItem).mockResolvedValueOnce(mockItem as any);
 
     const request = new Request("http://localhost/api/feeds/items/123");
     const response = await GET(request as any, { params: Promise.resolve({ id: "123" }) });
@@ -52,12 +52,12 @@ describe("GET /api/feeds/items/[id]", () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual(mockItem);
-    expect(getFeedItem).toHaveBeenCalledWith(expect.anything(), "user-1", 123);
+    expect(getItem).toHaveBeenCalledWith(expect.anything(), "user-1", 123);
   });
 
   it("returns 500 if service throws", async () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce({ user: { id: "user-1" } } as any);
-    vi.mocked(getFeedItem).mockRejectedValueOnce(new Error("DB error"));
+    vi.mocked(getItem).mockRejectedValueOnce(new Error("DB error"));
 
     const request = new Request("http://localhost/api/feeds/items/123");
     const response = await GET(request as any, { params: Promise.resolve({ id: "123" }) });

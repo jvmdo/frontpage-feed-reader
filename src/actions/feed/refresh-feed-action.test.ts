@@ -3,11 +3,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeedNotFoundError } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
-import { getSubscriptionWithFeed } from "@/services/feed/get-subscriptions-with-feed";
-import { ingestFeedItems } from "@/services/feed-ingestion";
+import { getSubscription } from "@/services/subscription/get-subscription";
+import { ingestItems } from "@/services/feed-ingestion";
 import { refreshFeedAction } from "./refresh-feed-action";
 
-vi.mock("@/services/feed/get-subscriptions-with-feed");
+vi.mock("@/services/subscription/get-subscription");
 vi.mock("@/services/feed-ingestion");
 vi.mock("@/lib/session");
 
@@ -50,10 +50,10 @@ describe("refreshFeedAction", () => {
     };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(getSubscriptionWithFeed)
+    vi.mocked(getSubscription)
       .mockResolvedValueOnce(mockRow as any) // Initial check
       .mockResolvedValueOnce(mockUpdatedRow as any); // Updated data
-    vi.mocked(ingestFeedItems).mockResolvedValueOnce({ success: true } as any);
+    vi.mocked(ingestItems).mockResolvedValueOnce({ success: true } as any);
 
     const result = await refreshFeedAction({ id: 123 });
 
@@ -64,7 +64,7 @@ describe("refreshFeedAction", () => {
         feed: mockUpdatedRow.feed,
       },
     });
-    expect(ingestFeedItems).toHaveBeenCalledWith(
+    expect(ingestItems).toHaveBeenCalledWith(
       expect.anything(),
       mockRow.feed.id,
     );
@@ -82,10 +82,10 @@ describe("refreshFeedAction", () => {
     };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(getSubscriptionWithFeed)
+    vi.mocked(getSubscription)
       .mockResolvedValueOnce(mockRow as any) // Initial check
       .mockResolvedValueOnce(mockErrorRow as any); // Data with error status
-    vi.mocked(ingestFeedItems).mockRejectedValueOnce(
+    vi.mocked(ingestItems).mockRejectedValueOnce(
       new FeedNotFoundError(),
     );
 

@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { PAGINATION_LIMIT } from "@/lib/constants";
-import { seedFeedItems, seedFeedWithSubscription } from "@/tests/seeding";
+import { seedItems, seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test.describe("Infinite Scroll", () => {
@@ -21,19 +21,19 @@ test.describe("Infinite Scroll", () => {
     const now = Date.now();
     const items = Array.from({ length: totalItems }).map((_, i) => ({
       guid: `item-${i}-${userId}`,
-      title: `Infinite Scroll Article ${i}`,
+      title: `Infinite Scroll Item ${i}`,
       description: `Description for article ${i}`,
       publishedAt: new Date(now - i * 60000), // Each item is 1 minute older than the previous
     }));
 
-    await seedFeedItems(db, feed.id, items);
+    await seedItems(db, feed.id, items);
 
     // 1. Go to dashboard
     await page.goto("/dashboard");
 
     // 2. Verify first page items are present
     const firstItem = page.getByRole("heading", {
-      name: "Infinite Scroll Article 0",
+      name: "Infinite Scroll Item 0",
     });
     await expect(firstItem).toBeVisible();
 
@@ -50,7 +50,7 @@ test.describe("Infinite Scroll", () => {
 
     // 4. Verify that an item from a later page is now visible
     const laterItem = page.getByRole("heading", {
-      name: `Infinite Scroll Article ${totalItems - 1}`,
+      name: `Infinite Scroll Item ${totalItems - 1}`,
     });
     await expect(laterItem).toBeVisible();
 

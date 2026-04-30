@@ -1,0 +1,133 @@
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+import { useActiveItem } from "@/hooks/use-active-item";
+import { useMarkRead } from "@/hooks/use-mark-read";
+import { createMockItemWithSource } from "@/tests/factories";
+import { render, screen } from "@/tests/rtl-utils";
+import { ItemCard } from "./item-card";
+
+// Mock the hooks
+vi.mock("@/hooks/use-mark-read", () => ({
+  useMarkRead: vi.fn(),
+}));
+
+vi.mock("@/hooks/use-active-item", () => ({
+  useActiveItem: vi.fn(),
+}));
+
+describe("ItemCard", () => {
+  const mockMarkAsRead = vi.fn();
+  const mockSetActiveItem = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useMarkRead).mockReturnValue({
+      mutate: mockMarkAsRead,
+    } as any);
+    vi.mocked(useActiveItem).mockReturnValue({
+      setActiveItemId: mockSetActiveItem,
+    } as any);
+  });
+
+  it("renders an unread indicator when isRead is false", () => {
+    const data = createMockItemWithSource({ isRead: false });
+    render(<ItemCard data={data} />);
+
+    const article = screen.getByRole("article");
+    expect(article).not.toHaveClass("opacity-60");
+
+    const dot = article.querySelector(".bg-unread-indicator");
+    expect(dot).toBeInTheDocument();
+  });
+
+  it("renders with read state styles when isRead is true", () => {
+    const data = createMockItemWithSource({ isRead: true });
+    render(<ItemCard data={data} />);
+
+    const article = screen.getByRole("article");
+    expect(article).toHaveClass("opacity-60");
+
+    const dot = article.querySelector(".bg-unread-indicator");
+    expect(dot).not.toBeInTheDocument();
+  });
+
+  it("calls markAsRead and setActiveItemId when clicking an unread item card", async () => {
+    const user = userEvent.setup();
+    const data = createMockItemWithSource({ isRead: false });
+    render(<ItemCard data={data} />);
+
+    const button = screen.getByRole("button", {
+      name: RegExp(data.item.title!, "i"),
+    });
+    await user.click(button);
+
+    expect(mockMarkAsRead).toHaveBeenCalledWith({ itemId: data.item.id });
+    expect(mockSetActiveItem).toHaveBeenCalledWith(data.item.id);
+  });
+
+  it("calls only setActiveItemId when clicking an already read item card", async () => {
+    const user = userEvent.setup();
+    const data = createMockItemWithSource({ isRead: true });
+    render(<ItemCard data={data} />);
+
+    const button = screen.getByRole("button", {
+      name: RegExp(data.item.title!, "i"),
+    });
+    await user.click(button);
+
+    expect(mockMarkAsRead).not.toHaveBeenCalled();
+    expect(mockSetActiveItem).toHaveBeenCalledWith(data.item.id);
+  });
+
+  it("renders category badge when categoryName is provided", () => {
+    const data = createMockItemWithSource({ categoryName: "Technology" });
+    render(<ItemCard data={data} />);
+
+    expect(screen.getByText("Technology")).toBeInTheDocument();
+  });
+
+  it("does not render category badge when categoryName is missing", () => {
+    const data = createMockItemWithSource({ categoryName: null });
+    render(<ItemCard data={data} />);
+
+    // The badge shouldn't be found
+    const badges = screen.queryByText(/Technology/i);
+    expect(badges).not.toBeInTheDocument();
+  });
+
+  it("skips all potentially focusable elements in excerpt during keyboard navigation", async () => {
+    const user = userEvent.setup();
+    const data = createMockItemWithSource({
+      item: {
+        title: "Test Item",
+        description:
+          'Excerpt with <a tabindex="-1" href="#">link</a> and <button tabindex="-1">btn</button>',
+      },
+    } as any);
+
+    render(<ItemCard data={data} />);
+
+    const openBtn = screen.getByRole("button", { name: /open reader/i });
+    const saveBtn = screen.getByRole("button", { name: /save for later/i });
+
+    openBtn.focus();
+    expect(openBtn).toHaveFocus();
+
+    // Tab should skip excerpt and land on save button
+    await user.tab();
+    expect(saveBtn).toHaveFocus();
+  });
+
+  it("isolates bookmark button clicks from the main card action", async () => {
+    const user = userEvent.setup();
+    const data = createMockItemWithSource();
+    render(<ItemCard data={data} />);
+
+    const saveBtn = screen.getByRole("button", { name: /save for later/i });
+    await user.click(saveBtn);
+
+    // Verify bookmark click didn't trigger the reader view
+    expect(mockSetActiveItem).not.toHaveBeenCalled();
+    expect(mockMarkAsRead).not.toHaveBeenCalled();
+  });
+});

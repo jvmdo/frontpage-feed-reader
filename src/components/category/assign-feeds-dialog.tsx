@@ -14,8 +14,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useCategories } from "@/hooks/use-categories";
-import { useSubscriptions } from "@/hooks/use-subscriptions";
-import { useUpdateSubscription } from "@/hooks/use-update-subscription";
+import { useFeeds } from "@/hooks/use-feeds";
+import { useUpdateFeed } from "@/hooks/use-update-feed";
 import { cn } from "@/lib/utils";
 import type { Category, FeedWithSubscription } from "@/types";
 
@@ -28,9 +28,9 @@ export function AssignFeedsDialog({
   categoryId,
   children,
 }: AssignFeedsDialogProps) {
-  const { data: subscriptions = [] } = useSubscriptions();
+  const { data: subscriptions = [] } = useFeeds();
   const { data: categories = [] } = useCategories();
-  const { mutate: updateSubscription, isPending } = useUpdateSubscription();
+  const { mutate: updateSubscription, isPending } = useUpdateFeed();
 
   const targetCategory = categories.find((c) => c.id === categoryId);
   const targetCategoryName = targetCategory?.name || "this category";
@@ -154,7 +154,7 @@ function FeedListSection({
             );
             return (
               <li key={item.subscription.id}>
-                <FeedItemRow
+                <ItemRow
                   item={item}
                   isPending={isPending}
                   onAction={() => onAction(item.subscription.id)}
@@ -170,7 +170,7 @@ function FeedListSection({
   );
 }
 
-function FeedItemRow({
+function ItemRow({
   item,
   isPending,
   onAction,

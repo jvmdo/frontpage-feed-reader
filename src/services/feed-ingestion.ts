@@ -8,7 +8,7 @@ import { fetchFeedXml } from "@/services/fetch-feed-xml";
 /**
  * Orchestrates fetching, parsing, and storing items for a single feed.
  */
-export async function ingestFeedItems(db: DB, feedId: number) {
+export async function ingestItems(db: DB, feedId: number) {
   const [feed] = await db.select().from(feeds).where(eq(feeds.id, feedId));
 
   if (!feed) {

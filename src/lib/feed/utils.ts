@@ -1,7 +1,7 @@
 /**
  * Heuristic to detect if a feed item is an excerpt rather than the full article.
  */
-export function checkIsExcerpt(item: {
+export function isExcerpt(item: {
   content?: string | null;
   description?: string | null;
 }): boolean {
