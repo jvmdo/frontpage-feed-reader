@@ -1,7 +1,7 @@
 "use client";
 
-import { Loader2Icon, MoveRightIcon, XIcon } from "lucide-react";
-import * as React from "react";
+import { MoveRightIcon, XIcon } from "lucide-react";
+import type * as React from "react";
 import { toast } from "sonner";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
+import { Spinner } from "@/components/ui/spinner";
 import { useCategories } from "@/hooks/category/use-categories";
 import { useFeeds } from "@/hooks/feed/use-feeds";
 import { useUpdateFeed } from "@/hooks/feed/use-update-feed";
-import { cn } from "@/lib/utils";
-import type { Category, FeedWithSubscription } from "@/types";
+import type { FeedWithSubscription } from "@/types";
 
 interface AssignFeedsDialogProps {
   categoryId: number;
@@ -28,45 +37,18 @@ export function AssignFeedsDialog({
   categoryId,
   children,
 }: AssignFeedsDialogProps) {
-  const { data: subscriptions = [] } = useFeeds();
-  const { data: categories = [] } = useCategories();
-  const { mutate: updateSubscription, isPending } = useUpdateFeed();
+  const { data: subscriptions } = useFeeds();
+  const { data: categories } = useCategories();
 
   const targetCategory = categories.find((c) => c.id === categoryId);
   const targetCategoryName = targetCategory?.name || "this category";
 
-  const { currentCategoryFeeds, availableFeeds } = React.useMemo(() => {
-    return {
-      currentCategoryFeeds: subscriptions.filter(
-        (s) => s.subscription.categoryId === categoryId,
-      ),
-      availableFeeds: subscriptions.filter(
-        (s) => s.subscription.categoryId !== categoryId,
-      ),
-    };
-  }, [subscriptions, categoryId]);
-
-  const handleAction = (subscriptionId: number, targetCatId?: number) => {
-    const isUnassign = targetCatId === undefined;
-
-    updateSubscription(
-      { id: subscriptionId, categoryId: targetCatId },
-      {
-        onSuccess: () => {
-          toast.success(
-            isUnassign
-              ? "Feed removed from category"
-              : "Feed moved to category",
-          );
-        },
-        onError: (error) => {
-          toast.error(
-            error.message || `Failed to ${isUnassign ? "remove" : "move"} feed`,
-          );
-        },
-      },
-    );
-  };
+  const currentCategoryFeeds = subscriptions.filter(
+    (s) => s.subscription.categoryId === categoryId,
+  );
+  const availableFeeds = subscriptions.filter(
+    (s) => s.subscription.categoryId !== categoryId,
+  );
 
   return (
     <Dialog>
@@ -82,160 +64,181 @@ export function AssignFeedsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-6 flex-1 min-h-0 pr-4 overflow-y-auto">
+        <div className="flex flex-col gap-6 flex-1 min-h-0 overflow-y-auto">
           {currentCategoryFeeds.length > 0 && (
-            <FeedListSection
-              id="current-feeds-list"
-              title="In this category"
-              items={currentCategoryFeeds}
-              isPending={isPending}
-              onAction={(id) => handleAction(id)}
-              actionType="unassign"
-            />
+            <section
+              className="flex flex-col gap-3"
+              aria-labelledby="current-feeds-header"
+            >
+              <h3
+                id="current-feeds-header"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+              >
+                In this category
+              </h3>
+              <ItemGroup>
+                {currentCategoryFeeds.map((item) => (
+                  <AssignedFeedItem key={item.subscription.id} item={item} />
+                ))}
+              </ItemGroup>
+            </section>
           )}
 
-          <FeedListSection
-            id="available-feeds-list"
-            title="Available feeds"
-            items={availableFeeds}
-            isPending={isPending}
-            onAction={(id) => handleAction(id, categoryId)}
-            actionType="assign"
-            emptyMessage="No other feeds available."
-            categories={categories}
-          />
+          <section
+            className="flex flex-col gap-3"
+            aria-labelledby="available-feeds-header"
+          >
+            <h3
+              id="available-feeds-header"
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              Available feeds
+            </h3>
+            {availableFeeds.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic px-1">
+                No other feeds available.
+              </p>
+            ) : (
+              <ItemGroup>
+                {availableFeeds.map((item) => {
+                  const currentCat = categories.find(
+                    (c) => c.id === item.subscription.categoryId,
+                  );
+
+                  return (
+                    <AvailableFeedItem
+                      key={item.subscription.id}
+                      item={item}
+                      categoryId={categoryId}
+                      currentCategoryName={currentCat?.name}
+                    />
+                  );
+                })}
+              </ItemGroup>
+            )}
+          </section>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-interface FeedListSectionProps {
-  title: string;
-  id: string;
-  items: FeedWithSubscription[];
-  isPending: boolean;
-  onAction: (id: number) => void;
-  actionType: "assign" | "unassign";
-  emptyMessage?: string;
-  categories?: Category[];
-}
+function AssignedFeedItem({ item }: { item: FeedWithSubscription }) {
+  const { mutate, isPending } = useUpdateFeed();
 
-function FeedListSection({
-  title,
-  id,
-  items,
-  isPending,
-  onAction,
-  actionType,
-  emptyMessage,
-  categories,
-}: FeedListSectionProps) {
-  const headerId = `${id}-header`;
+  const handleUnassign = () => {
+    mutate(
+      { id: item.subscription.id, categoryId: null },
+      {
+        onSuccess: () => toast.success("Feed removed from category"),
+        onError: (error) =>
+          toast.error(error.message || "Failed to remove feed"),
+      },
+    );
+  };
+
+  const title = item.subscription.customTitle || item.feed.title || "Untitled";
 
   return (
-    <section className="flex flex-col gap-3" aria-labelledby={headerId}>
-      <h3
-        id={headerId}
-        className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+    <FeedItemBase item={item} description="Currently in this category">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 hover:bg-destructive/10 hover:text-destructive"
+        onClick={handleUnassign}
+        disabled={isPending}
+        aria-label={`Remove ${title} from category`}
       >
-        {title}
-      </h3>
-
-      {items.length === 0 && emptyMessage ? (
-        <p className="text-sm text-muted-foreground italic px-1">
-          {emptyMessage}
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {items.map((item) => {
-            const currentCat = categories?.find(
-              (c) => c.id === item.subscription.categoryId,
-            );
-            return (
-              <li key={item.subscription.id}>
-                <ItemRow
-                  item={item}
-                  isPending={isPending}
-                  onAction={() => onAction(item.subscription.id)}
-                  actionType={actionType}
-                  currentCategoryName={currentCat?.name}
-                />
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </section>
+        {isPending ? (
+          <>
+            <Spinner />
+            <span className="sr-only">Removing...</span>
+          </>
+        ) : (
+          <>
+            Remove
+            <XIcon data-icon="inline-end" />
+          </>
+        )}
+      </Button>
+    </FeedItemBase>
   );
 }
 
-function ItemRow({
+function AvailableFeedItem({
   item,
-  isPending,
-  onAction,
-  actionType,
+  categoryId,
   currentCategoryName,
 }: {
   item: FeedWithSubscription;
-  isPending: boolean;
-  onAction: () => void;
-  actionType: "assign" | "unassign";
+  categoryId: number;
   currentCategoryName?: string;
+}) {
+  const { mutate, isPending } = useUpdateFeed();
+
+  const handleAssign = () => {
+    mutate(
+      { id: item.subscription.id, categoryId },
+      {
+        onSuccess: () => toast.success("Feed moved to category"),
+        onError: (error) => toast.error(error.message || "Failed to move feed"),
+      },
+    );
+  };
+
+  const title = item.subscription.customTitle || item.feed.title || "Untitled";
+
+  return (
+    <FeedItemBase
+      item={item}
+      description={currentCategoryName || "Uncategorized"}
+    >
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8"
+        onClick={handleAssign}
+        disabled={isPending}
+        aria-label={`Move ${title} to category`}
+      >
+        {isPending ? (
+          <>
+            <Spinner />
+            <span className="sr-only">Moving...</span>
+          </>
+        ) : (
+          <>
+            Move
+            <MoveRightIcon data-icon="inline-end" />
+          </>
+        )}
+      </Button>
+    </FeedItemBase>
+  );
+}
+
+function FeedItemBase({
+  item,
+  description,
+  children,
+}: {
+  item: FeedWithSubscription;
+  description: string;
+  children: React.ReactNode;
 }) {
   const { subscription: sub, feed } = item;
   const title = sub.customTitle || feed.title || "Untitled Feed";
 
   return (
-    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-lg border border-border/50 p-3 hover:bg-muted/30 transition-colors">
-      <FeedIcon url={feed.iconUrl || feed.url} title={title} size={24} />
-
-      <div className="flex flex-col min-w-0">
-        <span className="truncate text-sm font-medium cursor-default">
-          {title}
-        </span>
-        <span className="mt-0.5 truncate text-xs text-muted-foreground">
-          {actionType === "unassign"
-            ? "Currently in this category"
-            : currentCategoryName || "Uncategorized"}
-        </span>
-      </div>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        className={cn(
-          "whitespace-nowrap h-8",
-          actionType === "unassign" &&
-            "hover:text-destructive hover:bg-destructive/10",
-        )}
-        onClick={onAction}
-        disabled={isPending}
-        aria-label={
-          actionType === "unassign"
-            ? `Remove ${title} from category`
-            : `Move ${title} to category`
-        }
-      >
-        {isPending ? (
-          <div className="flex items-center gap-2">
-            <Loader2Icon className="size-4 animate-spin" aria-hidden="true" />
-            <span className="sr-only">
-              {actionType === "unassign" ? "Removing..." : "Moving..."}
-            </span>
-          </div>
-        ) : actionType === "unassign" ? (
-          <>
-            Remove
-            <XIcon className="ml-2 size-3" />
-          </>
-        ) : (
-          <>
-            Move
-            <MoveRightIcon className="ml-2 size-3" />
-          </>
-        )}
-      </Button>
-    </div>
+    <Item variant="outline" size="sm">
+      <ItemMedia variant="image">
+        <FeedIcon url={feed.iconUrl || feed.url} title={title} size={24} />
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>{title}</ItemTitle>
+        <ItemDescription>{description}</ItemDescription>
+      </ItemContent>
+      <ItemActions>{children}</ItemActions>
+    </Item>
   );
 }

@@ -82,8 +82,10 @@ describe("AssignFeedsDialog", () => {
       await screen.findByRole("button", { name: /open dialog/i }),
     );
 
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText(/manage feeds in tech/i)).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /manage feeds in tech/i }),
+    ).toBeInTheDocument();
 
     // Check "In this category" section
     expect(
@@ -116,11 +118,12 @@ describe("AssignFeedsDialog", () => {
   });
 
   it("calls updateFeedAction with null when 'Remove' is clicked", async () => {
-    const { user } = setup();
     vi.mocked(updateFeedAction).mockResolvedValue({
       success: true,
-      data: { id: 3, categoryId: null } as any,
+      data: { id: 3, categoryId: targetCategoryId, customTitle: null } as any,
     });
+
+    const { user } = setup();
 
     await user.click(
       await screen.findByRole("button", { name: /open dialog/i }),
@@ -129,17 +132,15 @@ describe("AssignFeedsDialog", () => {
     const removeButton = await screen.findByRole("button", {
       name: /remove feed 3 from category/i,
     });
+
     await user.click(removeButton);
 
     expect(updateFeedAction).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 3,
+        categoryId: null,
       }),
     );
-    // categoryId might be undefined or null depending on how the action is called
-    const callArgs = vi.mocked(updateFeedAction).mock
-      .calls[0][0] as any;
-    expect(callArgs.categoryId == null).toBe(true);
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith("Feed removed from category");
@@ -147,11 +148,12 @@ describe("AssignFeedsDialog", () => {
   });
 
   it("calls updateFeedAction when 'Move' is clicked", async () => {
-    const { user } = setup();
     vi.mocked(updateFeedAction).mockResolvedValue({
       success: true,
       data: { id: 1, categoryId: targetCategoryId } as any,
     });
+
+    const { user } = setup();
 
     await user.click(
       await screen.findByRole("button", { name: /open dialog/i }),
@@ -160,6 +162,7 @@ describe("AssignFeedsDialog", () => {
     const moveButton = await screen.findByRole("button", {
       name: /move feed 1 to category/i,
     });
+
     await user.click(moveButton);
 
     expect(updateFeedAction).toHaveBeenCalledWith({
@@ -173,12 +176,13 @@ describe("AssignFeedsDialog", () => {
   });
 
   it("shows error toast when movement fails", async () => {
-    const { user } = setup();
     vi.mocked(updateFeedAction).mockResolvedValue({
       success: false,
       error: "Something went wrong",
       code: "ERROR",
     });
+
+    const { user } = setup();
 
     await user.click(
       await screen.findByRole("button", { name: /open dialog/i }),
@@ -187,6 +191,7 @@ describe("AssignFeedsDialog", () => {
     const moveButton = await screen.findByRole("button", {
       name: /move feed 1 to category/i,
     });
+
     await user.click(moveButton);
 
     await waitFor(() => {
@@ -195,13 +200,14 @@ describe("AssignFeedsDialog", () => {
   });
 
   it("displays loading state while moving a feed", async () => {
-    const { user } = setup();
-
     let resolveAction!: (value: any) => void;
     const pendingPromise = new Promise((resolve) => {
       resolveAction = resolve;
     });
+
     vi.mocked(updateFeedAction).mockReturnValue(pendingPromise as any);
+
+    const { user } = setup();
 
     await user.click(
       await screen.findByRole("button", { name: /open dialog/i }),
@@ -210,10 +216,11 @@ describe("AssignFeedsDialog", () => {
     const moveButton = await screen.findByRole("button", {
       name: /move feed 1 to category/i,
     });
+
     await user.click(moveButton);
 
     expect(moveButton).toBeDisabled();
-    expect(within(moveButton).getByText(/moving\.\.\./i)).toBeInTheDocument();
+    expect(within(moveButton).getByText(/moving/i)).toBeInTheDocument();
 
     resolveAction({
       success: true,
@@ -226,13 +233,14 @@ describe("AssignFeedsDialog", () => {
   });
 
   it("displays loading state while removing a feed", async () => {
-    const { user } = setup();
-
     let resolveAction!: (value: any) => void;
     const pendingPromise = new Promise((resolve) => {
       resolveAction = resolve;
     });
+
     vi.mocked(updateFeedAction).mockReturnValue(pendingPromise as any);
+
+    const { user } = setup();
 
     await user.click(
       await screen.findByRole("button", { name: /open dialog/i }),
@@ -244,9 +252,7 @@ describe("AssignFeedsDialog", () => {
     await user.click(removeButton);
 
     expect(removeButton).toBeDisabled();
-    expect(
-      within(removeButton).getByText(/removing\.\.\./i),
-    ).toBeInTheDocument();
+    expect(within(removeButton).getByText(/removing/i)).toBeInTheDocument();
 
     resolveAction({
       success: true,

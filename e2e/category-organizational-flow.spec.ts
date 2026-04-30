@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { seedItems, seedFeedWithSubscription } from "@/tests/seeding";
+import { seedFeedWithSubscription, seedItems } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test("category creation, assignment via edit dialog, and empty state assignment", async ({
@@ -134,5 +134,35 @@ test("category creation, assignment via edit dialog, and empty state assignment"
   const techItem = page.getByRole("listitem").filter({ hasText: /^Tech$/ });
   await expect(
     techItem.getByRole("link", { name: "Feed A" }),
+  ).not.toBeVisible();
+
+  // 16. Open "Assign" dialog from toolbar to test removal
+  await page.getByRole("button", { name: "Assign" }).click();
+  const assignDialog2 = page.getByRole("dialog", { name: /manage feeds/i });
+  await expect(assignDialog2).toBeVisible();
+
+  // 17. Remove Feed A from Empty
+  await assignDialog2
+    .getByRole("button", { name: /remove feed a from category/i })
+    .click();
+
+  await page.keyboard.press("Escape");
+
+  // 18. Verify operation succeeded
+  await expect(
+    page
+      .locator("[data-sonner-toast]")
+      .filter({ hasText: /feed removed from category/i }),
+  ).toBeVisible();
+
+  // 19. Verify Feed A is no longer under Empty and category is empty again
+  await expect(page.getByText("Empty has no items yet")).toBeVisible();
+
+  const emptyCategoryItem = page
+    .getByRole("listitem")
+    .filter({ hasText: /^Empty$/ });
+
+  await expect(
+    emptyCategoryItem.getByRole("link", { name: "Feed A" }),
   ).not.toBeVisible();
 });
