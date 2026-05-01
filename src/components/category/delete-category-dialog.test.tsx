@@ -1,9 +1,16 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: Test asset */
+
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteCategoryAction } from "@/actions/category/delete-category-action";
 import { createMockCategory } from "@/tests/factories";
-import { render, screen, waitFor } from "@/tests/rtl-utils";
+import {
+  render,
+  screen,
+  waitFor,
+  waitForElementToBeRemoved,
+} from "@/tests/rtl-utils";
 import { DeleteCategoryDialog } from "./delete-category-dialog";
 
 // Mock the server action
@@ -48,10 +55,11 @@ describe("DeleteCategoryDialog", () => {
   });
 
   it("calls deleteCategoryAction when confirmed", async () => {
-    const { user } = setup();
     vi.mocked(deleteCategoryAction).mockResolvedValue({
       success: true,
     });
+
+    const { user } = setup();
 
     await user.click(screen.getByRole("button", { name: /open dialog/i }));
     await user.click(screen.getByRole("button", { name: /delete category/i }));
@@ -61,17 +69,20 @@ describe("DeleteCategoryDialog", () => {
     });
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith("Category deleted successfully");
+      expect(toast.success).toHaveBeenCalledWith(
+        "Category deleted successfully",
+      );
     });
   });
 
   it("shows error toast when deletion fails", async () => {
-    const { user } = setup();
     vi.mocked(deleteCategoryAction).mockResolvedValue({
       success: false,
       error: "Could not delete",
       code: "INTERNAL_ERROR",
     });
+
+    const { user } = setup();
 
     await user.click(screen.getByRole("button", { name: /open dialog/i }));
     await user.click(screen.getByRole("button", { name: /delete category/i }));
@@ -82,26 +93,23 @@ describe("DeleteCategoryDialog", () => {
   });
 
   it("displays loading state while deleting", async () => {
-    const { user } = setup();
-
     let resolveAction!: (value: any) => void;
     const pendingPromise = new Promise((resolve) => {
       resolveAction = resolve;
     });
+
     vi.mocked(deleteCategoryAction).mockReturnValue(pendingPromise as any);
+
+    const { user } = setup();
 
     await user.click(screen.getByRole("button", { name: /open dialog/i }));
     await user.click(screen.getByRole("button", { name: /delete category/i }));
 
-    expect(screen.getByRole("button", { name: /deleting\.\.\./i })).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("button", { name: /deleting/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /cancel/i })).toBeDisabled();
 
-    resolveAction({
-      success: true,
-    });
+    resolveAction({ success: true });
 
-    await waitFor(() => {
-      expect(toast.success).toHaveBeenCalled();
-    });
+    await waitForElementToBeRemoved(screen.queryByRole("alertdialog"));
   });
 });
