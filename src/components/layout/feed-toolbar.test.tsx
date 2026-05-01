@@ -1,36 +1,33 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: test asset */
+
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
+import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useMarkAllRead } from "@/hooks/feed/use-mark-all-read";
-import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
+import { markAllReadAction } from "@/actions/feed/mark-all-read-action";
+import { refreshFeedAction } from "@/actions/feed/refresh-feed-action";
 import { server } from "@/tests/mocks/server";
-import { render, screen } from "@/tests/rtl-utils";
+import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { FeedToolbar } from "./feed-toolbar";
 
-vi.mock("@/hooks/feed/use-mark-all-read", () => ({
-  useMarkAllRead: vi.fn(),
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
-vi.mock("@/hooks/feed/use-refresh-feed", () => ({
-  useRefreshFeed: vi.fn(),
+vi.mock("@/actions/feed/mark-all-read-action", () => ({
+  markAllReadAction: vi.fn(),
+}));
+
+vi.mock("@/actions/feed/refresh-feed-action", () => ({
+  refreshFeedAction: vi.fn(),
 }));
 
 describe("FeedToolbar", () => {
-  const mockRefresh = vi.fn();
-  const mockMarkAllRead = vi.fn();
-
   beforeEach(() => {
     vi.clearAllMocks();
-
-    vi.mocked(useRefreshFeed).mockReturnValue({
-      mutate: mockRefresh,
-      isPending: false,
-    } as any);
-
-    vi.mocked(useMarkAllRead).mockReturnValue({
-      mutate: mockMarkAllRead,
-      isPending: false,
-    } as any);
 
     server.use(
       http.get("/api/categories", () => {
@@ -55,18 +52,51 @@ describe("FeedToolbar", () => {
     expect(screen.getByText("10 unread")).toBeInTheDocument();
   });
 
-  it("triggers refresh when the button is clicked and a feed is selected", async () => {
-    const user = userEvent.setup();
-    render(<FeedToolbar />, {
-      searchParams: { feedId: "123" },
+  describe("Refresh Feed", () => {
+    it("shows success toast when refresh succeeds", async () => {
+      const user = userEvent.setup();
+      vi.mocked(refreshFeedAction).mockResolvedValue({
+        success: true,
+        data: { subscription: {} as any, feed: {} as any },
+      });
+
+      render(<FeedToolbar />, {
+        searchParams: { feedId: "123" },
+      });
+
+      const refreshButton = await screen.findByRole("button", {
+        name: /refresh/i,
+      });
+      await user.click(refreshButton);
+
+      expect(refreshFeedAction).toHaveBeenCalledWith({ feedId: 123 });
+
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith("Feed refreshed");
+      });
     });
 
-    const refreshButton = await screen.findByRole("button", {
-      name: /refresh/i,
-    });
-    await user.click(refreshButton);
+    it("shows error toast when refresh fails", async () => {
+      const user = userEvent.setup();
+      vi.mocked(refreshFeedAction).mockResolvedValue({
+        success: false,
+        error: "API Error",
+        code: "INTERNAL_ERROR",
+      });
 
-    expect(mockRefresh).toHaveBeenCalledWith({ id: 123 });
+      render(<FeedToolbar />, {
+        searchParams: { feedId: "123" },
+      });
+
+      const refreshButton = await screen.findByRole("button", {
+        name: /refresh/i,
+      });
+      await user.click(refreshButton);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("API Error");
+      });
+    });
   });
 
   it("hides refresh button when no feed is selected", async () => {
@@ -82,6 +112,8 @@ describe("FeedToolbar", () => {
   describe("Mark All Read", () => {
     it("marks all as read with global scope when no filters are active", async () => {
       const user = userEvent.setup();
+      vi.mocked(markAllReadAction).mockResolvedValue({ success: true });
+
       render(<FeedToolbar />);
 
       const markAllReadBtn = await screen.findByRole("button", {
@@ -94,7 +126,7 @@ describe("FeedToolbar", () => {
       });
       await user.click(confirmBtn);
 
-      expect(mockMarkAllRead).toHaveBeenCalledWith({
+      expect(markAllReadAction).toHaveBeenCalledWith({
         scope: "global",
         id: undefined,
       });
@@ -102,6 +134,8 @@ describe("FeedToolbar", () => {
 
     it("marks all as read with category scope when categoryId is active", async () => {
       const user = userEvent.setup();
+      vi.mocked(markAllReadAction).mockResolvedValue({ success: true });
+
       server.use(
         http.get("/api/feeds/unread-counts", () => {
           return HttpResponse.json({
@@ -125,7 +159,7 @@ describe("FeedToolbar", () => {
       });
       await user.click(confirmBtn);
 
-      expect(mockMarkAllRead).toHaveBeenCalledWith({
+      expect(markAllReadAction).toHaveBeenCalledWith({
         scope: "category",
         id: 10,
       });
@@ -133,6 +167,8 @@ describe("FeedToolbar", () => {
 
     it("marks all as read with feed scope when feedId is active", async () => {
       const user = userEvent.setup();
+      vi.mocked(markAllReadAction).mockResolvedValue({ success: true });
+
       server.use(
         http.get("/api/feeds/unread-counts", () => {
           return HttpResponse.json({
@@ -156,7 +192,7 @@ describe("FeedToolbar", () => {
       });
       await user.click(confirmBtn);
 
-      expect(mockMarkAllRead).toHaveBeenCalledWith({
+      expect(markAllReadAction).toHaveBeenCalledWith({
         scope: "feed",
         id: 123,
       });

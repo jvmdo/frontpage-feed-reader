@@ -1,6 +1,7 @@
 "use client";
 
 import { RotateCwIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,17 @@ export function RefreshAction({ feedId }: { feedId: number | null }) {
   }
 
   const handleRefresh = () => {
-    refreshFeed({ feedId });
+    refreshFeed(
+      { feedId },
+      {
+        onSuccess: () => {
+          toast.success("Feed refreshed");
+        },
+        onError: (error) => {
+          toast.error(error.message || "Failed to refresh feed");
+        },
+      },
+    );
   };
 
   return (

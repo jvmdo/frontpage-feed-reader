@@ -27,14 +27,13 @@ test("clicking 'Refresh' in FeedToolbar triggers ingestion and updates UI", asyn
 
   // 4. Trigger Refresh from the toolbar
   const refreshButton = page.getByRole("button", { name: /refresh/i });
+  
   await expect(refreshButton).toBeVisible();
   await refreshButton.click();
 
   // 5. Verify operation succeeded
-  // Note: Unlike the FeedRow, RefreshAction doesn't show a toast on success currently, 
-  // but it should at least finish its pending state.
+  await expect(page.locator("[data-sonner-toast]")).toContainText(
+    /feed refreshed/i,
+  );
   await expect(refreshButton).not.toBeDisabled();
-  
-  // We can also check if the feed status updated or if items were ingested if we had a way to verify that.
-  // For now, the fact that it doesn't crash and returns to enabled state is progress.
 });
