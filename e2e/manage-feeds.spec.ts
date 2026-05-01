@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { seedFeedWithSubscription } from "@/tests/seeding";
+import { seedCategory, seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test("displays a subscribed feed in the list", async ({ authedPage }) => {
@@ -142,6 +142,49 @@ test("updates title immediately in the table", async ({ authedPage }) => {
     page
       .locator('[data-slot="sidebar"]')
       .getByRole("link", { name: /new better title/i }),
+  ).toBeVisible();
+});
+
+test("assigns a feed to a category", async ({ authedPage }) => {
+  const { page, userId } = authedPage;
+
+  // Setup: One category and one unassigned feed
+  await seedCategory(db, { userId, name: "Tech News" });
+  await seedFeedWithSubscription(db, userId, {
+    url: `https://example.com/assign-me?tenant=${userId}`,
+    title: "Unassigned Feed",
+  });
+
+  // 1. Navigate to Manage Feeds
+  await page.goto("/manage-feeds");
+
+  const table = page.getByRole("table");
+  const row = table.getByRole("row", { name: /unassigned feed/i });
+
+  // 2. Open Edit dialog
+  await row.getByRole("button", { name: /open menu/i }).click();
+  await page.getByRole("menuitem", { name: /edit/i }).click();
+
+  const dialog = page.getByRole("dialog", { name: /edit subscription/i });
+
+  // 3. Select category
+  await dialog.getByRole("combobox").click();
+  await page.getByRole("option", { name: /tech news/i }).click();
+  await dialog.getByRole("button", { name: /save changes/i }).click();
+
+  // 4. Verify update
+  await expect(page.locator("[data-sonner-toast]")).toContainText(
+    /subscription updated/i,
+  );
+
+  // 5. Verify in sidebar (category folder should contain the feed)
+  const sidebar = page.locator('[data-slot="sidebar"]');
+  const categoryLink = sidebar.getByRole("link", { name: /tech news/i });
+
+  await categoryLink.click();
+  await expect(page).toHaveURL(/categoryId=/);
+  await expect(
+    sidebar.getByRole("link", { name: /unassigned feed/i }),
   ).toBeVisible();
 });
 

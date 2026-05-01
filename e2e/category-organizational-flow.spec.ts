@@ -1,168 +1,180 @@
 import { db } from "@/db";
-import { seedFeedWithSubscription, seedItems } from "@/tests/seeding";
+import {
+  seedCategory,
+  seedFeedWithSubscription,
+  seedItems,
+} from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
-test("category creation, assignment via edit dialog, and empty state assignment", async ({
+test("moves a feed to a category via empty state button", async ({
   authedPage,
 }) => {
   const { page, userId } = authedPage;
 
-  // Setup: User with 1 feed ("Feed A") that has items
-  const { feed: feedA } = await seedFeedWithSubscription(db, userId, {
-    url: `https://feed-a.com/rss?tenant=${userId}`,
-    title: "Feed A",
+  // Setup: One empty category and one unassigned feed with items
+  const cat = await seedCategory(db, { userId, name: "Empty Category" });
+  const { feed } = await seedFeedWithSubscription(db, userId, {
+    url: `https://example.com/rss?tenant=${userId}`,
+    title: "Unassigned Feed",
   });
 
-  await seedItems(db, feedA.id, [
+  await seedItems(db, feed.id, [
     {
-      guid: `item-a-${userId}`,
-      title: "Item from Feed A",
+      guid: `item-${userId}`,
+      title: "Featured Article",
     },
   ]);
 
-  // 1. Navigate to the dashboard and wait for hydration
+  // 1. Navigate to dashboard and click the empty category
   await page.goto("/dashboard");
   await page.waitForSelector('body[data-hydrated="true"]');
 
-  // 2. Open Add Category dialog and submit form
-  await page.getByRole("button", { name: /add category/i }).click();
+  await page.getByRole("link", { name: "Empty Category" }).click();
 
-  const addDialog = page.getByRole("dialog", { name: /add category/i });
-
-  await addDialog.getByLabel(/name/i).fill("Tech");
-  await addDialog.getByRole("button", { name: /create category/i }).click();
-
-  // 3. Verify operation succeeded
-  await expect(page.locator("[data-sonner-toast]")).toBeVisible();
-
-  const category = page.getByRole("link", { name: /tech/i });
-
-  await expect(category).toBeVisible();
-
-  // 4. Navigate to "Manage Feeds" page and wait for hydration
-  await page.getByRole("link", { name: /click to manage feeds/i }).click();
+  // 2. Verify URL and empty state
+  await expect(page).toHaveURL(new RegExp(`categoryId=${cat.id}`));
   await expect(
-    page.getByRole("status", { name: /loading categories/i }),
-  ).toBeHidden();
-
-  // 5. Open Edit dialog and assign "Feed A" to "Tech"
-  await page.getByRole("button", { name: "Open menu" }).click();
-  await page.getByRole("menuitem", { name: "Edit" }).click();
-
-  const editDialog = page.getByRole("dialog", { name: /edit subscription/i });
-
-  await editDialog.getByRole("combobox").click();
-  await page.getByRole("option", { name: /tech/i }).click(); // Portal
-  await editDialog.getByRole("button", { name: "Save Changes" }).click();
-
-  // 6. Verify operation succeeded
-  await expect(
-    page
-      .locator("[data-sonner-toast]")
-      .filter({ hasText: /subscription updated/i }),
+    page.getByText(/Empty Category has no items yet/i),
   ).toBeVisible();
 
-  // 7. Click "Tech" category and verify Feed A is visible under Tech in navigation
-  await category.click();
-
-  const feedALink = page.getByRole("link", { name: "Feed A" });
-
-  await expect(feedALink).toBeVisible();
-
-  // 8. Verify URL updated
-  await expect(page).toHaveURL(/categoryId=/);
-
-  // 9. Verify items in main view
-  await expect(
-    page.getByRole("heading", { name: "Item from Feed A" }),
-  ).toBeVisible();
-
-  // 10. Click "Feed A" under "Tech" and verify nesting
-  await feedALink.click();
-
-  await expect(page).toHaveURL(/feedId=/);
-
-  // 11. Create another category "Empty" and test empty state assignment
-  await page.getByRole("button", { name: /add category/i }).click();
-
-  const addDialog2 = page.getByRole("dialog", { name: /add category/i });
-
-  await addDialog2.getByLabel(/name/i).fill("Empty");
-  await addDialog2.getByRole("button", { name: /create category/i }).click();
-
-  // 12. Click "Empty" category
-  const emptyCategoryLink = page.getByRole("link", { name: /^Empty$/i });
-
-  await emptyCategoryLink.click();
-
-  // 13. Verify specific empty state in main view
-  await expect(page.getByText("Empty has no items yet")).toBeVisible();
-
-  await page.getByRole("button", { name: "Assign feeds" }).click();
-
-  // 14. Assign Feed A to "Empty" via empty state button
-  const assignDialog = page.getByRole("dialog", { name: /manage feeds/i });
-
-  await expect(assignDialog).toBeVisible();
-
-  // 14. Move Feed A to Empty
-  await assignDialog
-    .getByRole("button", { name: /move feed a to category/i })
+  // 3. Move feed to this category in the dialog
+  await page.getByRole("button", { name: /assign feeds/i }).click();
+  const dialog = page.getByRole("dialog", { name: /manage feeds/i });
+  await dialog
+    .getByRole("button", { name: /move unassigned feed to category/i })
     .click();
 
+  // 4. Verify toast and close dialog
+  await expect(page.locator("[data-sonner-toast]")).toContainText(
+    /feed moved to category/i,
+  );
   await page.keyboard.press("Escape");
 
-  // 15. Verify operation succeeded
+  // 5. Verify feed is now listed under category in sidebar and items are visible
+  const sidebar = page.locator('[data-slot="sidebar"]');
+  const catItem = sidebar
+    .getByRole("listitem")
+    .filter({ hasText: "Empty Category" });
+
+  await expect(
+    catItem.getByRole("link", { name: "Unassigned Feed" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Featured Article" }),
+  ).toBeVisible();
+});
+
+test("moves a feed between categories via toolbar", async ({ authedPage }) => {
+  const { page, userId } = authedPage;
+
+  // Setup: Feed 1 in Category A, Category B is empty
+  const catA = await seedCategory(db, { userId, name: "Category A" });
+  const catB = await seedCategory(db, { userId, name: "Category B" });
+
+  const { feed } = await seedFeedWithSubscription(
+    db,
+    userId,
+    {
+      url: `https://example.com/rss-2?tenant=${userId}`,
+      title: "Moving Feed",
+    },
+    { categoryId: catA.id },
+  );
+
+  await seedItems(db, feed.id, [
+    { guid: `item-2-${userId}`, title: "Moving Item" },
+  ]);
+
+  // 1. Navigate to Category B (target)
+  await page.goto(`/dashboard?categoryId=${catB.id}`);
+  await page.waitForSelector('body[data-hydrated="true"]');
+
+  // 2. Open "Assign" dialog from toolbar
+  await page.getByRole("button", { name: "Assign", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: /manage feeds/i });
+
+  // 3. Move from A to B
+  await dialog
+    .getByRole("button", { name: /move moving feed to category/i })
+    .click();
   await expect(
     page
       .locator("[data-sonner-toast]")
       .filter({ hasText: /feed moved to category/i }),
   ).toBeVisible();
-
-  // Feed A items appear in main view
-  await expect(
-    page.getByRole("heading", { name: "Item from Feed A" }),
-  ).toBeVisible();
-
-  // Verify navigation: Feed A moved
-  await expect(emptyCategoryLink).toBeVisible();
-
-  // Ensure Feed A is visible (should be expanded after move/navigation)
-  await expect(page.getByRole("link", { name: "Feed A" })).toBeVisible();
-
-  // Verify Feed A no longer under Tech (Tech should be collapsed or Feed A removed from its list)
-  const techItem = page.getByRole("listitem").filter({ hasText: /^Tech$/ });
-  await expect(
-    techItem.getByRole("link", { name: "Feed A" }),
-  ).not.toBeVisible();
-
-  // 16. Open "Assign" dialog from toolbar to test removal
-  await page.getByRole("button", { name: "Assign" }).click();
-  const assignDialog2 = page.getByRole("dialog", { name: /manage feeds/i });
-  await expect(assignDialog2).toBeVisible();
-
-  // 17. Remove Feed A from Empty
-  await assignDialog2
-    .getByRole("button", { name: /remove feed a from category/i })
-    .click();
-
   await page.keyboard.press("Escape");
 
-  // 18. Verify operation succeeded
+  // 4. Verify items appeared in the current view (Category B)
+  await expect(page.getByRole("heading", { name: "Moving Item" })).toBeVisible();
+
+  // 5. Verify movement in sidebar
+  const sidebar = page.locator('[data-slot="sidebar"]');
+
+  const itemA = sidebar.getByRole("listitem").filter({ hasText: "Category A" });
+  const itemB = sidebar.getByRole("listitem").filter({ hasText: "Category B" });
+
+  await expect(
+    itemA.getByRole("link", { name: "Moving Feed" }),
+  ).not.toBeVisible();
+  await expect(itemB.getByRole("link", { name: "Moving Feed" })).toBeVisible();
+});
+
+test("removes a feed from a category via toolbar", async ({ authedPage }) => {
+  const { page, userId } = authedPage;
+
+  // Setup: Feed already in a category
+  const cat = await seedCategory(db, { userId, name: "ToRemove" });
+
+  const { feed } = await seedFeedWithSubscription(
+    db,
+    userId,
+    {
+      url: `https://example.com/rss-remove?tenant=${userId}`,
+      title: "Removable Feed",
+    },
+    { categoryId: cat.id },
+  );
+
+  await seedItems(db, feed.id, [
+    { guid: `item-rem-${userId}`, title: "To Be Removed" },
+  ]);
+
+  // 1. Navigate to category page
+  await page.goto(`/dashboard?categoryId=${cat.id}`);
+  await page.waitForSelector('body[data-hydrated="true"]');
+
+  // Verify initial state
+  await expect(page).toHaveURL(new RegExp(`categoryId=${cat.id}`));
+  await expect(page.getByRole("heading", { name: "To Be Removed" })).toBeVisible();
+
+  // 2. Open "Assign" dialog from toolbar
+  await page.getByRole("button", { name: "Assign", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: /manage feeds/i });
+
+  // 3. Remove feed from category
+  await dialog
+    .getByRole("button", { name: /remove removable feed from category/i })
+    .click();
+
+  // 4. Verify toast
   await expect(
     page
       .locator("[data-sonner-toast]")
       .filter({ hasText: /feed removed from category/i }),
   ).toBeVisible();
 
-  // 19. Verify Feed A is no longer under Empty and category is empty again
-  await expect(page.getByText("Empty has no items yet")).toBeVisible();
+  await page.keyboard.press("Escape");
 
-  const emptyCategoryItem = page
-    .getByRole("listitem")
-    .filter({ hasText: /^Empty$/ });
+  // 5. Verify URL remains but content updates to empty state
+  await expect(page).toHaveURL(new RegExp(`categoryId=${cat.id}`));
+  await expect(page.getByText(/ToRemove has no items yet/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "To Be Removed" })).not.toBeVisible();
+
+  // 6. Verify sidebar reflects removal
+  const sidebar = page.locator('[data-slot="sidebar"]');
+  const catItem = sidebar.getByRole("listitem").filter({ hasText: "ToRemove" });
 
   await expect(
-    emptyCategoryItem.getByRole("link", { name: "Feed A" }),
+    catItem.getByRole("link", { name: "Removable Feed" }),
   ).not.toBeVisible();
 });
