@@ -39,47 +39,6 @@ export function RenameCategoryDialog({
   children,
 }: RenameCategoryDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const updateCategory = useUpdateCategory();
-
-  const form = useForm<UpdateCategoryInput>({
-    resolver: zodResolver(updateCategorySchema),
-    defaultValues: {
-      id: category.id,
-      name: category.name,
-    },
-  });
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = form;
-
-  const onSubmit = (data: UpdateCategoryInput) => {
-    if (isSubmitting) return;
-
-    updateCategory.mutate(data, {
-      onSuccess: () => {
-        toast.success("Category renamed successfully");
-        setOpen(false);
-      },
-      onError: (error) => {
-        toast.error(error.message || "Failed to rename category");
-      },
-    });
-  };
-
-  const isSubmitting = updateCategory.isPending;
-
-  React.useEffect(() => {
-    if (open) {
-      reset({
-        id: category.id,
-        name: category.name,
-      });
-    }
-  }, [open, category, reset]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -92,44 +51,92 @@ export function RenameCategoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <FieldGroup>
-            <Field data-invalid={!!errors.name}>
-              <FieldLabel htmlFor={`rename-${category.id}`}>Name</FieldLabel>
-              <Input
-                id={`rename-${category.id}`}
-                placeholder="e.g. Design, Frontend, AI"
-                {...register("name")}
-                aria-invalid={!!errors.name}
-                aria-describedby={
-                  errors.name ? `rename-${category.id}-error` : undefined
-                }
-              />
-              {errors.name && (
-                <FieldError id={`rename-${category.id}-error`}>
-                  {errors.name.message}
-                </FieldError>
-              )}
-            </Field>
-          </FieldGroup>
-
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              aria-disabled={isSubmitting}
-              aria-busy={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Spinner />}
-              {isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
-        </form>
+        {open && (
+          <RenameCategoryForm
+            category={category}
+            onSuccess={() => setOpen(false)}
+            onCancel={() => setOpen(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface RenameCategoryFormProps {
+  category: Category;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+function RenameCategoryForm({
+  category,
+  onSuccess,
+  onCancel,
+}: RenameCategoryFormProps) {
+  const { mutate: updateCategory, isPending } = useUpdateCategory();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<UpdateCategoryInput>({
+    resolver: zodResolver(updateCategorySchema),
+    defaultValues: {
+      id: category.id,
+      name: category.name,
+    },
+  });
+
+  const onSubmit = (data: UpdateCategoryInput) => {
+    updateCategory(data, {
+      onSuccess: () => {
+        toast.success("Category renamed successfully");
+        onSuccess?.();
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to rename category");
+      },
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+      <FieldGroup>
+        <Field data-invalid={!!errors.name}>
+          <FieldLabel htmlFor={`rename-${category.id}`}>Name</FieldLabel>
+          <Input
+            id={`rename-${category.id}`}
+            placeholder="e.g. Design, Frontend, AI"
+            {...register("name")}
+            aria-invalid={!!errors.name}
+            aria-describedby={
+              errors.name ? `rename-${category.id}-error` : undefined
+            }
+            disabled={isPending}
+          />
+          {errors.name && (
+            <FieldError id={`rename-${category.id}-error`}>
+              {errors.name.message}
+            </FieldError>
+          )}
+        </Field>
+      </FieldGroup>
+
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isPending}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Spinner data-icon="inline-start" />}
+          {isPending ? "Saving..." : "Save Changes"}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }

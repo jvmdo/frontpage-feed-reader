@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -25,14 +26,16 @@ export function DeleteCategoryDialog({
   category,
   children,
 }: DeleteCategoryDialogProps) {
-  const deleteCategory = useDeleteCategory();
+  const [open, setOpen] = React.useState(false);
+  const { mutate: deleteCategory, isPending } = useDeleteCategory();
 
   const handleDelete = () => {
-    deleteCategory.mutate(
+    deleteCategory(
       { id: category.id },
       {
         onSuccess: () => {
           toast.success("Category deleted successfully");
+          setOpen(false);
         },
         onError: (error) => {
           toast.error(error.message || "Failed to delete category");
@@ -41,10 +44,8 @@ export function DeleteCategoryDialog({
     );
   };
 
-  const isDeleting = deleteCategory.isPending;
-
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -56,19 +57,17 @@ export function DeleteCategoryDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
+            variant="destructive"
             onClick={(e) => {
               e.preventDefault();
-              if (isDeleting) return;
               handleDelete();
             }}
-            aria-disabled={isDeleting}
-            aria-busy={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={isPending}
           >
-            {isDeleting && <Spinner />}
-            {isDeleting ? <>Deleting...</> : "Delete Category"}
+            {isPending && <Spinner data-icon="inline-start" />}
+            {isPending ? "Deleting..." : "Delete Category"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

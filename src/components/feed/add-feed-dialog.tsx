@@ -32,12 +32,36 @@ interface AddFeedDialogProps {
 
 export function AddFeedDialog({ children, asChild }: AddFeedDialogProps) {
   const [open, setOpen] = useState(false);
-  const { mutate: addFeed, isPending } = useAddFeed();
 
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild={asChild}>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Feed</DialogTitle>
+          <DialogDescription>
+            Enter the URL of the RSS or Atom feed you want to subscribe to.
+          </DialogDescription>
+        </DialogHeader>
+        <AddFeedForm
+          onSuccess={() => setOpen(false)}
+          onCancel={() => setOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface AddFeedFormProps {
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
+  const { mutate: addFeed, isPending } = useAddFeed();
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<AddFeedInput>({
     resolver: zodResolver(addFeedSchema),
@@ -50,8 +74,7 @@ export function AddFeedDialog({ children, asChild }: AddFeedDialogProps) {
     addFeed(data, {
       onSuccess: () => {
         toast.success("Feed added successfully");
-        reset();
-        setOpen(false);
+        onSuccess();
       },
       onError: (error) => {
         toast.error(error.message || "Failed to add feed");
@@ -60,49 +83,38 @@ export function AddFeedDialog({ children, asChild }: AddFeedDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild={asChild}>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Feed</DialogTitle>
-          <DialogDescription>
-            Enter the URL of the RSS or Atom feed you want to subscribe to.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <FieldGroup>
-            <Field data-invalid={!!errors.url}>
-              <FieldLabel htmlFor="feed-url">Feed URL</FieldLabel>
-              <Input
-                id="feed-url"
-                placeholder="https://example.com/feed.xml"
-                disabled={isPending}
-                {...register("url")}
-                aria-invalid={!!errors.url}
-                aria-describedby={errors.url ? "field-error" : undefined}
-              />
-              {errors.url && (
-                <FieldError id="field-error">{errors.url.message}</FieldError>
-              )}
-            </Field>
-          </FieldGroup>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <FieldGroup>
+        <Field data-invalid={!!errors.url} data-disabled={isPending}>
+          <FieldLabel htmlFor="feed-url">Feed URL</FieldLabel>
+          <Input
+            id="feed-url"
+            placeholder="https://example.com/feed.xml"
+            disabled={isPending}
+            {...register("url")}
+            aria-invalid={!!errors.url}
+            aria-describedby={errors.url ? "field-error" : undefined}
+          />
+          {errors.url && (
+            <FieldError id="field-error">{errors.url.message}</FieldError>
+          )}
+        </Field>
+      </FieldGroup>
 
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Spinner className="mr-2" />}
-              {isPending ? "Adding..." : "Add Feed"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <DialogFooter className="mt-6">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isPending}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Spinner data-icon="inline-start" />}
+          {isPending ? "Adding..." : "Add Feed"}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }

@@ -38,34 +38,6 @@ export function AddCategoryDialog({
   asChild,
 }: AddCategoryDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { mutate: createCategory, isPending } = useCreateCategory();
-
-  const form = useForm<CreateCategoryInput>({
-    resolver: zodResolver(createCategorySchema),
-    defaultValues: {
-      name: "",
-    },
-  });
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = form;
-
-  const onSubmit = (data: CreateCategoryInput) => {
-    createCategory(data, {
-      onSuccess: () => {
-        toast.success("Category created successfully");
-        setOpen(false);
-        reset();
-      },
-      onError: (error) => {
-        toast.error(error.message || "Failed to create category");
-      },
-    });
-  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -78,43 +50,83 @@ export function AddCategoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <FieldGroup>
-            <Field data-invalid={!!errors.name}>
-              <FieldLabel htmlFor="category-name">Name</FieldLabel>
-              <Input
-                id="category-name"
-                placeholder="e.g. Design, Frontend, AI"
-                {...register("name")}
-                aria-invalid={!!errors.name}
-                aria-describedby={
-                  errors.name ? "category-name-error" : undefined
-                }
-              />
-              {errors.name && (
-                <FieldError id="category-name-error">
-                  {errors.name.message}
-                </FieldError>
-              )}
-            </Field>
-          </FieldGroup>
-
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Spinner data-icon="inline-start" />}
-              Create Category
-            </Button>
-          </DialogFooter>
-        </form>
+        {open && (
+          <AddCategoryForm
+            onSuccess={() => setOpen(false)}
+            onCancel={() => setOpen(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface AddCategoryFormProps {
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
+  const { mutate: createCategory, isPending } = useCreateCategory();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CreateCategoryInput>({
+    resolver: zodResolver(createCategorySchema),
+    defaultValues: {
+      name: "",
+    },
+  });
+
+  const onSubmit = (data: CreateCategoryInput) => {
+    createCategory(data, {
+      onSuccess: () => {
+        toast.success("Category created successfully");
+        reset();
+        onSuccess?.();
+      },
+      onError: (error) => {
+        toast.error(error.message || "Failed to create category");
+      },
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+      <FieldGroup>
+        <Field data-invalid={!!errors.name}>
+          <FieldLabel htmlFor="category-name">Name</FieldLabel>
+          <Input
+            id="category-name"
+            placeholder="e.g. Design, Frontend, AI"
+            {...register("name")}
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? "name-error" : undefined}
+            disabled={isPending}
+          />
+          {errors.name && (
+            <FieldError id="name-error">{errors.name.message}</FieldError>
+          )}
+        </Field>
+      </FieldGroup>
+
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isPending}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Spinner data-icon="inline-start" />}
+          {isPending ? "Creating..." : "Create Category"}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }
