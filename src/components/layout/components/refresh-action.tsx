@@ -13,7 +13,7 @@ export function RefreshAction({ feedId }: { feedId: number | null }) {
   }
 
   const handleRefresh = () => {
-    refreshFeed({ id: feedId });
+    refreshFeed({ feedId });
   };
 
   return (

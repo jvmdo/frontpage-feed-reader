@@ -21,7 +21,9 @@ export function useRefreshFeed() {
       return response.data;
     },
     onSuccess: (updatedData) => {
-      if (!updatedData) return;
+      if (!updatedData?.subscription || !updatedData?.feed) return;
+
+      const data = updatedData as FeedWithSubscription;
 
       // Manually update the 'subscriptions' cache with the refreshed feed and subscription data.
       queryClient.setQueryData<FeedWithSubscription[]>(
@@ -30,8 +32,8 @@ export function useRefreshFeed() {
           if (!old) return undefined;
 
           return old.map((item): FeedWithSubscription => {
-            if (item.subscription.id === updatedData.subscription.id) {
-              return updatedData;
+            if (item.subscription.id === data.subscription.id) {
+              return data;
             }
             return item;
           });

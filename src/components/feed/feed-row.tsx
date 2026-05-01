@@ -67,7 +67,7 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
 
   const handleRefresh = () => {
     refreshFeed(
-      { id: subscription.id },
+      { subscriptionId: subscription.id },
       {
         onSuccess: () => {
           toast.success("Feed refreshed");

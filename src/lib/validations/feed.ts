@@ -27,9 +27,15 @@ export const removeFeedSchema = z.object({
 
 export type RemoveFeedInput = z.infer<typeof removeFeedSchema>;
 
-export const refreshFeedSchema = z.object({
-  id: z.number(),
-});
+export const refreshFeedSchema = z
+  .object({
+    subscriptionId: z.number().optional(),
+    feedId: z.number().optional(),
+  })
+  .refine((data) => data.subscriptionId !== undefined || data.feedId !== undefined, {
+    message: "Either subscriptionId or feedId must be provided",
+    path: ["subscriptionId"],
+  });
 
 export type RefreshFeedInput = z.infer<typeof refreshFeedSchema>;
 

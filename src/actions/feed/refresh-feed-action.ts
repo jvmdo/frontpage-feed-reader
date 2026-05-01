@@ -14,10 +14,11 @@ import {
 } from "@/lib/validations/feed";
 import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { getSubscription } from "@/services/subscription/get-subscription";
+import { getSubscriptionByFeedId } from "@/services/subscription/get-subscription-by-feed-id";
 
 /**
  * Server action to refresh a feed.
- * @param input - ID of the subscription to refresh, validated by refreshFeedSchema.
+ * @param input - ID of the subscription or feed to refresh.
  */
 export async function refreshFeedAction(input: RefreshFeedInput) {
   const result = refreshFeedSchema.safeParse(input);
@@ -30,7 +31,7 @@ export async function refreshFeedAction(input: RefreshFeedInput) {
     };
   }
 
-  const { id } = result.data;
+  const { subscriptionId, feedId } = result.data;
 
   let userId: string | undefined;
   let currentSubscription = null;
@@ -49,7 +50,9 @@ export async function refreshFeedAction(input: RefreshFeedInput) {
 
     userId = session.user.id;
 
-    const row = await getSubscription(db, userId, id);
+    const row = subscriptionId
+      ? await getSubscription(db, userId, subscriptionId)
+      : await getSubscriptionByFeedId(db, userId, feedId!);
 
     if (!row) {
       return {
@@ -64,7 +67,7 @@ export async function refreshFeedAction(input: RefreshFeedInput) {
 
     await ingestItems(db, currentFeed.id);
 
-    const updatedRow = await getSubscription(db, userId, id);
+    const updatedRow = await getSubscription(db, userId, currentSubscription.id);
 
     return {
       success: true,
@@ -78,10 +81,10 @@ export async function refreshFeedAction(input: RefreshFeedInput) {
 
     let updatedRow = null;
 
-    // We can only fetch the updated row if we successfully got the user ID before the error occurred.
-    if (userId) {
+    // We can only fetch the updated row if we successfully got the user ID and subscription before the error occurred.
+    if (userId && currentSubscription) {
       try {
-        updatedRow = await getSubscription(db, userId, id);
+        updatedRow = await getSubscription(db, userId, currentSubscription.id);
       } catch (fallbackError) {
         console.error(
           "[refreshFeedAction] Failed to get fallback subscription:",
