@@ -1,11 +1,13 @@
 "use client";
 
+import { CheckCheckIcon } from "lucide-react";
 import { useState } from "react";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
+import { Button } from "@/components/ui/button";
+import { useMarkAllReadUI } from "@/hooks/ui/use-mark-all-read-ui";
 import { AssignAction } from "./components/assign-action";
 import { LayoutToggles } from "./components/layout-toggles";
 import { MarkAllReadAction } from "./components/mark-all-read-action";
-import { RefreshAction } from "./components/refresh-action";
 import { ToolbarActionsMenu } from "./components/toolbar-actions-menu";
 import { ToolbarTitle } from "./components/toolbar-title";
 
@@ -15,36 +17,21 @@ export function FeedToolbar() {
 
   return (
     <div className="border-b border-border bg-card">
-      <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4">
+      <div className="flex items-center justify-between gap-2 p-2 sm:p-3 md:p-4">
         <ToolbarTitle feedId={feedId} categoryId={categoryId} />
 
-        <div className="flex items-center gap-1.5">
-          <LayoutToggles
+        <div className="hidden md:flex md:ml-2">
+          <ToolbarActionsMenu
+            feedId={feedId}
+            categoryId={categoryId}
             layout={layout}
-            onLayoutChange={setLayout}
-            className="hidden lg:flex mr-3"
+            setLayout={setLayout}
           />
 
-          <RefreshAction feedId={feedId} />
-
-          <div className="hidden sm:flex items-center gap-1.5">
-            <MarkAllReadAction
-              feedId={feedId}
-              categoryId={categoryId}
-              className="hidden lg:inline-flex"
-            />
-
-            <AssignAction
-              categoryId={categoryId}
-              className="hidden lg:inline-flex"
-            />
-
-            <ToolbarActionsMenu
-              feedId={feedId}
-              categoryId={categoryId}
-              layout={layout}
-              setLayout={setLayout}
-            />
+          <div className="hidden lg:flex items-center gap-1">
+            <LayoutToggles layout={layout} onLayoutChange={setLayout} />
+            <AssignAction categoryId={categoryId} />
+            <StandaloneMarkAllRead />
           </div>
         </div>
       </div>
@@ -60,5 +47,21 @@ export function FeedToolbar() {
         <span>5 new items since your last visit</span>
       </button> */}
     </div>
+  );
+}
+
+/**
+ * Logic-aware standalone button for the toolbar.
+ */
+function StandaloneMarkAllRead() {
+  const { isDisabled } = useMarkAllReadUI();
+
+  return (
+    <MarkAllReadAction>
+      <Button variant="outline" size="sm" disabled={isDisabled}>
+        <CheckCheckIcon className="size-3.5" data-icon="inline-start" />
+        Mark all read
+      </Button>
+    </MarkAllReadAction>
   );
 }

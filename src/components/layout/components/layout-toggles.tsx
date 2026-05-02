@@ -2,26 +2,20 @@
 
 import { Grid2X2Icon, ListIcon, Rows3Icon } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { cn } from "@/lib/utils";
 
 export function LayoutToggles({
   layout,
   onLayoutChange,
-  className,
 }: {
   layout: string;
   onLayoutChange: (value: string) => void;
-  className?: string;
 }) {
   return (
     <ToggleGroup
       type="single"
       value={layout}
       onValueChange={(v) => v && onLayoutChange(v)}
-      className={cn(
-        "border border-border rounded-md overflow-hidden gap-0",
-        className,
-      )}
+      className="border"
     >
       <ToggleGroupItem
         value="list"

@@ -8,10 +8,12 @@ import {
   ListIcon,
   MoreHorizontalIcon,
   PlusIcon,
+  RotateCwIcon,
   Rows3Icon,
 } from "lucide-react";
 import { useState } from "react";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
+import { MarkAllReadAction } from "@/components/layout/components/mark-all-read-action";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,8 +25,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useMarkAllRead } from "@/hooks/feed/use-mark-all-read";
-import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
+import { useMarkAllReadUI } from "@/hooks/ui/use-mark-all-read-ui";
+import { useRefreshUI } from "@/hooks/ui/use-refresh-ui";
+import { cn } from "@/lib/utils";
 
 export function ToolbarActionsMenu({
   feedId,
@@ -37,24 +40,9 @@ export function ToolbarActionsMenu({
   layout: string;
   setLayout: (v: string) => void;
 }) {
-  const { data: unreadCounts } = useUnreadCounts();
-  const { mutate: markAllRead, isPending: isMarkingRead } = useMarkAllRead();
   const [order, setOrder] = useState("newest");
-
-  const currentCount = feedId
-    ? unreadCounts?.feeds[feedId] || 0
-    : categoryId
-      ? unreadCounts?.categories[categoryId] || 0
-      : unreadCounts?.global || 0;
-
-  const handleMarkAllRead = () => {
-    const scope = feedId ? "feed" : categoryId ? "category" : "global";
-    const id = feedId || categoryId || undefined;
-    markAllRead({ scope, id });
-  };
-
-  // TODO: layout toggle
-  // TODO: list sorting
+  const { isDisabled: isMarkAllDisabled } = useMarkAllReadUI();
+  const { isRefreshing, handleRefresh } = useRefreshUI();
 
   return (
     <DropdownMenu>
@@ -62,29 +50,53 @@ export function ToolbarActionsMenu({
         <Button
           variant="outline"
           size="icon"
-          className="inline-flex lg:hidden size-8 text-muted-foreground hover:text-foreground"
+          className="hidden md:inline-flex"
           aria-label="More controls"
         >
           <MoreHorizontalIcon className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem
-          onClick={handleMarkAllRead}
-          disabled={isMarkingRead || currentCount === 0}
-        >
-          <CheckCheckIcon data-icon="inline-start" />
-          Mark all read
-        </DropdownMenuItem>
-        {categoryId && (
-          <AssignFeedsDialog categoryId={categoryId}>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <PlusIcon data-icon="inline-start" />
-              Assign feeds
+        {feedId && (
+          <>
+            <DropdownMenuItem
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <RotateCwIcon
+                className={cn("size-4", isRefreshing && "animate-spin")}
+                data-icon="inline-start"
+              />
+              Refresh
             </DropdownMenuItem>
-          </AssignFeedsDialog>
+            <DropdownMenuSeparator />
+          </>
         )}
+
+        {categoryId && (
+          <>
+            <AssignFeedsDialog categoryId={categoryId}>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <PlusIcon data-icon="inline-start" />
+                Assign feeds
+              </DropdownMenuItem>
+            </AssignFeedsDialog>
+            <DropdownMenuSeparator />
+          </>
+        )}
+
+        <MarkAllReadAction>
+          <DropdownMenuItem
+            disabled={isMarkAllDisabled}
+            onSelect={(e) => e.preventDefault()}
+          >
+            <CheckCheckIcon data-icon="inline-start" />
+            Mark all read
+          </DropdownMenuItem>
+        </MarkAllReadAction>
         <DropdownMenuSeparator />
+
         <DropdownMenuLabel>Layout</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={layout} onValueChange={setLayout}>
           <DropdownMenuRadioItem value="list">
@@ -101,6 +113,7 @@ export function ToolbarActionsMenu({
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
+
         <DropdownMenuLabel>Order</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={order} onValueChange={setOrder}>
           <DropdownMenuRadioItem value="newest">

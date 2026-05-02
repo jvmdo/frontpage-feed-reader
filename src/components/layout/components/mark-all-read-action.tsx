@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCheckIcon } from "lucide-react";
+import type * as React from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,64 +12,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { useMarkAllRead } from "@/hooks/feed/use-mark-all-read";
-import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
-import { cn } from "@/lib/utils";
+import { useMarkAllReadUI } from "@/hooks/ui/use-mark-all-read-ui";
 
-export function MarkAllReadAction({
-  feedId,
-  categoryId,
-  className,
-}: {
-  feedId: number | null;
-  categoryId: number | null;
-  className?: string;
-}) {
-  const { data: unreadCounts } = useUnreadCounts();
-  const { mutate: markAllRead, isPending: isMarkingRead } = useMarkAllRead();
+interface MarkAllReadActionProps {
+  children: React.ReactNode;
+}
 
-  const currentCount = feedId
-    ? unreadCounts?.feeds[feedId] || 0
-    : categoryId
-      ? unreadCounts?.categories[categoryId] || 0
-      : unreadCounts?.global || 0;
-
-  if (currentCount === 0) return null;
-
-  const handleMarkAllRead = () => {
-    const scope = feedId ? "feed" : categoryId ? "category" : "global";
-    const id = feedId || categoryId || undefined;
-    markAllRead({ scope, id });
-  };
+export function MarkAllReadAction({ children }: MarkAllReadActionProps) {
+  const { scopeLabel, handleMarkAllRead } = useMarkAllReadUI();
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isMarkingRead}
-          className={cn(
-            "h-8 px-3 text-muted-foreground hover:text-foreground",
-            className,
-          )}
-        >
-          <CheckCheckIcon className="size-3.5 mr-2" />
-          Mark all read
-        </Button>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Mark everything as read?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will mark all articles in{" "}
-            {feedId
-              ? "this feed"
-              : categoryId
-                ? "this category"
-                : "all your subscriptions"}{" "}
-            as read. This action cannot be undone.
+            This will mark all items in {scopeLabel} as read. This action cannot
+            be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

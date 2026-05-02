@@ -9,11 +9,14 @@ import {
   MenuIcon,
   MoreHorizontalIcon,
   PlusIcon,
+  RotateCwIcon,
   Rows3Icon,
   SearchIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
+import { MarkAllReadAction } from "@/components/layout/components/mark-all-read-action";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,11 +30,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
+import { useMarkAllReadUI } from "@/hooks/ui/use-mark-all-read-ui";
+import { useRefreshUI } from "@/hooks/ui/use-refresh-ui";
+import { cn } from "@/lib/utils";
 
 export function BottomNav() {
+  const { toggleSidebar } = useSidebar();
+  const { feedId, categoryId } = useFeedFilter();
   const [layout, setLayout] = useState("list");
   const [order, setOrder] = useState("newest");
-  const { toggleSidebar } = useSidebar();
+
+  const { isDisabled: isMarkAllDisabled } = useMarkAllReadUI();
+  const { isRefreshing, handleRefresh } = useRefreshUI();
 
   return (
     <nav
@@ -80,11 +91,45 @@ export function BottomNav() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" side="top" className="w-56 mb-1">
-          <DropdownMenuItem>
-            <CheckCheckIcon data-icon="inline-start" />
-            Mark all read
-          </DropdownMenuItem>
+          {feedId && (
+            <>
+              <DropdownMenuItem
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <RotateCwIcon
+                  className={cn("size-4", isRefreshing && "animate-spin")}
+                  data-icon="inline-start"
+                />
+                Refresh
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          {categoryId && (
+            <>
+              <AssignFeedsDialog categoryId={categoryId}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <PlusIcon data-icon="inline-start" />
+                  Assign feeds
+                </DropdownMenuItem>
+              </AssignFeedsDialog>
+              <DropdownMenuSeparator />
+            </>
+          )}
+
+          <MarkAllReadAction>
+            <DropdownMenuItem
+              disabled={isMarkAllDisabled}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <CheckCheckIcon data-icon="inline-start" />
+              Mark all read
+            </DropdownMenuItem>
+          </MarkAllReadAction>
           <DropdownMenuSeparator />
+
           <DropdownMenuLabel>Layout</DropdownMenuLabel>
           <DropdownMenuRadioGroup value={layout} onValueChange={setLayout}>
             <DropdownMenuRadioItem value="list">
