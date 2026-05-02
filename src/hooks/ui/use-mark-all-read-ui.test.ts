@@ -86,7 +86,7 @@ describe("useMarkAllReadUI", () => {
 
     result.current.handleMarkAllRead();
 
-    expect(mockMutate).toHaveBeenCalledWith({ scope: "global", id: undefined });
+    expect(mockMutate).toHaveBeenCalledWith({ scope: "global" });
   });
 
   it("calls markAllRead with category scope", () => {

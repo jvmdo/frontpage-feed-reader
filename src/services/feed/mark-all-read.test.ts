@@ -70,11 +70,11 @@ describe("markAllRead", () => {
     testUser,
   }) => {
     await expect(
-      markAllRead(tx, testUser.id, { scope: "category" }),
+      markAllRead(tx, testUser.id, { scope: "category" } as any),
     ).rejects.toThrow(MarkAllReadIdRequiredError);
 
     await expect(
-      markAllRead(tx, testUser.id, { scope: "feed" }),
+      markAllRead(tx, testUser.id, { scope: "feed" } as any),
     ).rejects.toThrow(MarkAllReadIdRequiredError);
   });
 });

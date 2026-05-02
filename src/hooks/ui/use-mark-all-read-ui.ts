@@ -28,9 +28,13 @@ export function useMarkAllReadUI() {
       : "all your feeds";
 
   const handleMarkAllRead = () => {
-    const scope = feedId ? "feed" : categoryId ? "category" : "global";
-    const id = feedId || categoryId || undefined;
-    markAllRead({ scope, id });
+    if (feedId) {
+      markAllRead({ scope: "feed", id: feedId });
+    } else if (categoryId) {
+      markAllRead({ scope: "category", id: categoryId });
+    } else {
+      markAllRead({ scope: "global" });
+    }
   };
 
   return {

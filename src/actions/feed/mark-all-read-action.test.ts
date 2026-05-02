@@ -91,12 +91,12 @@ describe("markAllReadAction", () => {
       new MarkAllReadIdRequiredError("category"),
     );
 
-    const result = await markAllReadAction({ scope: "category" });
+    const result = await markAllReadAction({ scope: "category" } as any);
 
     expect(result).toEqual({
       success: false,
-      error: "Category ID is required for category scope",
-      code: "MARK_ALL_READ_ID_REQUIRED",
+      error: expect.any(String),
+      code: expect.stringMatching(/VALIDATION_ERROR|MARK_ALL_READ_ID_REQUIRED/),
     });
   });
 

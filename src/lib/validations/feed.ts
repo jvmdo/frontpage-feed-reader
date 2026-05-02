@@ -45,10 +45,11 @@ export const markReadSchema = z.object({
 
 export type MarkReadInput = z.infer<typeof markReadSchema>;
 
-export const markAllReadSchema = z.object({
-  scope: z.enum(["global", "category", "feed"]),
-  id: z.coerce.number().optional(),
-});
+export const markAllReadSchema = z.discriminatedUnion("scope", [
+  z.object({ scope: z.literal("global"), id: z.undefined().optional() }),
+  z.object({ scope: z.literal("category"), id: z.coerce.number() }),
+  z.object({ scope: z.literal("feed"), id: z.coerce.number() }),
+]);
 
 export type MarkAllReadInput = z.infer<typeof markAllReadSchema>;
 

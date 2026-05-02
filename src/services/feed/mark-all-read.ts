@@ -8,12 +8,10 @@ import {
   SubscriptionNotFoundError,
 } from "@/lib/errors";
 
-export type MarkAllReadScope = "global" | "category" | "feed";
-
-export interface MarkAllReadOptions {
-  scope: MarkAllReadScope;
-  id?: number; // categoryId or feedId
-}
+export type MarkAllReadOptions =
+  | { scope: "global"; id?: never }
+  | { scope: "category"; id: number }
+  | { scope: "feed"; id: number };
 
 /**
  * Mark all items as read by updating a watermark timestamp.

@@ -128,7 +128,6 @@ describe("FeedToolbar", () => {
 
       expect(markAllReadAction).toHaveBeenCalledWith({
         scope: "global",
-        id: undefined,
       });
     });
 
