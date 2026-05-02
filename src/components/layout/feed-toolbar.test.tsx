@@ -198,7 +198,7 @@ describe("FeedToolbar", () => {
       });
     });
 
-    it("hides the button when there are no unread items", async () => {
+    it("disables the button when there are no unread items", async () => {
       server.use(
         http.get("/api/feeds/unread-counts", () => {
           return HttpResponse.json({
@@ -215,7 +215,7 @@ describe("FeedToolbar", () => {
 
       expect(
         screen.queryByRole("button", { name: /mark all read/i }),
-      ).not.toBeInTheDocument();
+      ).toBeDisabled();
     });
   });
 
@@ -233,22 +233,77 @@ describe("FeedToolbar", () => {
     );
   });
 
-  describe("Assign Action", () => {
-    it("is visible when viewing a category", async () => {
+  describe("Feed Menu (Mobile/Tablet)", () => {
+    it("renders the menu trigger", async () => {
+      render(<FeedToolbar />);
+      expect(
+        await screen.findByRole("button", { name: /feed menu/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("shows all actions in the dropdown by default", async () => {
+      const user = userEvent.setup();
+      render(<FeedToolbar />);
+
+      const menuTrigger = await screen.findByRole("button", {
+        name: /feed menu/i,
+      });
+      await user.click(menuTrigger);
+
+      expect(screen.getByRole("menuitem", { name: /mark all read/i })).toBeInTheDocument();
+      expect(screen.getByText(/layout/i)).toBeInTheDocument();
+      expect(screen.getByText(/order/i)).toBeInTheDocument();
+      
+      // Should not show Refresh or Assign when no filters are active
+      expect(screen.queryByRole("menuitem", { name: /refresh/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("menuitem", { name: /assign feeds/i })).not.toBeInTheDocument();
+    });
+
+    it("shows Refresh in the menu when a feed is active", async () => {
+      const user = userEvent.setup();
+      render(<FeedToolbar />, {
+        searchParams: { feedId: "123" },
+      });
+
+      const menuTrigger = await screen.findByRole("button", {
+        name: /feed menu/i,
+      });
+      await user.click(menuTrigger);
+
+      expect(screen.getByRole("menuitem", { name: /refresh/i })).toBeInTheDocument();
+    });
+
+    it("shows Assign feeds in the menu when a category is active", async () => {
+      const user = userEvent.setup();
       render(<FeedToolbar />, {
         searchParams: { categoryId: "10" },
       });
 
-      const assignBtn = await screen.findByRole("button", { name: /assign/i });
-      expect(assignBtn).toBeInTheDocument();
-      expect(assignBtn).toHaveClass("hidden", "lg:inline-flex");
-    });
+      const menuTrigger = await screen.findByRole("button", {
+        name: /feed menu/i,
+      });
+      await user.click(menuTrigger);
 
-    it("is not visible in global view", async () => {
+      expect(screen.getByRole("menuitem", { name: /assign feeds/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("Sorting", () => {
+    it("updates sorting state when an option is selected", async () => {
+      const user = userEvent.setup();
       render(<FeedToolbar />);
-      expect(
-        screen.queryByRole("button", { name: /assign/i }),
-      ).not.toBeInTheDocument();
+
+      const sortTrigger = await screen.findByRole("button", {
+        name: /newest/i,
+      });
+      await user.click(sortTrigger);
+
+      const oldestOption = await screen.findByRole("menuitemradio", {
+        name: /oldest/i,
+      });
+      await user.click(oldestOption);
+
+      expect(screen.getByRole("button", { name: /oldest/i })).toBeInTheDocument();
     });
   });
 });

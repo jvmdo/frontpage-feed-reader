@@ -18,7 +18,7 @@ interface MarkAllReadActionProps {
   children: React.ReactNode;
 }
 
-export function MarkAllReadAction({ children }: MarkAllReadActionProps) {
+export function MarkAllReadDialog({ children }: MarkAllReadActionProps) {
   const { scopeLabel, handleMarkAllRead } = useMarkAllReadUI();
 
   return (

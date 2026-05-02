@@ -6,15 +6,13 @@ import {
   CheckCheckIcon,
   Grid2X2Icon,
   ListIcon,
-  MoreHorizontalIcon,
-  PlusIcon,
+  ListPlus,
   RotateCwIcon,
   Rows3Icon,
 } from "lucide-react";
-import { useState } from "react";
+import type * as React from "react";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
-import { MarkAllReadAction } from "@/components/layout/components/mark-all-read-action";
-import { Button } from "@/components/ui/button";
+import { MarkAllReadDialog } from "@/components/layout/components/mark-all-read-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,37 +23,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useMarkAllReadUI } from "@/hooks/ui/use-mark-all-read-ui";
 import { useRefreshUI } from "@/hooks/ui/use-refresh-ui";
+import {
+  FeedLayout,
+  FeedOrder,
+  useViewOptions,
+} from "@/hooks/ui/use-view-options";
 import { cn } from "@/lib/utils";
 
-export function ToolbarActionsMenu({
-  feedId,
-  categoryId,
-  layout,
-  setLayout,
-}: {
-  feedId: number | null;
-  categoryId: number | null;
-  layout: string;
-  setLayout: (v: string) => void;
-}) {
-  const [order, setOrder] = useState("newest");
+interface FeedActionsMenuProps {
+  children: React.ReactNode;
+}
+
+/**
+ * Unified menu for feed-related actions, layout toggles, and sorting.
+ * Consumes global state (filter, view options) internally.
+ */
+export function FeedMenu({ children }: FeedActionsMenuProps) {
+  const { feedId, categoryId } = useFeedFilter();
   const { isDisabled: isMarkAllDisabled } = useMarkAllReadUI();
   const { isRefreshing, handleRefresh } = useRefreshUI();
+  const { layout, order, setLayout, setOrder } = useViewOptions();
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="hidden md:inline-flex"
-          aria-label="More controls"
-        >
-          <MoreHorizontalIcon className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         {feedId && (
           <>
@@ -78,7 +72,7 @@ export function ToolbarActionsMenu({
           <>
             <AssignFeedsDialog categoryId={categoryId}>
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <PlusIcon data-icon="inline-start" />
+                <ListPlus data-icon="inline-start" />
                 Assign feeds
               </DropdownMenuItem>
             </AssignFeedsDialog>
@@ -86,7 +80,7 @@ export function ToolbarActionsMenu({
           </>
         )}
 
-        <MarkAllReadAction>
+        <MarkAllReadDialog>
           <DropdownMenuItem
             disabled={isMarkAllDisabled}
             onSelect={(e) => e.preventDefault()}
@@ -94,20 +88,23 @@ export function ToolbarActionsMenu({
             <CheckCheckIcon data-icon="inline-start" />
             Mark all read
           </DropdownMenuItem>
-        </MarkAllReadAction>
+        </MarkAllReadDialog>
         <DropdownMenuSeparator />
 
         <DropdownMenuLabel>Layout</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={layout} onValueChange={setLayout}>
-          <DropdownMenuRadioItem value="list">
+        <DropdownMenuRadioGroup
+          value={layout}
+          onValueChange={(v) => setLayout(v as FeedLayout)}
+        >
+          <DropdownMenuRadioItem value={FeedLayout.List}>
             <ListIcon data-icon="inline-start" />
             List
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="grid">
+          <DropdownMenuRadioItem value={FeedLayout.Grid}>
             <Grid2X2Icon data-icon="inline-start" />
             Grid
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="rows">
+          <DropdownMenuRadioItem value={FeedLayout.Rows}>
             <Rows3Icon data-icon="inline-start" />
             Rows
           </DropdownMenuRadioItem>
@@ -115,12 +112,15 @@ export function ToolbarActionsMenu({
         <DropdownMenuSeparator />
 
         <DropdownMenuLabel>Order</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={order} onValueChange={setOrder}>
-          <DropdownMenuRadioItem value="newest">
+        <DropdownMenuRadioGroup
+          value={order}
+          onValueChange={(v) => setOrder(v as FeedOrder)}
+        >
+          <DropdownMenuRadioItem value={FeedOrder.Newest}>
             <ArrowDownAZIcon data-icon="inline-start" />
             Newest
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="oldest">
+          <DropdownMenuRadioItem value={FeedOrder.Oldest}>
             <ArrowUpAZIcon data-icon="inline-start" />
             Oldest
           </DropdownMenuRadioItem>

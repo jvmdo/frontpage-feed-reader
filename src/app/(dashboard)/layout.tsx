@@ -2,10 +2,10 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { SidebarErrorFallback } from "@/components/layout/components/sidebar-error-fallback";
 import { SidebarFeeds } from "@/components/layout/components/sidebar-feeds";
 import { SidebarFeedsSkeleton } from "@/components/layout/components/sidebar-feeds-skeleton";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { TopNav } from "@/components/layout/top-nav";
 import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -61,7 +61,7 @@ export default async function DashboardLayout({
               {children}
             </SidebarInset>
 
-            <BottomNav />
+            <MobileBottomNav />
           </div>
         </SidebarProvider>
       </div>
