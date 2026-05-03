@@ -45,7 +45,7 @@ export async function getItem(
 
   if (!result) return null;
 
-  const publishedAt = result.item.publishedAt || result.item.createdAt;
+  const itemTimestamp = result.item.createdAt;
   
   // Cascading watermark logic
   const watermarks = [
@@ -59,7 +59,7 @@ export async function getItem(
     : null;
 
   const isRead =
-    !!result.readAt || (!!latestWatermark && publishedAt <= latestWatermark);
+    !!result.readAt || (!!latestWatermark && itemTimestamp <= latestWatermark);
 
   return {
     item: result.item,

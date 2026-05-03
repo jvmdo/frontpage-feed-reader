@@ -63,7 +63,7 @@ export async function getItems(
     .offset(offset);
 
   return results.map((row) => {
-    const publishedAt = row.item.publishedAt || row.item.createdAt;
+    const itemTimestamp = row.item.createdAt;
 
     // Cascading watermark logic
     const watermarks = [
@@ -78,7 +78,7 @@ export async function getItems(
         : null;
 
     const isRead =
-      !!row.readAt || (!!latestWatermark && publishedAt <= latestWatermark);
+      !!row.readAt || (!!latestWatermark && itemTimestamp <= latestWatermark);
 
     return {
       item: row.item,

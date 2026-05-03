@@ -1,7 +1,10 @@
+import { subMinutes } from "date-fns";
+import { eq } from "drizzle-orm";
+import { subscriptions } from "@/db/schema";
 import {
   seedFeed,
-  seedItems,
   seedFeedWithSubscription,
+  seedItems,
   seedUserItemState,
 } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
@@ -58,9 +61,7 @@ describe("getItem", () => {
     const { feed } = await seedFeedWithSubscription(tx, testUser.id);
 
     // Create an unread item
-    const [unreadItem] = await seedItems(tx, feed.id, [
-      { title: "Unread" },
-    ]);
+    const [unreadItem] = await seedItems(tx, feed.id, [{ title: "Unread" }]);
     const unreadResult = await getItem(tx, testUser.id, unreadItem.id);
     expect(unreadResult?.isRead).toBe(false);
 
@@ -74,5 +75,36 @@ describe("getItem", () => {
 
     const readResult = await getItem(tx, testUser.id, readItem.id);
     expect(readResult?.isRead).toBe(true);
+  });
+
+  test("regression: marks late-arriving item as unread even if publishedAt is before watermark", async ({
+    tx,
+    testUser,
+  }) => {
+    const { feed, subscription } = await seedFeedWithSubscription(
+      tx,
+      testUser.id,
+    );
+    const now = new Date();
+    const tenMinutesAgo = subMinutes(now, 10);
+    const fiveMinutesAgo = subMinutes(now, 5);
+
+    // 1. Mark as read 5 minutes ago
+    await tx
+      .update(subscriptions)
+      .set({ markedAllReadAt: fiveMinutesAgo })
+      .where(eq(subscriptions.id, subscription.id));
+
+    // 2. Item arrives NOW but was "published" 10 minutes ago
+    const [item] = await seedItems(tx, feed.id, [
+      {
+        title: "Late Arrival",
+        publishedAt: tenMinutesAgo,
+        createdAt: now,
+      },
+    ]);
+
+    const result = await getItem(tx, testUser.id, item.id);
+    expect(result?.isRead).toBe(false);
   });
 });

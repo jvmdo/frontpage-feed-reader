@@ -26,7 +26,7 @@ export async function getUnreadCounts(
   db: DB,
   userId: string,
 ): Promise<UnreadCounts> {
-  const publishedAt = sql`COALESCE(${feedItems.publishedAt}, ${feedItems.createdAt})`;
+  const itemTimestamp = feedItems.createdAt;
 
   const results = await db
     .select({
@@ -51,15 +51,15 @@ export async function getUnreadCounts(
         isNull(userItemStates.readAt),
         or(
           isNull(userPreferences.markedAllReadAt),
-          gt(publishedAt, userPreferences.markedAllReadAt),
+          gt(itemTimestamp, userPreferences.markedAllReadAt),
         ),
         or(
           isNull(categories.markedAllReadAt),
-          gt(publishedAt, categories.markedAllReadAt),
+          gt(itemTimestamp, categories.markedAllReadAt),
         ),
         or(
           isNull(subscriptions.markedAllReadAt),
-          gt(publishedAt, subscriptions.markedAllReadAt),
+          gt(itemTimestamp, subscriptions.markedAllReadAt),
         ),
       ),
     )

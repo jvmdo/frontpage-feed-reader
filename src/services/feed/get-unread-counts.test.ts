@@ -3,8 +3,8 @@ import { eq } from "drizzle-orm";
 import { categories, subscriptions } from "@/db/schema";
 import {
   seedCategory,
-  seedItems,
   seedFeedWithSubscription,
+  seedItems,
   seedUserItemState,
   seedUserPreferences,
 } from "@/tests/seeding";
@@ -19,7 +19,10 @@ describe("getUnreadCounts", () => {
     expect(result.feeds).toEqual({});
   });
 
-  test("counts unread items from subscribed feeds", async ({ tx, testUser }) => {
+  test("counts unread items from subscribed feeds", async ({
+    tx,
+    testUser,
+  }) => {
     const { feed } = await seedFeedWithSubscription(tx, testUser.id);
     await seedItems(tx, feed.id, [{ title: "Item 1" }, { title: "Item 2" }]);
 
@@ -28,7 +31,10 @@ describe("getUnreadCounts", () => {
     expect(result.feeds[feed.id]).toBe(2);
   });
 
-  test("calculates breakdown for multiple categories and feeds", async ({ tx, testUser }) => {
+  test("calculates breakdown for multiple categories and feeds", async ({
+    tx,
+    testUser,
+  }) => {
     const cat1 = await seedCategory(tx, { userId: testUser.id, name: "Tech" });
     const cat2 = await seedCategory(tx, { userId: testUser.id, name: "News" });
 
@@ -85,7 +91,7 @@ describe("getUnreadCounts", () => {
 
   test("excludes items marked as read explicitly", async ({ tx, testUser }) => {
     const { feed } = await seedFeedWithSubscription(tx, testUser.id);
-    const [item1, item2] = await seedItems(tx, feed.id, [
+    const [item1] = await seedItems(tx, feed.id, [
       { title: "Item 1" },
       { title: "Item 2" },
     ]);
@@ -108,8 +114,8 @@ describe("getUnreadCounts", () => {
     const fiveMinutesAgo = subMinutes(now, 5);
 
     await seedItems(tx, feed.id, [
-      { title: "Old", publishedAt: tenMinutesAgo },
-      { title: "New", publishedAt: now },
+      { title: "Old", createdAt: tenMinutesAgo },
+      { title: "New", createdAt: now },
     ]);
 
     await seedUserPreferences(tx, {
@@ -132,7 +138,7 @@ describe("getUnreadCounts", () => {
     const now = new Date();
     const tenMinutesAgo = subMinutes(now, 10);
 
-    await seedItems(tx, feed.id, [{ title: "Old", publishedAt: tenMinutesAgo }]);
+    await seedItems(tx, feed.id, [{ title: "Old", createdAt: tenMinutesAgo }]);
 
     await tx
       .update(categories)
@@ -144,11 +150,14 @@ describe("getUnreadCounts", () => {
   });
 
   test("respects subscription watermark", async ({ tx, testUser }) => {
-    const { feed, subscription } = await seedFeedWithSubscription(tx, testUser.id);
+    const { feed, subscription } = await seedFeedWithSubscription(
+      tx,
+      testUser.id,
+    );
     const now = new Date();
     const tenMinutesAgo = subMinutes(now, 10);
 
-    await seedItems(tx, feed.id, [{ title: "Old", publishedAt: tenMinutesAgo }]);
+    await seedItems(tx, feed.id, [{ title: "Old", createdAt: tenMinutesAgo }]);
 
     await tx
       .update(subscriptions)
@@ -157,5 +166,39 @@ describe("getUnreadCounts", () => {
 
     const result = await getUnreadCounts(tx, testUser.id);
     expect(result.global).toBe(0);
+  });
+
+  test("regression: late-arriving items are unread even if publishedAt is before watermark", async ({
+    tx,
+    testUser,
+  }) => {
+    const { feed, subscription } = await seedFeedWithSubscription(
+      tx,
+      testUser.id,
+    );
+    const now = new Date();
+    const tenMinutesAgo = subMinutes(now, 10);
+    const fiveMinutesAgo = subMinutes(now, 5);
+
+    // 1. Mark feed as read 5 minutes ago
+    await tx
+      .update(subscriptions)
+      .set({ markedAllReadAt: fiveMinutesAgo })
+      .where(eq(subscriptions.id, subscription.id));
+
+    // 2. A "new" item arrives NOW, but its internal 'publishedAt' is 10 minutes ago
+    // (Simulating a backdated post or ingestion delay)
+    await seedItems(tx, feed.id, [
+      {
+        title: "Late Arrival",
+        publishedAt: tenMinutesAgo,
+        createdAt: now, // Important: arrived AFTER the watermark
+      },
+    ]);
+
+    const result = await getUnreadCounts(tx, testUser.id);
+
+    // After fix: This should be 1 because it arrived (createdAt) after the watermark (5m ago)
+    expect(result.global).toBe(1);
   });
 });

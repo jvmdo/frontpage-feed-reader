@@ -5,8 +5,8 @@ import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import {
   seedCategory,
   seedFeed,
-  seedItems,
   seedFeedWithSubscription,
+  seedItems,
   seedUserItemState,
   seedUserPreferences,
 } from "@/tests/seeding";
@@ -190,12 +190,22 @@ describe("getItems", () => {
       });
 
       // 2. Create two feeds, each in a different category
-      const { feed: feed1 } = await seedFeedWithSubscription(tx, testUser.id, {}, {
-        categoryId: cat1.id,
-      });
-      const { feed: feed2 } = await seedFeedWithSubscription(tx, testUser.id, {}, {
-        categoryId: cat2.id,
-      });
+      const { feed: feed1 } = await seedFeedWithSubscription(
+        tx,
+        testUser.id,
+        {},
+        {
+          categoryId: cat1.id,
+        },
+      );
+      const { feed: feed2 } = await seedFeedWithSubscription(
+        tx,
+        testUser.id,
+        {},
+        {
+          categoryId: cat2.id,
+        },
+      );
 
       // 3. Add items to both
       await seedItems(tx, feed1.id, [{ title: "Cat 1 Item" }]);
@@ -221,9 +231,14 @@ describe("getItems", () => {
         name: "Cat 1",
       });
 
-      const { feed: feed1 } = await seedFeedWithSubscription(tx, testUser.id, {}, {
-        categoryId: cat1.id,
-      });
+      const { feed: feed1 } = await seedFeedWithSubscription(
+        tx,
+        testUser.id,
+        {},
+        {
+          categoryId: cat1.id,
+        },
+      );
       const { feed: feed2 } = await seedFeedWithSubscription(tx, testUser.id);
 
       await seedItems(tx, feed1.id, [{ title: "C1 Item" }]);
@@ -274,8 +289,8 @@ describe("getItems", () => {
       const fiveMinutesAgo = subMinutes(now, 5);
 
       await seedItems(tx, feed.id, [
-        { title: "Old Item", publishedAt: tenMinutesAgo },
-        { title: "New Item", publishedAt: now },
+        { title: "Old Item", createdAt: tenMinutesAgo },
+        { title: "New Item", createdAt: now },
       ]);
 
       await seedUserPreferences(tx, {
@@ -284,8 +299,12 @@ describe("getItems", () => {
       });
 
       const result = await getItems(tx, testUser.id, options);
-      expect(result.find((r) => r.item.title === "Old Item")?.isRead).toBe(true);
-      expect(result.find((r) => r.item.title === "New Item")?.isRead).toBe(false);
+      expect(result.find((r) => r.item.title === "Old Item")?.isRead).toBe(
+        true,
+      );
+      expect(result.find((r) => r.item.title === "New Item")?.isRead).toBe(
+        false,
+      );
     });
 
     test("marks item as read if published before category watermark", async ({
@@ -302,7 +321,9 @@ describe("getItems", () => {
       const now = new Date();
       const tenMinutesAgo = subMinutes(now, 10);
 
-      await seedItems(tx, feed.id, [{ title: "Item", publishedAt: tenMinutesAgo }]);
+      await seedItems(tx, feed.id, [
+        { title: "Item", createdAt: tenMinutesAgo },
+      ]);
 
       await tx
         .update(categories)
@@ -317,11 +338,16 @@ describe("getItems", () => {
       tx,
       testUser,
     }) => {
-      const { feed, subscription } = await seedFeedWithSubscription(tx, testUser.id);
+      const { feed, subscription } = await seedFeedWithSubscription(
+        tx,
+        testUser.id,
+      );
       const now = new Date();
       const tenMinutesAgo = subMinutes(now, 10);
 
-      await seedItems(tx, feed.id, [{ title: "Item", publishedAt: tenMinutesAgo }]);
+      await seedItems(tx, feed.id, [
+        { title: "Item", createdAt: tenMinutesAgo },
+      ]);
 
       await tx
         .update(subscriptions)
@@ -330,6 +356,40 @@ describe("getItems", () => {
 
       const result = await getItems(tx, testUser.id, options);
       expect(result[0].isRead).toBe(true);
+    });
+
+    test("regression: marks late-arriving item as unread even if publishedAt is before watermark", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed, subscription } = await seedFeedWithSubscription(
+        tx,
+        testUser.id,
+      );
+      const now = new Date();
+      const tenMinutesAgo = subMinutes(now, 10);
+      const fiveMinutesAgo = subMinutes(now, 5);
+
+      // 1. Mark as read 5 minutes ago
+      await tx
+        .update(subscriptions)
+        .set({ markedAllReadAt: fiveMinutesAgo })
+        .where(eq(subscriptions.id, subscription.id));
+
+      // 2. Item arrives NOW but was "published" 10 minutes ago
+      await seedItems(tx, feed.id, [
+        {
+          title: "Late Arrival",
+          publishedAt: tenMinutesAgo,
+          createdAt: now,
+        },
+      ]);
+
+      const result = await getItems(tx, testUser.id, options);
+      const item = result.find((r) => r.item.title === "Late Arrival");
+
+      // Should be false because createdAt (now) > watermark (5m ago)
+      expect(item?.isRead).toBe(false);
     });
   });
 });
