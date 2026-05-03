@@ -4,7 +4,6 @@ import { ChevronRight } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { DashboardLink } from "@/components/shared/dashboard-link";
-import { LinkPendingIndicator } from "@/components/shared/link-pending-indicator";
 import {
   Collapsible,
   CollapsibleContent,
@@ -219,7 +218,6 @@ function FeedLink({
         )}
         {suffix}
       </div>
-      <LinkPendingIndicator />
     </DashboardLink>
   );
 }

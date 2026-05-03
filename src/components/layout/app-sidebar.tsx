@@ -18,7 +18,6 @@ import {
   FeedStatusFallback,
 } from "@/components/layout/components/feed-status";
 import { DashboardLink } from "@/components/shared/dashboard-link";
-import { LinkPendingIndicator } from "@/components/shared/link-pending-indicator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
@@ -76,7 +75,6 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                     <DashboardLink href="/dashboard">
                       <InboxIcon className="size-4" />
                       <span>All Items</span>
-                      <LinkPendingIndicator />
                     </DashboardLink>
                   </SidebarMenuButton>
                   <Suspense fallback={null}>

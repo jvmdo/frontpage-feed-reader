@@ -1,10 +1,11 @@
 "use client";
 
-import Link, { type LinkProps } from "next/link";
+import Link, { type LinkProps, useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { saveItemsListScroll } from "@/lib/scroll-store";
+import { cn } from "@/lib/utils";
 
 interface DashboardLinkProps extends LinkProps {
   feedId?: number | null;
@@ -22,6 +23,7 @@ export function DashboardLink({
   feedId = null,
   categoryId = null,
   children,
+  className,
   ...props
 }: DashboardLinkProps) {
   const pathname = usePathname();
@@ -52,8 +54,26 @@ export function DashboardLink({
   };
 
   return (
-    <Link {...props} onClick={handleClick}>
+    <Link
+      {...props}
+      onClick={handleClick}
+      className={cn("relative", className)}
+    >
       {children}
+      <LinkPendingIndicator />
     </Link>
+  );
+}
+
+function LinkPendingIndicator() {
+  const { pending } = useLinkStatus();
+
+  if (!pending) return null;
+
+  return (
+    <span
+      aria-hidden
+      className="absolute right-2 size-1.5 animate-pulse rounded-full bg-accent"
+    />
   );
 }
