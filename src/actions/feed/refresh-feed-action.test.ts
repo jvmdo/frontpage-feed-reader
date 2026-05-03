@@ -3,14 +3,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeedNotFoundError } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
-import { getSubscription } from "@/services/subscription/get-subscription";
-import { getSubscriptionByFeedId } from "@/services/subscription/get-subscription-by-feed-id";
-import { ingestItems } from "@/services/ingestion/feed-ingestion";
+import { refreshFeeds } from "@/services/feed/refresh-feeds";
 import { refreshFeedAction } from "./refresh-feed-action";
 
-vi.mock("@/services/subscription/get-subscription");
-vi.mock("@/services/subscription/get-subscription-by-feed-id");
-vi.mock("@/services/ingestion/feed-ingestion");
+vi.mock("@/services/feed/refresh-feeds");
 vi.mock("@/lib/session");
 
 describe("refreshFeedAction", () => {
@@ -19,7 +15,7 @@ describe("refreshFeedAction", () => {
   });
 
   it("returns validation error if input is invalid", async () => {
-    const result = await refreshFeedAction({} as any);
+    const result = await refreshFeedAction({ scope: "invalid" as any });
 
     expect(result).toEqual({
       success: false,
@@ -31,64 +27,34 @@ describe("refreshFeedAction", () => {
   it("returns unauthorized error if session is missing", async () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce(null);
 
-    const result = await refreshFeedAction({ subscriptionId: 123 });
+    const result = await refreshFeedAction({ scope: "global" });
 
     expect(result).toEqual({
       success: false,
-      error: "You must be signed in to refresh a feed.",
+      error: "You must be signed in to refresh feeds.",
       code: "UNAUTHORIZED",
     });
   });
 
-  it("returns success when refreshing by subscriptionId", async () => {
+  it("returns success when refreshFeeds is successful", async () => {
     const mockSession = { user: { id: "user-123" } };
-    const mockRow = {
-      subscription: { id: 123 },
-      feed: { id: 456, url: "https://example.com/feed" },
-    };
-    const mockUpdatedRow = {
-      ...mockRow,
-      feed: { ...mockRow.feed, healthStatus: "healthy" },
-    };
-
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(getSubscription)
-      .mockResolvedValueOnce(mockRow as any)
-      .mockResolvedValueOnce(mockUpdatedRow as any);
-    vi.mocked(ingestItems).mockResolvedValueOnce({ success: true } as any);
+    vi.mocked(refreshFeeds).mockResolvedValueOnce(undefined as any);
 
-    const result = await refreshFeedAction({ subscriptionId: 123 });
+    const result = await refreshFeedAction({ scope: "global" });
 
-    expect(result.success).toBe(true);
-    expect(getSubscription).toHaveBeenCalledWith(expect.anything(), "user-123", 123);
-    expect(ingestItems).toHaveBeenCalledWith(expect.anything(), 456);
+    expect(result).toEqual({ success: true, data: undefined });
+    expect(refreshFeeds).toHaveBeenCalledWith(expect.anything(), "user-123", {
+      scope: "global",
+    });
   });
 
-  it("returns success when refreshing by feedId", async () => {
-    const mockSession = { user: { id: "user-123" } };
-    const mockRow = {
-      subscription: { id: 123 },
-      feed: { id: 456, url: "https://example.com/feed" },
-    };
-
-    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(getSubscriptionByFeedId).mockResolvedValueOnce(mockRow as any);
-    vi.mocked(getSubscription).mockResolvedValueOnce(mockRow as any);
-    vi.mocked(ingestItems).mockResolvedValueOnce({ success: true } as any);
-
-    const result = await refreshFeedAction({ feedId: 456 });
-
-    expect(result.success).toBe(true);
-    expect(getSubscriptionByFeedId).toHaveBeenCalledWith(expect.anything(), "user-123", 456);
-    expect(ingestItems).toHaveBeenCalledWith(expect.anything(), 456);
-  });
-
-  it("returns error if subscription is not found", async () => {
+  it("returns error if refreshFeeds returns null", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(getSubscription).mockResolvedValueOnce(undefined as any);
+    vi.mocked(refreshFeeds).mockResolvedValueOnce(null);
 
-    const result = await refreshFeedAction({ subscriptionId: 999 });
+    const result = await refreshFeedAction({ scope: "feed", id: 123 });
 
     expect(result).toEqual({
       success: false,
@@ -97,33 +63,31 @@ describe("refreshFeedAction", () => {
     });
   });
 
-  it("handles ingest errors and returns fallback data", async () => {
+  it("maps typed errors correctly", async () => {
     const mockSession = { user: { id: "user-123" } };
-    const mockRow = {
-      subscription: { id: 123 },
-      feed: { id: 456, url: "https://example.com/feed" },
-    };
-    const mockErrorRow = {
-      ...mockRow,
-      feed: { ...mockRow.feed, healthStatus: "error" },
-    };
-
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(getSubscription)
-      .mockResolvedValueOnce(mockRow as any) // Initial lookup
-      .mockResolvedValueOnce(mockErrorRow as any); // Fallback lookup
-    vi.mocked(ingestItems).mockRejectedValueOnce(new FeedNotFoundError());
+    vi.mocked(refreshFeeds).mockRejectedValueOnce(new FeedNotFoundError());
 
-    const result = await refreshFeedAction({ subscriptionId: 123 });
+    const result = await refreshFeedAction({ scope: "feed", id: 123 });
 
     expect(result).toEqual({
       success: false,
       error: "We couldn't reach this URL. Please double-check for typos.",
       code: "FEED_NOT_FOUND",
-      data: {
-        subscription: mockErrorRow.subscription,
-        feed: mockErrorRow.feed,
-      },
+    });
+  });
+
+  it("handles unexpected errors", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(refreshFeeds).mockRejectedValueOnce(new Error("Boom"));
+
+    const result = await refreshFeedAction({ scope: "global" });
+
+    expect(result).toEqual({
+      success: false,
+      error: "Boom",
+      code: "INTERNAL_ERROR",
     });
   });
 });

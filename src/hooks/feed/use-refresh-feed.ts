@@ -14,35 +14,37 @@ export function useRefreshFeed() {
     mutationFn: async (input: RefreshFeedInput) => {
       const response = await refreshFeedAction(input);
 
-      if (!response.success && !response.data) {
+      if (!response.success) {
         throw new Error(response.error);
       }
 
       return response.data;
     },
     onSuccess: (updatedData) => {
-      if (!updatedData?.subscription || !updatedData?.feed) return;
+      if (updatedData?.subscription && updatedData?.feed) {
+        const data = updatedData as FeedWithSubscription;
 
-      const data = updatedData as FeedWithSubscription;
+        // Manually update the 'subscriptions' cache with the refreshed feed and subscription data.
+        queryClient.setQueryData<FeedWithSubscription[]>(
+          ["subscriptions"],
+          (old) => {
+            if (!old) return undefined;
 
-      // Manually update the 'subscriptions' cache with the refreshed feed and subscription data.
-      queryClient.setQueryData<FeedWithSubscription[]>(
-        ["subscriptions"],
-        (old) => {
-          if (!old) return undefined;
-
-          return old.map((item): FeedWithSubscription => {
-            if (item.subscription.id === data.subscription.id) {
-              return data;
-            }
-            return item;
-          });
-        },
-      );
+            return old.map((item): FeedWithSubscription => {
+              if (item.subscription.id === data.subscription.id) {
+                return data;
+              }
+              return item;
+            });
+          },
+        );
+      }
 
       // Invalidate to ensure consistent state across other potential queries.
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["feeds"] });
+      queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
     },
   });
 }

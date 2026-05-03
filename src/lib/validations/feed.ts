@@ -27,15 +27,11 @@ export const removeFeedSchema = z.object({
 
 export type RemoveFeedInput = z.infer<typeof removeFeedSchema>;
 
-export const refreshFeedSchema = z
-  .object({
-    subscriptionId: z.number().optional(),
-    feedId: z.number().optional(),
-  })
-  .refine((data) => data.subscriptionId !== undefined || data.feedId !== undefined, {
-    message: "Either subscriptionId or feedId must be provided",
-    path: ["subscriptionId"],
-  });
+export const refreshFeedSchema = z.discriminatedUnion("scope", [
+  z.object({ scope: z.literal("global"), id: z.undefined().optional() }),
+  z.object({ scope: z.literal("category"), id: z.coerce.number() }),
+  z.object({ scope: z.literal("feed"), id: z.coerce.number() }),
+]);
 
 export type RefreshFeedInput = z.infer<typeof refreshFeedSchema>;
 

@@ -42,7 +42,7 @@ interface FeedActionsMenuProps {
  * Consumes global state (filter, view options) internally.
  */
 export function FeedMenu({ children }: FeedActionsMenuProps) {
-  const { feedId, categoryId } = useFeedFilter();
+  const { categoryId } = useFeedFilter();
   const { isDisabled: isMarkAllDisabled } = useMarkAllReadUI();
   const { isRefreshing, handleRefresh } = useRefreshUI();
   const { layout, order, setLayout, setOrder } = useViewOptions();
@@ -51,22 +51,18 @@ export function FeedMenu({ children }: FeedActionsMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        {feedId && (
-          <>
-            <DropdownMenuItem
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              onSelect={(e) => e.preventDefault()}
-            >
-              <RotateCwIcon
-                className={cn("size-4", isRefreshing && "animate-spin")}
-                data-icon="inline-start"
-              />
-              Refresh
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
+        <DropdownMenuItem
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          onSelect={(e) => e.preventDefault()}
+        >
+          <RotateCwIcon
+            className={cn("size-4", isRefreshing && "animate-spin")}
+            data-icon="inline-start"
+          />
+          Refresh
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
 
         {categoryId && (
           <>

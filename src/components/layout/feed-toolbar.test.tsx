@@ -53,11 +53,58 @@ describe("FeedToolbar", () => {
   });
 
   describe("Refresh Feed", () => {
-    it("shows success toast when refresh succeeds", async () => {
+    it("shows success toast when global refresh succeeds", async () => {
       const user = userEvent.setup();
       vi.mocked(refreshFeedAction).mockResolvedValue({
         success: true,
-        data: { subscription: {} as any, feed: {} as any },
+        data: undefined,
+      });
+
+      render(<FeedToolbar />);
+
+      const refreshButton = await screen.findByRole("button", {
+        name: /refresh/i,
+      });
+      await user.click(refreshButton);
+
+      expect(refreshFeedAction).toHaveBeenCalledWith({ scope: "global" });
+
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith("All feeds refreshed");
+      });
+    });
+
+    it("shows success toast when category refresh succeeds", async () => {
+      const user = userEvent.setup();
+      vi.mocked(refreshFeedAction).mockResolvedValue({
+        success: true,
+        data: undefined,
+      });
+
+      render(<FeedToolbar />, {
+        searchParams: { categoryId: "10" },
+      });
+
+      const refreshButton = await screen.findByRole("button", {
+        name: /refresh/i,
+      });
+      await user.click(refreshButton);
+
+      expect(refreshFeedAction).toHaveBeenCalledWith({
+        scope: "category",
+        id: 10,
+      });
+
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith("Category refreshed");
+      });
+    });
+
+    it("shows success toast when feed refresh succeeds", async () => {
+      const user = userEvent.setup();
+      vi.mocked(refreshFeedAction).mockResolvedValue({
+        success: true,
+        data: undefined,
       });
 
       render(<FeedToolbar />, {
@@ -69,44 +116,12 @@ describe("FeedToolbar", () => {
       });
       await user.click(refreshButton);
 
-      expect(refreshFeedAction).toHaveBeenCalledWith({ feedId: 123 });
+      expect(refreshFeedAction).toHaveBeenCalledWith({ scope: "feed", id: 123 });
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith("Feed refreshed");
       });
     });
-
-    it("shows error toast when refresh fails", async () => {
-      const user = userEvent.setup();
-      vi.mocked(refreshFeedAction).mockResolvedValue({
-        success: false,
-        error: "API Error",
-        code: "INTERNAL_ERROR",
-      });
-
-      render(<FeedToolbar />, {
-        searchParams: { feedId: "123" },
-      });
-
-      const refreshButton = await screen.findByRole("button", {
-        name: /refresh/i,
-      });
-      await user.click(refreshButton);
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("API Error");
-      });
-    });
-  });
-
-  it("hides refresh button when no feed is selected", async () => {
-    render(<FeedToolbar />);
-
-    await screen.findByText(/all items/i);
-
-    const refreshButton = screen.queryByRole("button", { name: /refresh/i });
-
-    expect(refreshButton).not.toBeInTheDocument();
   });
 
   describe("Mark All Read", () => {
@@ -249,12 +264,12 @@ describe("FeedToolbar", () => {
       });
       await user.click(menuTrigger);
 
+      expect(screen.getByRole("menuitem", { name: /refresh/i })).toBeInTheDocument();
       expect(screen.getByRole("menuitem", { name: /mark all read/i })).toBeInTheDocument();
       expect(screen.getByText(/layout/i)).toBeInTheDocument();
       expect(screen.getByText(/order/i)).toBeInTheDocument();
       
-      // Should not show Refresh or Assign when no filters are active
-      expect(screen.queryByRole("menuitem", { name: /refresh/i })).not.toBeInTheDocument();
+      // Should not show Assign when no filters are active
       expect(screen.queryByRole("menuitem", { name: /assign feeds/i })).not.toBeInTheDocument();
     });
 

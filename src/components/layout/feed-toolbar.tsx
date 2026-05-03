@@ -42,7 +42,7 @@ export function FeedToolbar() {
             <FeedLayoutToggles />
             <FeedSortingToggles />
             {categoryId && <AssignButton categoryId={categoryId} />}
-            {feedId && <RefreshButton />}
+            <RefreshButton />
             <MarkAllReadButton />
           </div>
         </div>
