@@ -10,16 +10,22 @@ import { fetchFeedXml } from "@/services/ingestion/fetch-feed-xml";
  * @param userId - The ID of the user whose subscriptions to create.
  */
 export async function createSubscription(db: DB, userId: string, url: string) {
+  // 1. Check if feed exists (outside transaction)
+  let feed = await db.query.feeds.findFirst({
+    where: eq(feeds.url, url),
+  });
+
+  // 2. If it doesn't exist, fetch and parse (outside transaction)
+  let metadata = null;
+  if (!feed) {
+    const xml = await fetchFeedXml(url);
+    const parsed = await parseFeedXml(xml, url);
+    metadata = parsed.metadata;
+  }
+
   return await db.transaction(async (tx) => {
-    // 1. Check if feed exists, or fetch and create it
-    let feed = await tx.query.feeds.findFirst({
-      where: eq(feeds.url, url),
-    });
-
-    if (!feed) {
-      const xml = await fetchFeedXml(url);
-      const { metadata } = await parseFeedXml(xml, url);
-
+    // 3. Resolve feed inside transaction (handles race conditions)
+    if (!feed && metadata) {
       const [newFeed] = await tx
         .insert(feeds)
         .values({
@@ -31,18 +37,28 @@ export async function createSubscription(db: DB, userId: string, url: string) {
           lastFetchedAt: new Date(),
           lastSuccessAt: new Date(),
         })
-        .onConflictDoNothing() // Don't throw on race conditions
+        .onConflictDoNothing()
         .returning();
 
-      // Find the feed that couldn't be returned due to a conflict
-      const existingFeed = await tx.query.feeds.findFirst({
-        where: eq(feeds.url, url),
-      });
-
-      feed = newFeed ?? existingFeed;
+      if (!newFeed) {
+        // Find the feed that was created by a concurrent request
+        const existingFeed = await tx.query.feeds.findFirst({
+          where: eq(feeds.url, url),
+        });
+        if (!existingFeed) {
+          throw new Error("Failed to resolve feed after conflict");
+        }
+        feed = existingFeed;
+      } else {
+        feed = newFeed;
+      }
     }
 
-    // 2. Check if subscription already exists
+    if (!feed) {
+      throw new Error("Feed could not be resolved");
+    }
+
+    // 4. Check if subscription already exists
     const existingSubscription = await tx.query.subscriptions.findFirst({
       where: and(
         eq(subscriptions.userId, userId),
@@ -54,7 +70,7 @@ export async function createSubscription(db: DB, userId: string, url: string) {
       return { subscription: existingSubscription, feed };
     }
 
-    // 3. Create subscription
+    // 5. Create subscription
     const [subscription] = await tx
       .insert(subscriptions)
       .values({
@@ -63,6 +79,6 @@ export async function createSubscription(db: DB, userId: string, url: string) {
       })
       .returning();
 
-    return { subscription, feed: feed };
+    return { subscription, feed };
   });
 }

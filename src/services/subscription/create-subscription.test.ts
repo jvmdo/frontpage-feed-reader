@@ -19,18 +19,15 @@ describe("createSubscription", () => {
     const url = "https://example.com/feed.xml";
 
     // Act
-    const { subscription } = await createSubscription(tx, userId, url);
-    const feed = await tx.query.feeds.findFirst({
-      where: eq(feeds.url, url),
-    });
+    const { subscription, feed } = await createSubscription(tx, userId, url);
 
     // Assert
     expect(subscription).toBeDefined();
     expect(subscription.userId).toBe(userId);
 
     expect(feed).toBeDefined();
-    expect(feed?.title).toBe("Example Feed");
-    expect(subscription.feedId).toBe(feed?.id);
+    expect(feed.title).toBe("Example Feed");
+    expect(subscription.feedId).toBe(feed.id);
   });
 
   test("reuses existing feed and creates subscription", async ({
@@ -43,10 +40,11 @@ describe("createSubscription", () => {
       url,
     });
 
-    const { subscription } = await createSubscription(tx, userId, url);
+    const { subscription, feed } = await createSubscription(tx, userId, url);
     const allFeeds = await tx.select().from(feeds);
 
     expect(subscription.feedId).toBe(existingFeed.id);
+    expect(feed.id).toBe(existingFeed.id);
     expect(allFeeds.length).toBe(1); // Should not have inserted a new feed
   });
 
