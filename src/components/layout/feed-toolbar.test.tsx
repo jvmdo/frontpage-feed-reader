@@ -116,7 +116,10 @@ describe("FeedToolbar", () => {
       });
       await user.click(refreshButton);
 
-      expect(refreshFeedAction).toHaveBeenCalledWith({ scope: "feed", id: 123 });
+      expect(refreshFeedAction).toHaveBeenCalledWith({
+        scope: "feed",
+        id: 123,
+      });
 
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith("Feed refreshed");
@@ -264,13 +267,19 @@ describe("FeedToolbar", () => {
       });
       await user.click(menuTrigger);
 
-      expect(screen.getByRole("menuitem", { name: /refresh/i })).toBeInTheDocument();
-      expect(screen.getByRole("menuitem", { name: /mark all read/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("menuitem", { name: /refresh/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("menuitem", { name: /mark all read/i }),
+      ).toBeInTheDocument();
       expect(screen.getByText(/layout/i)).toBeInTheDocument();
       expect(screen.getByText(/order/i)).toBeInTheDocument();
-      
+
       // Should not show Assign when no filters are active
-      expect(screen.queryByRole("menuitem", { name: /assign feeds/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("menuitem", { name: /assign feeds/i }),
+      ).not.toBeInTheDocument();
     });
 
     it("shows Refresh in the menu when a feed is active", async () => {
@@ -284,7 +293,9 @@ describe("FeedToolbar", () => {
       });
       await user.click(menuTrigger);
 
-      expect(screen.getByRole("menuitem", { name: /refresh/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("menuitem", { name: /refresh/i }),
+      ).toBeInTheDocument();
     });
 
     it("shows Assign feeds in the menu when a category is active", async () => {
@@ -298,7 +309,9 @@ describe("FeedToolbar", () => {
       });
       await user.click(menuTrigger);
 
-      expect(screen.getByRole("menuitem", { name: /assign feeds/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("menuitem", { name: /assign feeds/i }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -317,7 +330,9 @@ describe("FeedToolbar", () => {
       });
       await user.click(oldestOption);
 
-      expect(screen.getByRole("button", { name: /oldest/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /oldest/i }),
+      ).toBeInTheDocument();
     });
   });
 });

@@ -87,9 +87,9 @@ function RemoveFeedContent({
           Are you sure you want to remove{" "}
           <span className="font-medium text-foreground">
             {subscription.customTitle ?? feed.title ?? "this feed"}
-          </span>?
-          This action cannot be undone and you will stop receiving updates from{" "}
-          <span className="break-all italic">{feed.url}</span>.
+          </span>
+          ? This action cannot be undone and you will stop receiving updates
+          from <span className="break-all italic">{feed.url}</span>.
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>

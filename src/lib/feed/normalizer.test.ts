@@ -25,9 +25,9 @@ describe("decodeEntities", () => {
 
   it("should decode complex and nested HTML-like strings", () => {
     expect(decodeEntities("&lt;b&gt;bold&lt;/b&gt;")).toBe("<b>bold</b>");
-    expect(decodeEntities("Some &lt;script&gt;alert(1)&lt;/script&gt; code")).toBe(
-      "Some <script>alert(1)</script> code",
-    );
+    expect(
+      decodeEntities("Some &lt;script&gt;alert(1)&lt;/script&gt; code"),
+    ).toBe("Some <script>alert(1)</script> code");
   });
 
   it("should not recurse (as decided)", () => {
@@ -103,7 +103,9 @@ describe("normalizeDate", () => {
 
 describe("normalizeUrl", () => {
   it("should return absolute URL as is (but trimmed)", () => {
-    expect(normalizeUrl("  https://example.com  ")).toBe("https://example.com/");
+    expect(normalizeUrl("  https://example.com  ")).toBe(
+      "https://example.com/",
+    );
   });
 
   it("should resolve relative URLs with a base", () => {

@@ -42,7 +42,9 @@ describe("GET /api/feeds/unread-counts", () => {
   it("returns 500 if service fails", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(getUnreadCounts).mockRejectedValueOnce(new Error("Service error"));
+    vi.mocked(getUnreadCounts).mockRejectedValueOnce(
+      new Error("Service error"),
+    );
 
     const response = await GET();
     const body = await response.json();

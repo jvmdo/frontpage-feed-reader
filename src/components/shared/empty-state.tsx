@@ -34,14 +34,8 @@ export function EmptyState({
             <Icon className="text-muted-foreground" />
           </EmptyMedia>
         )}
-        <EmptyTitle id="empty-state-title">
-          {title}
-        </EmptyTitle>
-        {description && (
-          <EmptyDescription>
-            {description}
-          </EmptyDescription>
-        )}
+        <EmptyTitle id="empty-state-title">{title}</EmptyTitle>
+        {description && <EmptyDescription>{description}</EmptyDescription>}
       </EmptyHeader>
       {action && <EmptyContent>{action}</EmptyContent>}
     </Empty>

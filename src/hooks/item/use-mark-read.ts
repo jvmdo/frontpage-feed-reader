@@ -8,7 +8,7 @@ import {
 import { markReadAction } from "@/actions/item/mark-read-action";
 import type { MarkReadInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
-import type { ItemWithSource, FeedWithSubscription } from "@/types";
+import type { FeedWithSubscription, ItemWithSource } from "@/types";
 
 type CacheData = InfiniteData<ItemWithSource[]> | ItemWithSource;
 
@@ -109,7 +109,10 @@ export function useMarkRead() {
           ...previousCounts,
           categories: { ...(previousCounts.categories || {}) },
           feeds: { ...(previousCounts.feeds || {}) },
-          global: typeof previousCounts.global === "number" ? previousCounts.global : 0,
+          global:
+            typeof previousCounts.global === "number"
+              ? previousCounts.global
+              : 0,
         };
 
         // Decrement global

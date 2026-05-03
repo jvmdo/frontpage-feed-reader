@@ -1,7 +1,7 @@
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import type { ItemWithSource } from "@/types";
-import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 
 export function useItems() {
   const { feedId, categoryId } = useFeedFilter();

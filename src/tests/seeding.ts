@@ -46,10 +46,7 @@ export async function seedFeed(tx: DB, overrides: Partial<NewFeed> = {}) {
 /**
  * Seeds a subscription into the database.
  */
-export async function seedSubscription(
-  tx: DB,
-  overrides: NewSubscription,
-) {
+export async function seedSubscription(tx: DB, overrides: NewSubscription) {
   const [inserted] = await tx
     .insert(schema.subscriptions)
     .values(overrides)
@@ -107,10 +104,7 @@ export async function seedUserPreferences(
 /**
  * Seeds a user item state into the database.
  */
-export async function seedUserItemState(
-  tx: DB,
-  overrides: NewUserItemState,
-) {
+export async function seedUserItemState(tx: DB, overrides: NewUserItemState) {
   const [inserted] = await tx
     .insert(schema.userItemStates)
     .values(overrides)

@@ -1,6 +1,9 @@
 import { subDays, subMinutes } from "date-fns";
 import { HttpResponse, http } from "msw";
-import { createMockCategory, createMockFeedWithSubscription } from "@/tests/factories";
+import {
+  createMockCategory,
+  createMockFeedWithSubscription,
+} from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
 import type { FeedWithSubscription } from "@/types";

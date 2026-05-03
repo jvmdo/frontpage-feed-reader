@@ -190,8 +190,6 @@ describe("ingestItems integration", () => {
   });
 
   test("handles non existing feed in db", async ({ tx }) => {
-    await expect(ingestItems(tx, 123)).rejects.toThrow(
-      FeedRecordNotFoundError,
-    );
+    await expect(ingestItems(tx, 123)).rejects.toThrow(FeedRecordNotFoundError);
   });
 });

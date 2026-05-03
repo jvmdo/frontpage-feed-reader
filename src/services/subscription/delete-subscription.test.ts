@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { subscriptions } from "@/db/schema";
 import { SubscriptionNotFoundError } from "@/lib/errors";
-import { test } from "@/tests/test-extend";
 import { seedFeedWithSubscription, seedUser } from "@/tests/seeding";
+import { test } from "@/tests/test-extend";
 import { deleteSubscription } from "./delete-subscription";
 
 describe("deleteSubscription", () => {

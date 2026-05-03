@@ -8,8 +8,8 @@ import {
   FeedUnavailableError,
 } from "@/lib/errors";
 import { server } from "@/tests/mocks/server";
-import { test } from "@/tests/test-extend";
 import { seedFeed } from "@/tests/seeding";
+import { test } from "@/tests/test-extend";
 import { createSubscription } from "./create-subscription";
 
 describe("createSubscription", () => {

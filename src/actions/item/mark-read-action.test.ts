@@ -54,11 +54,7 @@ describe("markReadAction", () => {
       success: true,
       data: mockState,
     });
-    expect(markRead).toHaveBeenCalledWith(
-      expect.anything(),
-      "user-123",
-      123,
-    );
+    expect(markRead).toHaveBeenCalledWith(expect.anything(), "user-123", 123);
   });
 
   it("returns internal error if service fails", async () => {

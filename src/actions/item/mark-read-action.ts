@@ -2,10 +2,7 @@
 
 import { db } from "@/db";
 import { getCurrentSession } from "@/lib/session";
-import {
-  type MarkReadInput,
-  markReadSchema,
-} from "@/lib/validations/feed";
+import { type MarkReadInput, markReadSchema } from "@/lib/validations/feed";
 import { markRead } from "@/services/item/mark-read";
 
 /**

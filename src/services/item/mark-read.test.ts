@@ -1,4 +1,4 @@
-import { seedItems, seedFeedWithSubscription } from "@/tests/seeding";
+import { seedFeedWithSubscription, seedItems } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
 import { markRead } from "./mark-read";
 
@@ -28,6 +28,8 @@ describe("markRead", () => {
 
     expect(secondResult.userId).toBe(testUser.id);
     expect(secondResult.itemId).toBe(item.id);
-    expect(secondResult.readAt?.getTime()).toBeGreaterThan(firstReadAt?.getTime() ?? 0);
+    expect(secondResult.readAt?.getTime()).toBeGreaterThan(
+      firstReadAt?.getTime() ?? 0,
+    );
   });
 });

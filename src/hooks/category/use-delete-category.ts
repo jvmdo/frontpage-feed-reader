@@ -29,11 +29,11 @@ export function useDeleteCategory() {
 
       // Invalidate to ensure consistency (sidebar, counts, etc.)
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      
-      // Invalidate subscriptions because feeds previously in this category 
+
+      // Invalidate subscriptions because feeds previously in this category
       // are now uncategorized (ON DELETE SET NULL).
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      
+
       // Invalidate all feed items queries as the category grouping has changed
       queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
     },

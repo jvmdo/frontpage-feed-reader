@@ -2,9 +2,9 @@ import { isExcerpt } from "@/lib/feed/utils";
 import type {
   Category,
   Feed,
+  FeedWithSubscription,
   Item,
   ItemWithSource,
-  FeedWithSubscription,
   Subscription,
 } from "@/types";
 
@@ -29,7 +29,9 @@ export function createMockFeed(overrides: Partial<Feed> = {}): Feed {
   };
 }
 
-export function createMockCategory(overrides: Partial<Category> = {}): Category {
+export function createMockCategory(
+  overrides: Partial<Category> = {},
+): Category {
   const id = overrides.id ?? Math.floor(Math.random() * 1000);
   return {
     id,
@@ -59,7 +61,10 @@ export function createMockSubscription(
 }
 
 export function createMockFeedWithSubscription(
-  overrides: Partial<{ feed: Partial<Feed>; subscription: Partial<Subscription> }> = {},
+  overrides: Partial<{
+    feed: Partial<Feed>;
+    subscription: Partial<Subscription>;
+  }> = {},
 ): FeedWithSubscription {
   const feed = createMockFeed(overrides.feed);
   const subscription = createMockSubscription({

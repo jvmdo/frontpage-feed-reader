@@ -8,7 +8,10 @@ import { updateSubscription } from "./update-subscription";
 describe("updateSubscription", () => {
   test("updates the custom title successfully", async ({ tx, testUser }) => {
     // 1. Create a feed and subscription
-    const { subscription: sub } = await seedFeedWithSubscription(tx, testUser.id);
+    const { subscription: sub } = await seedFeedWithSubscription(
+      tx,
+      testUser.id,
+    );
 
     // 2. Update
     const updated = await updateSubscription(tx, testUser.id, sub.id, {
@@ -33,7 +36,10 @@ describe("updateSubscription", () => {
     const otherUser = await seedUser(tx);
 
     // 2. Create a feed and subscription for the other user
-    const { subscription: sub } = await seedFeedWithSubscription(tx, otherUser.id);
+    const { subscription: sub } = await seedFeedWithSubscription(
+      tx,
+      otherUser.id,
+    );
 
     // 3. Attempt to update as the test user
     await expect(

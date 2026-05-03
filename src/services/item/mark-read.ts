@@ -4,7 +4,7 @@ import { userItemStates } from "@/db/schema";
 /**
  * Marks a feed item as read for a specific user.
  * Uses an upsert (on conflict do update) to handle the sparse state pattern.
- * 
+ *
  * @param db - The database instance.
  * @param userId - The ID of the user performing the action.
  * @param itemId - The ID of the feed item to mark as read.

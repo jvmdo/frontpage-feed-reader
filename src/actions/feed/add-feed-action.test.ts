@@ -8,8 +8,8 @@ import {
   FeedUnavailableError,
 } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
-import { createSubscription } from "@/services/subscription/create-subscription";
 import { ingestItems } from "@/services/ingestion/feed-ingestion";
+import { createSubscription } from "@/services/subscription/create-subscription";
 import { addFeedAction } from "./add-feed-action";
 
 vi.mock("@/services/subscription/create-subscription");
@@ -77,7 +77,9 @@ describe("addFeedAction", () => {
   it("returns friendly error when FeedNotFoundError is thrown", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(createSubscription).mockRejectedValueOnce(new FeedNotFoundError());
+    vi.mocked(createSubscription).mockRejectedValueOnce(
+      new FeedNotFoundError(),
+    );
 
     const result = await addFeedAction({ url: "https://example.com/404.xml" });
 
@@ -91,7 +93,9 @@ describe("addFeedAction", () => {
   it("returns friendly error when FeedUnavailableError is thrown", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(createSubscription).mockRejectedValueOnce(new FeedUnavailableError());
+    vi.mocked(createSubscription).mockRejectedValueOnce(
+      new FeedUnavailableError(),
+    );
 
     const result = await addFeedAction({ url: "https://example.com/500.xml" });
 
@@ -142,7 +146,9 @@ describe("addFeedAction", () => {
   it("returns internal error on unexpected errors", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(createSubscription).mockRejectedValueOnce(new Error("Unexpected"));
+    vi.mocked(createSubscription).mockRejectedValueOnce(
+      new Error("Unexpected"),
+    );
 
     const result = await addFeedAction({ url: "https://example.com/feed.xml" });
 

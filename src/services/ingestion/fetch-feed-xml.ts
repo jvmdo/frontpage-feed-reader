@@ -20,7 +20,8 @@ export async function fetchFeedXml(url: string): Promise<string> {
         signal: controller.signal,
         headers: {
           "User-Agent": "Frontpage Feed Reader/1.0",
-          Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+          Accept:
+            "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
         },
       });
     } catch (error) {

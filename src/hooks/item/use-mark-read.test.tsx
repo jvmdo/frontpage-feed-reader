@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { markReadAction } from "@/actions/item/mark-read-action";
-import { renderHook, waitFor } from "@/tests/rtl-utils";
 import { useMarkRead } from "@/hooks/item/use-mark-read";
+import { renderHook, waitFor } from "@/tests/rtl-utils";
 
 vi.mock("@/actions/item/mark-read-action");
 
@@ -73,7 +73,10 @@ describe("useMarkRead", () => {
     feedCount?: number;
     catCount?: number;
   } = {}) {
-    queryClient.setQueryData(COUNTS_KEY, makeCounts(global, feedCount, catCount));
+    queryClient.setQueryData(
+      COUNTS_KEY,
+      makeCounts(global, feedCount, catCount),
+    );
     queryClient.setQueryData(ITEMS_KEY, makePagedCache([makeItem({ isRead })]));
   }
 
@@ -154,7 +157,12 @@ describe("useMarkRead", () => {
       seedCache();
       vi.mocked(markReadAction).mockResolvedValue({
         success: true,
-        data: { itemId: ITEM_ID, userId: "u1", readAt: new Date(), bookmarkedAt: null } as any
+        data: {
+          itemId: ITEM_ID,
+          userId: "u1",
+          readAt: new Date(),
+          bookmarkedAt: null,
+        } as any,
       });
 
       const invalidate = vi.spyOn(queryClient, "invalidateQueries");
@@ -164,8 +172,12 @@ describe("useMarkRead", () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: COUNTS_KEY }));
-      expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: ["feeds", "items"] }));
+      expect(invalidate).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: COUNTS_KEY }),
+      );
+      expect(invalidate).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: ["feeds", "items"] }),
+      );
     });
   });
 
@@ -175,7 +187,7 @@ describe("useMarkRead", () => {
       vi.mocked(markReadAction).mockResolvedValue({
         success: false,
         error: "Server error",
-        code: "ERROR"
+        code: "ERROR",
       });
 
       const { result } = renderHook(() => useMarkRead(), { wrapper });

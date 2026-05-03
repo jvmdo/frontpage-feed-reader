@@ -1,6 +1,6 @@
 import { describe, expect } from "vitest";
-import { test } from "@/tests/test-extend";
 import { seedCategory, seedUser } from "@/tests/seeding";
+import { test } from "@/tests/test-extend";
 import { getCategories } from "./get-categories";
 
 describe("getCategories", () => {

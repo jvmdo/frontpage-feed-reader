@@ -17,8 +17,7 @@ import type { Category } from "@/types";
 export function ItemList() {
   const { feedId, categoryId } = useFeedFilter();
   const { data: categories } = useCategories();
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useItems();
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useItems();
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);

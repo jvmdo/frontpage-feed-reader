@@ -135,7 +135,10 @@ export const subscriptions = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    unique("subscriptions_user_id_feed_id_unique").on(table.userId, table.feedId),
+    unique("subscriptions_user_id_feed_id_unique").on(
+      table.userId,
+      table.feedId,
+    ),
     index("idx_subscriptions_user").on(table.userId),
   ],
 );
@@ -242,12 +245,15 @@ export const userRelations = relations(user, ({ many, one }) => ({
   subscriptions: many(subscriptions),
 }));
 
-export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
-  user: one(user, {
-    fields: [userPreferences.userId],
-    references: [user.id],
+export const userPreferencesRelations = relations(
+  userPreferences,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [userPreferences.userId],
+      references: [user.id],
+    }),
   }),
-}));
+);
 
 export const userItemStatesRelations = relations(userItemStates, ({ one }) => ({
   user: one(user, {

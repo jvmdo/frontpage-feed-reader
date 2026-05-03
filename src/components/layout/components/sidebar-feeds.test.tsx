@@ -212,8 +212,6 @@ describe("SidebarFeeds", () => {
       </SidebarProvider>,
     );
 
-    expect(
-      await screen.findByText(/no feeds yet/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/no feeds yet/i)).toBeInTheDocument();
   });
 });

@@ -40,10 +40,7 @@ vi.mock("react-virtuoso", () => ({
   },
 }));
 
-const generateMockItems = (
-  count: number,
-  startId = 1,
-): ItemWithSource[] => {
+const generateMockItems = (count: number, startId = 1): ItemWithSource[] => {
   return Array.from({ length: count }).map((_, i) =>
     createMockItemWithSource({
       item: {

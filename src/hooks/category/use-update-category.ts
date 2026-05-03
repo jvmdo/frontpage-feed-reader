@@ -33,7 +33,7 @@ export function useUpdateCategory() {
 
       // Invalidate to ensure consistency across the app (sidebar, etc.)
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      
+
       // Also invalidate subscriptions since they might be grouped by category
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
