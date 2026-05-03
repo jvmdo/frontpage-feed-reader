@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addFeedAction } from "@/actions/feed/add-feed-action";
+import { useCategories } from "@/hooks/category/use-categories";
 import {
   render,
   screen,
@@ -17,6 +18,11 @@ vi.mock("@/actions/feed/add-feed-action", () => ({
   addFeedAction: vi.fn(),
 }));
 
+// Mock useCategories
+vi.mock("@/hooks/category/use-categories", () => ({
+  useCategories: vi.fn(),
+}));
+
 // Mock sonner toast
 vi.mock("sonner", () => ({
   toast: {
@@ -26,8 +32,22 @@ vi.mock("sonner", () => ({
 }));
 
 describe("AddFeedDialog", () => {
+  const mockCategories = [
+    { id: 1, name: "Tech" },
+    { id: 2, name: "Design" },
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useCategories).mockReturnValue({
+      data: mockCategories,
+    } as any);
+
+    // Mock PointerEvent methods for Radix UI Select
+    if (typeof window !== "undefined") {
+      window.HTMLElement.prototype.hasPointerCapture = vi.fn();
+      window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    }
   });
 
   const setup = () => {
@@ -84,20 +104,54 @@ describe("AddFeedDialog", () => {
     await user.type(input, url);
     await user.click(submitButton);
 
-    // The action call is usually synchronous upon submission, so no wait is needed.
-    expect(addFeedAction).toHaveBeenCalledExactlyOnceWith({ url });
+    expect(addFeedAction).toHaveBeenCalledExactlyOnceWith({
+      url,
+      categoryId: null,
+    });
 
-    // The toast happens strictly AFTER the promise resolves in TanStack Query's `onSuccess`.
-    // You MUST use waitFor here to prevent flakiness.
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledExactlyOnceWith(
         "Feed added successfully",
       );
     });
 
-    // Since the async cycle is complete, the DOM is fully updated.
-    // A synchronous assertion is perfect here.
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("calls addFeedAction with selected categoryId", async () => {
+    const url = "https://example.com/feed.xml";
+
+    vi.mocked(addFeedAction).mockResolvedValue({
+      success: true,
+      data: { id: "1", url } as any,
+    });
+
+    const { user } = setup();
+
+    await user.click(screen.getByRole("button", { name: /open dialog/i }));
+
+    const input = screen.getByRole("textbox", { name: /feed url/i });
+    await user.type(input, url);
+
+    // Open category select
+    const selectTrigger = screen.getByRole("combobox", { name: /category/i });
+    await user.click(selectTrigger);
+
+    // Select "Tech"
+    const option = await screen.findByRole("option", { name: /tech/i });
+    await user.click(option);
+
+    const submitButton = screen.getByRole("button", { name: /add/i });
+    await user.click(submitButton);
+
+    expect(addFeedAction).toHaveBeenCalledExactlyOnceWith({
+      url,
+      categoryId: 1,
+    });
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalled();
+    });
   });
 
   it("displays a loading state while the action is pending", async () => {

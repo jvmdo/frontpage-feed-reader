@@ -70,8 +70,44 @@ describe("addFeedAction", () => {
       expect.anything(),
       "user-123",
       "https://example.com/feed.xml",
+      undefined,
     );
     expect(ingestItems).toHaveBeenCalledWith(expect.anything(), "feed-123");
+  });
+
+  it("returns success and subscription data when addition with category is successful", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    const mockResult = {
+      subscription: {
+        id: "sub-123",
+        userId: "user-123",
+        feedId: "feed-123",
+        categoryId: 10,
+      },
+      feed: {
+        id: "feed-123",
+      },
+    };
+
+    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(createSubscription).mockResolvedValueOnce(mockResult as any);
+    vi.mocked(ingestItems).mockResolvedValueOnce({ success: true } as any);
+
+    const result = await addFeedAction({
+      url: "https://example.com/feed.xml",
+      categoryId: 10,
+    });
+
+    expect(result).toEqual({
+      success: true,
+      data: mockResult,
+    });
+    expect(createSubscription).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-123",
+      "https://example.com/feed.xml",
+      10,
+    );
   });
 
   it("returns friendly error when FeedNotFoundError is thrown", async () => {

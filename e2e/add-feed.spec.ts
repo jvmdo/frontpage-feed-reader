@@ -1,3 +1,5 @@
+import { db } from "@/db";
+import { seedCategory } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 const FEED_TYPES = [
@@ -41,6 +43,59 @@ for (const { file } of FEED_TYPES) {
     await expect(dialog).not.toBeVisible();
   });
 }
+
+test("successfully adds a feed and assigns it to a category", async ({
+  authedPage,
+}) => {
+  const { page, userId } = authedPage;
+  const feedUrl = `http://localhost:3432/rss-2.xml?tenant=${userId}`;
+
+  // 1. Setup: Seed a category
+  await seedCategory(db, {
+    userId,
+    name: "Tech News",
+  });
+
+  // 2. Navigate to dashboard and wait for hydration
+  await page.goto("/dashboard");
+  await page.waitForSelector('body[data-hydrated="true"]');
+
+  // 3. Open Add Feed dialog
+  await page
+    .getByRole("banner")
+    .getByRole("button", { name: /add feed/i })
+    .click();
+
+  const dialog = page.getByRole("dialog", { name: /add feed/i });
+
+  // 4. Fill URL
+  await dialog.getByLabel(/feed url/i).fill(feedUrl);
+
+  // 5. Select Category
+  await dialog.getByRole("combobox", { name: /category/i }).click();
+  await page.getByRole("option", { name: "Tech News" }).click();
+
+  // 6. Submit
+  await dialog.getByRole("button", { name: /add/i }).click();
+
+  // 7. Assert toast and dialog closure
+  const toast = page.locator("[data-sonner-toast]");
+  await expect(toast).toBeVisible();
+  await expect(toast).toContainText("Feed added successfully");
+  await expect(dialog).not.toBeVisible();
+
+  // 8. Verify it's under the category in sidebar
+  const sidebar = page.locator('[data-slot="sidebar"]');
+  const categoryLink = sidebar.getByRole("link", { name: /tech news/i });
+
+  await expect(categoryLink).toBeVisible();
+  await categoryLink.click();
+
+  // The feed should be visible inside the category folder
+  await expect(
+    sidebar.getByRole("link", { name: /standard rss 2\.0 feed/i }),
+  ).toBeVisible();
+});
 
 test("handles non-existent feed with friendly error", async ({
   authedPage,

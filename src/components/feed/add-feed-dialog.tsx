@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Suspense, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +21,16 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { useCategories } from "@/hooks/category/use-categories";
 import { useAddFeed } from "@/hooks/feed/use-add-feed";
 import { type AddFeedInput, addFeedSchema } from "@/lib/validations/feed";
 
@@ -43,10 +52,20 @@ export function AddFeedDialog({ children, asChild }: AddFeedDialogProps) {
             Enter the URL of the RSS or Atom feed you want to subscribe to.
           </DialogDescription>
         </DialogHeader>
-        <AddFeedForm
-          onSuccess={() => setOpen(false)}
-          onCancel={() => setOpen(false)}
-        />
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center py-8">
+              <Spinner />
+            </div>
+          }
+        >
+          {open && (
+            <AddFeedForm
+              onSuccess={() => setOpen(false)}
+              onCancel={() => setOpen(false)}
+            />
+          )}
+        </Suspense>
       </DialogContent>
     </Dialog>
   );
@@ -58,15 +77,19 @@ interface AddFeedFormProps {
 }
 
 function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
+  const { data: categories } = useCategories();
   const { mutate: addFeed, isPending } = useAddFeed();
+
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<AddFeedInput>({
     resolver: zodResolver(addFeedSchema),
     defaultValues: {
       url: "",
+      categoryId: null,
     },
   });
 
@@ -83,7 +106,7 @@ function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <FieldGroup>
         <Field data-invalid={!!errors.url} data-disabled={isPending}>
           <FieldLabel htmlFor="feed-url">Feed URL</FieldLabel>
@@ -93,15 +116,60 @@ function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
             disabled={isPending}
             {...register("url")}
             aria-invalid={!!errors.url}
-            aria-describedby={errors.url ? "field-error" : undefined}
+            aria-describedby={errors.url ? "url-error" : undefined}
           />
           {errors.url && (
-            <FieldError id="field-error">{errors.url.message}</FieldError>
+            <FieldError id="url-error">{errors.url.message}</FieldError>
+          )}
+        </Field>
+
+        <Field data-invalid={!!errors.categoryId}>
+          <FieldLabel htmlFor="category-id">Category</FieldLabel>
+          <Controller
+            control={control}
+            name="categoryId"
+            render={({ field }) => (
+              <Select
+                onValueChange={(value) =>
+                  field.onChange(value === "none" ? null : Number(value))
+                }
+                value={field.value?.toString() ?? "none"}
+                disabled={isPending}
+              >
+                <SelectTrigger
+                  id="category-id"
+                  aria-invalid={!!errors.categoryId}
+                  aria-describedby={
+                    errors.categoryId ? "category-error" : undefined
+                  }
+                >
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="none">Uncategorized</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem
+                        key={category.id}
+                        value={category.id.toString()}
+                      >
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.categoryId && (
+            <FieldError id="category-error">
+              {errors.categoryId.message}
+            </FieldError>
           )}
         </Field>
       </FieldGroup>
 
-      <DialogFooter className="mt-6">
+      <DialogFooter>
         <Button
           type="button"
           variant="outline"

@@ -8,8 +8,15 @@ import { fetchFeedXml } from "@/services/ingestion/fetch-feed-xml";
  * Create a feed subscription for a user.
  * @param db - Drizzle database instance.
  * @param userId - The ID of the user whose subscriptions to create.
+ * @param url - The URL of the feed to subscribe to.
+ * @param categoryId - Optional ID of the category to assign the subscription to.
  */
-export async function createSubscription(db: DB, userId: string, url: string) {
+export async function createSubscription(
+  db: DB,
+  userId: string,
+  url: string,
+  categoryId?: number | null,
+) {
   // 1. Check if feed exists (outside transaction)
   let feed = await db.query.feeds.findFirst({
     where: eq(feeds.url, url),
@@ -76,6 +83,7 @@ export async function createSubscription(db: DB, userId: string, url: string) {
       .values({
         userId,
         feedId: feed.id,
+        categoryId,
       })
       .returning();
 

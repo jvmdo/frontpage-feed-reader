@@ -3,6 +3,7 @@ import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 
 export const addFeedSchema = z.object({
   url: z.url("Please enter a valid URL").trim(),
+  categoryId: z.number().nullable().optional(),
 });
 
 export type AddFeedInput = z.infer<typeof addFeedSchema>;

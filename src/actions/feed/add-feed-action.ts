@@ -38,9 +38,14 @@ export async function addFeedAction(input: AddFeedInput) {
       };
     }
 
-    const { url } = result.data;
+    const { url, categoryId } = result.data;
 
-    const subscription = await createSubscription(db, session.user.id, url);
+    const subscription = await createSubscription(
+      db,
+      session.user.id,
+      url,
+      categoryId,
+    );
 
     // Trigger initial ingestion to populate the feed immediately
     await ingestItems(db, subscription.feed.id);
