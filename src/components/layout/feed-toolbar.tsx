@@ -22,7 +22,11 @@ export function FeedToolbar() {
   const { feedId, categoryId } = useFeedFilter();
 
   return (
-    <div className="border-b border-border bg-card">
+    <header
+      className="border-b border-border bg-card"
+      role="toolbar"
+      aria-label="Feed toolbar"
+    >
       <div className="flex items-center justify-between gap-2 p-2 sm:p-3 md:p-4">
         <ToolbarTitle feedId={feedId} categoryId={categoryId} />
 
@@ -47,7 +51,7 @@ export function FeedToolbar() {
           </div>
         </div>
       </div>
-    </div>
+    </header>
   );
 }
 

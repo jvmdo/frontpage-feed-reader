@@ -29,7 +29,8 @@ test.describe("FeedToolbar Refresh", () => {
     ).toBeVisible();
 
     // 4. Trigger Refresh from the toolbar
-    const refreshButton = page.getByRole("button", { name: /refresh/i });
+    const toolbar = page.getByRole("toolbar", { name: "Feed toolbar" });
+    const refreshButton = toolbar.getByRole("button", { name: /refresh/i });
 
     await expect(refreshButton).toBeVisible();
     await refreshButton.click();
@@ -58,7 +59,8 @@ test.describe("FeedToolbar Refresh", () => {
     await page.waitForSelector('body[data-hydrated="true"]');
 
     // 2. Trigger Refresh
-    const refreshButton = page.getByRole("button", { name: /refresh/i });
+    const toolbar = page.getByRole("toolbar", { name: "Feed toolbar" });
+    const refreshButton = toolbar.getByRole("button", { name: /refresh/i });
     await refreshButton.click();
 
     // 3. Verify toast message for global scope
@@ -88,7 +90,8 @@ test.describe("FeedToolbar Refresh", () => {
     await page.waitForSelector('body[data-hydrated="true"]');
 
     // 2. Trigger Refresh
-    const refreshButton = page.getByRole("button", { name: /refresh/i });
+    const toolbar = page.getByRole("toolbar", { name: "Feed toolbar" });
+    const refreshButton = toolbar.getByRole("button", { name: /refresh/i });
     await refreshButton.click();
 
     // 3. Verify toast message for category scope

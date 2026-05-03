@@ -50,7 +50,8 @@ test("marking a category as read updates all items and counts", async ({
   await expect(items.filter({ hasText: /\bunread\b/i })).toHaveCount(3);
 
   // 4. Trigger "Mark all as read"
-  await page.getByRole("button", { name: /mark all read/i }).click();
+  const toolbar = page.getByRole("toolbar", { name: "Feed toolbar" });
+  await toolbar.getByRole("button", { name: /mark all read/i }).click();
 
   // 5. Confirm the dialog
   await page
