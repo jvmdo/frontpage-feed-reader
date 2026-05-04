@@ -12,6 +12,7 @@ import {
   timestamp,
   unique,
 } from "drizzle-orm/pg-core";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -99,6 +100,7 @@ export const categories = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    color: text("color").notNull().default(DEFAULT_CATEGORY_COLOR),
 
     // Watermark for "Mark category as read"
     markedAllReadAt: timestamp("marked_all_read_at"),

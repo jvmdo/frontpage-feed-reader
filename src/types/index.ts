@@ -50,5 +50,6 @@ export type ItemWithSource = {
   feed: Feed;
   isRead: boolean;
   isExcerpt: boolean;
-  categoryName?: string | null;
+  categoryName: string | null;
+  categoryColor: string | null;
 };

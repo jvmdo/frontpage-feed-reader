@@ -6,6 +6,10 @@ export const createCategorySchema = z.object({
     .min(1, "Category name is required")
     .max(50, "Category name must be less than 50 characters")
     .trim(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-F]{6}$/i, "Invalid color format")
+    .optional(),
 });
 
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
@@ -17,6 +21,10 @@ export const updateCategorySchema = z.object({
     .min(1, "Category name is required")
     .max(50, "Category name must be less than 50 characters")
     .trim(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-F]{6}$/i, "Invalid color format")
+    .optional(),
 });
 
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
