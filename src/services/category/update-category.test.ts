@@ -8,21 +8,33 @@ import { createCategory } from "./create-category";
 import { updateCategory } from "./update-category";
 
 describe("updateCategory", () => {
-  test("updates a category successfully", async ({ tx, testUser }) => {
+  test("updates a category name and color successfully", async ({
+    tx,
+    testUser,
+  }) => {
     // Arrange
     const category = await createCategory(tx, testUser.id, "Old Name");
     const newName = "New Name";
+    const newColor = "#dc2626";
 
     // Act
-    const updatedCategory = await updateCategory(tx, testUser.id, category.id, newName);
+    const updatedCategory = await updateCategory(
+      tx,
+      testUser.id,
+      category.id,
+      newName,
+      newColor,
+    );
 
     // Assert
     expect(updatedCategory.name).toBe(newName);
-    
+    expect(updatedCategory.color).toBe(newColor);
+
     const dbCategory = await tx.query.categories.findFirst({
       where: eq(categories.id, category.id),
     });
     expect(dbCategory?.name).toBe(newName);
+    expect(dbCategory?.color).toBe(newColor);
   });
 
   test("throws CategoryNotFoundError when category does not exist", async ({
@@ -30,9 +42,9 @@ describe("updateCategory", () => {
     testUser,
   }) => {
     // Act & Assert
-    await expect(updateCategory(tx, testUser.id, 999, "New Name")).rejects.toThrow(
-      CategoryNotFoundError,
-    );
+    await expect(
+      updateCategory(tx, testUser.id, 999, "New Name"),
+    ).rejects.toThrow(CategoryNotFoundError);
   });
 
   test("throws CategoryNotFoundError when category belongs to another user", async ({
@@ -44,9 +56,9 @@ describe("updateCategory", () => {
     const category = await createCategory(tx, otherUser.id, "Other Category");
 
     // Act & Assert
-    await expect(updateCategory(tx, testUser.id, category.id, "New Name")).rejects.toThrow(
-      CategoryNotFoundError,
-    );
+    await expect(
+      updateCategory(tx, testUser.id, category.id, "New Name"),
+    ).rejects.toThrow(CategoryNotFoundError);
   });
 
   test("throws DuplicateCategoryError when new name is already taken by the same user", async ({
@@ -58,9 +70,9 @@ describe("updateCategory", () => {
     await createCategory(tx, testUser.id, "Category 2");
 
     // Act & Assert
-    await expect(updateCategory(tx, testUser.id, category1.id, "Category 2")).rejects.toThrow(
-      DuplicateCategoryError,
-    );
+    await expect(
+      updateCategory(tx, testUser.id, category1.id, "Category 2"),
+    ).rejects.toThrow(DuplicateCategoryError);
   });
 
   test("allows updating name to the same name (no-op)", async ({
@@ -71,7 +83,12 @@ describe("updateCategory", () => {
     const category = await createCategory(tx, testUser.id, "Same Name");
 
     // Act
-    const updatedCategory = await updateCategory(tx, testUser.id, category.id, "Same Name");
+    const updatedCategory = await updateCategory(
+      tx,
+      testUser.id,
+      category.id,
+      "Same Name",
+    );
 
     // Assert
     expect(updatedCategory.name).toBe("Same Name");
@@ -87,7 +104,12 @@ describe("updateCategory", () => {
     const category = await createCategory(tx, testUser.id, "My Category");
 
     // Act
-    const updatedCategory = await updateCategory(tx, testUser.id, category.id, "Shared Name");
+    const updatedCategory = await updateCategory(
+      tx,
+      testUser.id,
+      category.id,
+      "Shared Name",
+    );
 
     // Assert
     expect(updatedCategory.name).toBe("Shared Name");

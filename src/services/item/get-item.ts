@@ -27,6 +27,8 @@ export async function getItem(
       globalWatermark: userPreferences.markedAllReadAt,
       categoryWatermark: categories.markedAllReadAt,
       subscriptionWatermark: subscriptions.markedAllReadAt,
+      categoryName: categories.name,
+      categoryColor: categories.color,
     })
     .from(feedItems)
     .innerJoin(feeds, eq(feedItems.feedId, feeds.id))
@@ -67,5 +69,7 @@ export async function getItem(
     feed: result.feed,
     isRead,
     isExcerpt: isExcerpt(result.item),
+    categoryName: result.categoryName,
+    categoryColor: result.categoryColor,
   };
 }

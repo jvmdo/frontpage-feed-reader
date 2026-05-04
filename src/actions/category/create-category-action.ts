@@ -35,9 +35,9 @@ export async function createCategoryAction(input: CreateCategoryInput) {
       };
     }
 
-    const { name } = result.data;
+    const { name, color } = result.data;
 
-    const category = await createCategory(db, session.user.id, name);
+    const category = await createCategory(db, session.user.id, name, color);
 
     return {
       success: true,

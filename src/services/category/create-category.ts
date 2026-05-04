@@ -8,9 +8,15 @@ import { DuplicateCategoryError } from "@/lib/errors";
  * @param db - Drizzle database instance.
  * @param userId - The ID of the user.
  * @param name - The name of the category.
+ * @param color - The color of the category (optional).
  * @returns The newly created category.
  */
-export async function createCategory(db: DB, userId: string, name: string) {
+export async function createCategory(
+  db: DB,
+  userId: string,
+  name: string,
+  color?: string,
+) {
   // Check if category with same name already exists for this user
   const existing = await db.query.categories.findFirst({
     where: and(eq(categories.userId, userId), eq(categories.name, name)),
@@ -25,6 +31,7 @@ export async function createCategory(db: DB, userId: string, name: string) {
     .values({
       userId,
       name,
+      color,
     })
     .returning();
 

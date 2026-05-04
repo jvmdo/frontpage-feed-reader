@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { isExcerpt } from "@/lib/feed/utils";
 import type {
   Category,
@@ -37,6 +38,7 @@ export function createMockCategory(
     id,
     userId: "user-1",
     name: `Category ${id}`,
+    color: DEFAULT_CATEGORY_COLOR,
     markedAllReadAt: null,
     createdAt: new Date(),
     ...overrides,
@@ -104,6 +106,7 @@ export function createMockItemWithSource(
     isRead: boolean;
     isExcerpt?: boolean;
     categoryName?: string | null;
+    categoryColor?: string | null;
   }> = {},
 ): ItemWithSource {
   const feed = createMockFeed(overrides.feed);
@@ -118,5 +121,6 @@ export function createMockItemWithSource(
     isRead: overrides.isRead ?? false,
     isExcerpt: overrides.isExcerpt ?? isExcerpt(item),
     categoryName: overrides.categoryName ?? null,
+    categoryColor: overrides.categoryColor ?? null,
   };
 }

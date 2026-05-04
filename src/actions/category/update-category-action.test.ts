@@ -52,13 +52,18 @@ describe("updateCategoryAction", () => {
       id: 1,
       userId: "user-123",
       name: "Tech-Updated",
+      color: "#16a34a",
       createdAt: new Date(),
     };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
     vi.mocked(updateCategory).mockResolvedValueOnce(mockCategory as any);
 
-    const result = await updateCategoryAction({ id: 1, name: "Tech-Updated" });
+    const result = await updateCategoryAction({
+      id: 1,
+      name: "Tech-Updated",
+      color: "#16a34a",
+    });
 
     expect(result).toEqual({
       success: true,
@@ -69,6 +74,7 @@ describe("updateCategoryAction", () => {
       "user-123",
       1,
       "Tech-Updated",
+      "#16a34a",
     );
   });
 

@@ -38,6 +38,7 @@ export async function getItems(
       categoryWatermark: categories.markedAllReadAt,
       subscriptionWatermark: subscriptions.markedAllReadAt,
       categoryName: categories.name,
+      categoryColor: categories.color,
     })
     .from(feedItems)
     .innerJoin(feeds, eq(feedItems.feedId, feeds.id))
@@ -86,6 +87,7 @@ export async function getItems(
       isRead,
       isExcerpt: isExcerpt(row.item),
       categoryName: row.categoryName,
+      categoryColor: row.categoryColor,
     };
   });
 }

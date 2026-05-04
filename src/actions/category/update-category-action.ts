@@ -35,9 +35,9 @@ export async function updateCategoryAction(input: UpdateCategoryInput) {
       };
     }
 
-    const { id, name } = result.data;
+    const { id, name, color } = result.data;
 
-    const category = await updateCategory(db, session.user.id, id, name);
+    const category = await updateCategory(db, session.user.id, id, name, color);
 
     return {
       success: true,

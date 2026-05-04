@@ -9,6 +9,7 @@ import { CategoryNotFoundError, DuplicateCategoryError } from "@/lib/errors";
  * @param userId - The ID of the user.
  * @param categoryId - The ID of the category to update.
  * @param name - The new name of the category.
+ * @param color - The new color of the category (optional).
  * @returns The updated category.
  */
 export async function updateCategory(
@@ -16,6 +17,7 @@ export async function updateCategory(
   userId: string,
   categoryId: number,
   name: string,
+  color?: string,
 ) {
   // First, verify the category exists and belongs to the user
   const existingCategory = await db.query.categories.findFirst({
@@ -39,7 +41,7 @@ export async function updateCategory(
 
   const [updatedCategory] = await db
     .update(categories)
-    .set({ name })
+    .set({ name, color })
     .where(and(eq(categories.userId, userId), eq(categories.id, categoryId)))
     .returning();
 

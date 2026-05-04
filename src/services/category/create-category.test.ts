@@ -1,22 +1,33 @@
 import { eq } from "drizzle-orm";
 import { describe, expect } from "vitest";
 import { categories } from "@/db/schema";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { DuplicateCategoryError } from "@/lib/errors";
 import { seedUser } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
 import { createCategory } from "./create-category";
 
 describe("createCategory", () => {
-  test("creates a new category successfully", async ({ tx, testUser }) => {
+  test("creates a new category successfully with name and color", async ({
+    tx,
+    testUser,
+  }) => {
     // Arrange
     const categoryName = "Tech";
+    const categoryColor = "#dc2626";
 
     // Act
-    const newCategory = await createCategory(tx, testUser.id, categoryName);
+    const newCategory = await createCategory(
+      tx,
+      testUser.id,
+      categoryName,
+      categoryColor,
+    );
 
     // Assert
     expect(newCategory).toBeDefined();
     expect(newCategory.name).toBe(categoryName);
+    expect(newCategory.color).toBe(categoryColor);
     expect(newCategory.userId).toBe(testUser.id);
 
     const dbCategory = await tx.query.categories.findFirst({
@@ -24,6 +35,15 @@ describe("createCategory", () => {
     });
     expect(dbCategory).toBeDefined();
     expect(dbCategory?.name).toBe(categoryName);
+    expect(dbCategory?.color).toBe(categoryColor);
+  });
+
+  test("uses default color if not provided", async ({ tx, testUser }) => {
+    // Act
+    const newCategory = await createCategory(tx, testUser.id, "Default Color");
+
+    // Assert
+    expect(newCategory.color).toBe(DEFAULT_CATEGORY_COLOR);
   });
 
   test("throws DuplicateCategoryError when name already exists for the user", async ({

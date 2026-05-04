@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: testing asset */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { DuplicateCategoryError } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
 import { createCategory } from "@/services/category/create-category";
@@ -52,13 +53,17 @@ describe("createCategoryAction", () => {
       id: 1,
       userId: "user-123",
       name: "Tech",
+      color: DEFAULT_CATEGORY_COLOR,
       createdAt: new Date(),
     };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
     vi.mocked(createCategory).mockResolvedValueOnce(mockCategory as any);
 
-    const result = await createCategoryAction({ name: "Tech" });
+    const result = await createCategoryAction({
+      name: "Tech",
+      color: DEFAULT_CATEGORY_COLOR,
+    });
 
     expect(result).toEqual({
       success: true,
@@ -68,6 +73,7 @@ describe("createCategoryAction", () => {
       expect.anything(),
       "user-123",
       "Tech",
+      DEFAULT_CATEGORY_COLOR,
     );
   });
 
