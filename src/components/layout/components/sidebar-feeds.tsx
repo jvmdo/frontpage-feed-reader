@@ -91,8 +91,10 @@ function CategoryGroup({
               unreadCount={unreadCount}
               icon={
                 <span
-                  className="size-2 rounded-full bg-primary shrink-0"
+                  className="size-2 rounded-full shrink-0"
+                  style={{ backgroundColor: category.color }}
                   aria-hidden="true"
+                  data-testid="sidebar-category-dot"
                 />
               }
               suffix={
@@ -111,7 +113,11 @@ function CategoryGroup({
               </SidebarMenuSubItem>
             ) : (
               items.map((item) => (
-                <SidebarFeedSubItem key={item.feed.id} item={item} />
+                <SidebarFeedSubItem
+                  key={item.feed.id}
+                  item={item}
+                  categoryColor={category.color}
+                />
               ))
             )}
           </SidebarMenuSub>
@@ -161,7 +167,13 @@ function SidebarFeedItem({ item }: { item: FeedWithSubscription }) {
   );
 }
 
-function SidebarFeedSubItem({ item }: { item: FeedWithSubscription }) {
+function SidebarFeedSubItem({
+  item,
+  categoryColor,
+}: {
+  item: FeedWithSubscription;
+  categoryColor?: string | null;
+}) {
   const { title, isActive, unreadCount, feed } = useSidebarFeed(item);
 
   return (
@@ -173,7 +185,12 @@ function SidebarFeedSubItem({ item }: { item: FeedWithSubscription }) {
           label={title}
           unreadCount={unreadCount}
           icon={
-            <FeedIcon url={feed.iconUrl || feed.url} title={title} size={20} />
+            <FeedIcon
+              url={feed.iconUrl || feed.url}
+              title={title}
+              size={20}
+              categoryColor={categoryColor}
+            />
           }
         />
       </SidebarMenuSubButton>

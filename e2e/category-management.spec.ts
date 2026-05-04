@@ -116,7 +116,7 @@ test("handles duplicate category name error", async ({ authedPage }) => {
   await expect(dialog).toBeVisible();
 });
 
-test("verifies full management flow: empty state, creation, renaming and deleting", async ({
+test("verifies full management flow: empty state, creation, editing and deleting", async ({
   authedPage,
 }) => {
   const { page, userId } = authedPage;
@@ -139,43 +139,74 @@ test("verifies full management flow: empty state, creation, renaming and deletin
   // 2. Verify Empty State
   await expect(main.getByText(/no categories yet/i)).toBeVisible();
 
-  // 3. Create a new category
+  // 3. Create a new category with a specific color
   await main.getByRole("button", { name: /create .* category/i }).click();
   await addDialog.getByLabel(/name/i).fill("Fresh Category");
+
+  // Select a color
+  const redColorHex = "#dc2626";
+  const redColorRgb = "rgb(220, 38, 38)";
+  await addDialog.getByRole("button", { name: /select color/i }).click();
+  await page.getByRole("button", { name: redColorHex, exact: true }).click();
+
   await addDialog.getByRole("button", { name: /create category/i }).click();
 
   // 4. Verify operation succeeded
   await expect(page.locator("[data-sonner-toast]")).toContainText(
     /category created successfully/i,
   );
-
   await expect(main.getByText("Fresh Category")).toBeVisible();
+
+  // Verify color indicator is present in the list
+  const colorIndicator = main
+    .locator("li")
+    .filter({ hasText: "Fresh Category" })
+    .getByTestId("category-color-indicator");
+  await expect(colorIndicator).toHaveCSS("background-color", redColorRgb);
 
   await expect(
     sidebar.getByRole("link", { name: /fresh category/i }),
   ).toBeVisible();
 
-  // 5. Rename Category
-  await main.getByRole("button", { name: /rename fresh category/i }).click();
+  // Verify color dot in sidebar
+  const sidebarDot = sidebar
+    .getByRole("link", { name: /fresh category/i })
+    .getByTestId("sidebar-category-dot");
+  await expect(sidebarDot).toHaveCSS("background-color", redColorRgb);
 
-  const renameDialog = page.getByRole("dialog", { name: /rename category/i });
-  const nameInput = renameDialog.getByRole("textbox", { name: /name/i });
+  // 5. Edit Category
+  await main.getByRole("button", { name: /edit fresh category/i }).click();
 
+  const editDialog = page.getByRole("dialog", { name: /edit category/i });
+  const nameInput = editDialog.getByRole("textbox", { name: /name/i });
   await nameInput.clear();
   await nameInput.fill("Updated Category");
-  await renameDialog.getByRole("button", { name: /save changes/i }).click();
+
+  // Change color to green
+  const greenColorHex = "#16a34a";
+  const greenColorRgb = "rgb(22, 163, 74)";
+  await editDialog.getByRole("button", { name: /select color/i }).click();
+  await page.getByRole("button", { name: greenColorHex, exact: true }).click();
+
+  await editDialog.getByRole("button", { name: /save changes/i }).click();
 
   // 6. Verify operation succeeded
   await expect(
     page
       .locator("[data-sonner-toast]")
-      .filter({ hasText: /renamed successfully/i }),
+      .filter({ hasText: /updated successfully/i }),
   ).toBeVisible();
 
   await expect(main.getByText(/updated category/i)).toBeVisible();
   await expect(
     sidebar.getByRole("link", { name: /updated category/i }),
   ).toBeVisible();
+
+  // Verify green color in sidebar
+  const updatedSidebarDot = sidebar
+    .getByRole("link", { name: /updated category/i })
+    .getByTestId("sidebar-category-dot");
+  await expect(updatedSidebarDot).toHaveCSS("background-color", greenColorRgb);
 
   // 7. Delete Category
   await main.getByRole("button", { name: /delete updated category/i }).click();

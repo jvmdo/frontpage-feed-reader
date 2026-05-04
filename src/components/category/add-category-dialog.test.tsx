@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createCategoryAction } from "@/actions/category/create-category-action";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import {
   render,
   screen,
@@ -47,6 +48,9 @@ describe("AddCategoryDialog", () => {
     expect(
       screen.getByRole("heading", { name: /add category/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /select color/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows validation error for empty name", async () => {
@@ -89,7 +93,7 @@ describe("AddCategoryDialog", () => {
 
     vi.mocked(createCategoryAction).mockResolvedValue({
       success: true,
-      data: { id: 1, name: categoryName } as any,
+      data: { id: 1, name: categoryName, color: DEFAULT_CATEGORY_COLOR } as any,
     });
 
     const { user } = setup();
@@ -106,6 +110,7 @@ describe("AddCategoryDialog", () => {
 
     expect(createCategoryAction).toHaveBeenCalledExactlyOnceWith({
       name: categoryName,
+      color: DEFAULT_CATEGORY_COLOR,
     });
 
     await waitFor(() => {
@@ -142,7 +147,10 @@ describe("AddCategoryDialog", () => {
     expect(submitButton).toBeDisabled();
     expect(submitButton).toHaveTextContent(/creating/i);
 
-    resolveAction({ success: true, data: { id: 1, name: categoryName } });
+    resolveAction({
+      success: true,
+      data: { id: 1, name: categoryName, color: DEFAULT_CATEGORY_COLOR },
+    });
 
     await waitForElementToBeRemoved(screen.queryByRole("dialog"));
   });

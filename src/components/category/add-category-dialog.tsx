@@ -2,9 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ColorPicker } from "@/components/ui/color-picker";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useCreateCategory } from "@/hooks/category/use-create-category";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import {
   type CreateCategoryInput,
   createCategorySchema,
@@ -73,11 +75,13 @@ function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<CreateCategoryInput>({
     resolver: zodResolver(createCategorySchema),
     defaultValues: {
       name: "",
+      color: DEFAULT_CATEGORY_COLOR,
     },
   });
 
@@ -110,6 +114,21 @@ function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
           {errors.name && (
             <FieldError id="name-error">{errors.name.message}</FieldError>
           )}
+        </Field>
+
+        <Field>
+          <FieldLabel>Color</FieldLabel>
+          <Controller
+            name="color"
+            control={control}
+            render={({ field }) => (
+              <ColorPicker
+                value={field.value}
+                onValueChange={({ value }) => field.onChange(value)}
+                disabled={isPending}
+              />
+            )}
+          />
         </Field>
       </FieldGroup>
 

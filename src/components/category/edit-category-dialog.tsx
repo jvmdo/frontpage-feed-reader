@@ -2,9 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ColorPicker } from "@/components/ui/color-picker";
 import {
   Dialog,
   DialogContent,
@@ -29,15 +30,15 @@ import {
 } from "@/lib/validations/category";
 import type { Category } from "@/types";
 
-interface RenameCategoryDialogProps {
+interface EditCategoryDialogProps {
   category: Category;
   children: React.ReactNode;
 }
 
-export function RenameCategoryDialog({
+export function EditCategoryDialog({
   category,
   children,
-}: RenameCategoryDialogProps) {
+}: EditCategoryDialogProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -45,14 +46,14 @@ export function RenameCategoryDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Rename Category</DialogTitle>
+          <DialogTitle>Edit Category</DialogTitle>
           <DialogDescription>
-            Enter a new name for your category.
+            Update the name and color for your category.
           </DialogDescription>
         </DialogHeader>
 
         {open && (
-          <RenameCategoryForm
+          <EditCategoryForm
             category={category}
             onSuccess={() => setOpen(false)}
             onCancel={() => setOpen(false)}
@@ -63,39 +64,41 @@ export function RenameCategoryDialog({
   );
 }
 
-interface RenameCategoryFormProps {
+interface EditCategoryFormProps {
   category: Category;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-function RenameCategoryForm({
+function EditCategoryForm({
   category,
   onSuccess,
   onCancel,
-}: RenameCategoryFormProps) {
+}: EditCategoryFormProps) {
   const { mutate: updateCategory, isPending } = useUpdateCategory();
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<UpdateCategoryInput>({
     resolver: zodResolver(updateCategorySchema),
     defaultValues: {
       id: category.id,
       name: category.name,
+      color: category.color,
     },
   });
 
   const onSubmit = (data: UpdateCategoryInput) => {
     updateCategory(data, {
       onSuccess: () => {
-        toast.success("Category renamed successfully");
+        toast.success("Category updated successfully");
         onSuccess?.();
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to rename category");
+        toast.error(error.message || "Failed to update category");
       },
     });
   };
@@ -120,6 +123,21 @@ function RenameCategoryForm({
               {errors.name.message}
             </FieldError>
           )}
+        </Field>
+
+        <Field>
+          <FieldLabel>Color</FieldLabel>
+          <Controller
+            name="color"
+            control={control}
+            render={({ field }) => (
+              <ColorPicker
+                value={field.value}
+                onValueChange={({ value }) => field.onChange(value)}
+                disabled={isPending}
+              />
+            )}
+          />
         </Field>
       </FieldGroup>
 

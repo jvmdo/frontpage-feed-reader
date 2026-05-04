@@ -8,12 +8,19 @@ interface FeedIconProps {
   title?: string | null;
   className?: string;
   size?: number;
+  categoryColor?: string | null;
 }
 
 /**
  * Renders a feed icon using shadcn Avatar with a letter-box fallback.
  */
-export function FeedIcon({ url, title, className, size = 16 }: FeedIconProps) {
+export function FeedIcon({
+  url,
+  title,
+  className,
+  size = 16,
+  categoryColor,
+}: FeedIconProps) {
   const initial = (title || "U").charAt(0).toUpperCase();
 
   return (
@@ -27,8 +34,15 @@ export function FeedIcon({ url, title, className, size = 16 }: FeedIconProps) {
         className="rounded-sm object-contain"
       />
       <AvatarFallback
-        className="bg-primary text-primary-foreground rounded-sm font-bold select-none"
-        style={{ fontSize: Math.max(8, Math.floor(size * 0.5)) }}
+        className={cn(
+          "rounded-sm font-bold select-none",
+          !categoryColor && "bg-primary text-primary-foreground",
+        )}
+        style={{
+          fontSize: Math.max(8, Math.floor(size * 0.5)),
+          backgroundColor: categoryColor ?? undefined,
+          color: categoryColor ? "white" : undefined,
+        }}
         delayMs={600}
       >
         {initial}

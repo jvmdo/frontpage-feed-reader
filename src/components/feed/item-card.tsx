@@ -16,7 +16,7 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ data, className }: ItemCardProps) {
-  const { item, feed, isRead, categoryName } = data;
+  const { item, feed, isRead, categoryName, categoryColor } = data;
   const { mutate: markAsRead } = useMarkRead();
   const { setActiveItemId } = useActiveItem();
 
@@ -53,6 +53,7 @@ export function ItemCard({ data, className }: ItemCardProps) {
               title={feed.title || "Untitled Feed"}
               className="size-5 shrink-0"
               size={20}
+              categoryColor={categoryColor}
             />
             <span className="text-sm text-muted-foreground truncate max-w-37.5 sm:max-w-none">
               {feed.title || "Untitled Feed"}
@@ -91,7 +92,11 @@ export function ItemCard({ data, className }: ItemCardProps) {
           {categoryName && (
             <Badge
               variant="secondary"
-              className="text-xs font-medium px-2.5 py-1 rounded-md border-0 bg-accent/15 text-accent hover:bg-accent/20"
+              className={`text-xs font-semibold rounded-sm border-0`}
+              style={{
+                background: categoryColor ? `${categoryColor}40` : undefined,
+                color: categoryColor ?? undefined,
+              }}
             >
               {categoryName}
             </Badge>

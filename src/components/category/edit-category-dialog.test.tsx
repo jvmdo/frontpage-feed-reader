@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { updateCategoryAction } from "@/actions/category/update-category-action";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { createMockCategory } from "@/tests/factories";
 import {
   render,
@@ -11,7 +12,7 @@ import {
   waitFor,
   waitForElementToBeRemoved,
 } from "@/tests/rtl-utils";
-import { RenameCategoryDialog } from "./rename-category-dialog";
+import { EditCategoryDialog } from "./edit-category-dialog";
 
 // Mock the server action
 vi.mock("@/actions/category/update-category-action", () => ({
@@ -26,8 +27,12 @@ vi.mock("sonner", () => ({
   },
 }));
 
-describe("RenameCategoryDialog", () => {
-  const category = createMockCategory({ id: 1, name: "Old Name" });
+describe("EditCategoryDialog", () => {
+  const category = createMockCategory({
+    id: 1,
+    name: "Old Name",
+    color: DEFAULT_CATEGORY_COLOR,
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -36,14 +41,14 @@ describe("RenameCategoryDialog", () => {
   const setup = () => {
     const user = userEvent.setup();
     render(
-      <RenameCategoryDialog category={category}>
+      <EditCategoryDialog category={category}>
         <button type="button">Open Dialog</button>
-      </RenameCategoryDialog>,
+      </EditCategoryDialog>,
     );
     return { user };
   };
 
-  it("opens the dialog and shows the current name", async () => {
+  it("opens the dialog and shows the current name and color", async () => {
     const { user } = setup();
 
     await user.click(screen.getByRole("button", { name: /open dialog/i }));
@@ -52,39 +57,43 @@ describe("RenameCategoryDialog", () => {
     expect(screen.getByRole("textbox", { name: /name/i })).toHaveValue(
       "Old Name",
     );
+    expect(
+      screen.getByRole("button", { name: /select color/i }),
+    ).toBeInTheDocument();
   });
 
-  it("calls updateCategoryAction with new name when submitted", async () => {
+  it("calls updateCategoryAction with new name and color when submitted", async () => {
     vi.mocked(updateCategoryAction).mockResolvedValue({
       success: true,
-      data: { ...category, name: "New Name" },
+      data: { ...category, name: "New Name", color: "#dc2626" },
     });
 
     const { user } = setup();
 
     await user.click(screen.getByRole("button", { name: /open dialog/i }));
 
-    const input = screen.getByRole("textbox", { name: /name/i });
-    await user.clear(input);
-    await user.type(input, "New Name");
+    const nameInput = screen.getByRole("textbox", { name: /name/i });
+    await user.clear(nameInput);
+    await user.type(nameInput, "New Name");
 
     await user.click(screen.getByRole("button", { name: /save changes/i }));
 
     expect(updateCategoryAction).toHaveBeenCalledWith({
       id: category.id,
       name: "New Name",
+      color: DEFAULT_CATEGORY_COLOR, // Default from mock
     });
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(
-        "Category renamed successfully",
+        "Category updated successfully",
       );
     });
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("shows error toast when renaming fails", async () => {
+  it("shows error toast when update fails", async () => {
     vi.mocked(updateCategoryAction).mockResolvedValue({
       success: false,
       error: "Duplicate name",
