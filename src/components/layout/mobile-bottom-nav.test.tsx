@@ -3,8 +3,16 @@
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { useSidebar } from "@/components/ui/sidebar";
+import { createMockUser } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
 import { MobileBottomNav } from "./mobile-bottom-nav";
+
+// Mock next/navigation
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+  })),
+}));
 
 // Mock useSidebar
 vi.mock("@/components/ui/sidebar", () => ({
@@ -26,16 +34,18 @@ vi.mock("@/components/layout/components/feed-menu", () => ({
 }));
 
 describe("MobileBottomNav", () => {
+  const mockUser = createMockUser();
+
   it("renders all navigation items", () => {
     vi.mocked(useSidebar).mockReturnValue({ toggleSidebar: vi.fn() } as any);
 
-    render(<MobileBottomNav />);
+    render(<MobileBottomNav user={mockUser} />);
 
     expect(screen.getByLabelText(/open sidebar menu/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/search items/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/add new feed/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/feed menu/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/user profile/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/user menu/i)).toBeInTheDocument();
   });
 
   it("calls toggleSidebar when menu button is clicked", async () => {
@@ -43,7 +53,7 @@ describe("MobileBottomNav", () => {
     vi.mocked(useSidebar).mockReturnValue({ toggleSidebar } as any);
     const user = userEvent.setup();
 
-    render(<MobileBottomNav />);
+    render(<MobileBottomNav user={mockUser} />);
 
     const menuButton = screen.getByLabelText(/open sidebar menu/i);
     await user.click(menuButton);
@@ -54,7 +64,7 @@ describe("MobileBottomNav", () => {
   it("wraps AddFeedDialog around the add button", () => {
     vi.mocked(useSidebar).mockReturnValue({ toggleSidebar: vi.fn() } as any);
 
-    render(<MobileBottomNav />);
+    render(<MobileBottomNav user={mockUser} />);
 
     const dialogWrapper = screen.getByTestId("add-feed-dialog");
     expect(dialogWrapper).toContainElement(
@@ -65,7 +75,7 @@ describe("MobileBottomNav", () => {
   it("wraps FeedMenu around the more button", () => {
     vi.mocked(useSidebar).mockReturnValue({ toggleSidebar: vi.fn() } as any);
 
-    render(<MobileBottomNav />);
+    render(<MobileBottomNav user={mockUser} />);
 
     const menuWrapper = screen.getByTestId("feed-menu");
     expect(menuWrapper).toContainElement(screen.getByLabelText(/feed menu/i));

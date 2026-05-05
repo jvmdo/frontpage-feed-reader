@@ -2,11 +2,16 @@
 
 import { PlusIcon, SearchIcon } from "lucide-react";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserMenu } from "@/components/layout/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
+import type { User } from "@/lib/auth-client";
 
-export function TopNavActions() {
+interface TopNavActionsProps {
+  user: User;
+}
+
+export function TopNavActions({ user }: TopNavActionsProps) {
   return (
     <div className="hidden md:flex flex-1 items-center justify-end gap-3">
       {/* TODO: search articles */}
@@ -33,11 +38,7 @@ export function TopNavActions() {
         </Button>
       </AddFeedDialog>
 
-      <Avatar className="size-8">
-        <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
-          MS
-        </AvatarFallback>
-      </Avatar>
+      <UserMenu user={user} />
     </div>
   );
 }

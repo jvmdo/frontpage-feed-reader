@@ -1,11 +1,15 @@
 import { usePathname } from "next/navigation";
 import { describe, expect, it, vi } from "vitest";
+import { createMockUser } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
 import { TopNav } from "./top-nav";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn(() => "/dashboard"),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+  })),
 }));
 
 // Mock AddFeedDialog to simplify integration test
@@ -16,8 +20,10 @@ vi.mock("@/components/feed/add-feed-dialog", () => ({
 }));
 
 describe("TopNav", () => {
+  const mockUser = createMockUser();
+
   it("renders branding and navigation links", () => {
-    render(<TopNav />);
+    render(<TopNav user={mockUser} />);
 
     // Verify branding (desktop version)
     expect(screen.getByText("Frontpage")).toBeInTheDocument();
@@ -30,7 +36,7 @@ describe("TopNav", () => {
 
   it("highlights the active link based on pathname", () => {
     vi.mocked(usePathname).mockReturnValue("/dashboard");
-    const { rerender } = render(<TopNav />);
+    const { rerender } = render(<TopNav user={mockUser} />);
 
     // Default mock is /dashboard
     const feedLink = screen.getByRole("link", { name: /feed/i });
@@ -38,7 +44,7 @@ describe("TopNav", () => {
 
     // Change pathname to /digest
     vi.mocked(usePathname).mockReturnValue("/digest");
-    rerender(<TopNav />);
+    rerender(<TopNav user={mockUser} />);
 
     const digestLink = screen.getByRole("link", { name: /digest/i });
     expect(digestLink).toHaveAttribute("aria-current", "page");
@@ -48,12 +54,12 @@ describe("TopNav", () => {
   });
 
   it("renders desktop-only utilities", () => {
-    render(<TopNav />);
+    render(<TopNav user={mockUser} />);
 
     // Desktop utilities are inside a hidden md:flex div
     // But RTL renders everything in a jsdom environment by default
     expect(screen.getByLabelText(/search articles/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/add feed/i)).toBeInTheDocument();
-    expect(screen.getByText("MS")).toBeInTheDocument(); // Avatar fallback
+    expect(screen.getByText("JD")).toBeInTheDocument(); // Avatar fallback for John Doe
   });
 });

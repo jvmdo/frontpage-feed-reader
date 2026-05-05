@@ -1,3 +1,4 @@
+import type { User } from "@/lib/auth-client";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { isExcerpt } from "@/lib/feed/utils";
 import type {
@@ -122,5 +123,20 @@ export function createMockItemWithSource(
     isExcerpt: overrides.isExcerpt ?? isExcerpt(item),
     categoryName: overrides.categoryName ?? null,
     categoryColor: overrides.categoryColor ?? null,
+  };
+}
+
+export function createMockUser(overrides: Partial<User> = {}): User {
+  const id = overrides.id ?? `user-${Math.floor(Math.random() * 1000)}`;
+  return {
+    id,
+    name: "John Doe",
+    email: "john@example.com",
+    emailVerified: true,
+    image: null,
+    isAnonymous: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
   };
 }

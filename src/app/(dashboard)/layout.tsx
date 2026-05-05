@@ -47,7 +47,7 @@ export default async function DashboardLayout({
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="flex h-screen flex-col">
-        <TopNav />
+        <TopNav user={session.user} />
         <SidebarProvider className="overflow-hidden">
           <AppSidebar>
             <QueryErrorBoundary fallback={<SidebarErrorFallback />}>
@@ -61,7 +61,7 @@ export default async function DashboardLayout({
               {children}
             </SidebarInset>
 
-            <MobileBottomNav />
+            <MobileBottomNav user={session.user} />
           </div>
         </SidebarProvider>
       </div>

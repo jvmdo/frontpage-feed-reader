@@ -2,8 +2,13 @@ import { RssIcon } from "lucide-react";
 import Link from "next/link";
 import { TopNavActions } from "@/components/layout/components/top-nav-actions";
 import { TopNavItems } from "@/components/layout/components/top-nav-items";
+import type { User } from "@/lib/auth-client";
 
-export function TopNav() {
+interface TopNavProps {
+  user: User;
+}
+
+export function TopNav({ user }: TopNavProps) {
   return (
     <header className="h-14 border-b border-border flex items-center justify-between md:justify-start gap-6 px-3 sm:px-5">
       {/* Left: Logo + Name */}
@@ -25,7 +30,7 @@ export function TopNav() {
       <TopNavItems />
 
       {/* Desktop-only utilities (Search input grows) */}
-      <TopNavActions />
+      <TopNavActions user={user} />
     </header>
   );
 }

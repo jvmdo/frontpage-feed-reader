@@ -19,13 +19,16 @@ test.describe("Mobile Navigation", () => {
       name: "Open sidebar menu",
     });
 
+    const sidebar = page.getByRole("dialog");
+
     // Initially sidebar (Sheet) should be closed on mobile
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(sidebar).not.toBeVisible();
 
-    await toggleButton.click();
+    // `click` fails because of the Next.js float dev overlay
+    await toggleButton.press("Enter");
 
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await expect(page.getByRole("dialog")).toContainText(/frontpage/i);
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).toContainText(/frontpage/i);
   });
 
   test("opens Add Feed Dialog from bottom nav", async ({ authedPage }) => {
@@ -44,18 +47,18 @@ test.describe("Mobile Navigation", () => {
     await expect(dialog.getByLabel(/feed url/i)).toBeVisible();
   });
 
-  test("renders user profile avatar", async ({ authedPage }) => {
+  test("renders user menu avatar", async ({ authedPage }) => {
     const { page } = authedPage;
 
     const bottomNav = page.getByRole("navigation", {
       name: "Mobile navigation",
     });
     const profileButton = bottomNav.getByRole("button", {
-      name: "User profile",
+      name: "User menu",
     });
 
     await expect(profileButton).toBeVisible();
-    // MS is the default fallback in the component
-    await expect(profileButton).toContainText("MS");
+    // PU for Playwright User
+    await expect(profileButton).toContainText("PU");
   });
 });

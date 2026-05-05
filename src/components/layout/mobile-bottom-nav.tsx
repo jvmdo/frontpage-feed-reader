@@ -8,11 +8,16 @@ import {
 } from "lucide-react";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { FeedMenu } from "@/components/layout/components/feed-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserMenu } from "@/components/layout/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
+import type { User } from "@/lib/auth-client";
 
-export function MobileBottomNav() {
+interface MobileBottomNavProps {
+  user: User;
+}
+
+export function MobileBottomNav({ user }: MobileBottomNavProps) {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -61,18 +66,7 @@ export function MobileBottomNav() {
         </Button>
       </FeedMenu>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-10"
-        aria-label="User profile"
-      >
-        <Avatar className="size-7">
-          <AvatarFallback className="bg-secondary text-text-primary text-xs font-semibold">
-            MS
-          </AvatarFallback>
-        </Avatar>
-      </Button>
+      <UserMenu user={user} />
     </nav>
   );
 }
