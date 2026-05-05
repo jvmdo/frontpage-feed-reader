@@ -2,6 +2,8 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { anonymous, testUtils } from "better-auth/plugins";
 import { db } from "@/db";
+import { PasswordResetEmail } from "@/emails/password-reset";
+import { resend } from "./resend";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -11,6 +13,15 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: false,
     minPasswordLength: 6,
+    sendResetPassword: async ({ user, url, token }, _request) => {
+      // Don't await - prevents timing attacks
+      void resend.emails.send({
+        from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+        to: [user.email],
+        subject: "Reset your password",
+        react: PasswordResetEmail({ resetUrl: url }),
+      });
+    },
   },
   socialProviders: {
     github: {
