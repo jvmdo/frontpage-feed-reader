@@ -12,6 +12,12 @@ export const auth = betterAuth({
     requireEmailVerification: false,
     minPasswordLength: 6,
   },
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID as string,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+    },
+  },
   plugins: [
     anonymous({
       onLinkAccount: async ({ anonymousUser, newUser }) => {

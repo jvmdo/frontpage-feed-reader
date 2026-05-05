@@ -57,3 +57,14 @@ test("full journey: sign up, sign out, and sign in", async ({ page }) => {
     page.getByRole("button", { name: /user menu/i }).first(),
   ).toContainText("TU");
 });
+
+test("github button initiates redirect", async ({ page }) => {
+  await page.goto("/sign-in");
+
+  await page.route("**/api/auth/social/github**", async (route) => {
+    expect(route.request().method()).toBe("GET");
+    await route.fulfill({ status: 200, body: "Redirect intercepted" });
+  });
+
+  await page.getByRole("button", { name: /github/i }).click();
+});
