@@ -20,21 +20,10 @@ async function ensureUserExists(
   }
 }
 
-export async function getDevSession(userId?: string | null) {
-  const { test: authTest } = await auth.$context;
-  const targetUserId = userId ?? "dev-user-id";
-  const isDevUser = targetUserId === "dev-user-id";
-
-  await ensureUserExists(authTest, {
-    id: targetUserId,
-    email: isDevUser ? "dev@localhost" : `test-${targetUserId}@example.com`,
-    name: isDevUser ? "Dev User" : "Playwright User",
-  });
-
-  const headers = await authTest.getAuthHeaders({ userId: targetUserId });
-  return auth.api.getSession({ headers });
-}
-
+/**
+ * Creates a real session in the database and returns the session token.
+ * This token should be injected as a cookie in Playwright.
+ */
 export async function createPlaywrightSession(userId: string) {
   const { test: authTest } = await auth.$context;
   const email = `test-${userId}@example.com`;

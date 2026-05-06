@@ -14,11 +14,6 @@ export const test = baseTest.extend<Fixtures>({
     const uniqueId = crypto.randomUUID();
     const { sessionToken, authTest } = await createPlaywrightSession(uniqueId);
 
-    // Set header for robust isolation in development
-    await context.setExtraHTTPHeaders({
-      "x-test-user-id": uniqueId,
-    });
-
     // Inject the cookie directly into Playwright's browser context (for prod compatibility)
     if (sessionToken) {
       await context.addCookies([

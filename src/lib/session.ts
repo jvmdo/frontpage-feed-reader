@@ -1,25 +1,22 @@
 import { headers as nextHeaders } from "next/headers";
+import { cache } from "react";
 import { auth } from "@/lib/auth";
 
-export async function getCurrentSession() {
-  const headers = await nextHeaders();
-
-  // Try the REAL authentication flow first.
-  // This works perfectly for Production AND Playwright (because Playwright sends the cookie).
-  const session = await auth.api.getSession({
-    headers: headers,
+/**
+ * Shared session detection logic that exclusively relies on Better Auth
+ * session management (cookie-based).
+ */
+export async function getSessionFromHeaders(headers: Headers) {
+  return await auth.api.getSession({
+    headers,
   });
-
-  if (session) {
-    return session;
-  }
-
-  if (process.env.NODE_ENV === "development") {
-    const { getDevSession } = await import("@/tests/session");
-    const testUserId = headers.get("x-test-user-id");
-    return await getDevSession(testUserId);
-  }
-
-  // Unauthenticated
-  return null;
 }
+
+/**
+ * For use in Server Components, Actions, and Route Handlers.
+ * Leverages React 'cache' for per-request deduplication.
+ */
+export const getCurrentSession = cache(async () => {
+  const headers = await nextHeaders();
+  return getSessionFromHeaders(headers);
+});
