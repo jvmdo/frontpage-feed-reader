@@ -14,16 +14,14 @@ export async function deleteCategory(
   userId: string,
   categoryId: number,
 ) {
-  // First, verify the category exists and belongs to the user
-  const existingCategory = await db.query.categories.findFirst({
-    where: and(eq(categories.userId, userId), eq(categories.id, categoryId)),
-  });
+  const [deleted] = await db
+    .delete(categories)
+    .where(and(eq(categories.userId, userId), eq(categories.id, categoryId)))
+    .returning();
 
-  if (!existingCategory) {
+  if (!deleted) {
     throw new CategoryNotFoundError();
   }
 
-  await db
-    .delete(categories)
-    .where(and(eq(categories.userId, userId), eq(categories.id, categoryId)));
+  return deleted;
 }
