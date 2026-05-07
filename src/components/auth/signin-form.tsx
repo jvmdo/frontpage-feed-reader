@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import GithubButton from "@/components/auth/github-button";
+import { GuestButton } from "@/components/auth/guest-button";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -113,19 +114,22 @@ export function SigninForm({
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
-          <GithubButton disabled={isSubmitting}>
-            Sign in with GitHub
-          </GithubButton>
-          {process.env.NODE_ENV === "development" && (
-            <Button
-              variant="outline"
-              className="mt-2 w-full"
-              asChild
-              disabled={isSubmitting}
-            >
-              <Link href="/api/dev-login">Auto Login (Dev Only)</Link>
-            </Button>
-          )}
+          <div className="flex flex-col gap-2">
+            <GithubButton disabled={isSubmitting}>
+              Sign in with GitHub
+            </GithubButton>
+            <GuestButton disabled={isSubmitting} />
+            {process.env.NODE_ENV === "development" && (
+              <Button
+                variant="outline"
+                className="w-full"
+                asChild
+                disabled={isSubmitting}
+              >
+                <Link href="/api/dev-login">Auto Login (Dev Only)</Link>
+              </Button>
+            )}
+          </div>
           <FieldDescription className="px-6 text-center">
             Don&apos;t have an account? <Link href="/sign-up">Sign up</Link>
           </FieldDescription>
