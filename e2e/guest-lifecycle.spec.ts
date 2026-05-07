@@ -2,137 +2,112 @@ import crypto from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { feedItems, feeds, session, user } from "@/db/schema";
-import sampleFeeds from "../data/sample-feeds.json";
+import { session } from "@/db/schema";
+import { auth } from "@/lib/auth";
+import { seedCuratedFeeds } from "@/tests/seeding";
 
-test.describe("Guest Lifecycle", () => {
-  test.beforeAll(async () => {
-    // Pre-seed the feeds table so onboarding doesn't make network calls
-    for (const category of sampleFeeds.categories) {
-      for (const feedData of category.feeds) {
-        const [feed] = await db
-          .insert(feeds)
-          .values({
-            url: feedData.feedUrl,
-            title: feedData.title,
-            description: feedData.description,
-            healthStatus: "healthy",
-          })
-          .onConflictDoUpdate({
-            target: feeds.url,
-            set: { title: feedData.title },
-          })
-          .returning();
+let userToCleanup: string | undefined;
 
-        if (feedData.title === "Smashing Magazine") {
-          await db
-            .insert(feedItems)
-            .values({
-              feedId: feed.id,
-              guid: "seed-smash-1",
-              title: "Seeded Smashing Article",
-              url: "https://smashingmagazine.com/seeded",
-              publishedAt: new Date(),
-            })
-            .onConflictDoNothing();
-        }
-      }
-    }
+test.beforeAll(async () => {
+  // Pre-seed the feeds table so onboarding doesn't make network calls
+  await seedCuratedFeeds(db);
+});
+
+test.afterEach(async () => {
+  if (userToCleanup) {
+    const { test: authTest } = await auth.$context;
+    await authTest.deleteUser(userToCleanup);
+    userToCleanup = undefined;
+  }
+});
+
+test("full guest-to-member conversion journey", async ({ page, context }) => {
+  // 1. Try as Guest
+  await page.goto("/sign-in");
+  await page.waitForSelector('body[data-hydrated="true"]');
+
+  await page.getByRole("button", { name: /try as guest/i }).click();
+
+  await expect(page).toHaveURL(/\/dashboard/);
+
+  // Deterministically get the ID of the anonymous user from session cookie
+  const cookies = await context.cookies();
+  const sessionCookie = cookies.find(
+    (c) => c.name === "better-auth.session_token",
+  );
+  if (!sessionCookie) throw new Error("Session cookie not found");
+
+  // Better Auth format is token.signature
+  const token = sessionCookie.value.split(".")[0];
+  const dbSession = await db.query.session.findFirst({
+    where: eq(session.token, token),
   });
 
-  test("full guest-to-member conversion journey", async ({ page, context }) => {
-    // 1. Try as Guest
-    await page.goto("/sign-in");
-    await page.waitForSelector('body[data-hydrated="true"]');
+  if (!dbSession) throw new Error("Session not found in DB");
 
-    // Click Guest button
-    await page.getByRole("button", { name: /try as guest/i }).click();
+  userToCleanup = dbSession.userId;
 
-    // Verify redirect to dashboard
-    await expect(page).toHaveURL(/\/dashboard/);
-    
-    // Deterministically get the ID of the anonymous user from session cookie
-    const cookies = await context.cookies();
-    const sessionCookie = cookies.find(c => c.name === "better-auth.session_token");
-    if (!sessionCookie) throw new Error("Session cookie not found");
-    
-    // BA format is token.signature
-    const token = sessionCookie.value.split(".")[0];
-    const dbSession = await db.query.session.findFirst({
-      where: eq(session.token, token)
-    });
-    
-    if (!dbSession) throw new Error("Session not found in DB");
-    const anonId = dbSession.userId;
+  // Should see pre-populated curated categories
+  const sidebar = page.locator('[data-slot="sidebar"]');
+  const frontendCategory = sidebar.getByRole("link", { name: /frontend/i });
 
-    // Should see pre-populated curated categories
-    const sidebar = page.locator('[data-slot="sidebar"]');
-    const frontendCategory = sidebar.getByRole("link", { name: /frontend/i });
-    await expect(frontendCategory).toBeVisible();
+  await expect(frontendCategory).toBeVisible();
 
-    // Click category to expand it
-    await frontendCategory.click();
+  // Click category to expand it
+  await frontendCategory.click();
+  await expect(
+    sidebar.getByRole("link", { name: /smashing magazine/i }),
+  ).toBeVisible();
 
-    // Now should see smashing magazine
-    await expect(
-      sidebar.getByRole("link", { name: /smashing magazine/i }),
-    ).toBeVisible();
+  // 2. Interact with content
+  const main = page.getByRole("main");
+  const firstArticle = main.getByRole("article").first();
 
-    // 2. Interact with content
-    const main = page.getByRole("main");
-    const firstArticle = main.getByRole("article").first();
-    await expect(firstArticle).toBeVisible();
+  await expect(firstArticle.getByRole("heading", { level: 3 })).toContainText(
+    "Seeded Smashing Article",
+  );
 
-    // Use a locator that finds the text specifically
-    const articleHeading = firstArticle.getByRole("heading", { level: 3 });
-    await expect(articleHeading).toContainText("Seeded Smashing Article");
+  // 3. Convert to full account
+  const guestBanner = page.getByText(/you are using a guest session/i);
+  await expect(guestBanner).toBeVisible();
 
-    await firstArticle.click();
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).not.toBeVisible();
-    await expect(firstArticle).toHaveClass(/opacity-60/);
+  await page.getByRole("button", { name: /click to keep/i }).click();
 
-    // 3. Convert to full account
-    await page.goto("/sign-up");
-    await page.waitForSelector('body[data-hydrated="true"]');
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /create an account/i }),
+  ).toBeVisible();
 
-    const email = `guest-convert-${crypto.randomUUID()}@example.com`;
-    await page.getByLabel(/full name/i).fill("Converted Guest");
-    await page.getByLabel(/email/i).fill(email);
-    await page.getByLabel(/^password$/i).fill("password123");
-    await page.getByLabel(/confirm password/i).fill("password123");
+  const email = `guest-convert-${crypto.randomUUID()}@example.com`;
+  await page.getByLabel(/email address/i).fill(email);
 
-    await page.getByRole("button", { name: /^create account$/i }).click();
+  await page.getByRole("button", { name: /create account/i }).click();
 
-    // Sign up triggers full page reload to /dashboard
-    await expect(page).toHaveURL(/\/dashboard/);
-    await page.waitForSelector('body[data-hydrated="true"]');
-    
-    // Verify User ID remains constant
-    const convertedUser = await db.query.user.findFirst({
-      where: eq(user.email, email)
-    });
-    expect(convertedUser?.id).toBe(anonId);
-    expect(convertedUser?.isAnonymous).toBe(false);
+  // Conversion happens in-place, banner should disappear
+  await expect(guestBanner).not.toBeVisible();
+  await expect(
+    page
+      .locator("[data-sonner-toast]")
+      .filter({ hasText: /account created successfully/i }),
+  ).toBeVisible();
 
-    // 4. Verify data preservation
-    await expect(
-      sidebar.getByRole("link", { name: /frontend/i }),
-    ).toBeVisible();
+  // 4. Verify conversion via UI
+  await page.getByRole("button", { name: /user menu/i }).click();
+  await expect(page.getByText(email)).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: /profile/i })).toBeVisible();
+  await expect(
+    page.getByRole("menuitem", { name: /save progress/i }),
+  ).not.toBeVisible();
 
-    await sidebar.getByRole("link", { name: /frontend/i }).click();
-    await expect(
-      sidebar.getByRole("link", { name: /smashing magazine/i }),
-    ).toBeVisible();
+  // Close menu
+  await page.keyboard.press("Escape");
 
-    const movedArticle = main
-      .getByRole("article")
-      .filter({ hasText: "Seeded Smashing Article" });
+  // 5. Verify data preservation
+  await expect(
+    sidebar.getByRole("link", { name: /smashing magazine/i }),
+  ).toBeVisible();
 
-    // Assert on final state
-    await expect(movedArticle).toHaveClass(/opacity-60/);
-
-    // Cleanup
-    await db.delete(user).where(eq(user.id, anonId));
-  });
+  await expect(
+    main.getByRole("article").filter({ hasText: "Seeded Smashing Article" }),
+  ).toBeVisible();
 });

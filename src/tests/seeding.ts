@@ -9,6 +9,7 @@ import type {
   NewUserItemState,
   NewUserPreferences,
 } from "@/types";
+import sampleFeeds from "../../data/sample-feeds.json";
 
 /**
  * Seeds a user into the database.
@@ -133,4 +134,44 @@ export async function seedItems(
   }));
 
   return await tx.insert(schema.feedItems).values(values).returning();
+}
+
+/**
+ * Seeds the global curated feeds used by the 'Try as Guest' experience.
+ * This prevents real network calls during onboarding in E2E tests.
+ *
+ * @param tx - Drizzle database or transaction instance.
+ */
+export async function seedCuratedFeeds(tx: DB) {
+  for (const category of sampleFeeds.categories) {
+    for (const feedData of category.feeds) {
+      const [feed] = await tx
+        .insert(schema.feeds)
+        .values({
+          url: feedData.feedUrl,
+          title: feedData.title,
+          description: feedData.description,
+          healthStatus: "healthy",
+        })
+        .onConflictDoUpdate({
+          target: schema.feeds.url,
+          set: { title: feedData.title },
+        })
+        .returning();
+
+      // Seed at least one item for Smashing Magazine to verify content display
+      if (feedData.title === "Smashing Magazine") {
+        await tx
+          .insert(schema.feedItems)
+          .values({
+            feedId: feed.id,
+            guid: "seed-smash-1",
+            title: "Seeded Smashing Article",
+            url: "https://smashingmagazine.com/seeded",
+            publishedAt: new Date(),
+          })
+          .onConflictDoNothing();
+      }
+    }
+  }
 }
