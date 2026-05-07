@@ -4,14 +4,18 @@ import { getSessionFromHeaders } from "@/lib/session";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check session using shared logic (cookie-based)
   const session = await getSessionFromHeaders(request.headers);
 
   const isAuthRoute = pathname === "/sign-in" || pathname === "/sign-up";
   const isDashboardRoute = pathname.startsWith("/dashboard");
 
-  // If user is logged in and tries to access sign-in/sign-up, redirect to dashboard
+  // If user is logged in and tries to access sign-in/sign-up
   if (session && isAuthRoute) {
+    // ALLOW anonymous users to stay on auth routes so they can register themselves
+    if (session.user.isAnonymous) {
+      return NextResponse.next();
+    }
+    // Regular users are redirected to dashboard
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

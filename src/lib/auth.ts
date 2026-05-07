@@ -1,14 +1,37 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { createAuthMiddleware } from "better-auth/api";
 import { anonymous, testUtils } from "better-auth/plugins";
 import { db } from "@/db";
 import { PasswordResetEmail } from "@/emails/password-reset";
+import { convertGuestToMember } from "@/services/auth/convert-guest-account";
+import { onboardGuest } from "@/services/auth/onboard-guest";
 import { resend } from "./resend";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
+  user: {
+    additionalFields: {
+      isAnonymous: {
+        type: "boolean",
+        defaultValue: false,
+      },
+    },
+  },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === "/sign-in/anonymous") {
+        const returned = ctx.context.returned as any;
+        const user = returned?.user || returned;
+
+        if (user?.id && user.isAnonymous) {
+          await onboardGuest(db, user.id);
+        }
+      }
+    }),
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
@@ -31,8 +54,9 @@ export const auth = betterAuth({
   },
   plugins: [
     anonymous({
+      disableDeleteAnonymousUser: true,
       onLinkAccount: async ({ anonymousUser, newUser }) => {
-        // perform actions like moving the feed items from anonymous user to the new user
+        await convertGuestToMember(db, anonymousUser.user.id, newUser.user);
       },
     }),
     testUtils(),
