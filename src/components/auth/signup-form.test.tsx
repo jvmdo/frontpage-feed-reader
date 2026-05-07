@@ -29,6 +29,7 @@ vi.mock("@/lib/auth-client", () => ({
     },
     signIn: {
       social: vi.fn(),
+      anonymous: vi.fn(),
     },
   },
 }));
@@ -154,6 +155,14 @@ describe("SignupForm", () => {
       provider: "github",
       callbackURL: "/dashboard",
     });
+  });
+
+  it("calls authClient.signIn.anonymous when guest button is clicked", async () => {
+    const { user } = setup();
+
+    await user.click(screen.getByRole("button", { name: /try as guest/i }));
+
+    expect(authClient.signIn.anonymous).toHaveBeenCalled();
   });
 
   it("displays loading state while creating account", async () => {
