@@ -61,3 +61,12 @@ export const resetPasswordSchema = z
   });
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+/**
+ * Schema for guest conversion.
+ */
+export const guestConversionSchema = z.object({
+  email: z.email("Invalid email address"),
+});
+
+export type GuestConversionInput = z.infer<typeof guestConversionSchema>;

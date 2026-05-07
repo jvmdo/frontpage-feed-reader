@@ -1,6 +1,7 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { GuestBanner } from "@/components/auth/guest-banner";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SidebarErrorFallback } from "@/components/layout/components/sidebar-error-fallback";
 import { SidebarFeeds } from "@/components/layout/components/sidebar-feeds";
@@ -48,6 +49,7 @@ export default async function DashboardLayout({
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="flex h-screen flex-col">
         <TopNav user={session.user} />
+
         <SidebarProvider className="overflow-hidden">
           <AppSidebar>
             <QueryErrorBoundary fallback={<SidebarErrorFallback />}>
@@ -57,6 +59,8 @@ export default async function DashboardLayout({
             </QueryErrorBoundary>
           </AppSidebar>
           <div className="flex flex-1 flex-col overflow-hidden">
+            {session.user.isAnonymous && <GuestBanner />}
+
             <SidebarInset className="flex flex-col overflow-hidden">
               {children}
             </SidebarInset>

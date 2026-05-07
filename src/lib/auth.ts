@@ -4,6 +4,7 @@ import { createAuthMiddleware } from "better-auth/api";
 import { anonymous, testUtils } from "better-auth/plugins";
 import { db } from "@/db";
 import { PasswordResetEmail } from "@/emails/password-reset";
+import { generateAnonName } from "@/lib/utils";
 import { convertGuestToMember } from "@/services/auth/convert-guest-account";
 import { onboardGuest } from "@/services/auth/onboard-guest";
 import { resend } from "./resend";
@@ -12,14 +13,6 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
-  user: {
-    additionalFields: {
-      isAnonymous: {
-        type: "boolean",
-        defaultValue: false,
-      },
-    },
-  },
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
       if (ctx.path === "/sign-in/anonymous") {
@@ -55,8 +48,12 @@ export const auth = betterAuth({
   plugins: [
     anonymous({
       disableDeleteAnonymousUser: true,
+      generateName: generateAnonName,
       onLinkAccount: async ({ anonymousUser, newUser }) => {
-        await convertGuestToMember(db, anonymousUser.user.id, newUser.user);
+        await convertGuestToMember(db, anonymousUser.user.id, {
+          ...newUser.user,
+          name: anonymousUser.user.name,
+        });
       },
     }),
     testUtils(),
