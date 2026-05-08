@@ -71,6 +71,18 @@ export class FeedRecordNotFoundError extends Error {
 }
 
 /**
+ * Thrown when curated feeds are missing from the database during onboarding.
+ * This indicates that the seeding script has not been run or is out of sync.
+ */
+export class CuratedFeedsMissingError extends Error {
+  code = "CURATED_FEEDS_MISSING" as const;
+  constructor(message = "Required curated feeds are missing from the database. Please run bun db:seed.") {
+    super(message);
+    this.name = "CuratedFeedsMissingError";
+  }
+}
+
+/**
  * Thrown when a user tries to create a category with a name that already exists for them.
  */
 export class DuplicateCategoryError extends Error {

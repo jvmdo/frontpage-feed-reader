@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Frontpage</title>
+    <link>https://frontpage.app</link>
+    <description>A better way to read the web.</description>
+    <lastBuildDate>Fri, 08 May 2026 00:00:00 GMT</lastBuildDate>
+    <language>en</language>
+    <atom:link href="https://frontpage.app/feed/" rel="self" type="application/rss+xml" />
+
+    <item>
+      <title>Welcome to Frontpage</title>
+      <guid>https://frontpage.app/welcome</guid>
+      <pubDate>Fri, 08 May 2026 00:00:00 GMT</pubDate>
+      <description>A better way to read the web — no trackers, no ads, just the content you care about.</description>
+      <content:encoded><![CDATA[<p><strong>A Better Way to Read the Web</strong></p>
+
+<p>
+  Frontpage is designed to give you a clean, focused environment for
+  consuming your favorite content. No trackers, no ads, just the words
+  and images you care about.
+</p>
+
+<p><strong>Key Features</strong></p>
+
+<p>
+  <strong>Privacy First:</strong> Your reading habits are your business.
+  We don't track what you read.
+</p>
+
+<p>
+  <strong>Clean Reader:</strong> Distraction-free reading experience
+  for every article.
+</p>
+
+<p>
+  <strong>Organized:</strong> Groups your feeds into categories for
+  easy management.
+</p>
+
+<p>
+  <strong>Fast:</strong> Built with Next.js and React for a snappy,
+  app-like feel.
+</p>
+
+<p>
+  Since you are in a <strong>Guest Session</strong>, your feeds and
+  progress are stored temporarily. To keep them forever, click the
+  avatar icon in the top right to save your account.
+</p>
+
+<p>
+  Happy reading!<br>
+  — The Frontpage Team
+</p>]]></content:encoded>
+    </item>
+
+  </channel>
+</rss>

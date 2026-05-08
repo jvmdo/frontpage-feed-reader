@@ -1,5 +1,9 @@
+import fs from "node:fs";
+import path from "node:path";
 import type { DB } from "@/db";
 import * as schema from "@/db/schema";
+import { WELCOME_FEED_URL } from "@/lib/constants";
+import { parseFeedXml } from "@/lib/feed/parser";
 import type {
   NewCategory,
   NewFeed,
@@ -37,7 +41,6 @@ export async function seedFeed(tx: DB, overrides: Partial<NewFeed> = {}) {
     .values({
       url: `https://example.com/${Math.random().toString(36).slice(2)}`,
       title: "Sample Feed",
-      healthStatus: "healthy",
       ...overrides,
     })
     .returning();
@@ -137,40 +140,84 @@ export async function seedItems(
 }
 
 /**
- * Seeds the global curated feeds used by the 'Try as Guest' experience.
+ * Seeds the global curated feeds and their items used by the 'Try as Guest' experience.
  * This prevents real network calls during onboarding in E2E tests.
  *
  * @param tx - Drizzle database or transaction instance.
  */
 export async function seedCuratedFeeds(tx: DB) {
-  for (const category of sampleFeeds.categories) {
-    for (const feedData of category.feeds) {
-      const [feed] = await tx
-        .insert(schema.feeds)
-        .values({
-          url: feedData.feedUrl,
-          title: feedData.title,
-          description: feedData.description,
-          healthStatus: "healthy",
-        })
-        .onConflictDoUpdate({
-          target: schema.feeds.url,
-          set: { title: feedData.title },
-        })
-        .returning();
+  // 1. Process Metadata
+  const feedsToSeed = [
+    {
+      url: WELCOME_FEED_URL,
+      title: "Frontpage",
+      description: "Welcome to your new favorite way to read the web.",
+    },
+    ...sampleFeeds.categories.flatMap((c) =>
+      c.feeds.map((f) => ({
+        url: f.feedUrl,
+        title: f.title,
+        description: f.description,
+      })),
+    ),
+  ];
 
-      // Seed at least one item for Smashing Magazine to verify content display
-      if (feedData.title === "Smashing Magazine") {
+  await tx.insert(schema.feeds).values(feedsToSeed).onConflictDoNothing();
+
+  // 2. Seed "Frontpage" Items
+  const welcomeFeed = await tx.query.feeds.findFirst({
+    where: (feeds, { eq }) => eq(feeds.url, WELCOME_FEED_URL),
+  });
+
+  if (welcomeFeed) {
+    const publicPath = path.join(process.cwd(), "public", "feed.xml");
+    if (fs.existsSync(publicPath)) {
+      const xml = fs.readFileSync(publicPath, "utf-8");
+      const { items } = await parseFeedXml(xml, WELCOME_FEED_URL);
+
+      if (items.length > 0) {
         await tx
           .insert(schema.feedItems)
-          .values({
-            feedId: feed.id,
-            guid: "seed-smash-1",
-            title: "Seeded Smashing Article",
-            url: "https://smashingmagazine.com/seeded",
-            publishedAt: new Date(),
-          })
+          .values(items.map((item) => ({ ...item, feedId: welcomeFeed.id })))
           .onConflictDoNothing();
+      }
+    }
+  }
+
+  // 3. Process Fixture Items for other curated feeds
+  for (const category of sampleFeeds.categories) {
+    for (const feedData of category.feeds) {
+      const fixtureName = (feedData as any).fixture;
+      if (!fixtureName) continue;
+
+      const feed = await tx.query.feeds.findFirst({
+        where: (feeds, { eq }) => eq(feeds.url, feedData.feedUrl),
+      });
+
+      if (feed) {
+        const fixturePath = path.join(
+          process.cwd(),
+          "data",
+          "fixtures",
+          fixtureName,
+        );
+
+        if (fs.existsSync(fixturePath)) {
+          const xml = fs.readFileSync(fixturePath, "utf-8");
+          const parsed = await parseFeedXml(xml, feedData.feedUrl);
+
+          if (parsed.items.length > 0) {
+            await tx
+              .insert(schema.feedItems)
+              .values(
+                parsed.items.map((item) => ({
+                  ...item,
+                  feedId: feed.id,
+                })),
+              )
+              .onConflictDoNothing();
+          }
+        }
       }
     }
   }

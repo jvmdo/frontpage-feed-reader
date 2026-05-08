@@ -9,7 +9,7 @@ import { seedCuratedFeeds } from "@/tests/seeding";
 let userToCleanup: string | undefined;
 
 test.beforeAll(async () => {
-  // Pre-seed the feeds table so onboarding doesn't make network calls
+  // Pre-seed the feeds table
   await seedCuratedFeeds(db);
 });
 
@@ -49,22 +49,22 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
 
   // Should see pre-populated curated categories
   const sidebar = page.locator('[data-slot="sidebar"]');
-  const frontendCategory = sidebar.getByRole("link", { name: /frontend/i });
+  const gettingStartedCategory = sidebar.getByRole("link", {
+    name: /getting started/i,
+  });
 
-  await expect(frontendCategory).toBeVisible();
+  await expect(gettingStartedCategory).toBeVisible();
 
   // Click category to expand it
-  await frontendCategory.click();
-  await expect(
-    sidebar.getByRole("link", { name: /smashing magazine/i }),
-  ).toBeVisible();
+  await gettingStartedCategory.click();
+  await expect(sidebar.getByRole("link", { name: /frontpage/i })).toBeVisible();
 
   // 2. Interact with content
   const main = page.getByRole("main");
   const firstArticle = main.getByRole("article").first();
 
   await expect(firstArticle.getByRole("heading", { level: 3 })).toContainText(
-    "Seeded Smashing Article",
+    /Welcome to Frontpage/i,
   );
 
   // 3. Convert to full account
@@ -103,11 +103,9 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
   await page.keyboard.press("Escape");
 
   // 5. Verify data preservation
-  await expect(
-    sidebar.getByRole("link", { name: /smashing magazine/i }),
-  ).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: /frontpage/i })).toBeVisible();
 
   await expect(
-    main.getByRole("article").filter({ hasText: "Seeded Smashing Article" }),
+    main.getByRole("article").filter({ hasText: /Welcome to Frontpage/i }),
   ).toBeVisible();
 });
