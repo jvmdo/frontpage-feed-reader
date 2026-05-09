@@ -145,7 +145,11 @@ export function SignupForm({
             <GithubButton disabled={isSubmitting}>
               Sign up with GitHub
             </GithubButton>
-            <GuestButton disabled={isSubmitting} />
+            <GuestButton
+              variant="outline"
+              showIcon={true}
+              disabled={isSubmitting}
+            />
           </div>
           <FieldDescription className="px-6 text-center">
             Already have an account?{" "}

@@ -7,16 +7,25 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
-interface GuestButtonProps {
-  disabled?: boolean;
+interface GuestButtonProps extends React.ComponentProps<typeof Button> {
+  showIcon?: boolean;
 }
 
-export function GuestButton({ disabled }: GuestButtonProps) {
+export function GuestButton({
+  className,
+  children,
+  disabled,
+  showIcon = false,
+  variant = "default",
+  ...props
+}: GuestButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleGuestSignIn = async () => {
+  const handleGuestSignIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     setIsLoading(true);
     try {
       const { error } = await authClient.signIn.anonymous();
@@ -26,7 +35,7 @@ export function GuestButton({ disabled }: GuestButtonProps) {
         toast.success("Signed in as guest!");
         router.push("/dashboard");
       }
-    } catch (e) {
+    } catch {
       toast.error("An unexpected error occurred.");
     } finally {
       setIsLoading(false);
@@ -35,18 +44,19 @@ export function GuestButton({ disabled }: GuestButtonProps) {
 
   return (
     <Button
-      variant="outline"
+      variant={variant}
       type="button"
-      className="w-full"
+      className={cn(className)}
       disabled={disabled || isLoading}
       onClick={handleGuestSignIn}
+      {...props}
     >
       {isLoading ? (
         <Spinner data-icon="inline-start" />
       ) : (
-        <UserIcon data-icon="inline-start" />
+        showIcon && <UserIcon data-icon="inline-start" />
       )}
-      {isLoading ? "Signing in as guest..." : "Try as Guest"}
+      {children || (isLoading ? "Signing in as guest..." : "Try as Guest")}
     </Button>
   );
 }

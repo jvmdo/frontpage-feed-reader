@@ -118,12 +118,16 @@ export function SigninForm({
             <GithubButton disabled={isSubmitting}>
               Sign in with GitHub
             </GithubButton>
-            <GuestButton disabled={isSubmitting} />
+            <GuestButton
+              variant={"outline"}
+              showIcon={true}
+              disabled={isSubmitting}
+            />
             {process.env.NODE_ENV === "development" && (
               <Button
+                asChild={true}
                 variant="outline"
                 className="w-full"
-                asChild
                 disabled={isSubmitting}
               >
                 <Link href="/api/dev-login">Auto Login (Dev Only)</Link>
