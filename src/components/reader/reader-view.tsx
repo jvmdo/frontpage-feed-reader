@@ -3,9 +3,7 @@
 import { ExternalLinkIcon } from "lucide-react";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { RelativeDate } from "@/components/shared/relative-date";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { ItemWithSource } from "@/types";
 
@@ -18,62 +16,55 @@ export function ReaderView({ data, className }: ReaderViewProps) {
   const { item, feed, isExcerpt } = data;
 
   return (
-    <div className={cn("flex flex-col gap-8 py-8 px-4 md:px-8", className)}>
+    <div className={cn("flex flex-col gap-4 py-8 px-4 md:px-8", className)}>
       <header className="flex flex-col gap-4">
-        {/* Source metadata */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-            <FeedIcon url={feed.iconUrl} size={20} />
-            <span>{feed.title}</span>
-            <span className="opacity-40" aria-hidden="true">
-              •
-            </span>
-            <RelativeDate date={item.publishedAt || item.createdAt} />
-          </div>
-          {isExcerpt && (
-            <Badge variant="secondary" className="font-semibold">
-              Excerpt
-            </Badge>
-          )}
+        <div className="inline-flex gap-1 text-text-secondary">
+          <FeedIcon url={feed.iconUrl} size={20} />
+          {feed.title}
         </div>
 
-        {/* Title */}
         <h1 className="text-2xl md:text-3xl font-bold text-text-primary leading-tight">
           {item.title}
         </h1>
 
-        {/* Original link */}
-        {item.url && (
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-sm text-accent hover:underline w-fit"
-          >
-            View original
-            <ExternalLinkIcon className="size-3.5" />
-            <span className="sr-only"> (Opens in a new tab)</span>
-          </a>
-        )}
+        <div className="flex flex-wrap gap-2 justify-between relative -top-3">
+          <RelativeDate
+            date={item.publishedAt || item.createdAt}
+            className="text-text-tertiary "
+          />
+
+          {!isExcerpt && item.url && (
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex gap-0.5 text-sm text-primary hover:underline"
+            >
+              View original
+              <ExternalLinkIcon className="size-3" />
+              <span className="sr-only"> (Opens in a new tab)</span>
+            </a>
+          )}
+        </div>
       </header>
 
-      <Separator />
+      <ReaderViewContent content={item.content || item.description || ""} />
 
-      {/* Item Content */}
-      <div className="flex flex-col gap-8">
-        <ReaderViewContent content={item.content || item.description || ""} />
-
-        {isExcerpt && item.url && (
-          <div className="pt-4 border-t border-border-subtle">
-            <Button asChild className="w-full sm:w-auto" size="lg">
-              <a href={item.url} target="_blank" rel="noopener noreferrer">
-                Read full item on {feed.title}
-                <ExternalLinkIcon data-icon="inline-end" />
-              </a>
-            </Button>
-          </div>
-        )}
-      </div>
+      {isExcerpt && item.url && (
+        <div className="flex flex-col items-center gap-4 pt-4 border-t border-border-subtle">
+          <p className="text-text-tertiary text-xs italic order-2">
+            The author provided only an excerpt for this item. Please, go to the
+            original source in order to read the full article.
+          </p>
+          <Button asChild className="w-full sm:max-w-xl" size="lg">
+            <a href={item.url} target="_blank" rel="noopener noreferrer">
+              View original
+              <ExternalLinkIcon data-icon="inline-end" />
+              <span className="sr-only"> (Opens in a new tab)</span>
+            </a>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

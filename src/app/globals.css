@@ -135,7 +135,7 @@
   --text-primary: #1a1d21;
   --text-secondary: #57606a;
   --text-tertiary: #8b949e;
-  --accent-hover: #1d4ed8;
+  --accent-hover: #2563eb;
   --accent-subtle: #eff6ff;
   --unread-indicator: #2563eb;
 
@@ -245,12 +245,12 @@
       @apply text-lg;
     }
 
-    p {
+    p:not(:last-of-type) {
       @apply mb-6;
     }
 
     a {
-      @apply text-accent underline underline-offset-4 decoration-accent/30 hover:decoration-accent transition-colors;
+      @apply text-primary underline underline-offset-4 decoration-primary/0 hover:decoration-primary transition-colors;
     }
 
     blockquote {
@@ -259,7 +259,11 @@
 
     ul,
     ol {
-      @apply mb-6 pl-6;
+      @apply pl-6;
+    }
+
+    :where(ul, ol):not(:last-of-type) {
+      @apply mb-6;
     }
 
     ul {
@@ -270,7 +274,7 @@
       @apply list-decimal;
     }
 
-    li {
+    li:not(:last-of-type) {
       @apply mb-2;
     }
 
@@ -328,11 +332,11 @@
 
 @theme inline {
   @keyframes bg-position {
-  0% {
-    background-position: 0% 50%;
+    0% {
+      background-position: 0% 50%;
     }
-  100% {
-    background-position: 100% 50%;
+    100% {
+      background-position: 100% 50%;
     }
   }
 }

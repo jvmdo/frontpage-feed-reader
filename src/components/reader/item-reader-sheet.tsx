@@ -1,9 +1,11 @@
 "use client";
 
-import { AlertCircleIcon } from "lucide-react";
+import { AlertCircleIcon, Maximize2Icon } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { ReaderView } from "@/components/reader/reader-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -14,15 +16,21 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
-import { getItemReaderScroll, saveItemReaderScroll } from "@/lib/scroll-store";
+import {
+  getItemReaderScroll,
+  saveItemReaderScroll,
+  saveItemsListScroll,
+} from "@/lib/scroll-store";
 import { ReaderNavigation } from "./reader-navigation";
 
 export function ItemReaderSheet() {
   const { activeItemId, setActiveItemId } = useActiveItem();
+  const { feedId, categoryId } = useFeedFilter();
   const { data, isLoading, error } = useItem(activeItemId);
   const { goToNext, goToPrev } = useItemReaderNavigation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -75,9 +83,22 @@ export function ItemReaderSheet() {
     }
   };
 
+  const handleFullPageTransition = () => {
+    saveItemsListScroll(feedId || categoryId);
+  };
+
+  const fullPageHref = `/items/${activeItemId}${
+    feedId || categoryId
+      ? `?${new URLSearchParams({
+          ...(feedId ? { feedId: String(feedId) } : {}),
+          ...(categoryId ? { categoryId: String(categoryId) } : {}),
+        }).toString()}`
+      : ""
+  }`;
+
   return (
     <Sheet open={!!activeItemId} onOpenChange={handleOpenChange}>
-      <SheetContent className="sm:max-w-[90vw] md:max-w-2xl lg:max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
+      <SheetContent className="gap-0 w-[90vw]! md:max-w-2xl lg:max-w-3xl">
         <SheetHeader className="sr-only">
           <SheetTitle>Item Reader</SheetTitle>
           <SheetDescription>
@@ -112,8 +133,22 @@ export function ItemReaderSheet() {
         </section>
 
         {data && (
-          <SheetFooter className="sticky bottom-0 z-10 border-t bg-background/80 p-4 backdrop-blur-sm sm:flex-row">
+          <SheetFooter className="sticky bottom-0 z-10 border-t">
             <ReaderNavigation />
+            {!data.isExcerpt && (
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                onClick={handleFullPageTransition}
+                className="gap-2"
+              >
+                <Link href={fullPageHref}>
+                  <Maximize2Icon className="size-4" />
+                  <span className="hidden sm:inline">Full Page</span>
+                </Link>
+              </Button>
+            )}
           </SheetFooter>
         )}
       </SheetContent>

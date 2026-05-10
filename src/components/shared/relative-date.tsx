@@ -1,9 +1,10 @@
 "use client";
 
 import { formatDistance } from "date-fns";
+import type { ComponentProps } from "react";
 import { useServerTime } from "@/components/providers/server-time-provider";
 
-interface RelativeDateProps {
+interface RelativeDateProps extends ComponentProps<"time"> {
   date: Date | string;
   addSuffix?: boolean;
 }
@@ -13,7 +14,11 @@ interface RelativeDateProps {
  * Uses a synchronized server time to handle clock drift between client and server.
  * Updates every 30 seconds to keep the displayed time fresh.
  */
-export function RelativeDate({ date, addSuffix = true }: RelativeDateProps) {
+export function RelativeDate({
+  date,
+  addSuffix = true,
+  ...props
+}: RelativeDateProps) {
   const { adjustedNow } = useServerTime();
 
   if (!adjustedNow) {
@@ -26,17 +31,25 @@ export function RelativeDate({ date, addSuffix = true }: RelativeDateProps) {
   // If the date is in the future relative to our adjusted now,
   // we treat it as "just now" to avoid "in 5 minutes" or confusing drift.
   if (parsedDate > adjustedNow) {
-    return <time dateTime={parsedDate.toISOString()}>Just now</time>;
+    return (
+      <time {...props} dateTime={parsedDate.toISOString()}>
+        Just now
+      </time>
+    );
   }
 
   // Also handle very recent past (less than 30 seconds) as "Just now"
   const diffInSeconds = (adjustedNow.getTime() - parsedDate.getTime()) / 1000;
   if (diffInSeconds < 30) {
-    return <time dateTime={parsedDate.toISOString()}>Just now</time>;
+    return (
+      <time {...props} dateTime={parsedDate.toISOString()}>
+        Just now
+      </time>
+    );
   }
 
   return (
-    <time dateTime={parsedDate.toISOString()}>
+    <time {...props} dateTime={parsedDate.toISOString()}>
       {formatDistance(parsedDate, adjustedNow, { addSuffix })}
     </time>
   );
