@@ -7,7 +7,7 @@ import { markAllReadAction } from "@/actions/feed/mark-all-read-action";
 import { useFeeds } from "@/hooks/feed/use-feeds";
 import type { MarkAllReadInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
-import type { ItemWithSource } from "@/types";
+import type { ListItemWithSource } from "@/types";
 
 /**
  * Custom hook for marking all items in a scope as read.
@@ -88,7 +88,7 @@ export function useMarkAllRead() {
       }
 
       // 4. Optimistically update items in all queries
-      queryClient.setQueriesData<InfiniteData<ItemWithSource[]>>(
+      queryClient.setQueriesData<InfiniteData<ListItemWithSource[]>>(
         { queryKey: ["feeds", "items"] },
         (old) => {
           if (!old?.pages) return old;

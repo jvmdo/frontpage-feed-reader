@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, getTableColumns } from "drizzle-orm";
 import type { DB } from "@/db";
 import {
   categories,
@@ -19,9 +19,12 @@ export async function getItem(
   userId: string,
   itemId: number,
 ): Promise<ItemWithSource | null> {
+  const { rawPayload: _rawPayload, ...itemColumns } =
+    getTableColumns(feedItems);
+
   const [result] = await db
     .select({
-      item: feedItems,
+      item: itemColumns,
       feed: feeds,
       readAt: userItemStates.readAt,
       globalWatermark: userPreferences.markedAllReadAt,

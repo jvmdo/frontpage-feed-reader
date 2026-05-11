@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useMarkRead } from "@/hooks/item/use-mark-read";
 import { cn } from "@/lib/utils";
-import type { ItemWithSource } from "@/types";
+import type { ListItemWithSource } from "@/types";
 import { FeedIcon } from "./feed-icon";
 
 interface ItemCardProps {
-  data: ItemWithSource;
+  data: ListItemWithSource;
   className?: string;
 }
 

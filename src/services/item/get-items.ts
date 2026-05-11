@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, getTableColumns } from "drizzle-orm";
 import type { DB } from "@/db";
 import {
   categories,
@@ -9,7 +9,7 @@ import {
   userPreferences,
 } from "@/db/schema";
 import { isExcerpt } from "@/lib/feed/utils";
-import type { ItemWithSource } from "@/types";
+import type { ListItemWithSource } from "@/types";
 
 interface GetItemsOptions {
   limit?: number;
@@ -26,12 +26,18 @@ export async function getItems(
   db: DB,
   userId: string,
   options: GetItemsOptions,
-): Promise<ItemWithSource[]> {
+): Promise<ListItemWithSource[]> {
   const { limit = 20, offset = 0, feedId, categoryId } = options;
+
+  const {
+    rawPayload: _rawPayload,
+    content: _content,
+    ...itemColumns
+  } = getTableColumns(feedItems);
 
   const results = await db
     .select({
-      item: feedItems,
+      item: itemColumns,
       feed: feeds,
       readAt: userItemStates.readAt,
       globalWatermark: userPreferences.markedAllReadAt,

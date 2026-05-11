@@ -8,9 +8,13 @@ import {
 import { markReadAction } from "@/actions/item/mark-read-action";
 import type { MarkReadInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
-import type { FeedWithSubscription, ItemWithSource } from "@/types";
+import type {
+  FeedWithSubscription,
+  ItemWithSource,
+  ListItemWithSource,
+} from "@/types";
 
-type CacheData = InfiniteData<ItemWithSource[]> | ItemWithSource;
+type CacheData = InfiniteData<ListItemWithSource[]> | ItemWithSource;
 
 function findItemInCache(
   queries: [readonly unknown[], CacheData | undefined][],

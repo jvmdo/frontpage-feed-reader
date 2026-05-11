@@ -7,6 +7,8 @@ import type {
   FeedWithSubscription,
   Item,
   ItemWithSource,
+  ListItem,
+  ListItemWithSource,
   Subscription,
 } from "@/types";
 
@@ -94,10 +96,16 @@ export function createMockItem(overrides: Partial<Item> = {}): Item {
     author: "Author Name",
     publishedAt: new Date(),
     updatedAt: new Date(),
-    rawPayload: {},
     createdAt: new Date(),
     ...overrides,
   };
+}
+
+export function createMockListItem(
+  overrides: Partial<ListItem> = {},
+): ListItem {
+  const { content: _content, ...item } = createMockItem(overrides);
+  return item;
 }
 
 export function createMockItemWithSource(
@@ -112,6 +120,32 @@ export function createMockItemWithSource(
 ): ItemWithSource {
   const feed = createMockFeed(overrides.feed);
   const item = createMockItem({
+    feedId: feed.id,
+    ...overrides.item,
+  });
+
+  return {
+    item,
+    feed,
+    isRead: overrides.isRead ?? false,
+    isExcerpt: overrides.isExcerpt ?? isExcerpt(item),
+    categoryName: overrides.categoryName ?? null,
+    categoryColor: overrides.categoryColor ?? null,
+  };
+}
+
+export function createMockListItemWithSource(
+  overrides: Partial<{
+    item: Partial<ListItem>;
+    feed: Partial<Feed>;
+    isRead: boolean;
+    isExcerpt?: boolean;
+    categoryName?: string | null;
+    categoryColor?: string | null;
+  }> = {},
+): ListItemWithSource {
+  const feed = createMockFeed(overrides.feed);
+  const item = createMockListItem({
     feedId: feed.id,
     ...overrides.item,
   });

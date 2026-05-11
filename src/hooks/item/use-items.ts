@@ -1,12 +1,12 @@
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
-import type { ItemWithSource } from "@/types";
+import type { ListItemWithSource } from "@/types";
 
 export function useItems() {
   const { feedId, categoryId } = useFeedFilter();
 
-  return useSuspenseInfiniteQuery<ItemWithSource[]>({
+  return useSuspenseInfiniteQuery<ListItemWithSource[]>({
     queryKey: ["feeds", "items", { feedId, categoryId }],
     queryFn: async ({ pageParam }) => {
       const offset = pageParam as number;

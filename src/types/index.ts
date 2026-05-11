@@ -32,9 +32,11 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type NewSubscription = typeof subscriptions.$inferInsert;
 export type UpdateSubscription = Partial<NewSubscription>;
 
-export type Item = typeof feedItems.$inferSelect;
+export type Item = Omit<typeof feedItems.$inferSelect, "rawPayload">;
 export type NewItem = typeof feedItems.$inferInsert;
 export type UpdateItem = Partial<NewItem>;
+
+export type ListItem = Omit<Item, "content">;
 
 export type Session = typeof session.$inferSelect;
 export type Account = typeof account.$inferSelect;
@@ -52,4 +54,8 @@ export type ItemWithSource = {
   isExcerpt: boolean;
   categoryName: string | null;
   categoryColor: string | null;
+};
+
+export type ListItemWithSource = Omit<ItemWithSource, "item"> & {
+  item: ListItem;
 };
