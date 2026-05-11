@@ -67,7 +67,6 @@ const MOCK_ITEM: ItemWithSource = {
     description: null,
     guid: "1",
     author: "Frontpage Team",
-    rawPayload: undefined,
   },
   feed: {
     id: 1,

@@ -2,11 +2,9 @@
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
-import { getItemReaderScroll, saveItemReaderScroll } from "@/lib/scroll-store";
 import { createMockItemWithSource } from "@/tests/factories";
 import { ItemReaderLightbox } from "./item-reader-lightbox";
 import { ReaderView } from "./reader-view";
@@ -76,21 +74,22 @@ describe("ItemReaderLightbox Integration", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useActiveItem as any).mockReturnValue({
+
+    vi.mocked(useActiveItem).mockReturnValue({
       activeItemId: 1,
       setActiveItemId: mockSetActiveItemId,
     });
-    (useItemReaderNavigation as any).mockReturnValue({
+
+    vi.mocked(useItemReaderNavigation).mockReturnValue({
       goToNext: vi.fn(),
       goToPrev: vi.fn(),
       hasNext: true,
       hasPrev: true,
-    });
-    (getItemReaderScroll as any).mockReturnValue(0);
+    } as any);
   });
 
   it("renders correctly when open and loading", () => {
-    (useItem as any).mockReturnValue({ isLoading: true });
+    vi.mocked(useItem).mockReturnValue({ isLoading: true } as any);
 
     render(<ItemReaderLightbox />);
 
@@ -98,10 +97,10 @@ describe("ItemReaderLightbox Integration", () => {
   });
 
   it("renders error state", () => {
-    (useItem as any).mockReturnValue({
+    vi.mocked(useItem).mockReturnValue({
       error: new Error("Failed to load"),
       isLoading: false,
-    });
+    } as any);
 
     render(<ItemReaderLightbox />);
 
@@ -112,7 +111,8 @@ describe("ItemReaderLightbox Integration", () => {
     const data = createMockItemWithSource({
       item: { title: "Loaded Article" },
     });
-    (useItem as any).mockReturnValue({ data, isLoading: false });
+
+    vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
 
     render(<ItemReaderLightbox />);
 
@@ -121,77 +121,15 @@ describe("ItemReaderLightbox Integration", () => {
     ).toBeInTheDocument();
   });
 
-  it("closes the lightbox and saves scroll when clicking the close button", async () => {
+  it("closes the lightbox when clicking the close button", async () => {
     const data = createMockItemWithSource({ item: { id: 1 } });
-    (useItem as any).mockReturnValue({ data, isLoading: false });
+
+    vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
 
     render(<ItemReaderLightbox />);
 
-    // Query by the X icon class
-    const xIcon = document.querySelector(".lucide-x");
-    const btn = xIcon?.closest("button");
-    if (btn) {
-      await userEvent.click(btn);
-    }
+    await userEvent.click(screen.getByRole("button", { name: /close/i }));
 
     expect(mockSetActiveItemId).toHaveBeenCalledWith(null);
-    expect(saveItemReaderScroll).toHaveBeenCalledWith(1, 0);
-  });
-
-  it("persists scroll position when navigating between articles", async () => {
-    // This test verifies the useEffect logic for scroll persistence
-    const item1 = createMockItemWithSource({ item: { id: 1 } });
-    const item2 = createMockItemWithSource({ item: { id: 2 } });
-
-    const { rerender } = render(<ItemReaderLightbox />);
-
-    // 1. Initial render with Item 1
-    (useItem as any).mockReturnValue({ data: item1, isLoading: false });
-    (useActiveItem as any).mockReturnValue({
-      activeItemId: 1,
-      setActiveItemId: mockSetActiveItemId,
-    });
-
-    rerender(<ItemReaderLightbox />);
-
-    // Mock scroll position
-    const container = document
-      .querySelector(".lucide-x")
-      ?.closest("header")?.nextElementSibling;
-    if (container) {
-      Object.defineProperty(container, "scrollTop", {
-        value: 100,
-        writable: true,
-      });
-    }
-
-    // 2. Switch to Item 2
-    (useItem as any).mockReturnValue({ data: item2, isLoading: false });
-    (useActiveItem as any).mockReturnValue({
-      activeItemId: 2,
-      setActiveItemId: mockSetActiveItemId,
-    });
-
-    rerender(<ItemReaderLightbox />);
-
-    // Verify Item 1 scroll was saved
-    expect(saveItemReaderScroll).toHaveBeenCalledWith(1, 100);
-
-    // Verify Item 2 starts at 0 (or whatever is in store)
-    // In this test environment, it might not actually update the DOM property
-    // so we check if the getItemReaderScroll was called
-    expect(getItemReaderScroll).toHaveBeenCalledWith(2);
-
-    // 3. Switch back to Item 1
-    (getItemReaderScroll as any).mockReturnValue(100);
-    (useItem as any).mockReturnValue({ data: item1, isLoading: false });
-    (useActiveItem as any).mockReturnValue({
-      activeItemId: 1,
-      setActiveItemId: mockSetActiveItemId,
-    });
-
-    rerender(<ItemReaderLightbox />);
-
-    expect(getItemReaderScroll).toHaveBeenCalledWith(1);
   });
 });

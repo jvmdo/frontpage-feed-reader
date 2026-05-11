@@ -15,11 +15,3 @@ export function getItemsListScroll(filterId: number | null) {
   if (typeof window === "undefined") return 0;
   return scrollPositions.get(`items-list-${filterId ?? "all"}`) ?? 0;
 }
-
-export function saveItemReaderScroll(itemId: number, scrollTop: number) {
-  scrollPositions.set(`item-reader-${itemId}`, scrollTop);
-}
-
-export function getItemReaderScroll(itemId: number) {
-  return scrollPositions.get(`item-reader-${itemId}`) ?? 0;
-}

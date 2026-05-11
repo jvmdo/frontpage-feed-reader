@@ -9,7 +9,7 @@ import {
   UnfoldHorizontalIcon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { ReaderView } from "@/components/reader/reader-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -29,16 +29,11 @@ import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
-import { getItemReaderScroll, saveItemReaderScroll } from "@/lib/scroll-store";
 import { cn } from "@/lib/utils";
 
 const ReaderWidthValues = ["50vw", "65vw", "80vw"] as const;
 type ReaderWidth = (typeof ReaderWidthValues)[number];
 
-/**
- * A comprehensive, full-screen reader for feed items.
- * Optimized for both mobile (compact toolbar) and desktop (focused reading).
- */
 export function ItemReaderLightbox() {
   const { activeItemId, setActiveItemId } = useActiveItem();
   const { data, isLoading, error } = useItem(activeItemId);
@@ -47,45 +42,15 @@ export function ItemReaderLightbox() {
   const [readerWidth, setReaderWidth] = useState<ReaderWidth>(
     ReaderWidthValues[0],
   );
-  const scrollViewportRef = useRef<HTMLDivElement>(null);
-  const lastItemIdRef = useRef<number | null>(null);
 
   useReaderShortcuts({
     onNext: goToNext,
     onPrev: goToPrev,
     enabled: !!activeItemId,
-    scrollContainerRef: scrollViewportRef,
   });
-
-  // Handle scroll persistence across items
-  useEffect(() => {
-    if (
-      lastItemIdRef.current !== null &&
-      lastItemIdRef.current !== activeItemId
-    ) {
-      if (scrollViewportRef.current) {
-        saveItemReaderScroll(
-          lastItemIdRef.current,
-          scrollViewportRef.current.scrollTop,
-        );
-      }
-    }
-
-    lastItemIdRef.current = activeItemId;
-
-    if (activeItemId && !isLoading && !error && data) {
-      const savedScroll = getItemReaderScroll(activeItemId);
-      if (scrollViewportRef.current) {
-        scrollViewportRef.current.scrollTop = savedScroll;
-      }
-    }
-  }, [activeItemId, isLoading, error, data]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      if (activeItemId && scrollViewportRef.current) {
-        saveItemReaderScroll(activeItemId, scrollViewportRef.current.scrollTop);
-      }
       setActiveItemId(null);
     }
   };
@@ -113,7 +78,7 @@ export function ItemReaderLightbox() {
           {/* Toolbar */}
           <header className="sticky top-0 z-20 flex items-center border-b bg-background">
             <DialogClose asChild>
-              <Button variant="ghost">
+              <Button variant="ghost" aria-label="Close">
                 <XIcon className="size-4 md:size-5 text-text-tertiary" />
               </Button>
             </DialogClose>
@@ -169,7 +134,7 @@ export function ItemReaderLightbox() {
           </header>
 
           {/* Content Area */}
-          <ScrollArea className="h-full" ref={scrollViewportRef}>
+          <ScrollArea className="h-full">
             {isLoading ? (
               <ReaderSkeleton />
             ) : error ? (
