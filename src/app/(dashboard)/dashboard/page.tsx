@@ -5,7 +5,7 @@ import { ItemList } from "@/components/feed/item-list";
 import ItemListSkeleton from "@/components/feed/item-list-skeleton";
 import { FeedToolbarSkeleton } from "@/components/layout/components/feed-toolbar-skeleton";
 import { FeedToolbar } from "@/components/layout/feed-toolbar";
-import { ItemReaderSheet } from "@/components/reader/item-reader-sheet";
+import { ItemReaderLightbox } from "@/components/reader/item-reader-lightbox";
 import { db } from "@/db";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import { getQueryClient } from "@/lib/get-query-client";
@@ -76,7 +76,7 @@ export default async function DashboardPage({
           </Suspense>
         </section>
       </HydrationBoundary>
-      <ItemReaderSheet />
+      <ItemReaderLightbox />
     </div>
   );
 }

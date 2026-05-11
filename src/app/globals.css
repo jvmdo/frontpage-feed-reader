@@ -224,7 +224,9 @@
 
 @layer components {
   .item-content {
-    @apply font-serif text-base leading-loose text-text-secondary;
+    @apply font-serif text-base leading-loose text-text-secondary w-full max-w-full block;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 
     h1,
     h2,
@@ -236,13 +238,13 @@
     }
 
     h1 {
-      @apply text-2xl;
-    }
-    h2 {
       @apply text-xl;
     }
-    h3 {
+    h2 {
       @apply text-lg;
+    }
+    h3 {
+      @apply text-base;
     }
 
     p:not(:last-of-type) {
@@ -305,6 +307,19 @@
 
     iframe {
       @apply w-full aspect-video rounded-lg border border-border-subtle my-8;
+    }
+
+    table {
+      @apply w-full border-collapse mb-6 overflow-x-auto block md:table;
+    }
+
+    th,
+    td {
+      @apply p-2 border border-border-subtle text-sm;
+    }
+
+    th {
+      @apply bg-bg-secondary font-semibold text-left;
     }
   }
 }

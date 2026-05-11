@@ -1,7 +1,6 @@
 "use client";
 
 import { ExternalLinkIcon } from "lucide-react";
-import { FeedIcon } from "@/components/feed/feed-icon";
 import { RelativeDate } from "@/components/shared/relative-date";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,17 +12,15 @@ interface ReaderViewProps {
 }
 
 export function ReaderView({ data, className }: ReaderViewProps) {
-  const { item, feed, isExcerpt } = data;
+  const { item, isExcerpt } = data;
 
   return (
-    <div className={cn("flex flex-col gap-4 py-8 px-4 md:px-8", className)}>
+    <section
+      className={cn("flex flex-col gap-4 pt-4 pb-24 px-4 md:px-8", className)}
+      aria-label="item content"
+    >
       <header className="flex flex-col gap-4">
-        <div className="inline-flex gap-1 text-text-secondary">
-          <FeedIcon url={feed.iconUrl} size={20} />
-          {feed.title}
-        </div>
-
-        <h1 className="text-2xl md:text-3xl font-bold text-text-primary leading-tight">
+        <h1 className="text-lg md:text-xl xl:text-2xl font-bold text-text-primary leading-tight">
           {item.title}
         </h1>
 
@@ -65,7 +62,7 @@ export function ReaderView({ data, className }: ReaderViewProps) {
           </Button>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 

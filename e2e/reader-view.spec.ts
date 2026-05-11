@@ -33,29 +33,29 @@ test("open item, read its content, and dismiss", async ({ authedPage }) => {
 
   await expect(page).toHaveURL(new RegExp(`itemId=${item.id}`));
 
-  // 3. Verify Sheet slides in
-  const sheet = page.getByRole("dialog", { name: /item reader/i });
+  // 3. Verify dialog shows up
+  const lightbox = page.getByRole("dialog", { name: /item reader/i });
 
-  await expect(sheet).toBeVisible();
+  await expect(lightbox).toBeVisible();
 
   // 5. Verify item content is visible
   await expect(
-    sheet.getByRole("heading", { name: "Test Item For Reader" }),
+    lightbox.getByRole("heading", { name: "Test Item For Reader" }),
   ).toBeVisible();
 
   await expect(
-    sheet.locator("header").getByText("Reader Test Feed"),
+    lightbox.locator("header").getByText("Reader Test Feed"),
   ).toBeVisible();
 
   await expect(
-    sheet.getByText("This is the test content for the reader view."),
+    lightbox.getByText("This is the test content for the reader view."),
   ).toBeVisible();
 
   // 6. Dismiss the reader
   await page.keyboard.press("Escape");
 
   // 7. Verify reader is closed and URL is cleared
-  await expect(sheet).not.toBeVisible();
+  await expect(lightbox).not.toBeVisible();
   await expect(page).not.toHaveURL(/itemId=/);
 });
 
@@ -178,5 +178,7 @@ test("opening direct URL with itemId", async ({ authedPage }) => {
   const sheet = page.getByRole("dialog", { name: /item reader/i });
 
   await expect(sheet).toBeVisible();
-  await expect(sheet.getByText("Direct Item")).toBeVisible();
+  await expect(
+    sheet.getByRole("heading", { name: "Direct Item" }),
+  ).toBeVisible();
 });

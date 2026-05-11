@@ -1,13 +1,13 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: test asset */
 
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { createMockItemWithSource } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
-import { ItemReaderSheet } from "./item-reader-sheet";
+import { ItemReaderLightbox } from "./item-reader-lightbox";
 import { ReaderView } from "./reader-view";
 
 vi.mock("@/hooks/item/use-active-item");
@@ -68,10 +68,13 @@ describe("ReaderView", () => {
     });
     render(<ReaderView data={data} />);
 
-    expect(screen.getByText("Excerpt")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /Read full item on Test Feed/i }),
-    ).toHaveAttribute("href", "https://example.com/full");
+      screen.getByText(/The author provided only an excerpt/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /View original/i })).toHaveAttribute(
+      "href",
+      "https://example.com/full",
+    );
   });
 
   it("does not show excerpt UI for full articles", () => {
@@ -83,14 +86,13 @@ describe("ReaderView", () => {
     });
     render(<ReaderView data={data} />);
 
-    expect(screen.queryByText("Excerpt")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: /Read full article/i }),
+      screen.queryByText(/The author provided only an excerpt/i),
     ).not.toBeInTheDocument();
   });
 });
 
-describe("FeedReaderSheet Integration", () => {
+describe("ItemReaderLightbox Integration", () => {
   beforeEach(() => {
     vi.mocked(useActiveItem).mockReturnValue({
       activeItemId: 1,
@@ -112,7 +114,7 @@ describe("FeedReaderSheet Integration", () => {
       error: null,
     } as any);
 
-    render(<ItemReaderSheet />);
+    render(<ItemReaderLightbox />);
 
     expect(screen.getByRole("status")).toHaveTextContent(
       /loading item content/i,
@@ -136,7 +138,7 @@ describe("FeedReaderSheet Integration", () => {
       hasPrev: true,
     } as any);
 
-    render(<ItemReaderSheet />);
+    render(<ItemReaderLightbox />);
 
     expect(
       screen.getByRole("heading", { name: "Loaded Item" }),
@@ -166,7 +168,7 @@ describe("FeedReaderSheet Integration", () => {
       hasNext: true,
     } as any);
 
-    render(<ItemReaderSheet />);
+    render(<ItemReaderLightbox />);
 
     await user.click(screen.getByRole("button", { name: /next item/i }));
     expect(goToNext).toHaveBeenCalled();
@@ -181,7 +183,7 @@ describe("FeedReaderSheet Integration", () => {
       error: null,
     } as any);
 
-    render(<ItemReaderSheet />);
+    render(<ItemReaderLightbox />);
 
     expect(
       screen.getByRole("button", { name: /previous item/i }),
@@ -207,7 +209,7 @@ describe("FeedReaderSheet Integration", () => {
       error: null,
     } as any);
 
-    const { rerender } = render(<ItemReaderSheet />);
+    const { rerender } = render(<ItemReaderLightbox />);
 
     const container = screen.getByRole("region", { name: /item content/i });
 
@@ -228,7 +230,7 @@ describe("FeedReaderSheet Integration", () => {
       error: null,
     } as any);
 
-    rerender(<ItemReaderSheet />);
+    rerender(<ItemReaderLightbox />);
 
     // Verify Item 2 starts at 0 (or whatever is in store)
     expect(container.scrollTop).toBe(0);
@@ -244,7 +246,7 @@ describe("FeedReaderSheet Integration", () => {
       error: null,
     } as any);
 
-    rerender(<ItemReaderSheet />);
+    rerender(<ItemReaderLightbox />);
 
     // Verify Item 1 restored its 100px
     expect(container.scrollTop).toBe(100);
