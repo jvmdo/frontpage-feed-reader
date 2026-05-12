@@ -8,7 +8,6 @@ import { onboardGuest } from "./onboard-guest";
 
 describe("onboardGuest", () => {
   const TOTAL_EXPECTED_FEEDS =
-    1 + // Welcome feed
     sampleFeeds.categories.reduce((acc, cat) => acc + cat.feeds.length, 0);
 
   test("successfully onboards a guest user with curated feeds and preferences", async ({

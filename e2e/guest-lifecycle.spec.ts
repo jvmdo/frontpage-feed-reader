@@ -49,22 +49,20 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
 
   // Should see pre-populated curated categories
   const sidebar = page.locator('[data-slot="sidebar"]');
-  const gettingStartedCategory = sidebar.getByRole("link", {
-    name: /getting started/i,
+  const frontendCategory = sidebar.getByRole("link", {
+    name: /frontend/i,
   });
 
-  await expect(gettingStartedCategory).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: /frontpage/i })).toBeVisible();
+  await expect(frontendCategory).toBeVisible();
+  await expect(sidebar.getByRole("link", { name: /css-tricks/i })).toBeVisible();
 
   // 2. Interact with content
 
   const main = page.getByRole("main");
   const firstArticle = main.getByRole("article").first();
 
-  await gettingStartedCategory.click();
-  await expect(firstArticle.getByRole("heading", { level: 3 })).toContainText(
-    /Welcome to Frontpage/i,
-  );
+  await frontendCategory.click();
+  await expect(firstArticle.getByRole("heading", { level: 3 })).toBeVisible();
 
   // 3. Convert to full account
   const guestBanner = page.getByText(/you are using a guest session/i);
@@ -104,10 +102,8 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
   await page.keyboard.press("Escape");
 
   // 5. Verify data preservation
-  await gettingStartedCategory.click(); // Expand category
-  await expect(sidebar.getByRole("link", { name: /frontpage/i })).toBeVisible();
+  await frontendCategory.click(); // Expand category
+  await expect(sidebar.getByRole("link", { name: /css-tricks/i })).toBeVisible();
 
-  await expect(
-    main.getByRole("article").filter({ hasText: /Welcome to Frontpage/i }),
-  ).toBeVisible();
+  await expect(firstArticle.getByRole("heading", { level: 3 })).toBeVisible();
 });

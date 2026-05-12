@@ -1,15 +1,13 @@
 import { inArray } from "drizzle-orm";
 import type { DB } from "@/db";
 import { categories, feeds, subscriptions, userPreferences } from "@/db/schema";
-import { DEFAULT_CATEGORY_COLOR, WELCOME_FEED_URL } from "@/lib/constants";
+import { WELCOME_FEED_URL } from "@/lib/constants";
 import { CuratedFeedsMissingError } from "@/lib/errors";
 import sampleFeeds from "../../../data/sample-feeds.json";
 
 const CATEGORY_COLORS = [
-  "#2563eb", // blue-600
   "#16a34a", // green-600
   "#dc2626", // red-600
-  "#ca8a04", // yellow-600
   "#9333ea", // purple-600
   "#0891b2", // cyan-600
   "#ea580c", // orange-600
@@ -51,33 +49,7 @@ export async function onboardGuest(db: DB, userId: string) {
   // Create a bridge to quickly find the Record ID for any URL Definition
   const urlToRecordMap = new Map(feedRecords.map((r) => [r.url, r]));
 
-  // 3. Setup Categories and Subscriptions
-
-  // Step A: Welcome Category ("Getting Started")
-  const [welcomeCategory] = await db
-    .insert(categories)
-    .values({
-      userId,
-      name: "Getting Started",
-      color: DEFAULT_CATEGORY_COLOR,
-    })
-    .onConflictDoUpdate({
-      target: [categories.userId, categories.name],
-      set: { color: DEFAULT_CATEGORY_COLOR },
-    })
-    .returning({ id: categories.id });
-
-  const welcomeFeedRecord = urlToRecordMap.get(WELCOME_FEED_URL)!;
-  await db
-    .insert(subscriptions)
-    .values({
-      userId,
-      feedId: welcomeFeedRecord.id,
-      categoryId: welcomeCategory.id,
-    })
-    .onConflictDoNothing();
-
-  // Step B: Curated Categories
+  // 3. Setup Curated Categories and Subscriptions
   const curatedCategoryPromises = sampleFeeds.categories.map(
     async (categoryData, i) => {
       const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
