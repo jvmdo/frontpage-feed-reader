@@ -56,6 +56,7 @@ test("moves a feed to a category via empty state button", async ({
     .getByRole("listitem")
     .filter({ hasText: "Empty Category" });
 
+  await page.getByRole("link", { name: "Empty Category" }).click();
   await expect(
     catItem.getByRole("link", { name: "Unassigned Feed" }),
   ).toBeVisible();
@@ -105,7 +106,9 @@ test("moves a feed between categories via toolbar", async ({ authedPage }) => {
   await page.keyboard.press("Escape");
 
   // 4. Verify items appeared in the current view (Category B)
-  await expect(page.getByRole("heading", { name: "Moving Item" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Moving Item" }),
+  ).toBeVisible();
 
   // 5. Verify movement in sidebar
   const sidebar = page.locator('[data-slot="sidebar"]');
@@ -145,7 +148,9 @@ test("removes a feed from a category via toolbar", async ({ authedPage }) => {
 
   // Verify initial state
   await expect(page).toHaveURL(new RegExp(`categoryId=${cat.id}`));
-  await expect(page.getByRole("heading", { name: "To Be Removed" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "To Be Removed" }),
+  ).toBeVisible();
 
   // 2. Open "Assign" dialog from toolbar
   await page.getByRole("button", { name: "Assign", exact: true }).click();
@@ -168,7 +173,9 @@ test("removes a feed from a category via toolbar", async ({ authedPage }) => {
   // 5. Verify URL remains but content updates to empty state
   await expect(page).toHaveURL(new RegExp(`categoryId=${cat.id}`));
   await expect(page.getByText(/ToRemove has no items yet/i)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "To Be Removed" })).not.toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "To Be Removed" }),
+  ).not.toBeVisible();
 
   // 6. Verify sidebar reflects removal
   const sidebar = page.locator('[data-slot="sidebar"]');

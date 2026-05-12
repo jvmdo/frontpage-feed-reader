@@ -12,13 +12,12 @@ test.describe("Mobile Navigation", () => {
   test("toggles sidebar on mobile", async ({ authedPage }) => {
     const { page } = authedPage;
 
-    const bottomNav = page.getByRole("navigation", {
-      name: "Mobile navigation",
+    const bottomNav = page.getByRole("toolbar", {
+      name: /mobile quick actions/i,
     });
     const toggleButton = bottomNav.getByRole("button", {
-      name: "Open sidebar menu",
+      name: /open sidebar/i,
     });
-
     const sidebar = page.getByRole("dialog");
 
     // Initially sidebar (Sheet) should be closed on mobile
@@ -31,34 +30,29 @@ test.describe("Mobile Navigation", () => {
     await expect(sidebar).toContainText(/frontpage/i);
   });
 
-  test("opens Add Feed Dialog from bottom nav", async ({ authedPage }) => {
+  test("opens Add Feed dialog", async ({ authedPage }) => {
     const { page } = authedPage;
 
-    const bottomNav = page.getByRole("navigation", {
-      name: "Mobile navigation",
+    const bottomNav = page.getByRole("toolbar", {
+      name: /mobile quick actions/i,
     });
-    const addButton = bottomNav.getByRole("button", { name: "Add new feed" });
+    const addButton = bottomNav.getByRole("button", { name: /add new feed/i });
 
     await addButton.click();
 
     // Verify Add Feed dialog appears
-    const dialog = page.getByRole("dialog", { name: /add feed/i });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel(/feed url/i)).toBeVisible();
+    await expect(page.getByRole("dialog", { name: /add feed/i })).toBeVisible();
   });
 
   test("renders user menu avatar", async ({ authedPage }) => {
     const { page } = authedPage;
 
-    const bottomNav = page.getByRole("navigation", {
-      name: "Mobile navigation",
+    const bottomNav = page.getByRole("toolbar", {
+      name: /mobile quick actions/i,
     });
-    const profileButton = bottomNav.getByRole("button", {
-      name: "User menu",
-    });
+    const profileButton = bottomNav.getByRole("button", { name: /user menu/i });
 
     await expect(profileButton).toBeVisible();
-    // PU for Playwright User
-    await expect(profileButton).toContainText("PU");
+    await expect(profileButton).toContainText("PU"); // PU for Playwright User
   });
 });

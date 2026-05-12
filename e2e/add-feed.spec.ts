@@ -86,14 +86,12 @@ test("successfully adds a feed and assigns it to a category", async ({
 
   // 8. Verify it's under the category in sidebar
   const sidebar = page.locator('[data-slot="sidebar"]');
-  const categoryLink = sidebar.getByRole("link", { name: /tech news/i });
-
-  await expect(categoryLink).toBeVisible();
-  await categoryLink.click();
+  const categoryGroup = sidebar.locator("li", { hasText: "Tech News" });
+  await expect(categoryGroup).toBeVisible();
 
   // The feed should be visible inside the category folder
   await expect(
-    sidebar.getByRole("link", { name: /standard rss 2\.0 feed/i }),
+    categoryGroup.getByRole("link", { name: /standard rss 2\.0 feed/i }),
   ).toBeVisible();
 });
 

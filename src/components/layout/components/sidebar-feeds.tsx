@@ -63,19 +63,14 @@ function CategoryGroup({
   category: Category;
   items: FeedWithSubscription[];
 }) {
-  const { feedId, categoryId } = useFeedFilter();
+  const { categoryId } = useFeedFilter();
   const { data: unreadCounts } = useUnreadCounts();
 
   const isActive = categoryId === category.id;
-  const hasActiveChild = items.some((item) => item.feed.id === feedId);
   const unreadCount = unreadCounts?.categories?.[category.id] || 0;
 
   return (
-    <Collapsible
-      asChild
-      defaultOpen={hasActiveChild || isActive}
-      className="group/collapsible"
-    >
+    <Collapsible asChild defaultOpen={true} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton

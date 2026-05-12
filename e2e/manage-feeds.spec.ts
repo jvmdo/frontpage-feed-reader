@@ -181,7 +181,9 @@ test("assigns a feed to a category", async ({ authedPage }) => {
   const sidebar = page.locator('[data-slot="sidebar"]');
   const categoryLink = sidebar.getByRole("link", { name: /tech news/i });
 
-  await categoryLink.click();
+  await categoryLink.click(); // First click filters, but collapses the menu
+  await categoryLink.click(); // Second click to open it
+
   await expect(page).toHaveURL(/categoryId=/);
   await expect(
     sidebar.getByRole("link", { name: /unassigned feed/i }),

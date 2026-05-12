@@ -19,20 +19,30 @@ test.describe("FeedToolbar Responsiveness and View Options", () => {
     // Desktop-only buttons should be visible in toolbar
     await expect(page.getByLabel("List view")).toBeVisible();
     await expect(page.getByRole("button", { name: "Newest" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Assign", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Refresh", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Mark all read" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Assign", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Refresh", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Mark all read" }),
+    ).toBeVisible();
 
     // Menu button in toolbar should be hidden
-    await expect(page.locator("header").getByRole("button", { name: "Feed menu" })).not.toBeVisible();
+    await expect(
+      page.locator("header").getByRole("button", { name: "Feed menu" }),
+    ).not.toBeVisible();
 
     // 2. Tablet View (800px)
     await page.setViewportSize({ width: 800, height: 800 });
 
     // Desktop-only layout/sorting/refresh buttons should be hidden
     await expect(page.getByLabel("List view")).not.toBeVisible();
-    await expect(page.getByRole("button", { name: "Newest" })).not.toBeVisible();
-    
+    await expect(
+      page.getByRole("button", { name: "Newest" }),
+    ).not.toBeVisible();
+
     // "Menu" button should now be visible in toolbar (md-lg)
     const toolbar = page.getByRole("toolbar", { name: "Feed toolbar" });
     const toolbarMenu = toolbar.getByRole("button", { name: "Feed menu" });
@@ -45,21 +55,36 @@ test.describe("FeedToolbar Responsiveness and View Options", () => {
     await expect(toolbarMenu).not.toBeVisible();
 
     // Mobile Bottom Nav should be visible and contain the menu
-    const bottomNav = page.getByRole("navigation", { name: "Mobile navigation" });
+    const bottomNav = page.getByRole("toolbar", {
+      name: /mobile quick actions/i,
+    });
     const bottomNavMenu = bottomNav.getByRole("button", { name: "Feed menu" });
+
     await expect(bottomNavMenu).toBeVisible();
 
     // Open the menu and verify items
     await bottomNavMenu.click();
+
     const menu = page.getByRole("menu");
-    await expect(menu.getByRole("menuitem", { name: /refresh/i })).toBeVisible();
+
+    await expect(
+      menu.getByRole("menuitem", { name: /refresh/i }),
+    ).toBeVisible();
     await expect(menu.getByRole("menuitem", { name: /assign/i })).toBeVisible();
-    await expect(menu.getByRole("menuitem", { name: /mark all read/i })).toBeVisible();
-    await expect(menu.getByRole("menuitemradio", { name: /list/i })).toBeVisible();
-    await expect(menu.getByRole("menuitemradio", { name: /newest/i })).toBeVisible();
+    await expect(
+      menu.getByRole("menuitem", { name: /mark all read/i }),
+    ).toBeVisible();
+    await expect(
+      menu.getByRole("menuitemradio", { name: /list/i }),
+    ).toBeVisible();
+    await expect(
+      menu.getByRole("menuitemradio", { name: /newest/i }),
+    ).toBeVisible();
   });
 
-  test("layout and sorting toggles update URL state", async ({ authedPage }) => {
+  test("layout and sorting toggles update URL state", async ({
+    authedPage,
+  }) => {
     const { page } = authedPage;
 
     await page.goto("/dashboard");

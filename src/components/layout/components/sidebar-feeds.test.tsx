@@ -84,18 +84,11 @@ describe("SidebarFeeds", () => {
   });
 
   it("renders unread count for individual subscriptions", async () => {
-    const user = userEvent.setup();
     render(
       <SidebarProvider>
         <SidebarFeeds />
       </SidebarProvider>,
     );
-
-    // Open Tech category to see Tech Feed
-    const techFolder = await screen.findByRole("link", {
-      name: /tech 5 unread items/i,
-    });
-    await user.click(techFolder);
 
     // Tech Feed (ID 1) should have 2 unread
     expect(
@@ -109,7 +102,6 @@ describe("SidebarFeeds", () => {
   });
 
   it("renders subscriptions grouped by categories", async () => {
-    const user = userEvent.setup();
     render(
       <SidebarProvider>
         <SidebarFeeds />
@@ -120,14 +112,14 @@ describe("SidebarFeeds", () => {
     const techFolder = await screen.findByRole("link", {
       name: /tech 5 unread items/i,
     });
+
     expect(techFolder).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /design 3 unread items/i }),
     ).toBeInTheDocument();
-
-    // Clicking the category row now both navigates and toggles the list
-    await user.click(techFolder);
-    expect(await screen.findByText(/tech feed/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /tech feed/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders uncategorized subscriptions at the root level", async () => {
@@ -141,7 +133,7 @@ describe("SidebarFeeds", () => {
   });
 
   it("handles empty categories by showing 'No feeds' message", async () => {
-    const user = userEvent.setup();
+    const _user = userEvent.setup();
     server.use(
       http.get("/api/categories", () => {
         return HttpResponse.json({
@@ -170,11 +162,11 @@ describe("SidebarFeeds", () => {
       </SidebarProvider>,
     );
 
-    const emptyFolder = await screen.findByRole("link", {
+    await screen.findByRole("link", {
       name: /empty category/i,
     });
-    await user.click(emptyFolder);
-    expect(await screen.findByText(/no feeds/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/no feeds/i)).toBeInTheDocument();
   });
 
   it("highlights the active feed and opens its category collapsible", async () => {

@@ -31,8 +31,6 @@ test("successfully creates a new category via sidebar", async ({
   ).toBeVisible();
 
   // 4. Verify category is empty initially
-  await sidebar.getByRole("link", { name: /new category/i }).click();
-
   await expect(sidebar.getByText(/no feeds/i)).toBeVisible();
 });
 
@@ -73,15 +71,10 @@ test("displays feeds grouped under categories", async ({ authedPage }) => {
   // 2. Verify category folder is visible
   await expect(category).toBeVisible();
 
-  // 3. Verify feed is NOT visible yet (nested)
-  await expect(feed).not.toBeVisible();
-
-  // 4. Open category and verify feed is visible
-  await category.click();
-
+  // 3. Verify feed is visible yet (default open)
   await expect(feed).toBeVisible();
 
-  // 6. Verify uncategorized feed is visible at root
+  // 4. Verify uncategorized feed is visible at root
   await expect(
     sidebar.getByRole("link", { name: /uncategorized feed/i }),
   ).toBeVisible();

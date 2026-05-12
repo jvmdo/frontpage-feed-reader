@@ -54,15 +54,14 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
   });
 
   await expect(gettingStartedCategory).toBeVisible();
-
-  // Click category to expand it
-  await gettingStartedCategory.click();
   await expect(sidebar.getByRole("link", { name: /frontpage/i })).toBeVisible();
 
   // 2. Interact with content
+
   const main = page.getByRole("main");
   const firstArticle = main.getByRole("article").first();
 
+  await gettingStartedCategory.click();
   await expect(firstArticle.getByRole("heading", { level: 3 })).toContainText(
     /Welcome to Frontpage/i,
   );
@@ -92,7 +91,9 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
   ).toBeVisible();
 
   // 4. Verify conversion via UI
+  // Open menu
   await page.getByRole("button", { name: /user menu/i }).click();
+
   await expect(page.getByText(email)).toBeVisible();
   await expect(page.getByRole("menuitem", { name: /profile/i })).toBeVisible();
   await expect(
@@ -103,6 +104,7 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
   await page.keyboard.press("Escape");
 
   // 5. Verify data preservation
+  await gettingStartedCategory.click(); // Expand category
   await expect(sidebar.getByRole("link", { name: /frontpage/i })).toBeVisible();
 
   await expect(
