@@ -1,4 +1,3 @@
-import type { User } from "@/lib/auth-client";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { isExcerpt } from "@/lib/feed/utils";
 import type {
@@ -10,6 +9,7 @@ import type {
   ListItem,
   ListItemWithSource,
   Subscription,
+  User,
 } from "@/types";
 
 export function createMockFeed(overrides: Partial<Feed> = {}): Feed {

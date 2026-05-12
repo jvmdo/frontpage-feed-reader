@@ -49,11 +49,7 @@ export function TopNavItems() {
             )}
             aria-current={isActive ? "page" : undefined}
           >
-            {item.isDisabled ? (
-              <span>{item.label}</span>
-            ) : (
-              <Link href={item.href}>{item.label}</Link>
-            )}
+            <Link href={item.href}>{item.label}</Link>
           </Button>
         );
 

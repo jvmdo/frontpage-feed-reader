@@ -11,19 +11,20 @@ import { FeedMenu } from "@/components/layout/components/feed-menu";
 import { UserMenu } from "@/components/layout/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
-import type { User } from "@/lib/auth-client";
+import type { SessionUser } from "@/lib/auth-client";
 
 interface MobileBottomNavProps {
-  user: User;
+  user: SessionUser;
 }
 
 export function MobileBottomNav({ user }: MobileBottomNavProps) {
   const { toggleSidebar } = useSidebar();
 
   return (
-    <nav
+    <div
       className="md:hidden h-14 border-t border-border bg-card flex items-center justify-around px-2 shrink-0 z-30"
-      aria-label="Mobile navigation"
+      role="toolbar"
+      aria-label="Mobile quick actions"
     >
       <Button
         variant="ghost"
@@ -67,6 +68,6 @@ export function MobileBottomNav({ user }: MobileBottomNavProps) {
       </FeedMenu>
 
       <UserMenu user={user} />
-    </nav>
+    </div>
   );
 }

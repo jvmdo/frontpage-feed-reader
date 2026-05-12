@@ -2,10 +2,10 @@ import { RssIcon } from "lucide-react";
 import Link from "next/link";
 import { TopNavActions } from "@/components/layout/components/top-nav-actions";
 import { TopNavItems } from "@/components/layout/components/top-nav-items";
-import type { User } from "@/lib/auth-client";
+import type { SessionUser } from "@/lib/auth-client";
 
 interface TopNavProps {
-  user: User;
+  user: SessionUser;
 }
 
 export function TopNav({ user }: TopNavProps) {

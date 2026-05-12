@@ -5,10 +5,10 @@ import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { UserMenu } from "@/components/layout/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
-import type { User } from "@/lib/auth-client";
+import type { SessionUser } from "@/lib/auth-client";
 
 interface TopNavActionsProps {
-  user: User;
+  user: SessionUser;
 }
 
 export function TopNavActions({ user }: TopNavActionsProps) {

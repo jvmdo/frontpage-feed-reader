@@ -15,10 +15,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { authClient, type User } from "@/lib/auth-client";
+import { authClient, type SessionUser } from "@/lib/auth-client";
 
 interface UserMenuProps {
-  user: User;
+  user: SessionUser;
 }
 
 /**
@@ -76,7 +76,10 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
               <p className="text-sm font-medium leading-none text-text-primary">
                 {user.name}
               </p>
-              <p className="text-xs leading-none text-text-tertiary">
+              <p
+                className="text-xs leading-none text-text-tertiary truncate"
+                title={user.email}
+              >
                 {user.email}
               </p>
             </div>
