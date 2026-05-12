@@ -14,7 +14,7 @@ interface FeedTableProps {
 
 export function FeedTable({ data }: FeedTableProps) {
   return (
-    <div className="rounded-lg border bg-surface">
+    <div className="rounded-lg border bg-surface px-2">
       <Table>
         <TableHeader>
           <TableRow>

@@ -58,10 +58,10 @@ export default async function DashboardLayout({
               </Suspense>
             </QueryErrorBoundary>
           </AppSidebar>
-          <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex flex-1 flex-col overflow-x-hidden">
             {session.user.isAnonymous && <GuestBanner />}
 
-            <SidebarInset className="flex flex-col overflow-hidden">
+            <SidebarInset className="flex flex-col p-4 overflow-y-scroll">
               {children}
             </SidebarInset>
 

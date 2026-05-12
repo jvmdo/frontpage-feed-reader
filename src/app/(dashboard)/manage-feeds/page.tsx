@@ -12,10 +12,16 @@ export default async function ManageFeedsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+    <section
+      className="flex flex-col gap-6"
+      aria-labelledby="manage-feeds-title"
+    >
+      <header className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1
+            id="manage-feeds-title"
+            className="text-2xl font-semibold tracking-tight"
+          >
             Manage Feeds
           </h1>
           <p className="text-muted-foreground text-sm">
@@ -25,11 +31,9 @@ export default async function ManageFeedsPage() {
         <AddFeedDialog>
           <Plus size={40} className="text-primary" />
         </AddFeedDialog>
-      </div>
+      </header>
 
-      <div className="flex-1 rounded-xl border border-border/50 bg-card p-4 shadow-sm md:p-6">
-        <FeedManager />
-      </div>
-    </div>
+      <FeedManager />
+    </section>
   );
 }

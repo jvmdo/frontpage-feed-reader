@@ -1,7 +1,8 @@
 "use client";
 
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
-import { AlertCircleIcon, HomeIcon, Link, RotateCcwIcon } from "lucide-react";
+import { AlertCircleIcon, HomeIcon, RotateCcwIcon } from "lucide-react";
+import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -55,10 +56,16 @@ export default function ManageFeedsError({
             Try again
           </Button>
 
-          <Link href="/dashboard" className="w-full sm:w-auto">
-            <HomeIcon className="size-4" />
-            Return home
-          </Link>
+          <Button
+            asChild={true}
+            variant="secondary"
+            className="w-full sm:w-auto"
+          >
+            <Link href="/dashboard">
+              <HomeIcon className="size-4" />
+              Return home
+            </Link>
+          </Button>
         </div>
 
         {error.digest && (

@@ -57,7 +57,10 @@ export function ToolbarTitle({
 
   return (
     <div className="flex items-baseline gap-2 sm:gap-3 min-w-0">
-      <h1 className="text-lg sm:text-xl font-semibold text-foreground truncate">
+      <h1
+        id="feed-title"
+        className="text-lg sm:text-xl font-semibold text-foreground truncate"
+      >
         {title}
       </h1>
       {currentCount > 0 && (

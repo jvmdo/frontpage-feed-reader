@@ -61,14 +61,17 @@ export default async function DashboardPage({
   });
 
   return (
-    <div className="flex flex-col h-full">
+    <section
+      className="flex flex-col h-full -mx-4 -mt-4"
+      aria-labelledby="feed-title"
+    >
       <HydrationBoundary state={dehydrate(queryClient)}>
         <Suspense fallback={<FeedToolbarSkeleton />}>
           <FeedToolbar />
         </Suspense>
         <section
           id="feed-container"
-          className="flex-1 overflow-y-auto"
+          className="flex-1 overflow-y-auto -mb-8"
           aria-label="Feed"
         >
           <Suspense fallback={<ItemListSkeleton />}>
@@ -77,6 +80,6 @@ export default async function DashboardPage({
         </section>
       </HydrationBoundary>
       <ItemReaderLightbox />
-    </div>
+    </section>
   );
 }
