@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { useCategories } from "@/hooks/category/use-categories";
 import { useAddFeed } from "@/hooks/feed/use-add-feed";
+import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { type AddFeedInput, addFeedSchema } from "@/lib/validations/feed";
 
 interface AddFeedDialogProps {
@@ -41,11 +42,23 @@ interface AddFeedDialogProps {
 
 export function AddFeedDialog({ children, asChild }: AddFeedDialogProps) {
   const [open, setOpen] = useState(false);
+  const { isTourActive } = useTourStore();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild={asChild}>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent
+        onPointerDownOutside={(e) => {
+          if (isTourActive) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if (isTourActive) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Add Feed</DialogTitle>
           <DialogDescription>
@@ -79,19 +92,28 @@ interface AddFeedFormProps {
 function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
   const { data: categories } = useCategories();
   const { mutate: addFeed, isPending } = useAddFeed();
+  const { prefillUrl } = useTourStore();
 
   const {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<AddFeedInput>({
     resolver: zodResolver(addFeedSchema),
     defaultValues: {
-      url: "",
+      url: prefillUrl ?? "",
       categoryId: null,
     },
   });
+
+  // Update form value if prefillUrl changes while dialog is open
+  useEffect(() => {
+    if (prefillUrl) {
+      setValue("url", prefillUrl);
+    }
+  }, [prefillUrl, setValue]);
 
   const onSubmit = (data: AddFeedInput) => {
     addFeed(data, {
@@ -117,6 +139,7 @@ function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
             {...register("url")}
             aria-invalid={!!errors.url}
             aria-describedby={errors.url ? "url-error" : undefined}
+            data-tour="add-feed-url"
           />
           {errors.url && (
             <FieldError id="url-error">{errors.url.message}</FieldError>
@@ -178,7 +201,7 @@ function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending} data-tour="add-feed-submit">
           {isPending && <Spinner data-icon="inline-start" />}
           {isPending ? "Adding..." : "Add Feed"}
         </Button>

@@ -21,6 +21,7 @@ import { useCategories } from "@/hooks/category/use-categories";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useFeeds } from "@/hooks/feed/use-feeds";
 import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
+import { WELCOME_FEED_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Category, FeedWithSubscription } from "@/types";
 
@@ -45,12 +46,18 @@ export function SidebarFeeds() {
 
   return (
     <SidebarMenu>
-      {groups.map((group) => (
-        <CategoryGroup key={group.id} category={group} items={group.items} />
+      {uncategorized.map((item) => (
+        <SidebarFeedItem
+          key={item.feed.id}
+          item={item}
+          data-tour={
+            item.feed.url === WELCOME_FEED_URL ? "welcome-feed" : undefined
+          }
+        />
       ))}
 
-      {uncategorized.map((item) => (
-        <SidebarFeedItem key={item.feed.id} item={item} />
+      {groups.map((group) => (
+        <CategoryGroup key={group.id} category={group} items={group.items} />
       ))}
     </SidebarMenu>
   );
@@ -136,12 +143,17 @@ function useSidebarFeed(item: FeedWithSubscription) {
 
   return { title, isActive, unreadCount, feed };
 }
-
-function SidebarFeedItem({ item }: { item: FeedWithSubscription }) {
+function SidebarFeedItem({
+  item,
+  "data-tour": dataTour,
+}: {
+  item: FeedWithSubscription;
+  "data-tour"?: string;
+}) {
   const { title, isActive, unreadCount, feed } = useSidebarFeed(item);
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem data-tour={dataTour}>
       <SidebarMenuButton
         asChild
         isActive={isActive}
@@ -172,7 +184,9 @@ function SidebarFeedSubItem({
   const { title, isActive, unreadCount, feed } = useSidebarFeed(item);
 
   return (
-    <SidebarMenuSubItem>
+    <SidebarMenuSubItem
+      data-tour={feed.url === WELCOME_FEED_URL ? "welcome-feed" : undefined}
+    >
       <SidebarMenuSubButton asChild isActive={isActive} className="h-8 px-3">
         <FeedLink
           href={`/dashboard?feedId=${feed.id}`}

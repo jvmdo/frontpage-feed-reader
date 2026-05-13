@@ -105,7 +105,7 @@ export function AppSidebar({ children }: { children: ReactNode }) {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <AddCategoryDialog asChild>
-                    <SidebarMenuButton tooltip="Add Category">
+                    <SidebarMenuButton tooltip="Add Category" data-tour="add-category">
                       <FolderPlusIcon className="size-4" />
                       <span>Add Category</span>
                     </SidebarMenuButton>
@@ -113,7 +113,7 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <AddFeedDialog asChild>
-                    <SidebarMenuButton tooltip="Add Feed">
+                    <SidebarMenuButton tooltip="Add Feed" data-tour="add-feed">
                       <PlusIcon className="size-4" />
                       <span>Add Feed</span>
                     </SidebarMenuButton>

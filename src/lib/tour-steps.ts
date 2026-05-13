@@ -1,0 +1,160 @@
+import { type Tour, waitForElement, waitForEvent } from "@ark-ui/react/tour";
+import { useTourStore } from "@/hooks/ui/use-tour-store";
+import { WELCOME_FEED_URL } from "@/lib/constants";
+
+export const steps: Tour.StepDetails[] = [
+  // --- PHASE 1: Add Feed ---
+  {
+    id: "add-feed-button",
+    type: "tooltip",
+    title: "Add your first feed",
+    description: "Click here to add a new RSS or Atom feed to your dashboard.",
+    target: () => document.querySelector<HTMLElement>('[data-tour="add-feed"]'),
+    effect({ next, target, show }) {
+      show();
+      if (!target) return;
+      const [promise, cancel] = waitForEvent(target, "click");
+      promise.then(() => setTimeout(() => next(), 0));
+      return cancel;
+    },
+  },
+  {
+    id: "wait-for-add-form",
+    type: "wait",
+    effect({ next }) {
+      const [promise, cancel] = waitForElement(
+        () => document.querySelector<HTMLElement>('[data-tour="add-feed-url"]'),
+        { timeout: 5000 },
+      );
+      promise.then(() => next());
+      return cancel;
+    },
+    title: undefined,
+    description: undefined,
+  },
+  {
+    id: "add-feed-form",
+    type: "tooltip",
+    title: "Subscribe to a feed",
+    description:
+      "We've prefilled a welcome feed for you. Just click 'Add Feed' to continue.",
+    target: () =>
+      document.querySelector<HTMLElement>('[data-tour="add-feed-submit"]'),
+    effect({ next, target, show }) {
+      // Prefill the URL via store
+      useTourStore.getState().setPrefillUrl(WELCOME_FEED_URL);
+      show();
+
+      if (!target) return;
+      const [promise, cancel] = waitForEvent(target, "click");
+      promise.then(() => {
+        useTourStore.getState().setPrefillUrl(null);
+        setTimeout(() => next(), 0);
+      });
+      return cancel;
+    },
+  },
+
+  // --- PHASE 2: Feed Selection ---
+  {
+    id: "wait-for-sidebar-feed",
+    type: "wait",
+    effect({ next }) {
+      const [promise, cancel] = waitForElement(
+        () => document.querySelector<HTMLElement>('[data-tour="welcome-feed"]'),
+        { timeout: 10000 },
+      );
+      promise.then(() => next());
+      return cancel;
+    },
+    title: undefined,
+    description: undefined,
+  },
+  {
+    id: "click-welcome-feed",
+    type: "tooltip",
+    title: "View your feeds",
+    description: "Click on the welcome feed to see its latest articles.",
+    target: () =>
+      document.querySelector<HTMLElement>('[data-tour="welcome-feed"]'),
+    effect({ next, target, show }) {
+      show();
+      if (!target) return;
+      const [promise, cancel] = waitForEvent(target, "click");
+      promise.then(() => setTimeout(() => next(), 0));
+      return cancel;
+    },
+  },
+
+  // --- PHASE 3: Reading ---
+  {
+    id: "wait-for-welcome-item",
+    type: "wait",
+    effect({ next }) {
+      const [promise, cancel] = waitForElement(
+        () => document.querySelector<HTMLElement>('[data-tour="welcome-item"]'),
+        { timeout: 10000 },
+      );
+      promise.then(() => next());
+      return cancel;
+    },
+    title: undefined,
+    description: undefined,
+  },
+  {
+    id: "click-welcome-item",
+    type: "tooltip",
+    title: "Read an article",
+    description: "Click on an article card to open the reader view.",
+    target: () =>
+      document.querySelector<HTMLElement>('[data-tour="welcome-item"]'),
+    effect({ next, target, show, update }) {
+      if (!target) return;
+      // Pin exactly to found element
+      update({ target: target });
+      show();
+
+      const [promise, cancel] = waitForEvent(target, "click");
+      promise.then(() => setTimeout(() => next(), 0));
+      return cancel;
+    },
+  },
+  {
+    id: "reader-content",
+    type: "floating",
+    title: "Immersive Reading",
+    placement: "bottom-end",
+    description:
+      "Enjoy a clean reading experience. You can scroll through the entire content here.",
+    actions: [{ label: "Next", action: "next" }],
+    effect({ show }) {
+      const [promise, cancel] = waitForElement(
+        () =>
+          document.querySelector<HTMLElement>('[data-tour="reader-content"]'),
+        { timeout: 5000 },
+      );
+      promise.then(() => show());
+      return cancel;
+    },
+  },
+
+  // --- PHASE 4: Completion ---
+  {
+    id: "complete",
+    type: "dialog",
+    title: "You're all set!",
+    description:
+      "You've learned the basics. Enjoy exploring your favorite feeds with Frontpage!",
+    actions: [{ label: "Finish", action: "dismiss" }],
+    effect({ show }) {
+      show();
+      // Auto-close reader when showing the completion dialog
+      setTimeout(() => {
+        const closeButton = document.querySelector<HTMLButtonElement>(
+          '[data-tour="reader-close"]',
+        );
+        closeButton?.click();
+      }, 100);
+    },
+  },
+];

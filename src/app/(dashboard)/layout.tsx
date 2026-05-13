@@ -9,6 +9,8 @@ import { SidebarFeedsSkeleton } from "@/components/layout/components/sidebar-fee
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { TopNav } from "@/components/layout/top-nav";
 import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
+import { TourProvider } from "@/components/shared/tour-provider";
+import { WelcomeTour } from "@/components/shared/welcome-tour";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { db } from "@/db";
 import { getQueryClient } from "@/lib/get-query-client";
@@ -47,28 +49,31 @@ export default async function DashboardLayout({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="flex h-screen flex-col">
-        <TopNav user={session.user} />
+      <TourProvider>
+        <div className="flex h-screen flex-col">
+          <TopNav user={session.user} />
 
-        <SidebarProvider className="overflow-hidden">
-          <AppSidebar>
-            <QueryErrorBoundary fallback={<SidebarErrorFallback />}>
-              <Suspense fallback={<SidebarFeedsSkeleton />}>
-                <SidebarFeeds />
-              </Suspense>
-            </QueryErrorBoundary>
-          </AppSidebar>
-          <div className="flex flex-1 flex-col overflow-x-hidden">
-            {session.user.isAnonymous && <GuestBanner />}
+          <SidebarProvider className="overflow-hidden">
+            <AppSidebar>
+              <QueryErrorBoundary fallback={<SidebarErrorFallback />}>
+                <Suspense fallback={<SidebarFeedsSkeleton />}>
+                  <SidebarFeeds />
+                </Suspense>
+              </QueryErrorBoundary>
+            </AppSidebar>
+            <div className="flex flex-1 flex-col overflow-x-hidden">
+              {session.user.isAnonymous && <GuestBanner />}
 
-            <SidebarInset className="flex flex-col p-4 overflow-y-scroll">
-              {children}
-            </SidebarInset>
+              <SidebarInset className="flex flex-col p-4 overflow-y-scroll">
+                {children}
+              </SidebarInset>
 
-            <MobileBottomNav user={session.user} />
-          </div>
-        </SidebarProvider>
-      </div>
+              <MobileBottomNav user={session.user} />
+            </div>
+          </SidebarProvider>
+        </div>
+        <WelcomeTour />
+      </TourProvider>
     </HydrationBoundary>
   );
 }

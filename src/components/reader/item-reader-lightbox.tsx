@@ -28,6 +28,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
+import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ export function ItemReaderLightbox() {
   const { activeItemId, setActiveItemId } = useActiveItem();
   const { data, isLoading, error } = useItem(activeItemId);
   const { goToNext, goToPrev, hasNext, hasPrev } = useItemReaderNavigation();
+  const { isTourActive } = useTourStore();
 
   const [readerWidth, setReaderWidth] = useState<ReaderWidth>(
     ReaderWidthValues[0],
@@ -59,6 +61,16 @@ export function ItemReaderLightbox() {
     <Dialog open={!!activeItemId} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={false}
+        onPointerDownOutside={(e) => {
+          if (isTourActive) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if (isTourActive) {
+            e.preventDefault();
+          }
+        }}
         style={{ "--max-width": readerWidth } as React.CSSProperties}
         className={cn(
           "inset-0 translate-x-0 translate-y-0 max-w-none mx-auto p-0 bg-transparent",
@@ -78,7 +90,7 @@ export function ItemReaderLightbox() {
           {/* Toolbar */}
           <header className="sticky top-0 z-20 flex items-center border-b bg-background">
             <DialogClose asChild>
-              <Button variant="ghost" aria-label="Close">
+              <Button variant="ghost" aria-label="Close" data-tour="reader-close">
                 <XIcon className="size-4 md:size-5 text-text-tertiary" />
               </Button>
             </DialogClose>
@@ -134,7 +146,7 @@ export function ItemReaderLightbox() {
           </header>
 
           {/* Content Area */}
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full" data-tour="reader-content">
             {isLoading ? (
               <ReaderSkeleton />
             ) : error ? (

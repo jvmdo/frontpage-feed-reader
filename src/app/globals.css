@@ -332,6 +332,7 @@
   body {
     @apply bg-background text-foreground;
     min-width: 320px;
+    position: relative;
   }
 
   html {

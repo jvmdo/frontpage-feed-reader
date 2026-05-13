@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { useCategories } from "@/hooks/category/use-categories";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useItems } from "@/hooks/item/use-items";
+import { useTourStore } from "@/hooks/ui/use-tour-store";
+import { WELCOME_FEED_URL } from "@/lib/constants";
 import { getItemsListScroll } from "@/lib/scroll-store";
 import type { Category } from "@/types";
 
@@ -18,6 +20,7 @@ export function ItemList() {
   const { feedId, categoryId } = useFeedFilter();
   const { data: categories } = useCategories();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useItems();
+  const { isTourActive } = useTourStore();
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
@@ -42,13 +45,35 @@ export function ItemList() {
     return <FeedEmptyState categoryId={categoryId} categories={categories} />;
   }
 
+  // Find the index of the first item from the welcome feed
+  const firstWelcomeItemIndex = allItems.findIndex(
+    (item) => item.feed.url === WELCOME_FEED_URL,
+  );
+
+  // Disable virtualization during tour for stable positioning
+  if (isTourActive) {
+    return (
+      <div className="flex flex-col">
+        {allItems.map((itemWithSource, index) => (
+          <ItemCard
+            key={itemWithSource.item.id}
+            data={itemWithSource}
+            data-tour={
+              index === firstWelcomeItemIndex ? "welcome-item" : undefined
+            }
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <Virtuoso
       ref={virtuosoRef}
       customScrollParent={scrollParent || undefined}
       initialScrollTop={getItemsListScroll(feedId || categoryId)}
       data={allItems}
-      itemContent={(_index, itemWithSource) => (
+      itemContent={(_, itemWithSource) => (
         <ItemCard key={itemWithSource.item.id} data={itemWithSource} />
       )}
       endReached={() => {

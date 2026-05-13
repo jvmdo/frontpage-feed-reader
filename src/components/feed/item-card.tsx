@@ -13,9 +13,14 @@ import { FeedIcon } from "./feed-icon";
 interface ItemCardProps {
   data: ListItemWithSource;
   className?: string;
+  "data-tour"?: string;
 }
 
-export function ItemCard({ data, className }: ItemCardProps) {
+export function ItemCard({
+  data,
+  className,
+  "data-tour": dataTour,
+}: ItemCardProps) {
   const { item, feed, isRead, categoryName, categoryColor } = data;
   const { mutate: markAsRead } = useMarkRead();
   const { setActiveItemId } = useActiveItem();
@@ -35,6 +40,7 @@ export function ItemCard({ data, className }: ItemCardProps) {
         className,
       )}
       aria-labelledby={`title-${item.id}`}
+      data-tour={dataTour}
     >
       <div className="flex gap-4">
         {/* Unread dot */}
