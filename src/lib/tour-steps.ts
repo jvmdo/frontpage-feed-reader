@@ -7,14 +7,14 @@ export const steps: Tour.StepDetails[] = [
   {
     id: "add-feed-button",
     type: "tooltip",
+    placement: "right",
     title: "Add your first feed",
     description: "Click here to add a new RSS or Atom feed to your dashboard.",
-    target: () => document.querySelector<HTMLElement>('[data-tour="add-feed"]'),
+    target: () => document.querySelector('[data-tour="add-feed"]'),
     effect({ next, target, show }) {
       show();
-      if (!target) return;
       const [promise, cancel] = waitForEvent(target, "click");
-      promise.then(() => setTimeout(() => next(), 0));
+      promise.then(() => next());
       return cancel;
     },
   },
@@ -23,7 +23,7 @@ export const steps: Tour.StepDetails[] = [
     type: "wait",
     effect({ next }) {
       const [promise, cancel] = waitForElement(
-        () => document.querySelector<HTMLElement>('[data-tour="add-feed-url"]'),
+        () => document.querySelector('[data-tour="add-feed-url"]'),
         { timeout: 5000 },
       );
       promise.then(() => next());
@@ -33,23 +33,30 @@ export const steps: Tour.StepDetails[] = [
     description: undefined,
   },
   {
-    id: "add-feed-form",
+    id: "add-feed-form-url",
     type: "tooltip",
-    title: "Subscribe to a feed",
-    description:
-      "We've prefilled a welcome feed for you. Just click 'Add Feed' to continue.",
-    target: () =>
-      document.querySelector<HTMLElement>('[data-tour="add-feed-submit"]'),
-    effect({ next, target, show }) {
+    title: "Feed URL input",
+    description: "We've prefilled a welcome feed for you. Hit next.",
+    target: () => document.querySelector('[data-tour="add-feed-url"]'),
+    actions: [{ label: "Next", action: "next" }],
+    effect({ show }) {
       // Prefill the URL via store
       useTourStore.getState().setPrefillUrl(WELCOME_FEED_URL);
       show();
-
-      if (!target) return;
+    },
+  },
+  {
+    id: "add-feed-form-submit",
+    type: "tooltip",
+    title: "Subscribe to a feed",
+    description: "Just click 'Add Feed' to continue.",
+    target: () => document.querySelector('[data-tour="add-feed-submit"]'),
+    effect({ next, target, show }) {
+      show();
       const [promise, cancel] = waitForEvent(target, "click");
       promise.then(() => {
         useTourStore.getState().setPrefillUrl(null);
-        setTimeout(() => next(), 0);
+        next();
       });
       return cancel;
     },
@@ -61,7 +68,7 @@ export const steps: Tour.StepDetails[] = [
     type: "wait",
     effect({ next }) {
       const [promise, cancel] = waitForElement(
-        () => document.querySelector<HTMLElement>('[data-tour="welcome-feed"]'),
+        () => document.querySelector('[data-tour="welcome-feed"]'),
         { timeout: 10000 },
       );
       promise.then(() => next());
@@ -74,14 +81,13 @@ export const steps: Tour.StepDetails[] = [
     id: "click-welcome-feed",
     type: "tooltip",
     title: "View your feeds",
+    placement: "right",
     description: "Click on the welcome feed to see its latest articles.",
-    target: () =>
-      document.querySelector<HTMLElement>('[data-tour="welcome-feed"]'),
+    target: () => document.querySelector('[data-tour="welcome-feed"]'),
     effect({ next, target, show }) {
       show();
-      if (!target) return;
       const [promise, cancel] = waitForEvent(target, "click");
-      promise.then(() => setTimeout(() => next(), 0));
+      promise.then(() => next());
       return cancel;
     },
   },
@@ -92,7 +98,7 @@ export const steps: Tour.StepDetails[] = [
     type: "wait",
     effect({ next }) {
       const [promise, cancel] = waitForElement(
-        () => document.querySelector<HTMLElement>('[data-tour="welcome-item"]'),
+        () => document.querySelector('[data-tour="welcome-item"]'),
         { timeout: 10000 },
       );
       promise.then(() => next());
@@ -106,16 +112,12 @@ export const steps: Tour.StepDetails[] = [
     type: "tooltip",
     title: "Read an article",
     description: "Click on an article card to open the reader view.",
-    target: () =>
-      document.querySelector<HTMLElement>('[data-tour="welcome-item"]'),
-    effect({ next, target, show, update }) {
-      if (!target) return;
-      // Pin exactly to found element
-      update({ target: target });
+    target: () => document.querySelector('[data-tour="welcome-item"]'),
+    effect({ next, target, show }) {
       show();
 
       const [promise, cancel] = waitForEvent(target, "click");
-      promise.then(() => setTimeout(() => next(), 0));
+      promise.then(() => next());
       return cancel;
     },
   },
@@ -129,8 +131,7 @@ export const steps: Tour.StepDetails[] = [
     actions: [{ label: "Next", action: "next" }],
     effect({ show }) {
       const [promise, cancel] = waitForElement(
-        () =>
-          document.querySelector<HTMLElement>('[data-tour="reader-content"]'),
+        () => document.querySelector('[data-tour="reader-content"]'),
         { timeout: 5000 },
       );
       promise.then(() => show());

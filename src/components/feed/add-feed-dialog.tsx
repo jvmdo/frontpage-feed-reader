@@ -92,7 +92,7 @@ interface AddFeedFormProps {
 function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
   const { data: categories } = useCategories();
   const { mutate: addFeed, isPending } = useAddFeed();
-  const { prefillUrl } = useTourStore();
+  const { prefillUrl, isTourActive } = useTourStore();
 
   const {
     register,
@@ -130,12 +130,17 @@ function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <FieldGroup>
-        <Field data-invalid={!!errors.url} data-disabled={isPending}>
+        <Field
+          data-invalid={!!errors.url}
+          data-disabled={isPending}
+          data-tour="add-feed-url"
+        >
           <FieldLabel htmlFor="feed-url">Feed URL</FieldLabel>
           <Input
             id="feed-url"
             placeholder="https://example.com/feed.xml"
             disabled={isPending}
+            readOnly={isTourActive}
             {...register("url")}
             aria-invalid={!!errors.url}
             aria-describedby={errors.url ? "url-error" : undefined}
@@ -153,10 +158,10 @@ function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
             name="categoryId"
             render={({ field }) => (
               <Select
+                value={field.value?.toString() ?? "none"}
                 onValueChange={(value) =>
                   field.onChange(value === "none" ? null : Number(value))
                 }
-                value={field.value?.toString() ?? "none"}
                 disabled={isPending}
               >
                 <SelectTrigger

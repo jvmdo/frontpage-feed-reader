@@ -1,4 +1,5 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { differenceInHours } from "date-fns";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { GuestBanner } from "@/components/auth/guest-banner";
@@ -9,7 +10,6 @@ import { SidebarFeedsSkeleton } from "@/components/layout/components/sidebar-fee
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { TopNav } from "@/components/layout/top-nav";
 import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
-import { TourProvider } from "@/components/shared/tour-provider";
 import { WelcomeTour } from "@/components/shared/welcome-tour";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { db } from "@/db";
@@ -47,33 +47,35 @@ export default async function DashboardLayout({
     queryFn: () => getUnreadCounts(db, session.user.id),
   });
 
+  const isNewUser =
+    session.user.isAnonymous ||
+    differenceInHours(session.user.createdAt, Date.now()) <= 24;
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <TourProvider>
-        <div className="flex h-screen flex-col">
-          <TopNav user={session.user} />
+      <div className="flex h-screen flex-col">
+        <TopNav user={session.user} />
 
-          <SidebarProvider className="overflow-hidden">
-            <AppSidebar>
-              <QueryErrorBoundary fallback={<SidebarErrorFallback />}>
-                <Suspense fallback={<SidebarFeedsSkeleton />}>
-                  <SidebarFeeds />
-                </Suspense>
-              </QueryErrorBoundary>
-            </AppSidebar>
-            <div className="flex flex-1 flex-col overflow-x-hidden">
-              {session.user.isAnonymous && <GuestBanner />}
+        <SidebarProvider className="overflow-hidden">
+          <AppSidebar>
+            <QueryErrorBoundary fallback={<SidebarErrorFallback />}>
+              <Suspense fallback={<SidebarFeedsSkeleton />}>
+                <SidebarFeeds />
+              </Suspense>
+            </QueryErrorBoundary>
+          </AppSidebar>
+          <div className="flex flex-1 flex-col overflow-x-hidden">
+            {session.user.isAnonymous && <GuestBanner />}
 
-              <SidebarInset className="flex flex-col p-4 overflow-y-scroll">
-                {children}
-              </SidebarInset>
+            <SidebarInset className="flex flex-col p-4 overflow-y-scroll">
+              {children}
+            </SidebarInset>
 
-              <MobileBottomNav user={session.user} />
-            </div>
-          </SidebarProvider>
-        </div>
-        <WelcomeTour />
-      </TourProvider>
+            <MobileBottomNav user={session.user} />
+          </div>
+        </SidebarProvider>
+      </div>
+      {isNewUser && <WelcomeTour />}
     </HydrationBoundary>
   );
 }
