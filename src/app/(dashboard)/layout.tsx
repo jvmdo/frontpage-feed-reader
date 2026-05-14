@@ -73,9 +73,9 @@ export default async function DashboardLayout({
 
             <MobileBottomNav user={session.user} />
           </div>
+          {isNewUser && <WelcomeTour />}
         </SidebarProvider>
       </div>
-      {isNewUser && <WelcomeTour />}
     </HydrationBoundary>
   );
 }

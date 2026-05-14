@@ -2,6 +2,15 @@ import { type Tour, waitForElement, waitForEvent } from "@ark-ui/react/tour";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { WELCOME_FEED_URL } from "@/lib/constants";
 
+/**
+ * Helper to find the first visible element matching a selector.
+ * Useful when multiple elements share a data-tour attribute (e.g. mobile vs desktop variants).
+ */
+const getVisibleTarget = (selector: string) =>
+  Array.from(document.querySelectorAll<HTMLElement>(selector)).find(
+    (el) => el.offsetWidth > 0 && el.offsetHeight > 0,
+  ) ?? null;
+
 export const steps: Tour.StepDetails[] = [
   // --- PHASE 1: Add Feed ---
   {
@@ -10,7 +19,7 @@ export const steps: Tour.StepDetails[] = [
     placement: "right",
     title: "Add your first feed",
     description: "Click here to add a new RSS or Atom feed to your dashboard.",
-    target: () => document.querySelector('[data-tour="add-feed"]'),
+    target: () => getVisibleTarget('[data-tour="add-feed"]'),
     effect({ next, target, show }) {
       show();
       const [promise, cancel] = waitForEvent(target, "click");

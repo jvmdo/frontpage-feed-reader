@@ -22,7 +22,7 @@ export function MobileBottomNav({ user }: MobileBottomNavProps) {
 
   return (
     <div
-      className="md:hidden h-14 border-t border-border bg-card flex items-center justify-around px-2 shrink-0 z-30"
+      className="md:hidden h-14 border-t border-border bg-card flex items-center justify-around z-30"
       role="toolbar"
       aria-label="Mobile quick actions"
     >
@@ -51,6 +51,7 @@ export function MobileBottomNav({ user }: MobileBottomNavProps) {
           size="icon"
           className="size-10"
           aria-label="Add new feed"
+          data-tour="add-feed"
         >
           <PlusIcon className="size-5" />
         </Button>

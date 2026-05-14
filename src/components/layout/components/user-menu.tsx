@@ -58,7 +58,7 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="relative size-8 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-opacity hover:opacity-80"
+          className="relative size-10 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background transition-opacity hover:opacity-80"
           aria-label="User menu"
         >
           <Avatar className="size-8">

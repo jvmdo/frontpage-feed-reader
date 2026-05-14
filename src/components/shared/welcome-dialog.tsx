@@ -20,7 +20,7 @@ export function WelcomeDialog({ startTour }: { startTour?: () => void }) {
   const setTourCompleted = useTourStore((s) => s.setTourCompleted);
 
   useEffect(() => {
-    setOpen(!(isTourActive || isTourCompleted));
+    setOpen(!isTourActive && !isTourCompleted);
   }, [isTourActive, isTourCompleted]);
 
   const handleStart = () => {
@@ -35,7 +35,7 @@ export function WelcomeDialog({ startTour }: { startTour?: () => void }) {
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogContent>
+      <AlertDialogContent className="w-[min(calc(100vw-2rem),25rem)]">
         <AlertDialogHeader>
           <AlertDialogTitle>Welcome to Frontpage!</AlertDialogTitle>
           <AlertDialogDescription>

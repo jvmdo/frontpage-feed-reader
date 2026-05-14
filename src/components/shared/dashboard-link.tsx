@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { saveItemsListScroll } from "@/lib/scroll-store";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface DashboardLinkProps extends LinkProps {
   feedId?: number | null;
@@ -27,6 +28,7 @@ export function DashboardLink({
   ...props
 }: DashboardLinkProps) {
   const pathname = usePathname();
+  const { setOpenMobile, isMobile } = useSidebar();
   const {
     feedId: currentFeedId,
     categoryId: currentCategoryId,
@@ -37,6 +39,11 @@ export function DashboardLink({
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Call the original onClick if it exists (e.g. from a CollapsibleTrigger)
     props.onClick?.(e);
+
+    // If on mobile, close the sidebar when navigating
+    if (isMobile) {
+      setOpenMobile(false);
+    }
 
     // If we are already on the dashboard, intercept the click to do a shallow update
     if (pathname === "/dashboard") {
