@@ -89,7 +89,7 @@ describe("ItemReaderLightbox Integration", () => {
   });
 
   it("renders correctly when open and loading", () => {
-    vi.mocked(useItem).mockReturnValue({ isLoading: true } as any);
+    vi.mocked(useItem).mockReturnValue({ isPending: true } as any);
 
     render(<ItemReaderLightbox />);
 
@@ -99,7 +99,8 @@ describe("ItemReaderLightbox Integration", () => {
   it("renders error state", () => {
     vi.mocked(useItem).mockReturnValue({
       error: new Error("Failed to load"),
-      isLoading: false,
+      isPending: false,
+      isError: true,
     } as any);
 
     render(<ItemReaderLightbox />);

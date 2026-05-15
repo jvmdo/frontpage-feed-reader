@@ -5,6 +5,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FoldHorizontalIcon,
+  RefreshCwIcon,
   TextAlignJustifyIcon,
   UnfoldHorizontalIcon,
   XIcon,
@@ -12,7 +13,12 @@ import {
 import { useState } from "react";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { ReaderView } from "@/components/reader/reader-view";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,7 +43,24 @@ type ReaderWidth = (typeof ReaderWidthValues)[number];
 
 export function ItemReaderLightbox() {
   const { activeItemId, setActiveItemId } = useActiveItem();
-  const { data, isLoading, error } = useItem(activeItemId);
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setActiveItemId(null);
+    }
+  };
+
+  return (
+    <Dialog open={!!activeItemId} onOpenChange={handleOpenChange}>
+      {activeItemId && (
+        <ItemReaderLightboxContent activeItemId={activeItemId} />
+      )}
+    </Dialog>
+  );
+}
+
+function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
+  const { data, isPending, isError, error, refetch } = useItem(activeItemId);
   const { goToNext, goToPrev, hasNext, hasPrev } = useItemReaderNavigation();
   const { isTourActive } = useTourStore();
 
@@ -48,158 +71,136 @@ export function ItemReaderLightbox() {
   useReaderShortcuts({
     onNext: goToNext,
     onPrev: goToPrev,
-    enabled: !!activeItemId,
+    enabled: true,
   });
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      setActiveItemId(null);
-    }
-  };
-
   return (
-    <Dialog open={!!activeItemId} onOpenChange={handleOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        onInteractOutside={(e) => {
-          if (isTourActive) {
-            e.preventDefault();
-          }
-        }}
-        style={{ "--max-width": readerWidth } as React.CSSProperties}
-        className={cn(
-          "inset-0 translate-x-0 translate-y-0 max-w-none mx-auto p-0 bg-transparent",
-          "sm:max-w-(--max-width) sm:h-[96vh] sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
-          data?.isExcerpt && "top-auto h-min!",
-        )}
-      >
-        <DialogHeader className="sr-only">
-          <DialogTitle>Item Reader</DialogTitle>
-          <DialogDescription>
-            Read the full content of the selected item.
-          </DialogDescription>
-        </DialogHeader>
+    <DialogContent
+      showCloseButton={false}
+      onInteractOutside={(e) => {
+        if (isTourActive) {
+          e.preventDefault();
+        }
+      }}
+      style={{ "--max-width": readerWidth } as React.CSSProperties}
+      className={cn(
+        "inset-0 translate-x-0 translate-y-0 max-w-none mx-auto p-0 bg-transparent",
+        "sm:max-w-(--max-width) sm:h-[96vh] sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
+        data?.isExcerpt && "top-auto h-min!",
+      )}
+    >
+      <DialogHeader className="sr-only">
+        <DialogTitle>Item Reader</DialogTitle>
+        <DialogDescription>
+          Read the full content of the selected item.
+        </DialogDescription>
+      </DialogHeader>
 
-        {/* Main Surface */}
-        <div className="bg-background sm:rounded-xl overflow-hidden">
-          {/* Toolbar */}
-          <header className="sticky top-0 z-20 flex items-center border-b bg-background">
-            <DialogClose asChild>
-              <Button
-                variant="ghost"
-                aria-label="Close"
-                data-tour="reader-close"
-              >
-                <XIcon className="size-4 md:size-5 text-text-tertiary" />
-              </Button>
-            </DialogClose>
-            <div className="h-10 flex gap-1 items-center min-w-0 border-l pl-1 md:h-14 md:pl-2">
-              <FeedIcon url={data?.feed.iconUrl} size={20} />
-              <span className="text-text-secondary text-xs truncate md:text-base">
-                {data?.feed.title}
-              </span>
-            </div>
+      {/* Main Surface */}
+      <div className="bg-background sm:rounded-xl overflow-hidden">
+        {/* Toolbar */}
+        <header className="sticky top-0 z-20 flex items-center border-b bg-background">
+          <DialogClose asChild>
+            <Button variant="ghost" aria-label="Close" data-tour="reader-close">
+              <XIcon className="size-4 md:size-5 text-text-tertiary" />
+            </Button>
+          </DialogClose>
+          <div className="h-10 flex gap-1 items-center min-w-0 border-l pl-1 md:h-14 md:pl-2">
+            <FeedIcon url={data?.feed.iconUrl} size={20} />
+            <span className="text-text-secondary text-xs truncate md:text-base">
+              {data?.feed.title}
+            </span>
+          </div>
 
-            {/* Mobile Nav Controls */}
-            <div className="ml-auto flex items-center gap-1 pr-2 sm:hidden">
-              <Button
-                variant="secondary"
-                size="icon-sm"
-                onClick={goToPrev}
-                disabled={!hasPrev}
-                aria-label="Previous article"
-              >
-                <ChevronLeftIcon />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon-sm"
-                onClick={goToNext}
-                disabled={!hasNext}
-                aria-label="Next article"
-              >
-                <ChevronRightIcon />
-              </Button>
-            </div>
+          {/* Mobile Nav Controls */}
+          <div className="ml-auto flex items-center gap-1 pr-2 sm:hidden">
+            <Button
+              variant="secondary"
+              size="icon-sm"
+              onClick={goToPrev}
+              disabled={!hasPrev}
+              aria-label="Previous article"
+            >
+              <ChevronLeftIcon />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon-sm"
+              onClick={goToNext}
+              disabled={!hasNext}
+              aria-label="Next article"
+            >
+              <ChevronRightIcon />
+            </Button>
+          </div>
 
-            {/* Desktop Layout Controls */}
-            <div className="hidden ml-auto sm:flex items-center gap-2 pr-4">
-              <ToggleGroup
-                type="single"
-                value={readerWidth}
-                onValueChange={(val) => {
-                  setReaderWidth(val as ReaderWidth);
-                }}
-              >
-                <ToggleGroupItem value={ReaderWidthValues[0]}>
-                  <FoldHorizontalIcon className="size-4" />
-                </ToggleGroupItem>
-                <ToggleGroupItem value={ReaderWidthValues[1]}>
-                  <TextAlignJustifyIcon className="size-4" />
-                </ToggleGroupItem>
-                <ToggleGroupItem value={ReaderWidthValues[2]}>
-                  <UnfoldHorizontalIcon className="size-4" />
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-          </header>
+          {/* Desktop Layout Controls */}
+          <div className="hidden ml-auto sm:flex items-center gap-2 pr-4">
+            <ToggleGroup
+              type="single"
+              value={readerWidth}
+              onValueChange={(val) => {
+                setReaderWidth(val as ReaderWidth);
+              }}
+            >
+              <ToggleGroupItem value={ReaderWidthValues[0]}>
+                <FoldHorizontalIcon className="size-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value={ReaderWidthValues[1]}>
+                <TextAlignJustifyIcon className="size-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value={ReaderWidthValues[2]}>
+                <UnfoldHorizontalIcon className="size-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        </header>
 
-          {/* Content Area */}
-          <ScrollArea className="h-full" data-tour="reader-content">
-            {isLoading ? (
-              <ReaderSkeleton />
-            ) : error ? (
-              <div className="p-8">
-                <Alert variant="destructive">
-                  <AlertCircleIcon className="size-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>
-                    {error instanceof Error
-                      ? error.message
-                      : "Failed to load item"}
-                  </AlertDescription>
-                </Alert>
-              </div>
-            ) : data ? (
-              <ReaderView data={data} />
-            ) : null}
-          </ScrollArea>
-        </div>
+        {/* Content Area */}
+        <ScrollArea className="h-full" data-tour="reader-content">
+          {isPending ? (
+            <ReaderSkeleton />
+          ) : isError ? (
+            <ReaderError message={error.message} retry={refetch} />
+          ) : (
+            <ReaderView data={data} />
+          )}
+        </ScrollArea>
+      </div>
 
-        {/* Floating Controls */}
-        <div className="hidden sm:block fixed -left-16 top-1/2 -translate-y-1/2">
-          <Button
-            variant="secondary"
-            size="icon"
-            className={cn(
-              "size-12 rounded-full hover:scale-110 active:scale-95",
-              !hasPrev && "opacity-20",
-            )}
-            onClick={goToPrev}
-            disabled={!hasPrev}
-            aria-label="Previous item"
-          >
-            <ChevronLeftIcon className="size-6" />
-          </Button>
-        </div>
+      {/* Floating Controls */}
+      <div className="hidden sm:block fixed -left-16 top-1/2 -translate-y-1/2">
+        <Button
+          variant="secondary"
+          size="icon"
+          className={cn(
+            "size-12 rounded-full hover:scale-110 active:scale-95",
+            !hasPrev && "opacity-20",
+          )}
+          onClick={goToPrev}
+          disabled={!hasPrev}
+          aria-label="Previous item"
+        >
+          <ChevronLeftIcon className="size-6" />
+        </Button>
+      </div>
 
-        <div className="hidden sm:block fixed -right-16 top-1/2 -translate-y-1/2">
-          <Button
-            variant="secondary"
-            size="icon"
-            className={cn(
-              "size-12 rounded-full hover:scale-110 active:scale-95",
-              !hasNext && "opacity-20",
-            )}
-            onClick={goToNext}
-            disabled={!hasNext}
-            aria-label="Next item"
-          >
-            <ChevronRightIcon className="size-6" />
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <div className="hidden sm:block fixed -right-16 top-1/2 -translate-y-1/2">
+        <Button
+          variant="secondary"
+          size="icon"
+          className={cn(
+            "size-12 rounded-full hover:scale-110 active:scale-95",
+            !hasNext && "opacity-20",
+          )}
+          onClick={goToNext}
+          disabled={!hasNext}
+          aria-label="Next item"
+        >
+          <ChevronRightIcon className="size-6" />
+        </Button>
+      </div>
+    </DialogContent>
   );
 }
 
@@ -234,6 +235,30 @@ function ReaderSkeleton() {
           <Skeleton className="h-4 w-[95%]" />
         </div>
       </div>
+    </div>
+  );
+}
+
+function ReaderError({
+  message,
+  retry,
+}: {
+  message?: string;
+  retry: () => void;
+}) {
+  return (
+    <div className="p-8">
+      <Alert variant="destructive">
+        <AlertCircleIcon className="size-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{message ?? "Failed to load item"}</AlertDescription>
+        <AlertAction>
+          <Button variant="secondary" onClick={() => retry()}>
+            <RefreshCwIcon data-icon="inline-start" />
+            Try again
+          </Button>
+        </AlertAction>
+      </Alert>
     </div>
   );
 }
