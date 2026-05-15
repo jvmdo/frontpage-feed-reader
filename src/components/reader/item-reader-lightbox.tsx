@@ -28,8 +28,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
-import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
+import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { cn } from "@/lib/utils";
 
 const ReaderWidthValues = ["50vw", "65vw", "80vw"] as const;
@@ -61,11 +61,6 @@ export function ItemReaderLightbox() {
     <Dialog open={!!activeItemId} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton={false}
-        onPointerDownOutside={(e) => {
-          if (isTourActive) {
-            e.preventDefault();
-          }
-        }}
         onInteractOutside={(e) => {
           if (isTourActive) {
             e.preventDefault();
@@ -90,7 +85,11 @@ export function ItemReaderLightbox() {
           {/* Toolbar */}
           <header className="sticky top-0 z-20 flex items-center border-b bg-background">
             <DialogClose asChild>
-              <Button variant="ghost" aria-label="Close" data-tour="reader-close">
+              <Button
+                variant="ghost"
+                aria-label="Close"
+                data-tour="reader-close"
+              >
                 <XIcon className="size-4 md:size-5 text-text-tertiary" />
               </Button>
             </DialogClose>

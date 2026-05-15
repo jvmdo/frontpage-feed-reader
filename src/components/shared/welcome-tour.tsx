@@ -16,6 +16,7 @@ export function WelcomeTour() {
   const setTourActive = useTourStore((s) => s.setTourActive);
   const setTourCompleted = useTourStore((s) => s.setTourCompleted);
   const isTourActive = useTourStore((s) => s.isTourActive);
+  const isWaitingForFeed = useTourStore((s) => s.isWaitingForFeed);
 
   const responsiveSteps = React.useMemo(() => {
     return steps.map((step) => {
@@ -49,27 +50,26 @@ export function WelcomeTour() {
       ) {
         setTourActive(false);
         setTourCompleted(true);
+        // Clean up steps on finish
+        tour.setSteps(responsiveSteps);
       }
     },
   });
 
   // Sync steps if they change (e.g. on window resize)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `tour` isn't stable
   React.useEffect(() => {
     tour.setSteps(responsiveSteps);
-  }, [responsiveSteps, tour]);
+  }, [responsiveSteps]);
 
-  // Ensure sidebar is open on mobile during relevant steps
+  // Ensure sidebar is open on mobile during relevant steps or waiting states
   React.useEffect(() => {
-    if (isTourActive && isMobile) {
-      const currentStepId = tour.step?.id;
-      if (
-        currentStepId === "wait-for-sidebar-feed" ||
-        currentStepId === "click-welcome-feed"
-      ) {
-        setOpenMobile(true);
-      }
+    if (!isTourActive || !isMobile) return;
+
+    if (isWaitingForFeed || tour.step?.id === "click-welcome-feed") {
+      setOpenMobile(true);
     }
-  }, [tour.step?.id, isTourActive, isMobile, setOpenMobile]);
+  }, [tour.step?.id, isTourActive, isMobile, setOpenMobile, isWaitingForFeed]);
 
   return (
     <Tour.Root tour={tour}>

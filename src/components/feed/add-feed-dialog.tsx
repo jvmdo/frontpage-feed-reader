@@ -48,11 +48,7 @@ export function AddFeedDialog({ children, asChild }: AddFeedDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild={asChild}>{children}</DialogTrigger>
       <DialogContent
-        onPointerDownOutside={(e) => {
-          if (isTourActive) {
-            e.preventDefault();
-          }
-        }}
+        data-tour="add-feed-dialog"
         onInteractOutside={(e) => {
           if (isTourActive) {
             e.preventDefault();

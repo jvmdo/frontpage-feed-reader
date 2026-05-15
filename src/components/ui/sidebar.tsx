@@ -21,6 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/ui/use-mobile";
+import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { cn } from "@/lib/utils";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
@@ -161,6 +162,7 @@ function Sidebar({
   collapsible?: "offcanvas" | "icon" | "none";
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+  const isTourActive = useTourStore((s) => s.isTourActive);
 
   if (collapsible === "none") {
     return (
@@ -192,6 +194,11 @@ function Sidebar({
             } as React.CSSProperties
           }
           side={side}
+          onInteractOutside={(e) => {
+            if (isTourActive) {
+              e.preventDefault();
+            }
+          }}
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Sidebar</SheetTitle>
