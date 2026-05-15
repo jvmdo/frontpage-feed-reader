@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOutIcon, SettingsIcon, UserIcon } from "lucide-react";
+import { LogOutIcon, SettingsIcon, SparklesIcon, UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { authClient, type SessionUser } from "@/lib/auth-client";
 
 interface UserMenuProps {
@@ -27,6 +28,7 @@ interface UserMenuProps {
 export function UserMenu({ user: initialUser }: UserMenuProps) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
+  const resetTour = useTourStore((s) => s.reset);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isConversionDialogOpen, setIsConversionDialogOpen] = useState(false);
 
@@ -100,6 +102,10 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
             <DropdownMenuItem disabled>
               <SettingsIcon data-icon="inline-start" />
               Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => resetTour()}>
+              <SparklesIcon data-icon="inline-start" />
+              Take the tour again
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />

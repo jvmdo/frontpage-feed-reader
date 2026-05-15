@@ -84,3 +84,35 @@ test("full onboarding journey as a guest", async ({ page }) => {
   await expect(tourContent).not.toBeVisible();
   await expect(reader).not.toBeVisible();
 });
+
+test("restart tour from user menu", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+
+  // 1. Start at landing page to establish guest session
+  await page.goto("/");
+  await page.waitForSelector('body[data-hydrated="true"]');
+
+  // 2. Access as Guest
+  await page
+    .getByRole("button", { name: /try as guest/i })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/dashboard/);
+  await page.waitForSelector('body[data-hydrated="true"]');
+
+  // 3. Dismiss initial tour
+  const welcomeDialog = page.getByRole("alertdialog");
+  await expect(welcomeDialog).toBeVisible();
+  await welcomeDialog.getByRole("button", { name: /maybe later/i }).click();
+  await expect(welcomeDialog).not.toBeVisible();
+
+  // 4. Open User Menu
+  await page.getByLabel("User menu").filter({ visible: true }).click();
+
+  // 5. Click "Take the tour again"
+  await page.getByRole("menuitem", { name: /take the tour again/i }).click();
+
+  // 6. Verify Welcome Dialog reappears
+  await expect(welcomeDialog).toBeVisible();
+  await expect(welcomeDialog).toContainText(/welcome to frontpage/i);
+});
