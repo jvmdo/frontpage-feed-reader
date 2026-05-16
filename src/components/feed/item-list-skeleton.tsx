@@ -5,33 +5,93 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FeedLayout, useViewOptions } from "@/hooks/ui/use-view-options";
 import { cn } from "@/lib/utils";
 
+// --- Atomic Skeleton Parts ---
+
+const SourceSkeleton = ({ className }: { className?: string }) => (
+  <div className={cn("flex items-center gap-1 min-w-0", className)}>
+    <Skeleton className="size-5 rounded-md shrink-0" />
+    <Skeleton className="h-4 w-20" />
+  </div>
+);
+
+const DateSkeleton = ({
+  showSeparator = false,
+  className,
+}: {
+  showSeparator?: boolean;
+  className?: string;
+}) => (
+  <div className={cn("flex items-center gap-2 shrink-0", className)}>
+    {showSeparator && <Skeleton className="size-1 rounded-full opacity-40" />}
+    <Skeleton className="h-4 w-12" />
+  </div>
+);
+
+const TitleSkeleton = ({ className }: { className?: string }) => (
+  <div className={cn("space-y-1", className)}>
+    <Skeleton className="h-4 w-full" />
+    <Skeleton className="h-4 w-2/3" />
+  </div>
+);
+
+const ExcerptSkeleton = ({
+  lines = 2,
+  className,
+}: {
+  lines?: number;
+  className?: string;
+}) => (
+  <div className={cn("space-y-1", className)}>
+    <Skeleton className="h-3 w-full" />
+    {lines > 1 && <Skeleton className="h-3 w-5/6" />}
+    {lines > 2 && <Skeleton className="h-3 w-4/6" />}
+  </div>
+);
+
+const BadgeSkeleton = ({ className }: { className?: string }) => (
+  <Skeleton className={cn("h-4 w-16 rounded-sm", className)} />
+);
+
+const ActionSkeleton = ({ className }: { className?: string }) => (
+  <Skeleton className={cn("size-8 rounded-md", className)} />
+);
+
+const UnreadSkeleton = ({ className }: { className?: string }) => (
+  <div className={cn("flex shrink-0", className)}>
+    <Skeleton className="size-2 rounded-full" />
+  </div>
+);
+
+// --- Layout Skeletons ---
+
 export function ItemSkeleton({ layout }: { layout: FeedLayout }) {
+  // Shared base classes matching CardShell
+  const baseClasses =
+    "relative border-b border-border overflow-hidden transition-all";
+
   if (layout === FeedLayout.Grid) {
     return (
-      <div className="flex flex-col h-[200px] border border-border rounded-lg bg-card p-4">
-        {/* Source line placeholder */}
-        <div className="flex items-center gap-2 mb-3">
-          <Skeleton className="size-4 rounded-md shrink-0" />
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-3 w-10 ml-auto" />
+      <div
+        className={cn(
+          "w-full h-50 flex flex-col gap-1 p-4 border border-border rounded-lg",
+          "bg-muted/10 animate-pulse",
+        )}
+      >
+        <div className="flex items-center justify-between gap-3 mb-1">
+          <SourceSkeleton />
+          <UnreadSkeleton />
         </div>
 
-        {/* Title placeholder */}
-        <div className="mb-2">
-          <Skeleton className="h-5 w-full mb-1" />
-          <Skeleton className="h-5 w-2/3" />
+        <TitleSkeleton className="mb-1 shrink-0" />
+        <div className="flex-1 overflow-hidden py-1">
+          <ExcerptSkeleton lines={2} />
         </div>
-
-        {/* Excerpt placeholder */}
-        <div className="space-y-1 mb-4">
-          <Skeleton className="h-3 w-full" />
-          <Skeleton className="h-3 w-5/6" />
-        </div>
-
-        {/* Footer placeholder */}
-        <div className="mt-auto flex items-center justify-between">
-          <Skeleton className="h-5 w-16 rounded-sm" />
-          <Skeleton className="size-2 rounded-full" />
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1 shrink-0">
+          <BadgeSkeleton className="shrink" />
+          <div className="grow flex items-center justify-end gap-2 shrink-0">
+            <DateSkeleton />
+            <ActionSkeleton />
+          </div>
         </div>
       </div>
     );
@@ -39,69 +99,33 @@ export function ItemSkeleton({ layout }: { layout: FeedLayout }) {
 
   if (layout === FeedLayout.Rows) {
     return (
-      <div className="px-2 py-1.5 border-b border-border md:px-3 md:py-3">
-        <div className="flex gap-2">
-          {/* Unread dot placeholder */}
-          <div className="flex items-center w-2">
-            <Skeleton className="size-2 rounded-full" />
+      <div className={cn(baseClasses, "flex gap-3 p-2 md:p-3")}>
+        <UnreadSkeleton className="w-2 items-center" />
+        <div className="flex-1 space-y-1 min-w-0">
+          <div className="flex">
+            <SourceSkeleton />
+            <DateSkeleton showSeparator className="pl-2" />
           </div>
-
-          {/* Content placeholder */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1 mb-1">
-              <Skeleton className="size-4 rounded-md shrink-0" />
-              <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-3 w-8" />
-            </div>
-            <Skeleton className="h-5 w-2/3" />
-          </div>
-
-          {/* Action placeholder */}
-          <div className="shrink-0 mt-2">
-            <Skeleton className="size-8 rounded-md" />
-          </div>
+          <Skeleton className="h-4 w-3/4" />
         </div>
+        <ActionSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-4 border-b border-border sm:px-6 sm:py-5">
-      <div className="flex gap-4">
-        {/* Unread dot placeholder */}
-        <div className="pt-4 w-3 shrink-0">
-          <Skeleton className="size-2 rounded-full" />
+    <div className={cn(baseClasses, "flex gap-4 p-4 lg:p-6")}>
+      <UnreadSkeleton className="pt-2 w-2" />
+      <div className="flex-1 min-w-0">
+        <div className="flex mb-1.5">
+          <SourceSkeleton />
+          <DateSkeleton showSeparator className="pl-2" />
         </div>
-
-        {/* Content placeholder */}
-        <div className="flex-1 min-w-0">
-          {/* Source line placeholder */}
-          <div className="flex items-center gap-2 mb-2">
-            <Skeleton className="size-5 rounded-md shrink-0" />
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-12" />
-          </div>
-
-          {/* Title placeholder */}
-          <div className="mb-2">
-            <Skeleton className="h-6 w-3/4 mb-1" />
-          </div>
-
-          {/* Excerpt placeholder */}
-          <div className="space-y-1 mb-3">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-          </div>
-
-          {/* Tag placeholder */}
-          <Skeleton className="h-6 w-20 rounded-md" />
-        </div>
-
-        {/* Action placeholder */}
-        <div className="shrink-0 mt-2">
-          <Skeleton className="size-8 rounded-md" />
-        </div>
+        <TitleSkeleton className="mb-1.5" />
+        <ExcerptSkeleton lines={2} className="mb-3" />
+        <BadgeSkeleton />
       </div>
+      <ActionSkeleton />
     </div>
   );
 }

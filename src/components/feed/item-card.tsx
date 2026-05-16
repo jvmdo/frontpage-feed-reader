@@ -1,6 +1,7 @@
 "use client";
 
 import { BookmarkIcon } from "lucide-react";
+import { createContext, useContext } from "react";
 import { RelativeDate } from "@/components/shared/relative-date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,27 @@ import { cn } from "@/lib/utils";
 import type { ListItemWithSource } from "@/types";
 import { FeedIcon } from "./feed-icon";
 
+// --- Context ---
+
+interface ItemCardContextValue {
+  data: ListItemWithSource;
+  handleOpenReader: () => void;
+}
+
+const ItemCardContext = createContext<ItemCardContextValue | null>(null);
+
+function useItemCard() {
+  const context = useContext(ItemCardContext);
+  if (!context) {
+    throw new Error(
+      "ItemCard compound components must be used within an ItemCard",
+    );
+  }
+  return context;
+}
+
+// --- Root Components ---
+
 interface ItemCardProps {
   data: ListItemWithSource;
   className?: string;
@@ -18,13 +40,40 @@ interface ItemCardProps {
   layout: FeedLayout;
 }
 
+function CardShell({
+  className,
+  dataTour,
+  children,
+}: {
+  className?: string;
+  dataTour?: string;
+  children: React.ReactNode;
+}) {
+  const { data } = useItemCard();
+  const { isRead, item } = data;
+
+  return (
+    <article
+      className={cn(
+        "group relative border-b border-border overflow-hidden transition-all hover:bg-accent/60 cursor-pointer",
+        isRead && "opacity-60",
+        className,
+      )}
+      aria-labelledby={`title-${item.id}`}
+      data-tour={dataTour}
+    >
+      {children}
+    </article>
+  );
+}
+
 export function ItemCard({
   data,
+  layout,
   className,
   "data-tour": dataTour,
-  layout,
 }: ItemCardProps) {
-  const { item, feed, isRead, categoryName, categoryColor } = data;
+  const { isRead, item } = data;
   const { mutate: markAsRead } = useMarkRead();
   const { setActiveItemId } = useActiveItem();
 
@@ -35,263 +84,265 @@ export function ItemCard({
     setActiveItemId(item.id);
   };
 
-  if (layout === FeedLayout.Grid) {
-    return (
-      <article
-        className={cn(
-          "group relative flex flex-col w-full h-50 border border-border rounded-lg bg-card transition-all hover:bg-accent/60 cursor-pointer overflow-hidden",
-          isRead && "opacity-60",
-          className,
-        )}
-        aria-labelledby={`title-${item.id}`}
-        data-tour={dataTour}
-      >
-        <div className="p-4 flex flex-col h-full">
-          {/* Source line */}
-          <div className="flex items-center gap-2 mb-3">
-            <FeedIcon
-              url={feed.iconUrl || feed.url}
-              title={feed.title || "Untitled Feed"}
-              className="size-4 shrink-0"
-              categoryColor={categoryColor}
-            />
-            <span className="text-xs text-muted-foreground truncate">
-              {feed.title || "Untitled Feed"}
-            </span>
-            <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
-              <RelativeDate date={item.publishedAt || item.createdAt} />
-            </span>
-          </div>
-
-          {/* Title */}
-          <h3
-            id={`title-${item.id}`}
-            className="text-base font-semibold text-foreground leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-3"
-          >
-            {item.title || "Untitled Item"}
-            <span className="sr-only">({isRead ? "" : "un"}read)</span>
-          </h3>
-
-          <button
-            type="button"
-            className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset z-10"
-            aria-label={`Open reader for ${item.title || "item"}`}
-            onClick={handleOpenReader}
-          />
-
-          {/* Excerpt */}
-          {item.description && (
-            <div
-              // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted content from parser
-              dangerouslySetInnerHTML={{ __html: item.description }}
-              className="text-sm text-muted-foreground leading-relaxed line-clamp-2 pointer-events-none"
-            />
-          )}
-
-          {/* Footer */}
-          <div className="mt-auto flex items-center justify-between">
-            {categoryName ? (
-              <Badge
-                variant="secondary"
-                className="text-[10px] px-1.5 py-0 font-semibold rounded-sm border-0"
-                style={{
-                  background: categoryColor ? `${categoryColor}40` : undefined,
-                  color: categoryColor ?? undefined,
-                }}
-              >
-                {categoryName}
-              </Badge>
-            ) : (
-              <div />
-            )}
-
-            <div className="flex items-center">
-              {/* Save button (Bookmark) */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Toggle save logic would go here
-                }}
-                aria-label="Save for later"
-                className="group relative z-20 transition-all shrink-0 size-8 p-0 hover:bg-primary/10"
-              >
-                <BookmarkIcon className="size-4 text-muted-foreground group-hover:text-primary" />
-              </Button>
-
-              {!isRead && (
-                <div className="size-2 rounded-full bg-unread-indicator shrink-0" />
-              )}
-            </div>
-          </div>
-        </div>
-      </article>
-    );
-  }
-
-  if (layout === FeedLayout.Rows) {
-    return (
-      <article
-        className={cn(
-          "group relative px-2 py-1.5 border-b border-border transition-colors hover:bg-accent/60 cursor-pointer md:px-3 md:py-3",
-          isRead && "opacity-60",
-          className,
-        )}
-        aria-labelledby={`title-${item.id}`}
-        data-tour={dataTour}
-      >
-        <div className="flex gap-2">
-          {/* Unread dot */}
-          <div className="flex items-center w-2">
-            {!isRead && (
-              <div className="size-2 rounded-full bg-unread-indicator" />
-            )}
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1">
-              <FeedIcon
-                url={feed.iconUrl || feed.url}
-                title={feed.title || "Untitled Feed"}
-                className="size-4 shrink-0"
-                categoryColor={categoryColor}
-              />
-              <span className="text-sm text-muted-foreground truncate">
-                {feed.title || "Untitled Feed"}
-              </span>
-              <span className="text-muted-foreground opacity-40">·</span>
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                <RelativeDate date={item.publishedAt || item.createdAt} />
-              </span>
-            </div>
-
-            {/* Title */}
-            <h3
-              id={`title-${item.id}`}
-              className="grow min-w-0 truncate text-base font-semibold text-foreground leading-snug group-hover:text-primary transition-colors"
-            >
-              {item.title || "Untitled Item"}
-              <span className="sr-only">({isRead ? "" : "un"}read)</span>
-            </h3>
-            <button
-              type="button"
-              className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset z-10"
-              aria-label={`Open reader for ${item.title || "item"}`}
-              onClick={handleOpenReader}
-            />
-          </div>
-
-          {/* Save button (Bookmark) */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              // Toggle save logic would go here
-            }}
-            aria-label="Save for later"
-            className="group relative z-20 transition-all shrink-0 size-8 p-0 mt-2 hover:bg-primary/10"
-          >
-            <BookmarkIcon className="size-4 text-muted-foreground group-hover:text-primary" />
-          </Button>
-        </div>
-      </article>
-    );
-  }
+  const contextValue = { data, handleOpenReader };
 
   return (
-    <article
+    <ItemCardContext.Provider value={contextValue}>
+      {layout === FeedLayout.Grid ? (
+        <GridCardContent className={className} dataTour={dataTour} />
+      ) : layout === FeedLayout.Rows ? (
+        <RowCardContent className={className} dataTour={dataTour} />
+      ) : (
+        <ListCardContent className={className} dataTour={dataTour} />
+      )}
+    </ItemCardContext.Provider>
+  );
+}
+
+// --- Atomic Compound Components ---
+
+ItemCard.Source = function CardSource({ className }: { className?: string }) {
+  const { data } = useItemCard();
+  const { feed, categoryColor } = data;
+
+  return (
+    <div className={cn("flex items-center gap-1 min-w-0", className)}>
+      <FeedIcon
+        url={feed.iconUrl || feed.url}
+        title={feed.title || "Untitled Feed"}
+        className="shrink-0"
+        size={20}
+        categoryColor={categoryColor}
+      />
+      <span className="text-sm text-muted-foreground truncate">
+        {feed.title || "Untitled Feed"}
+      </span>
+    </div>
+  );
+};
+
+ItemCard.Date = function CardDate({
+  className,
+  showSeparator = false,
+}: {
+  className?: string;
+  showSeparator?: boolean;
+}) {
+  const { data } = useItemCard();
+  const { item } = data;
+
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      {showSeparator && (
+        <div className="size-1 rounded-full bg-muted-foreground/50" />
+      )}
+      <span className="text-sm text-muted-foreground whitespace-nowrap">
+        <RelativeDate date={item.publishedAt || item.createdAt} />
+      </span>
+    </div>
+  );
+};
+
+ItemCard.Title = function CardTitle({
+  className,
+  clamped = false,
+}: {
+  className?: string;
+  clamped?: boolean;
+}) {
+  const { data, handleOpenReader } = useItemCard();
+  const { item, isRead } = data;
+
+  return (
+    <>
+      <h3
+        id={`title-${item.id}`}
+        className={cn(
+          "text-base font-semibold text-foreground leading-tight group-hover:text-primary transition-colors",
+          clamped && "line-clamp-3",
+          className,
+        )}
+      >
+        {item.title || "Untitled Item"}
+        <span className="sr-only">({isRead ? "" : "un"}read)</span>
+      </h3>
+      <button
+        type="button"
+        className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset z-10"
+        aria-label={`Open reader for ${item.title || "item"}`}
+        onClick={handleOpenReader}
+      />
+    </>
+  );
+};
+
+ItemCard.Excerpt = function CardExcerpt({
+  className,
+  clampLines = 2,
+}: {
+  className?: string;
+  clampLines?: number;
+}) {
+  const { data } = useItemCard();
+  const { item } = data;
+
+  if (!item.description) return null;
+
+  return (
+    <div
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted content from parser
+      dangerouslySetInnerHTML={{ __html: item.description }}
       className={cn(
-        "group relative px-4 py-4 border-b border-border transition-colors hover:bg-accent/60 cursor-pointer sm:px-6 sm:py-5",
-        isRead && "opacity-60",
+        "text-sm text-muted-foreground leading-relaxed overflow-hidden pointer-events-none",
+        clampLines === 2 ? "line-clamp-2" : "line-clamp-4",
         className,
       )}
-      aria-labelledby={`title-${item.id}`}
-      data-tour={dataTour}
+    />
+  );
+};
+
+ItemCard.Badge = function CardBadge({ className }: { className?: string }) {
+  const { data } = useItemCard();
+  const { categoryName, categoryColor } = data;
+
+  if (!categoryName) return null;
+
+  return (
+    <Badge
+      variant="secondary"
+      className={cn(
+        "text-xs px-1.5 py-0 font-semibold rounded-sm border-0",
+        className,
+      )}
+      style={{
+        background: categoryColor ? `${categoryColor}40` : undefined,
+        color: categoryColor ?? undefined,
+      }}
     >
-      <div className="flex gap-4">
-        {/* Unread dot */}
-        <div className="pt-4 w-3 shrink-0">
-          {!isRead && (
-            <div className="size-2 rounded-full bg-unread-indicator" />
-          )}
+      {categoryName}
+    </Badge>
+  );
+};
+
+ItemCard.Bookmark = function CardBookmark({
+  className,
+}: {
+  className?: string;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={(e) => e.stopPropagation()}
+      aria-label="Save for later"
+      className={cn(
+        "group relative z-20 transition-all shrink-0 size-8 p-0 hover:bg-primary/10",
+        className,
+      )}
+    >
+      <BookmarkIcon className="size-4 text-muted-foreground group-hover:text-primary" />
+    </Button>
+  );
+};
+
+ItemCard.UnreadIndicator = function CardUnreadIndicator({
+  className,
+}: {
+  className?: string;
+}) {
+  const { data } = useItemCard();
+
+  return (
+    <div className={cn("flex shrink-0", className)}>
+      {!data.isRead && (
+        <div className="size-2 rounded-full bg-unread-indicator" />
+      )}
+    </div>
+  );
+};
+
+// --- Layout Content variants ---
+
+function GridCardContent({
+  className,
+  dataTour,
+}: {
+  className?: string;
+  dataTour?: string;
+}) {
+  return (
+    <CardShell
+      className={cn(
+        "w-full h-50 flex flex-col gap-1 p-4 border rounded-lg",
+        className,
+      )}
+      dataTour={dataTour}
+    >
+      <header className="flex items-center justify-between gap-3 mb-1">
+        <ItemCard.Source />
+        <ItemCard.UnreadIndicator />
+      </header>
+      <ItemCard.Title clamped={true} className="shrink-0" />
+      <ItemCard.Excerpt clampLines={4} />
+      <footer className="mt-auto flex items-center justify-between gap-2">
+        <ItemCard.Badge className="shrink" />
+        <div className="grow flex items-center justify-end gap-2 shrink-0">
+          <ItemCard.Date />
+          <ItemCard.Bookmark />
         </div>
+      </footer>
+    </CardShell>
+  );
+}
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Source line */}
-          <div className="flex items-center gap-2 mb-1.5">
-            <FeedIcon
-              url={feed.iconUrl || feed.url}
-              title={feed.title || "Untitled Feed"}
-              className="size-5 shrink-0"
-              size={20}
-              categoryColor={categoryColor}
-            />
-            <span className="text-sm text-muted-foreground truncate max-w-37.5 sm:max-w-none">
-              {feed.title || "Untitled Feed"}
-            </span>
-            <span className="text-muted-foreground opacity-40">·</span>
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
-              <RelativeDate date={item.publishedAt || item.createdAt} />
-            </span>
-          </div>
-
-          {/* Title */}
-          <h3
-            id={`title-${item.id}`}
-            className="text-base font-semibold text-foreground leading-snug mb-1.5 group-hover:text-primary transition-colors"
-          >
-            {item.title || "Untitled Item"}
-            <span className="sr-only">({isRead ? "" : "un"}read)</span>
-          </h3>
-          <button
-            type="button"
-            className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset z-10"
-            aria-label={`Open reader for ${item.title || "item"}`}
-            onClick={handleOpenReader}
-          />
-
-          {/* Excerpt */}
-          {item.description && (
-            <div
-              // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted content from parser
-              dangerouslySetInnerHTML={{ __html: item.description }}
-              className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-3 pointer-events-none"
-            />
-          )}
-
-          {/* Tag (Category) */}
-          {categoryName && (
-            <Badge
-              variant="secondary"
-              className={`text-xs font-semibold rounded-sm border-0`}
-              style={{
-                background: categoryColor ? `${categoryColor}40` : undefined,
-                color: categoryColor ?? undefined,
-              }}
-            >
-              {categoryName}
-            </Badge>
-          )}
-        </div>
-
-        {/* Save button (Bookmark) */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Toggle save logic would go here
-          }}
-          aria-label="Save for later"
-          className="group relative z-20 transition-all shrink-0 size-8 p-0 mt-2 hover:bg-primary/10"
-        >
-          <BookmarkIcon className="size-4 text-muted-foreground group-hover:text-primary" />
-        </Button>
+function RowCardContent({
+  className,
+  dataTour,
+}: {
+  className?: string;
+  dataTour?: string;
+}) {
+  return (
+    <CardShell
+      className={cn("flex gap-3 p-2 md:p-3", className)}
+      dataTour={dataTour}
+    >
+      <ItemCard.UnreadIndicator className="w-2 items-center" />
+      <div className="flex-1 space-y-1 min-w-0">
+        <header className="flex">
+          <ItemCard.Source />
+          <ItemCard.Date showSeparator className="pl-2" />
+        </header>
+        <ItemCard.Title className="truncate" />
       </div>
-    </article>
+      <ItemCard.Bookmark />
+    </CardShell>
+  );
+}
+
+function ListCardContent({
+  className,
+  dataTour,
+}: {
+  className?: string;
+  dataTour?: string;
+}) {
+  return (
+    <CardShell
+      className={cn("flex gap-4 p-4 lg:p-6", className)}
+      dataTour={dataTour}
+    >
+      <ItemCard.UnreadIndicator className="pt-2 w-2" />
+      <div className="flex-1 min-w-0">
+        <header className="flex mb-1.5">
+          <ItemCard.Source />
+          <ItemCard.Date showSeparator className="pl-2" />
+        </header>
+        <ItemCard.Title className="mb-1.5" />
+        <ItemCard.Excerpt className="not-last:mb-3" />
+        <ItemCard.Badge className="max-w-full" />
+      </div>
+      <ItemCard.Bookmark />
+    </CardShell>
   );
 }
