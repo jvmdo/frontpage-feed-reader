@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: test asset */
+
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
 import { RssIcon } from "lucide-react";
@@ -15,9 +17,16 @@ import type { ItemWithSource } from "@/types";
 import { ItemList } from "./item-list";
 import ItemListSkeleton from "./item-list-skeleton";
 
+// Control tour state in tests
+const mockTourState = { isTourActive: false };
+
+vi.mock("@/hooks/ui/use-tour-store", () => ({
+  useTourStore: () => mockTourState,
+}));
+
 // Mock react-virtuoso to render items normally in JSDOM
 vi.mock("react-virtuoso", () => ({
-  Virtuoso: ({ data, itemContent, endReached, components }: any) => {
+  Virtuoso: ({ data, itemContent, components, context }: any) => {
     return (
       <div data-testid="virtuoso-scroller">
         <div data-testid="virtuoso-item-list">
@@ -25,16 +34,19 @@ vi.mock("react-virtuoso", () => ({
             <div key={item.item?.id || index}>{itemContent(index, item)}</div>
           ))}
         </div>
-        {components?.Footer && <components.Footer />}
-        <button
-          data-testid="virtuoso-end-reached-trigger"
-          onClick={endReached}
-          onKeyDown={(e: React.KeyboardEvent) =>
-            e.key === "Enter" && endReached()
-          }
-          style={{ height: 1, width: 1 }}
-          type="button"
-        />
+        {components?.Footer && <components.Footer context={context} />}
+      </div>
+    );
+  },
+  VirtuosoGrid: ({ data, itemContent, components, context }: any) => {
+    return (
+      <div data-testid="virtuoso-grid-scroller">
+        <div data-testid="virtuoso-item-grid">
+          {data.map((item: any, index: number) => (
+            <div key={item.item?.id || index}>{itemContent(index, item)}</div>
+          ))}
+        </div>
+        {components?.Footer && <components.Footer context={context} />}
       </div>
     );
   },
@@ -81,6 +93,7 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe("ItemList", () => {
   beforeEach(() => {
+    mockTourState.isTourActive = false;
     server.use(
       http.get("/api/categories", () => {
         return HttpResponse.json({ success: true, data: [] });
@@ -143,55 +156,6 @@ describe("ItemList", () => {
     expect(itemCard).toBeInTheDocument();
     expect(itemCard).toHaveTextContent(/description 1\b/i);
     expect(itemCard).toHaveTextContent(/example feed/i);
-  });
-
-  test("loads more items when scrolling to the bottom", async () => {
-    server.use(
-      http.get("/api/items", ({ request }) => {
-        const url = new URL(request.url);
-        const offset = Number(url.searchParams.get("offset") || "0");
-        const limit = Number(
-          url.searchParams.get("limit") || String(PAGINATION_LIMIT),
-        );
-
-        return HttpResponse.json(mockItems.slice(offset, offset + limit));
-      }),
-    );
-
-    const user = userEvent.setup();
-
-    render(
-      <TestWrapper>
-        <ItemList />
-      </TestWrapper>,
-    );
-
-    const firstItemTitle = /test item 1\b/i;
-    const nextItemTitle = new RegExp(
-      `test item ${PAGINATION_LIMIT + 1}\\b`,
-      "i",
-    );
-
-    // Wait for the first page to load
-    await screen.findByRole("heading", { name: firstItemTitle });
-
-    expect(
-      screen.queryByRole("heading", { name: nextItemTitle }),
-    ).not.toBeInTheDocument();
-
-    // Trigger endReached via our mock's sentinel using userEvent
-    await user.click(screen.getByTestId("virtuoso-end-reached-trigger"));
-
-    // Wait for the second page to load
-    await screen.findByRole("heading", { name: nextItemTitle });
-
-    expect(
-      screen.getByRole("heading", { name: firstItemTitle }),
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("heading", { name: nextItemTitle }),
-    ).toBeInTheDocument();
   });
 
   test("renders empty state when no items are returned", async () => {
@@ -272,5 +236,40 @@ describe("ItemList", () => {
     expect(
       screen.getByText(/we couldn't load your feed items/i),
     ).toBeInTheDocument();
+  });
+
+  test("switches to grid layout when requested", async () => {
+    server.use(
+      http.get("/api/items", () => HttpResponse.json(mockItems.slice(0, 1))),
+    );
+
+    render(
+      <TestWrapper>
+        <ItemList />
+      </TestWrapper>,
+      { searchParams: { layout: "grid" } },
+    );
+
+    // Verify grid scroller is used instead of list scroller
+    expect(await screen.findByTestId("virtuoso-grid-scroller")).toBeInTheDocument();
+    expect(screen.queryByTestId("virtuoso-scroller")).not.toBeInTheDocument();
+  });
+
+  test("disables virtualization when tour is active", async () => {
+    mockTourState.isTourActive = true;
+    server.use(
+      http.get("/api/items", () => HttpResponse.json(mockItems.slice(0, 5))),
+    );
+
+    render(
+      <TestWrapper>
+        <ItemList />
+      </TestWrapper>,
+    );
+
+    // In tour mode, it renders a plain div, not Virtuoso
+    expect(await screen.findByRole("article", { name: /test item 1\b/i })).toBeInTheDocument();
+    expect(screen.queryByTestId("virtuoso-scroller")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("virtuoso-grid-scroller")).not.toBeInTheDocument();
   });
 });

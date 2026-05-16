@@ -1,8 +1,8 @@
 "use client";
 
 import { FolderIcon, RssIcon } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
-import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
+import { useLayoutEffect, useState } from "react";
+import { Virtuoso, VirtuosoGrid } from "react-virtuoso";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
 import { ItemCard } from "@/components/feed/item-card";
 import ItemListSkeleton from "@/components/feed/item-list-skeleton";
@@ -12,17 +12,52 @@ import { useCategories } from "@/hooks/category/use-categories";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useItems } from "@/hooks/item/use-items";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
+import { FeedLayout, useViewOptions } from "@/hooks/ui/use-view-options";
 import { WELCOME_FEED_URL } from "@/lib/constants";
-import { getItemsListScroll } from "@/lib/scroll-store";
-import type { Category } from "@/types";
+import { cn } from "@/lib/utils";
+import type { Category, ListItemWithSource } from "@/types";
+
+interface VirtuosoContext {
+  isFetching: boolean;
+  isGrid: boolean;
+}
+
+/**
+ * Stable component definition for the footer to prevent Virtuoso remounts.
+ * Uses the 'context' prop to react to state changes without changing reference.
+ */
+const ListFooter = ({ context }: { context?: VirtuosoContext }) => {
+  const isGrid = context?.isGrid;
+
+  if (!context?.isFetching) {
+    return <div className={cn(isGrid && "col-span-full", "h-8")} />;
+  }
+
+  return (
+    <div
+      className={cn(
+        isGrid && "col-span-full",
+        "pb-8 pt-4 flex justify-center w-full",
+      )}
+    >
+      <ItemListSkeleton count={isGrid ? 4 : 2}>
+        Loading more items...
+      </ItemListSkeleton>
+    </div>
+  );
+};
+
+const virtuosoComponents = {
+  Footer: ListFooter,
+};
 
 export function ItemList() {
   const { feedId, categoryId } = useFeedFilter();
   const { data: categories } = useCategories();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useItems();
   const { isTourActive } = useTourStore();
+  const { layout } = useViewOptions();
 
-  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
 
   // Identify the scroll container on mount
@@ -30,69 +65,80 @@ export function ItemList() {
     setScrollParent(document.getElementById("feed-container"));
   }, []);
 
-  // Handle scroll restoration when filter changes
-  useLayoutEffect(() => {
-    if (virtuosoRef.current) {
-      virtuosoRef.current.scrollTo({
-        top: getItemsListScroll(feedId || categoryId),
-      });
-    }
-  }, [feedId, categoryId]);
+  const items = data?.pages?.flat() ?? [];
 
-  const allItems = data?.pages?.flat() ?? [];
+  const context: VirtuosoContext = {
+    isFetching: isFetchingNextPage,
+    isGrid: layout === FeedLayout.Grid,
+  };
 
-  if (!allItems.length) {
+  if (!items.length) {
     return <FeedEmptyState categoryId={categoryId} categories={categories} />;
   }
 
   // Find the index of the first item from the welcome feed
-  const firstWelcomeItemIndex = allItems.findIndex(
+  const firstWelcomeItemIndex = items.findIndex(
     (item) => item.feed.url === WELCOME_FEED_URL,
   );
 
   // Disable virtualization during tour for stable positioning
   if (isTourActive) {
     return (
-      <div className="flex flex-col">
-        {allItems.map((itemWithSource, index) => (
+      <div
+        className={cn(
+          "flex flex-col",
+          layout === FeedLayout.Grid &&
+            "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4",
+        )}
+      >
+        {items.map((itemWithSource, index) => (
           <ItemCard
             key={itemWithSource.item.id}
             data={itemWithSource}
             data-tour={
               index === firstWelcomeItemIndex ? "welcome-item" : undefined
             }
+            layout={layout}
           />
         ))}
       </div>
     );
   }
 
-  return (
-    <Virtuoso
-      ref={virtuosoRef}
-      customScrollParent={scrollParent || undefined}
-      initialScrollTop={getItemsListScroll(feedId || categoryId)}
-      data={allItems}
-      itemContent={(_, itemWithSource) => (
-        <ItemCard key={itemWithSource.item.id} data={itemWithSource} />
-      )}
-      endReached={() => {
-        if (hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      }}
-      components={{
-        Footer: () =>
-          isFetchingNextPage ? (
-            <div className="pb-8 pt-4">
-              <ItemListSkeleton>Loading more items...</ItemListSkeleton>
-            </div>
-          ) : (
-            <div className="h-8" />
-          ),
-      }}
-    />
-  );
+  const sharedProps = {
+    customScrollParent: scrollParent || undefined,
+    data: items,
+    itemContent: (_: number, itemWithSource: ListItemWithSource) => (
+      <ItemCard
+        key={itemWithSource.item.id}
+        data={itemWithSource}
+        layout={layout}
+      />
+    ),
+    endReached: () => {
+      if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    components: virtuosoComponents,
+    context,
+    overscan: 400, // Buffer for smoother scrolling
+  };
+
+  const listKey = `feed-${feedId || "all"}-cat-${categoryId || "none"}`;
+
+  if (layout === FeedLayout.Grid) {
+    return (
+      <VirtuosoGrid
+        {...sharedProps}
+        key={`grid-${listKey}`}
+        listClassName="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-4 p-2 mt-2"
+        itemClassName="flex"
+      />
+    );
+  }
+
+  return <Virtuoso {...sharedProps} key={`list-${listKey}`} />;
 }
 
 function FeedEmptyState({

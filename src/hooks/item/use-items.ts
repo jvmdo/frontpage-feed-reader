@@ -33,7 +33,8 @@ export function useItems() {
       if (lastPage.length < PAGINATION_LIMIT) {
         return undefined;
       }
-      return allPages.flat().length;
+      // Calculate total items fetched so far
+      return allPages.reduce((total, page) => total + page.length, 0);
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

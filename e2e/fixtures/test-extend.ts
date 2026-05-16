@@ -26,6 +26,17 @@ export const test = baseTest.extend<Fixtures>({
       ]);
     }
 
+    // Disable the welcome tour via local storage
+    await context.addInitScript(() => {
+      window.localStorage.setItem(
+        "frontpage_welcome_tour",
+        JSON.stringify({
+          state: { isTourCompleted: true },
+          version: 0,
+        }),
+      );
+    });
+
     // Yield the perfectly authenticated, isolated page to our test
     await use({ page, userId: uniqueId });
 
