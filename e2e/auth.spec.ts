@@ -34,6 +34,12 @@ test("full journey: sign up, sign out, and sign in", async ({ page }) => {
   ).toBeVisible();
   await expect(page).toHaveURL(/\/dashboard/);
 
+  // Dismiss welcome dialog
+  await page
+    .getByRole("alertdialog", { name: /welcome/i })
+    .getByRole("button", { name: /later/i })
+    .click();
+
   // 2. Sign Out
   await page.getByRole("button", { name: /user menu/i }).click();
   await page.getByRole("menuitem", { name: /log out/i }).click();

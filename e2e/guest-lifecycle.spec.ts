@@ -47,6 +47,12 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
 
   userToCleanup = dbSession.userId;
 
+  // Dismiss welcome dialog
+  await page
+    .getByRole("alertdialog", { name: /welcome/i })
+    .getByRole("button", { name: /later/i })
+    .click();
+
   // Should see pre-populated curated categories
   const sidebar = page.locator('[data-slot="sidebar"]');
   const frontendCategory = sidebar.getByRole("link", {
@@ -54,7 +60,9 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
   });
 
   await expect(frontendCategory).toBeVisible();
-  await expect(sidebar.getByRole("link", { name: /css-tricks/i })).toBeVisible();
+  await expect(
+    sidebar.getByRole("link", { name: /css-tricks/i }),
+  ).toBeVisible();
 
   // 2. Interact with content
 
@@ -103,7 +111,9 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
 
   // 5. Verify data preservation
   await frontendCategory.click(); // Expand category
-  await expect(sidebar.getByRole("link", { name: /css-tricks/i })).toBeVisible();
+  await expect(
+    sidebar.getByRole("link", { name: /css-tricks/i }),
+  ).toBeVisible();
 
   await expect(firstArticle.getByRole("heading", { level: 3 })).toBeVisible();
 });
