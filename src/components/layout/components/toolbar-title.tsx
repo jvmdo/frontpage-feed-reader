@@ -1,6 +1,7 @@
 "use client";
 
 import { useCategories } from "@/hooks/category/use-categories";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useFeeds } from "@/hooks/feed/use-feeds";
 import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
 import type { Category, FeedWithSubscription } from "@/types";
@@ -11,9 +12,14 @@ import type { Category, FeedWithSubscription } from "@/types";
 function getHeaderContent(
   feedId: number | null,
   categoryId: number | null,
+  isSaved: boolean,
   subscriptions: FeedWithSubscription[],
   categories: Category[],
 ) {
+  if (isSaved) {
+    return "Saved Items";
+  }
+
   if (feedId) {
     const sub = subscriptions.find((s) => s.feed.id === feedId);
     if (sub) {
@@ -38,6 +44,7 @@ export function ToolbarTitle({
   feedId: number | null;
   categoryId: number | null;
 }) {
+  const { isSaved } = useFeedFilter();
   const { data: subscriptions } = useFeeds();
   const { data: categories } = useCategories();
   const { data: unreadCounts } = useUnreadCounts();
@@ -45,15 +52,18 @@ export function ToolbarTitle({
   const title = getHeaderContent(
     feedId,
     categoryId,
+    isSaved,
     subscriptions || [],
     categories || [],
   );
 
-  const currentCount = feedId
-    ? unreadCounts?.feeds[feedId] || 0
-    : categoryId
-      ? unreadCounts?.categories[categoryId] || 0
-      : unreadCounts?.global || 0;
+  const currentCount = isSaved
+    ? unreadCounts?.saved || 0
+    : feedId
+      ? unreadCounts?.feeds[feedId] || 0
+      : categoryId
+        ? unreadCounts?.categories[categoryId] || 0
+        : unreadCounts?.global || 0;
 
   return (
     <div className="flex items-baseline gap-2 sm:gap-3 min-w-0">

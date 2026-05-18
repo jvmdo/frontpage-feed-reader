@@ -4,13 +4,27 @@ import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import type { ListItemWithSource } from "@/types";
 
 export function useItems() {
-  const { feedId, categoryId } = useFeedFilter();
+  const { feedId, categoryId, isSaved, unreadOnly, feedIds } = useFeedFilter();
 
   return useSuspenseInfiniteQuery<ListItemWithSource[]>({
-    queryKey: ["feeds", "items", { feedId, categoryId }],
+    queryKey: [
+      "feeds",
+      "items",
+      {
+        feedId: feedId ?? null,
+        categoryId: categoryId ?? null,
+        bookmarkedOnly: isSaved,
+        unreadOnly,
+        feedIds: [...feedIds].sort(),
+      },
+    ],
     queryFn: async ({ pageParam }) => {
       const offset = pageParam as number;
-      let url = `/api/items?offset=${offset}&limit=${PAGINATION_LIMIT}`;
+      const baseUrl =
+        typeof window !== "undefined"
+          ? ""
+          : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      let url = `${baseUrl}/api/items?offset=${offset}&limit=${PAGINATION_LIMIT}`;
 
       if (feedId) {
         url += `&feedId=${feedId}`;
@@ -18,6 +32,18 @@ export function useItems() {
 
       if (categoryId) {
         url += `&categoryId=${categoryId}`;
+      }
+
+      if (isSaved) {
+        url += "&saved=true";
+      }
+
+      if (unreadOnly) {
+        url += "&unreadOnly=true";
+      }
+
+      if (feedIds.length > 0) {
+        url += `&feedIds=${feedIds.join(",")}`;
       }
 
       const response = await fetch(url);

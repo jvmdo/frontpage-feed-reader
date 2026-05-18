@@ -52,7 +52,7 @@ const virtuosoComponents = {
 };
 
 export function ItemList() {
-  const { feedId, categoryId } = useFeedFilter();
+  const { feedId, categoryId, isSaved } = useFeedFilter();
   const { data: categories } = useCategories();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useItems();
   const { isTourActive } = useTourStore();
@@ -73,7 +73,13 @@ export function ItemList() {
   };
 
   if (!items.length) {
-    return <FeedEmptyState categoryId={categoryId} categories={categories} />;
+    return (
+      <FeedEmptyState
+        categoryId={categoryId}
+        categories={categories}
+        isSaved={isSaved}
+      />
+    );
   }
 
   // Find the index of the first item from the welcome feed
@@ -125,7 +131,7 @@ export function ItemList() {
     overscan: 400, // Buffer for smoother scrolling
   };
 
-  const listKey = `feed-${feedId || "all"}-cat-${categoryId || "none"}`;
+  const listKey = `feed-${feedId || "all"}-cat-${categoryId || "none"}-saved-${isSaved}`;
 
   if (layout === FeedLayout.Grid) {
     return (
@@ -144,10 +150,22 @@ export function ItemList() {
 function FeedEmptyState({
   categoryId,
   categories,
+  isSaved,
 }: {
   categoryId: number | null;
   categories: Category[];
+  isSaved: boolean;
 }) {
+  if (isSaved) {
+    return (
+      <EmptyState
+        title={<h3>No saved items yet</h3>}
+        description="Articles you save for later will appear here, even after they've been read."
+        icon={RssIcon}
+      />
+    );
+  }
+
   if (!categoryId) {
     return (
       <EmptyState

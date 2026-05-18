@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ItemList } from "@/components/feed/item-list";
 import ItemListSkeleton from "@/components/feed/item-list-skeleton";
+import { ActiveFilterChips } from "@/components/layout/components/active-filter-chips";
 import { FeedToolbarSkeleton } from "@/components/layout/components/feed-toolbar-skeleton";
 import { FeedToolbar } from "@/components/layout/feed-toolbar";
 import { ItemReaderLightbox } from "@/components/reader/item-reader-lightbox";
@@ -36,6 +37,9 @@ export default async function DashboardPage({
   const {
     feedId,
     categoryId,
+    saved = false,
+    unreadOnly = false,
+    feedIds = [],
     limit = PAGINATION_LIMIT,
     offset = PAGINATION_INITIAL_OFFSET,
   } = result.success ? result.data : {};
@@ -48,7 +52,13 @@ export default async function DashboardPage({
     queryKey: [
       "feeds",
       "items",
-      { feedId: feedId || null, categoryId: categoryId || null },
+      {
+        feedId: feedId ?? null,
+        categoryId: categoryId ?? null,
+        bookmarkedOnly: saved,
+        unreadOnly,
+        feedIds: [...feedIds].sort(),
+      },
     ],
     queryFn: () =>
       getItems(db, session.user.id, {
@@ -56,6 +66,9 @@ export default async function DashboardPage({
         offset,
         feedId,
         categoryId,
+        bookmarkedOnly: saved,
+        unreadOnly,
+        feedIds,
       }),
     initialPageParam: PAGINATION_INITIAL_OFFSET,
   });
@@ -69,6 +82,7 @@ export default async function DashboardPage({
         <Suspense fallback={<FeedToolbarSkeleton />}>
           <FeedToolbar />
         </Suspense>
+        <ActiveFilterChips />
         <section
           id="feed-container"
           className="flex-1 overflow-y-auto -mb-8"
