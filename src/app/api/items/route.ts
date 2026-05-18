@@ -17,6 +17,9 @@ export async function GET(request: NextRequest) {
     offset: searchParams.get("offset"),
     feedId: searchParams.get("feedId"),
     categoryId: searchParams.get("categoryId"),
+    saved: searchParams.get("saved"),
+    unreadOnly: searchParams.get("unreadOnly"),
+    feedIds: searchParams.get("feedIds"),
   });
 
   if (!parseResult.success) {
@@ -26,7 +29,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { limit, offset, feedId, categoryId } = parseResult.data;
+  const { limit, offset, feedId, categoryId, saved, unreadOnly, feedIds } =
+    parseResult.data;
 
   try {
     const items = await getItems(db, session.user.id, {
@@ -34,6 +38,9 @@ export async function GET(request: NextRequest) {
       offset,
       feedId,
       categoryId,
+      bookmarkedOnly: saved,
+      unreadOnly,
+      feedIds,
     });
     return NextResponse.json(items);
   } catch (error) {

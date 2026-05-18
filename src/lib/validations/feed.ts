@@ -42,6 +42,12 @@ export const markReadSchema = z.object({
 
 export type MarkReadInput = z.infer<typeof markReadSchema>;
 
+export const toggleBookmarkSchema = z.object({
+  itemId: z.number(),
+});
+
+export type ToggleBookmarkInput = z.infer<typeof toggleBookmarkSchema>;
+
 export const markAllReadSchema = z.discriminatedUnion("scope", [
   z.object({ scope: z.literal("global"), id: z.undefined().optional() }),
   z.object({ scope: z.literal("category"), id: z.coerce.number() }),
@@ -53,8 +59,25 @@ export type MarkAllReadInput = z.infer<typeof markAllReadSchema>;
 export const itemsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(PAGINATION_LIMIT),
   offset: z.coerce.number().int().min(0).default(PAGINATION_INITIAL_OFFSET),
-  feedId: z.coerce.number().int().optional(),
-  categoryId: z.coerce.number().int().optional(),
+  feedId: z.coerce.number().int().nullable().optional(),
+  categoryId: z.coerce.number().int().nullable().optional(),
+  saved: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => val === "true"),
+  unreadOnly: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => val === "true"),
+  feedIds: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) =>
+      val ? val.split(",").map((id) => Number.parseInt(id, 10)) : undefined,
+    ),
 });
 
 export type ItemsQueryInput = z.infer<typeof itemsQuerySchema>;
