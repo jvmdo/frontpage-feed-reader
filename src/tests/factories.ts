@@ -113,6 +113,8 @@ export function createMockItemWithSource(
     item: Partial<Item>;
     feed: Partial<Feed>;
     isRead: boolean;
+    isBookmarked?: boolean;
+    bookmarkedAt?: Date | null;
     isExcerpt?: boolean;
     categoryName?: string | null;
     categoryColor?: string | null;
@@ -128,6 +130,8 @@ export function createMockItemWithSource(
     item,
     feed,
     isRead: overrides.isRead ?? false,
+    isBookmarked: overrides.isBookmarked ?? false,
+    bookmarkedAt: overrides.bookmarkedAt ?? null,
     isExcerpt: overrides.isExcerpt ?? isExcerpt(item),
     categoryName: overrides.categoryName ?? null,
     categoryColor: overrides.categoryColor ?? null,
@@ -139,6 +143,8 @@ export function createMockListItemWithSource(
     item: Partial<ListItem>;
     feed: Partial<Feed>;
     isRead: boolean;
+    isBookmarked?: boolean;
+    bookmarkedAt?: Date | null;
     isExcerpt?: boolean;
     categoryName?: string | null;
     categoryColor?: string | null;
@@ -154,6 +160,8 @@ export function createMockListItemWithSource(
     item,
     feed,
     isRead: overrides.isRead ?? false,
+    isBookmarked: overrides.isBookmarked ?? false,
+    bookmarkedAt: overrides.bookmarkedAt ?? null,
     isExcerpt: overrides.isExcerpt ?? isExcerpt(item),
     categoryName: overrides.categoryName ?? null,
     categoryColor: overrides.categoryColor ?? null,

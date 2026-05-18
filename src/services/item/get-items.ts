@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, gt, inArray, isNotNull, isNull, or } from "drizzle-orm";
 import type { DB } from "@/db";
 import {
   categories,
@@ -14,8 +14,11 @@ import type { ListItemWithSource } from "@/types";
 interface GetItemsOptions {
   limit?: number;
   offset?: number;
-  feedId?: number;
-  categoryId?: number;
+  feedId?: number | null;
+  categoryId?: number | null;
+  feedIds?: number[] | null;
+  bookmarkedOnly?: boolean;
+  unreadOnly?: boolean;
 }
 
 /**
@@ -27,7 +30,15 @@ export async function getItems(
   userId: string,
   options: GetItemsOptions,
 ): Promise<ListItemWithSource[]> {
-  const { limit = 20, offset = 0, feedId, categoryId } = options;
+  const {
+    limit = 20,
+    offset = 0,
+    feedId,
+    categoryId,
+    feedIds,
+    bookmarkedOnly,
+    unreadOnly,
+  } = options;
 
   const {
     rawPayload: _rawPayload,
@@ -40,6 +51,7 @@ export async function getItems(
       item: itemColumns,
       feed: feeds,
       readAt: userItemStates.readAt,
+      bookmarkedAt: userItemStates.bookmarkedAt,
       globalWatermark: userPreferences.markedAllReadAt,
       categoryWatermark: categories.markedAllReadAt,
       subscriptionWatermark: subscriptions.markedAllReadAt,
@@ -63,9 +75,35 @@ export async function getItems(
         eq(subscriptions.userId, userId),
         feedId ? eq(feedItems.feedId, feedId) : undefined,
         categoryId ? eq(subscriptions.categoryId, categoryId) : undefined,
+        feedIds && feedIds.length > 0
+          ? inArray(feedItems.feedId, feedIds)
+          : undefined,
+        bookmarkedOnly ? isNotNull(userItemStates.bookmarkedAt) : undefined,
+        unreadOnly
+          ? and(
+              isNull(userItemStates.readAt),
+              or(
+                isNull(userPreferences.markedAllReadAt),
+                gt(feedItems.createdAt, userPreferences.markedAllReadAt),
+              ),
+              or(
+                isNull(categories.markedAllReadAt),
+                gt(feedItems.createdAt, categories.markedAllReadAt),
+              ),
+              or(
+                isNull(subscriptions.markedAllReadAt),
+                gt(feedItems.createdAt, subscriptions.markedAllReadAt),
+              ),
+            )
+          : undefined,
       ),
     )
-    .orderBy(desc(feedItems.publishedAt), desc(feedItems.createdAt))
+    .orderBy(
+      bookmarkedOnly
+        ? desc(userItemStates.bookmarkedAt)
+        : desc(feedItems.publishedAt),
+      desc(feedItems.createdAt),
+    )
     .limit(limit)
     .offset(offset);
 
@@ -91,6 +129,8 @@ export async function getItems(
       item: row.item,
       feed: row.feed,
       isRead,
+      isBookmarked: !!row.bookmarkedAt,
+      bookmarkedAt: row.bookmarkedAt,
       isExcerpt: isExcerpt(row.item),
       categoryName: row.categoryName,
       categoryColor: row.categoryColor,

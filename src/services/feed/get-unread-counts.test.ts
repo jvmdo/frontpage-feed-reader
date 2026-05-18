@@ -201,4 +201,70 @@ describe("getUnreadCounts", () => {
     // After fix: This should be 1 because it arrived (createdAt) after the watermark (5m ago)
     expect(result.global).toBe(1);
   });
+
+  describe("bookmarks", () => {
+    test("counts unread bookmarked items", async ({ tx, testUser }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      const [item1, item2] = await seedItems(tx, feed.id, [
+        { title: "I1" },
+        { title: "I2" },
+      ]);
+
+      await seedUserItemState(tx, {
+        userId: testUser.id,
+        itemId: item1.id,
+        bookmarkedAt: new Date(),
+      });
+
+      const result = await getUnreadCounts(tx, testUser.id);
+      expect(result.saved).toBe(1);
+    });
+
+    test("excludes bookmarked items that are already read", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      const [item1] = await seedItems(tx, feed.id, [{ title: "I1" }]);
+
+      await seedUserItemState(tx, {
+        userId: testUser.id,
+        itemId: item1.id,
+        bookmarkedAt: new Date(),
+        readAt: new Date(),
+      });
+
+      const result = await getUnreadCounts(tx, testUser.id);
+      expect(result.saved).toBe(0);
+    });
+
+    test("respects cascading watermarks for bookmarked items", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed, subscription } = await seedFeedWithSubscription(
+        tx,
+        testUser.id,
+      );
+      const tenMinutesAgo = subMinutes(new Date(), 10);
+      const [item1] = await seedItems(tx, feed.id, [
+        { title: "I1", createdAt: tenMinutesAgo },
+      ]);
+
+      await seedUserItemState(tx, {
+        userId: testUser.id,
+        itemId: item1.id,
+        bookmarkedAt: new Date(),
+      });
+
+      // Mark subscription as read NOW
+      await tx
+        .update(subscriptions)
+        .set({ markedAllReadAt: new Date() })
+        .where(eq(subscriptions.id, subscription.id));
+
+      const result = await getUnreadCounts(tx, testUser.id);
+      expect(result.saved).toBe(0);
+    });
+  });
 });

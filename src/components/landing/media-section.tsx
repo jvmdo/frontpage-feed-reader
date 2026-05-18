@@ -86,6 +86,8 @@ const MOCK_ITEM: ItemWithSource = {
   },
   isExcerpt: false,
   isRead: false,
+  isBookmarked: false,
+  bookmarkedAt: null,
   categoryName: null,
   categoryColor: null,
 };

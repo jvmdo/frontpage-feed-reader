@@ -51,6 +51,8 @@ export type ItemWithSource = {
   item: Item;
   feed: Feed;
   isRead: boolean;
+  isBookmarked: boolean;
+  bookmarkedAt: Date | null;
   isExcerpt: boolean;
   categoryName: string | null;
   categoryColor: string | null;
