@@ -14,6 +14,7 @@ describe("useRefreshUI", () => {
   const mockFilter = {
     feedId: null,
     categoryId: null,
+    isSaved: false,
   };
 
   beforeEach(() => {

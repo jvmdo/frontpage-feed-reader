@@ -16,8 +16,14 @@ describe("useMarkAllReadUI", () => {
   const mockFilter = {
     feedId: null,
     categoryId: null,
+    isSaved: false,
+    unreadOnly: false,
+    feedIds: [],
     setFeedId: vi.fn(),
     setCategoryId: vi.fn(),
+    setFeedIds: vi.fn(),
+    setUnreadOnly: vi.fn(),
+    goToSaved: vi.fn(),
     clearFilter: vi.fn(),
   };
 

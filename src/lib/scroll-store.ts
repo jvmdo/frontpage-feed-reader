@@ -4,14 +4,14 @@
 
 const scrollPositions = new Map<string, number>();
 
-export function saveItemsListScroll(filterId: number | null) {
+export function saveItemsListScroll(filterId: number | string | null) {
   if (typeof window === "undefined") return;
   const container = document.getElementById("feed-container");
   const scrollTop = container ? container.scrollTop : window.scrollY;
   scrollPositions.set(`items-list-${filterId ?? "all"}`, scrollTop);
 }
 
-export function getItemsListScroll(filterId: number | null) {
+export function getItemsListScroll(filterId: number | string | null) {
   if (typeof window === "undefined") return 0;
   return scrollPositions.get(`items-list-${filterId ?? "all"}`) ?? 0;
 }
