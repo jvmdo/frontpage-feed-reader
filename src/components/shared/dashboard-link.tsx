@@ -11,6 +11,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 interface DashboardLinkProps extends LinkProps {
   feedId?: number | null;
   categoryId?: number | null;
+  saved?: boolean | null;
   children: ReactNode;
   className?: string;
 }
@@ -23,6 +24,7 @@ interface DashboardLinkProps extends LinkProps {
 export function DashboardLink({
   feedId = null,
   categoryId = null,
+  saved = null,
   children,
   className,
   ...props
@@ -32,8 +34,10 @@ export function DashboardLink({
   const {
     feedId: currentFeedId,
     categoryId: currentCategoryId,
+    isSaved: currentIsSaved,
     setFeedId,
     setCategoryId,
+    goToSaved,
   } = useFeedFilter();
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -49,9 +53,11 @@ export function DashboardLink({
     if (pathname === "/dashboard") {
       e.preventDefault();
 
-      saveItemsListScroll(currentFeedId || currentCategoryId);
+      saveItemsListScroll(currentFeedId || currentCategoryId || (currentIsSaved ? "saved" : null));
 
-      if (categoryId !== null) {
+      if (saved === true) {
+        goToSaved();
+      } else if (categoryId !== null) {
         setCategoryId(categoryId);
       } else {
         setFeedId(feedId);

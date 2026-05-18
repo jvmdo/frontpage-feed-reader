@@ -39,9 +39,12 @@ import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
 
 export function AppSidebar({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { feedId, categoryId } = useFeedFilter();
+  const { feedId, categoryId, isSaved } = useFeedFilter();
 
-  const isDashboardActive = pathname === "/dashboard" && !feedId && !categoryId;
+  const isDashboardActive =
+    pathname === "/dashboard" && !feedId && !categoryId && !isSaved;
+
+  const isSavedActive = pathname === "/dashboard" && isSaved;
 
   return (
     <Sidebar
@@ -84,15 +87,18 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === "/saved"}
+                    isActive={isSavedActive}
                     tooltip="Saved"
                     className="relative font-medium"
                   >
-                    <Link href="/saved">
+                    <DashboardLink href="/dashboard?saved=true" saved={true}>
                       <BookmarkIcon className="size-4" />
                       <span>Saved</span>
-                    </Link>
+                    </DashboardLink>
                   </SidebarMenuButton>
+                  <Suspense fallback={null}>
+                    <SavedItemsBadge />
+                  </Suspense>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
@@ -105,7 +111,10 @@ export function AppSidebar({ children }: { children: ReactNode }) {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <AddCategoryDialog asChild>
-                    <SidebarMenuButton tooltip="Add Category" data-tour="add-category">
+                    <SidebarMenuButton
+                      tooltip="Add Category"
+                      data-tour="add-category"
+                    >
                       <FolderPlusIcon className="size-4" />
                       <span>Add Category</span>
                     </SidebarMenuButton>
@@ -157,8 +166,24 @@ function AllItemsBadge() {
 
   return (
     <SidebarMenuBadge className="font-semibold border-0">
-      <output aria-label={`${unreadCounts} unread items`}>
+      <output aria-label={`${unreadCounts.global} unread items`}>
         {unreadCounts.global}
+      </output>
+    </SidebarMenuBadge>
+  );
+}
+
+function SavedItemsBadge() {
+  const { data: unreadCounts } = useUnreadCounts();
+
+  if (!unreadCounts?.saved || unreadCounts.saved <= 0) {
+    return null;
+  }
+
+  return (
+    <SidebarMenuBadge className="font-semibold border-0">
+      <output aria-label={`${unreadCounts.saved} unread saved items`}>
+        {unreadCounts.saved}
       </output>
     </SidebarMenuBadge>
   );

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useMarkRead } from "@/hooks/item/use-mark-read";
+import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
 import { FeedLayout } from "@/hooks/ui/use-view-options";
 import { cn } from "@/lib/utils";
 import type { ListItemWithSource } from "@/types";
@@ -229,18 +230,31 @@ ItemCard.Bookmark = function CardBookmark({
 }: {
   className?: string;
 }) {
+  const { data } = useItemCard();
+  const { isBookmarked, item } = data;
+  const { mutate: toggleBookmark } = useToggleBookmark();
+
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={(e) => e.stopPropagation()}
-      aria-label="Save for later"
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleBookmark({ itemId: item.id });
+      }}
+      aria-label={isBookmarked ? "Remove from saved" : "Save for later"}
       className={cn(
         "group relative z-20 transition-all shrink-0 size-8 p-0 hover:bg-primary/10",
+        isBookmarked && "text-primary",
         className,
       )}
     >
-      <BookmarkIcon className="size-4 text-muted-foreground group-hover:text-primary" />
+      <BookmarkIcon
+        className={cn(
+          "size-4 text-muted-foreground group-hover:text-primary transition-colors",
+          isBookmarked && "fill-current text-primary",
+        )}
+      />
     </Button>
   );
 };

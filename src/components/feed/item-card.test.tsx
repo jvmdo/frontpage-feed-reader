@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useMarkRead } from "@/hooks/item/use-mark-read";
+import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
 import { FeedLayout } from "@/hooks/ui/use-view-options";
 import { createMockItemWithSource } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
@@ -18,9 +19,14 @@ vi.mock("@/hooks/item/use-active-item", () => ({
   useActiveItem: vi.fn(),
 }));
 
+vi.mock("@/hooks/item/use-toggle-bookmark", () => ({
+  useToggleBookmark: vi.fn(),
+}));
+
 describe("ItemCard", () => {
   const mockMarkAsRead = vi.fn();
   const mockSetActiveItem = vi.fn();
+  const mockToggleBookmark = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -29,6 +35,9 @@ describe("ItemCard", () => {
     } as any);
     vi.mocked(useActiveItem).mockReturnValue({
       setActiveItemId: mockSetActiveItem,
+    } as any);
+    vi.mocked(useToggleBookmark).mockReturnValue({
+      mutate: mockToggleBookmark,
     } as any);
   });
 
@@ -129,7 +138,10 @@ describe("ItemCard", () => {
     const saveBtn = screen.getByRole("button", { name: /save for later/i });
     await user.click(saveBtn);
 
-    // Verify bookmark click didn't trigger the reader view
+    // Verify bookmark click triggered the bookmark hook
+    expect(mockToggleBookmark).toHaveBeenCalledWith({ itemId: data.item.id });
+
+    // Verify bookmark click DID NOT trigger the reader view or mark as read
     expect(mockSetActiveItem).not.toHaveBeenCalled();
     expect(mockMarkAsRead).not.toHaveBeenCalled();
   });
