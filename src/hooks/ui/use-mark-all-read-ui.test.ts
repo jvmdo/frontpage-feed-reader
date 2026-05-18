@@ -25,6 +25,7 @@ describe("useMarkAllReadUI", () => {
     setUnreadOnly: vi.fn(),
     goToSaved: vi.fn(),
     clearFilter: vi.fn(),
+    setStates: vi.fn(),
   };
 
   beforeEach(() => {

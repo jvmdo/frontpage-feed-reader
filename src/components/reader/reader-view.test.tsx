@@ -13,7 +13,6 @@ import { ReaderView } from "./reader-view";
 vi.mock("@/hooks/item/use-active-item");
 vi.mock("@/hooks/item/use-item");
 vi.mock("@/hooks/item/use-item-reader-navigation");
-vi.mock("@/lib/scroll-store");
 vi.mock("@/hooks/ui/use-reader-shortcuts");
 
 describe("ReaderView", () => {

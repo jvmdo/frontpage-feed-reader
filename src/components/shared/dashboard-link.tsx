@@ -2,86 +2,102 @@
 
 import Link, { type LinkProps, useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
-import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
-import { saveItemsListScroll } from "@/lib/scroll-store";
-import { cn } from "@/lib/utils";
+import { createSerializer } from "nuqs";
+import { type ReactNode, useTransition } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
+import { feedFilterParsers } from "@/lib/search-params";
+import { cn } from "@/lib/utils";
 
-interface DashboardLinkProps extends LinkProps {
+// Initialize a serializer to generate consistent dashboard URLs
+const serialize = createSerializer(feedFilterParsers);
+
+/**
+ * Represents the valid state transitions for the dashboard.
+ * We omit the Default values and allow partial updates.
+ */
+type DashboardState = {
   feedId?: number | null;
   categoryId?: number | null;
   saved?: boolean | null;
+  unreadOnly?: boolean | null;
+  feedIds?: number[] | null;
+};
+
+interface DashboardLinkProps extends Omit<LinkProps, "href"> {
+  /** The target state for the dashboard filters */
+  state?: DashboardState;
+  /** Optional href override if not navigating to the dashboard */
+  href?: string;
   children: ReactNode;
   className?: string;
 }
 
 /**
- * A specialized Link component for dashboard navigation.
- * If already on the dashboard, it performs a shallow state update to preserve
- * the TanStack Query cache and scroll position.
+ * A robust Link component for dashboard navigation.
+ *
+ * - Synchronize URL generation (via nuqs serializers)
+ * - Perform shallow SPA-like navigation on the dashboard (preventing RSC re-runs)
+ * - Handle mobile sidebar behavior
+ * - Provide loading feedback via useTransition
  */
 export function DashboardLink({
-  feedId = null,
-  categoryId = null,
-  saved = null,
+  state,
+  href,
   children,
   className,
   ...props
 }: DashboardLinkProps) {
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
   const { setOpenMobile, isMobile } = useSidebar();
-  const {
-    feedId: currentFeedId,
-    categoryId: currentCategoryId,
-    isSaved: currentIsSaved,
-    setFeedId,
-    setCategoryId,
-    goToSaved,
-  } = useFeedFilter();
+  const { setStates } = useFeedFilter();
+
+  // If a state is provided, generate the /dashboard URL
+  // Otherwise, fallback to the provided href
+  const targetHref = state
+    ? serialize("/dashboard", state)
+    : href || "/dashboard";
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Call the original onClick if it exists (e.g. from a CollapsibleTrigger)
     props.onClick?.(e);
 
-    // If on mobile, close the sidebar when navigating
     if (isMobile) {
       setOpenMobile(false);
     }
 
-    // If we are already on the dashboard, intercept the click to do a shallow update
-    if (pathname === "/dashboard") {
+    // Shallow navigation optimization:
+    // If we are already on the dashboard and have a target state,
+    // intercept the click to update the URL state via nuqs.
+    if (pathname === "/dashboard" && state) {
       e.preventDefault();
 
-      saveItemsListScroll(currentFeedId || currentCategoryId || (currentIsSaved ? "saved" : null));
-
-      if (saved === true) {
-        goToSaved();
-      } else if (categoryId !== null) {
-        setCategoryId(categoryId);
-      } else {
-        setFeedId(feedId);
-      }
+      startTransition(() => {
+        setStates(state);
+      });
     }
-    // Otherwise, let the standard Link navigation happen
   };
 
   return (
     <Link
       {...props}
+      href={targetHref}
       onClick={handleClick}
       className={cn("relative", className)}
     >
       {children}
-      <LinkPendingIndicator />
+      <LinkPendingIndicator isLocalPending={isPending} />
     </Link>
   );
 }
 
-function LinkPendingIndicator() {
+function LinkPendingIndicator({ isLocalPending }: { isLocalPending: boolean }) {
   const { pending } = useLinkStatus();
 
-  if (!pending) return null;
+  // Combine Next.js link prefetching/loading status with our local transition status
+  const isLoading = pending || isLocalPending;
+
+  if (!isLoading) return null;
 
   return (
     <span

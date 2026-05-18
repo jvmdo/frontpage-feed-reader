@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  parseAsArrayOf,
-  parseAsBoolean,
-  parseAsInteger,
-  useQueryStates,
-} from "nuqs";
+import { useQueryStates } from "nuqs";
+import { feedFilterParsers } from "@/lib/search-params";
 
 /**
  * Hook to manage feedId, categoryId, saved, and refinement filters in the URL.
@@ -13,20 +9,7 @@ import {
  * Within 'saved', feedIds and unreadOnly provide additional refinement.
  */
 export function useFeedFilter() {
-  const [states, setStates] = useQueryStates(
-    {
-      feedId: parseAsInteger.withDefault(0),
-      categoryId: parseAsInteger.withDefault(0),
-      saved: parseAsBoolean.withDefault(false),
-      unreadOnly: parseAsBoolean.withDefault(false),
-      feedIds: parseAsArrayOf(parseAsInteger).withDefault([]),
-    },
-    {
-      shallow: true,
-      clearOnDefault: true,
-      scroll: false,
-    },
-  );
+  const [states, setStates] = useQueryStates(feedFilterParsers);
 
   const feedId = states.feedId === 0 ? null : states.feedId;
   const categoryId = states.categoryId === 0 ? null : states.categoryId;
@@ -84,5 +67,6 @@ export function useFeedFilter() {
     feedIds,
     setFeedIds,
     clearFilter,
+    setStates,
   };
 }

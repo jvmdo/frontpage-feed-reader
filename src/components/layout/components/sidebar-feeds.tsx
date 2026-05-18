@@ -22,6 +22,7 @@ import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useFeeds } from "@/hooks/feed/use-feeds";
 import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
 import { WELCOME_FEED_URL } from "@/lib/constants";
+import { dashboardState } from "@/lib/search-params";
 import { cn } from "@/lib/utils";
 import type { Category, FeedWithSubscription } from "@/types";
 
@@ -87,8 +88,7 @@ function CategoryGroup({
             className="h-9 px-3"
           >
             <FeedLink
-              href={`/dashboard?categoryId=${category.id}`}
-              categoryId={category.id}
+              state={dashboardState.category(category.id)}
               label={category.name}
               unreadCount={unreadCount}
               icon={
@@ -161,8 +161,7 @@ function SidebarFeedItem({
         className="h-9 px-3 relative"
       >
         <FeedLink
-          href={`/dashboard?feedId=${feed.id}`}
-          feedId={feed.id}
+          state={dashboardState.feed(feed.id)}
           label={title}
           unreadCount={unreadCount}
           icon={
@@ -189,8 +188,7 @@ function SidebarFeedSubItem({
     >
       <SidebarMenuSubButton asChild isActive={isActive} className="h-8 px-3">
         <FeedLink
-          href={`/dashboard?feedId=${feed.id}`}
-          feedId={feed.id}
+          state={dashboardState.feed(feed.id)}
           label={title}
           unreadCount={unreadCount}
           icon={

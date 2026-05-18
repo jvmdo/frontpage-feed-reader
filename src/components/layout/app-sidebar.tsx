@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
+import { dashboardState } from "@/lib/search-params";
 
 export function AppSidebar({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -75,7 +76,7 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                     tooltip="All Items"
                     className="relative font-medium"
                   >
-                    <DashboardLink href="/dashboard">
+                    <DashboardLink state={dashboardState.allItems()}>
                       <InboxIcon className="size-4" />
                       <span>All Items</span>
                     </DashboardLink>
@@ -91,7 +92,7 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                     tooltip="Saved"
                     className="relative font-medium"
                   >
-                    <DashboardLink href="/dashboard?saved=true" saved={true}>
+                    <DashboardLink state={dashboardState.saved()}>
                       <BookmarkIcon className="size-4" />
                       <span>Saved</span>
                     </DashboardLink>
