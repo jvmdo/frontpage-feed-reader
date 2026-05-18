@@ -25,8 +25,8 @@ export function FeedSortingToggles() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1 px-2.5">
-          <Icon className="size-3.5 text-muted-foreground" />
+        <Button variant="outline" size="sm">
+          <Icon className="size-3.5" />
           <span className="text-xs font-medium">{text}</span>
         </Button>
       </DropdownMenuTrigger>

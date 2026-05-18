@@ -16,10 +16,11 @@ import { cn } from "@/lib/utils";
 import { FeedLayoutToggles } from "./components/feed-layout-toggles";
 import { FeedMenu } from "./components/feed-menu";
 import { MarkAllReadDialog } from "./components/mark-all-read-dialog";
+import { SavedFilterDropdown } from "./components/saved-filter-dropdown";
 import { ToolbarTitle } from "./components/toolbar-title";
 
 export function FeedToolbar() {
-  const { feedId, categoryId } = useFeedFilter();
+  const { feedId, categoryId, isSaved } = useFeedFilter();
 
   return (
     <header
@@ -30,24 +31,31 @@ export function FeedToolbar() {
       <div className="flex items-center justify-between gap-2 p-2 sm:p-3 md:p-4">
         <ToolbarTitle feedId={feedId} categoryId={categoryId} />
 
-        <div className="hidden md:flex md:ml-2">
-          <FeedMenu>
-            <Button
-              variant="outline"
-              className="hidden md:inline-flex lg:hidden"
-              aria-label="Feed menu"
-            >
-              Menu
-              <MoreHorizontalIcon className="size-4" data-icon="inline-end" />
-            </Button>
-          </FeedMenu>
+        <div className="flex gap-1 md:ml-2">
+          {isSaved && <SavedFilterDropdown />}
 
-          <div className="hidden lg:flex items-center gap-1">
-            <FeedLayoutToggles />
-            <FeedSortingToggles />
-            {categoryId && <AssignButton categoryId={categoryId} />}
-            <RefreshButton />
-            <MarkAllReadButton />
+          <div className="hidden md:flex">
+            <FeedMenu>
+              <Button
+                variant="outline"
+                className="hidden md:inline-flex lg:hidden"
+                aria-label="Feed menu"
+              >
+                <MoreHorizontalIcon
+                  className="size-4"
+                  data-icon="inline-start"
+                />
+                Menu
+              </Button>
+            </FeedMenu>
+
+            <div className="hidden lg:flex items-center gap-1">
+              <FeedSortingToggles />
+              <FeedLayoutToggles />
+              {categoryId && <AssignButton categoryId={categoryId} />}
+              <RefreshButton />
+              <MarkAllReadButton />
+            </div>
           </div>
         </div>
       </div>
