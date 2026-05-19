@@ -1,8 +1,10 @@
 "use client";
 
-import { ExternalLinkIcon } from "lucide-react";
+import { BookmarkIcon, ExternalLinkIcon } from "lucide-react";
 import { RelativeDate } from "@/components/shared/relative-date";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
 import { cn } from "@/lib/utils";
 import type { ItemWithSource } from "@/types";
 
@@ -12,7 +14,8 @@ interface ReaderViewProps {
 }
 
 export function ReaderView({ data, className }: ReaderViewProps) {
-  const { item, isExcerpt } = data;
+  const { item, isExcerpt, isBookmarked } = data;
+  const { mutate: toggleBookmark } = useToggleBookmark();
 
   return (
     <section
@@ -24,11 +27,29 @@ export function ReaderView({ data, className }: ReaderViewProps) {
           {item.title}
         </h1>
 
-        <div className="flex flex-wrap gap-2 justify-between relative -top-3">
-          <RelativeDate
-            date={item.publishedAt || item.createdAt}
-            className="text-text-tertiary "
-          />
+        <div className="flex flex-wrap gap-2 items-center justify-between relative -top-3">
+          <div className="flex gap-2 items-center">
+            <RelativeDate
+              date={item.publishedAt || item.createdAt}
+              className="text-text-tertiary "
+            />
+            <Separator orientation="vertical" className="ml-2" />
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() => toggleBookmark({ itemId: item.id })}
+              className="group text-sm"
+            >
+              <BookmarkIcon
+                className={cn(
+                  "size-3 group-hover:text-primary transition-colors",
+                  isBookmarked && "fill-current text-primary",
+                )}
+              />
+              {isBookmarked ? "Remove from saved" : "Save for later"}
+            </Button>
+            <Separator orientation="vertical" className="mr-2" />
+          </div>
 
           {!isExcerpt && item.url && (
             <a
