@@ -5,14 +5,19 @@
     <title>Frontpage</title>
     <link>https://frontpage.app</link>
     <description>A better way to read the web.</description>
-    <lastBuildDate>Fri, 08 May 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>{{NOW}}</lastBuildDate>
     <language>en</language>
-    <atom:link href="https://frontpage.app/feed/" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:3000/feed.xml" rel="self" type="application/rss+xml" />
+    <image>
+      <url>http://localhost:3000/feed-icon.svg</url>
+      <title>Frontpage</title>
+      <link>https://frontpage.app</link>
+    </image>
 
     <item>
       <title>Welcome to Frontpage</title>
       <guid>https://frontpage.app/welcome</guid>
-      <pubDate>Fri, 08 May 2026 00:00:00 GMT</pubDate>
+      <pubDate>{{NOW}}</pubDate>
       <description>A better way to read the web — no trackers, no ads, just the content you care about.</description>
       <content:encoded><![CDATA[<p><strong>A Better Way to Read the Web</strong></p>
 

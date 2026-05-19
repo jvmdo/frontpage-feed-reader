@@ -2,8 +2,6 @@ export const PAGINATION_LIMIT = 20;
 export const PAGINATION_INITIAL_OFFSET = 0;
 export const DEFAULT_CATEGORY_COLOR = "#2563eb";
 
-export const WELCOME_FEED_URL = "http://localhost:3000/feed.xml";
-
 export const LANDING_USERS = [
   {
     name: "John Doe",
@@ -42,3 +40,7 @@ export const LANDING_USERS = [
       "https://images.unsplash.com/photo-1573496799515-eebbb63814f2?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
 ];
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+export const WELCOME_FEED_URL = `${APP_URL}/feed.xml`;
