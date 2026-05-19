@@ -1,4 +1,15 @@
-import { and, desc, eq, getTableColumns, gt, inArray, isNotNull, isNull, or } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  getTableColumns,
+  gt,
+  inArray,
+  isNotNull,
+  isNull,
+  or,
+} from "drizzle-orm";
 import type { DB } from "@/db";
 import {
   categories,
@@ -19,6 +30,8 @@ interface GetItemsOptions {
   feedIds?: number[] | null;
   bookmarkedOnly?: boolean;
   unreadOnly?: boolean;
+  sortBy?: "publishedAt" | "bookmarkedAt";
+  sortOrder?: "desc" | "asc";
 }
 
 /**
@@ -38,7 +51,17 @@ export async function getItems(
     feedIds,
     bookmarkedOnly,
     unreadOnly,
+    sortBy = "publishedAt",
+    sortOrder = "desc",
   } = options;
+
+  const direction = sortOrder === "asc" ? asc : desc;
+  const sortClauses = [
+    sortBy === "bookmarkedAt"
+      ? direction(userItemStates.bookmarkedAt)
+      : direction(feedItems.publishedAt),
+    direction(feedItems.createdAt),
+  ];
 
   const {
     rawPayload: _rawPayload,
@@ -98,12 +121,7 @@ export async function getItems(
           : undefined,
       ),
     )
-    .orderBy(
-      bookmarkedOnly
-        ? desc(userItemStates.bookmarkedAt)
-        : desc(feedItems.publishedAt),
-      desc(feedItems.createdAt),
-    )
+    .orderBy(...sortClauses)
     .limit(limit)
     .offset(offset);
 

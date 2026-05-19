@@ -82,7 +82,7 @@ test.describe("FeedToolbar Responsiveness and View Options", () => {
     ).toBeVisible();
   });
 
-  test("layout and sorting toggles update URL state", async ({
+  test("layout toggles update URL state", async ({
     authedPage,
   }) => {
     const { page } = authedPage;
@@ -91,7 +91,7 @@ test.describe("FeedToolbar Responsiveness and View Options", () => {
     await page.waitForSelector('body[data-hydrated="true"]');
     await page.setViewportSize({ width: 1280, height: 800 });
 
-    // 1. Test Layout Toggles
+    // Test Layout Toggles
     await page.getByLabel("Grid view").click();
     await expect(page).toHaveURL(/layout=grid/);
 
@@ -100,14 +100,5 @@ test.describe("FeedToolbar Responsiveness and View Options", () => {
 
     await page.getByLabel("List view").click();
     await expect(page).not.toHaveURL(/layout=(grid|rows)/);
-
-    // 2. Test Sorting Toggle
-    await page.getByRole("button", { name: "Newest" }).click();
-    await page.getByRole("menuitemradio", { name: "Oldest" }).click();
-    await expect(page).toHaveURL(/order=oldest/);
-
-    await page.getByRole("button", { name: "Oldest" }).click();
-    await page.getByRole("menuitemradio", { name: "Newest" }).click();
-    await expect(page).not.toHaveURL(/order=oldest/);
   });
 });

@@ -11,6 +11,7 @@ import { db } from "@/db";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import { getQueryClient } from "@/lib/get-query-client";
 import { getCurrentSession } from "@/lib/session";
+import { getDefaultSorting } from "@/lib/sorting";
 import { itemsQuerySchema } from "@/lib/validations/feed";
 import { getItems } from "@/services/item/get-items";
 
@@ -42,7 +43,14 @@ export default async function DashboardPage({
     feedIds = [],
     limit = PAGINATION_LIMIT,
     offset = PAGINATION_INITIAL_OFFSET,
+    sortBy: urlSortBy,
+    sortOrder: urlSortOrder,
   } = result.success ? result.data : {};
+
+  // Determine default sorting based on the view
+  const defaultSort = getDefaultSorting({ isSaved: saved });
+  const sortBy = urlSortBy ?? defaultSort.sortBy;
+  const sortOrder = urlSortOrder ?? defaultSort.sortOrder;
 
   const queryClient = getQueryClient();
 
@@ -58,6 +66,8 @@ export default async function DashboardPage({
         bookmarkedOnly: saved,
         unreadOnly,
         feedIds: [...feedIds].sort(),
+        sortBy,
+        sortOrder,
       },
     ],
     queryFn: () =>
@@ -69,6 +79,8 @@ export default async function DashboardPage({
         bookmarkedOnly: saved,
         unreadOnly,
         feedIds,
+        sortBy,
+        sortOrder,
       }),
     initialPageParam: PAGINATION_INITIAL_OFFSET,
   });

@@ -61,3 +61,14 @@ export type ItemWithSource = {
 export type ListItemWithSource = Omit<ItemWithSource, "item"> & {
   item: ListItem;
 };
+
+export type SortOptionId =
+  | "recently_saved"
+  | "oldest_saved"
+  | "newest_published"
+  | "oldest_published";
+
+export type SortConfig = {
+  sortBy: "publishedAt" | "bookmarkedAt";
+  sortOrder: "desc" | "asc";
+};

@@ -1,6 +1,8 @@
 "use client";
 
 import { parseAsStringEnum, useQueryStates } from "nuqs";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
+import { getDefaultSorting } from "@/lib/sorting";
 
 export enum FeedLayout {
   List = "list",
@@ -8,23 +10,23 @@ export enum FeedLayout {
   Rows = "rows",
 }
 
-export enum FeedOrder {
-  Newest = "newest",
-  Oldest = "oldest",
-}
-
 /**
  * Hook to manage feed view options (layout and order) in the URL.
  */
 export function useViewOptions() {
+  const { isSaved } = useFeedFilter();
+  const defaultSort = getDefaultSorting({ isSaved });
+
   const [options, setOptions] = useQueryStates(
     {
       layout: parseAsStringEnum<FeedLayout>(
         Object.values(FeedLayout),
       ).withDefault(FeedLayout.List),
-      order: parseAsStringEnum<FeedOrder>(Object.values(FeedOrder)).withDefault(
-        FeedOrder.Newest,
-      ),
+      sortBy: parseAsStringEnum<"publishedAt" | "bookmarkedAt">([
+        "publishedAt",
+        "bookmarkedAt",
+      ]),
+      sortOrder: parseAsStringEnum<"desc" | "asc">(["desc", "asc"]),
     },
     {
       shallow: true,
@@ -35,8 +37,20 @@ export function useViewOptions() {
 
   return {
     layout: options.layout,
-    order: options.order,
+    sortBy: options.sortBy,
+    sortOrder: options.sortOrder,
     setLayout: (layout: FeedLayout) => setOptions({ layout }),
-    setOrder: (order: FeedOrder) => setOptions({ order }),
+    setSorting: (
+      sortBy: "publishedAt" | "bookmarkedAt" | null,
+      sortOrder: "desc" | "asc" | null,
+    ) => {
+      const isDefault =
+        sortBy === defaultSort.sortBy && sortOrder === defaultSort.sortOrder;
+
+      return setOptions({
+        sortBy: isDefault ? null : sortBy,
+        sortOrder: isDefault ? null : sortOrder,
+      });
+    },
   };
 }

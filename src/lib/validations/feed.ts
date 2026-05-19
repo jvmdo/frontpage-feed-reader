@@ -78,6 +78,8 @@ export const itemsQuerySchema = z.object({
     .transform((val) =>
       val ? val.split(",").map((id) => Number.parseInt(id, 10)) : undefined,
     ),
+  sortBy: z.enum(["publishedAt", "bookmarkedAt"]).optional(),
+  sortOrder: z.enum(["desc", "asc"]).optional(),
 });
 
 export type ItemsQueryInput = z.infer<typeof itemsQuerySchema>;

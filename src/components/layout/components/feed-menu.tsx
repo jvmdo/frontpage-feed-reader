@@ -26,11 +26,12 @@ import {
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useMarkAllReadUI } from "@/hooks/ui/use-mark-all-read-ui";
 import { useRefreshUI } from "@/hooks/ui/use-refresh-ui";
+import { FeedLayout, useViewOptions } from "@/hooks/ui/use-view-options";
 import {
-  FeedLayout,
-  FeedOrder,
-  useViewOptions,
-} from "@/hooks/ui/use-view-options";
+  getDefaultSorting,
+  REVERSE_SORT_LOOKUP,
+  SORT_OPTIONS,
+} from "@/lib/sorting";
 import { cn } from "@/lib/utils";
 
 interface FeedActionsMenuProps {
@@ -42,10 +43,31 @@ interface FeedActionsMenuProps {
  * Consumes global state (filter, view options) internally.
  */
 export function FeedMenu({ children }: FeedActionsMenuProps) {
-  const { categoryId } = useFeedFilter();
+  const { categoryId, isSaved } = useFeedFilter();
   const { isDisabled: isMarkAllDisabled } = useMarkAllReadUI();
   const { isRefreshing, handleRefresh } = useRefreshUI();
-  const { layout, order, setLayout, setOrder } = useViewOptions();
+  const {
+    layout,
+    setLayout,
+    sortBy: urlSortBy,
+    sortOrder: urlSortOrder,
+    setSorting,
+  } = useViewOptions();
+
+  const defaultSort = getDefaultSorting({ isSaved });
+  const sortBy = urlSortBy ?? defaultSort.sortBy;
+  const sortOrder = urlSortOrder ?? defaultSort.sortOrder;
+
+  // Reverse lookup using a composite key
+  const activeValue =
+    REVERSE_SORT_LOOKUP[`${sortBy}-${sortOrder}`] || "newest_published";
+
+  const handleValueChange = (v: string) => {
+    const config = SORT_OPTIONS[v as keyof typeof SORT_OPTIONS];
+    if (config) {
+      setSorting(config.sortBy, config.sortOrder);
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -109,16 +131,28 @@ export function FeedMenu({ children }: FeedActionsMenuProps) {
 
         <DropdownMenuLabel>Order</DropdownMenuLabel>
         <DropdownMenuRadioGroup
-          value={order}
-          onValueChange={(v) => setOrder(v as FeedOrder)}
+          value={activeValue}
+          onValueChange={handleValueChange}
         >
-          <DropdownMenuRadioItem value={FeedOrder.Newest}>
+          {isSaved && (
+            <>
+              <DropdownMenuRadioItem value="recently_saved">
+                <ArrowDownAZIcon data-icon="inline-start" />
+                Recently Saved
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="oldest_saved">
+                <ArrowUpAZIcon data-icon="inline-start" />
+                Oldest Saved
+              </DropdownMenuRadioItem>
+            </>
+          )}
+          <DropdownMenuRadioItem value="newest_published">
             <ArrowDownAZIcon data-icon="inline-start" />
-            Newest
+            Newest {isSaved && "Published"}
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value={FeedOrder.Oldest}>
+          <DropdownMenuRadioItem value="oldest_published">
             <ArrowUpAZIcon data-icon="inline-start" />
-            Oldest
+            Oldest {isSaved && "Published"}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>

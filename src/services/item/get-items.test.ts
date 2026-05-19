@@ -392,4 +392,112 @@ describe("getItems", () => {
       expect(item?.isRead).toBe(false);
     });
   });
+
+  describe("sorting and decoupling", () => {
+    test("can sort by bookmarkedAt independently of filtering", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      const [item1, item2] = await seedItems(tx, feed.id, [
+        { title: "Item 1" },
+        { title: "Item 2" },
+      ]);
+
+      const now = new Date();
+      const tenMinutesAgo = subMinutes(now, 10);
+
+      // Bookmark Item 1 recently, Item 2 earlier
+      await seedUserItemState(tx, {
+        userId: testUser.id,
+        itemId: item1.id,
+        bookmarkedAt: now,
+      });
+      await seedUserItemState(tx, {
+        userId: testUser.id,
+        itemId: item2.id,
+        bookmarkedAt: tenMinutesAgo,
+      });
+
+      // 1. Sort by bookmarkedAt DESC (default)
+      const descResult = await getItems(tx, testUser.id, {
+        ...options,
+        bookmarkedOnly: true,
+        sortBy: "bookmarkedAt",
+        sortOrder: "desc",
+      });
+      expect(descResult[0].item.title).toBe("Item 1");
+      expect(descResult[1].item.title).toBe("Item 2");
+
+      // 2. Sort by bookmarkedAt ASC
+      const ascResult = await getItems(tx, testUser.id, {
+        ...options,
+        bookmarkedOnly: true,
+        sortBy: "bookmarkedAt",
+        sortOrder: "asc",
+      });
+      expect(ascResult[0].item.title).toBe("Item 2");
+      expect(ascResult[1].item.title).toBe("Item 1");
+    });
+
+    test("can filter by bookmarkedOnly but sort by publishedAt", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      const now = new Date();
+      const tenMinutesAgo = subMinutes(now, 10);
+
+      const [item1, item2] = await seedItems(tx, feed.id, [
+        { title: "Older Item", publishedAt: tenMinutesAgo },
+        { title: "Newer Item", publishedAt: now },
+      ]);
+
+      // Bookmark them in reverse order of publication
+      await seedUserItemState(tx, {
+        userId: testUser.id,
+        itemId: item1.id,
+        bookmarkedAt: now,
+      });
+      await seedUserItemState(tx, {
+        userId: testUser.id,
+        itemId: item2.id,
+        bookmarkedAt: tenMinutesAgo,
+      });
+
+      // Request bookmarked items sorted by publishedAt DESC
+      // (The old 'magic' behavior would have sorted them by bookmarkedAt DESC,
+      // showing 'Older Item' first because it was bookmarked more recently)
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        bookmarkedOnly: true,
+        sortBy: "publishedAt",
+        sortOrder: "desc",
+      });
+
+      expect(result).toHaveLength(2);
+      expect(result[0].item.title).toBe("Newer Item");
+      expect(result[1].item.title).toBe("Older Item");
+    });
+
+    test("sortOrder=asc works for publishedAt", async ({ tx, testUser }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      const now = new Date();
+      const tenMinutesAgo = subMinutes(now, 10);
+
+      await seedItems(tx, feed.id, [
+        { title: "Old", publishedAt: tenMinutesAgo },
+        { title: "New", publishedAt: now },
+      ]);
+
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        sortBy: "publishedAt",
+        sortOrder: "asc",
+      });
+
+      expect(result[0].item.title).toBe("Old");
+      expect(result[1].item.title).toBe("New");
+    });
+  });
 });

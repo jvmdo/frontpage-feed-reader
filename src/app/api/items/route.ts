@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
     saved: searchParams.get("saved"),
     unreadOnly: searchParams.get("unreadOnly"),
     feedIds: searchParams.get("feedIds"),
+    sortBy: searchParams.get("sortBy"),
+    sortOrder: searchParams.get("sortOrder"),
   });
 
   if (!parseResult.success) {
@@ -29,8 +31,17 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { limit, offset, feedId, categoryId, saved, unreadOnly, feedIds } =
-    parseResult.data;
+  const {
+    limit,
+    offset,
+    feedId,
+    categoryId,
+    saved,
+    unreadOnly,
+    feedIds,
+    sortBy,
+    sortOrder,
+  } = parseResult.data;
 
   try {
     const items = await getItems(db, session.user.id, {
@@ -41,6 +52,8 @@ export async function GET(request: NextRequest) {
       bookmarkedOnly: saved,
       unreadOnly,
       feedIds,
+      sortBy,
+      sortOrder,
     });
     return NextResponse.json(items);
   } catch (error) {
