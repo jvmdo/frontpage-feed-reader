@@ -1,11 +1,12 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: test asset */
 
-import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
+import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
 import { createMockItemWithSource } from "@/tests/factories";
+import { render, screen } from "@/tests/rtl-utils";
 import { ItemReaderLightbox } from "./item-reader-lightbox";
 import { ReaderView } from "./reader-view";
 
@@ -14,8 +15,15 @@ vi.mock("@/hooks/item/use-active-item");
 vi.mock("@/hooks/item/use-item");
 vi.mock("@/hooks/item/use-item-reader-navigation");
 vi.mock("@/hooks/ui/use-reader-shortcuts");
+vi.mock("@/hooks/item/use-toggle-bookmark");
 
 describe("ReaderView", () => {
+  beforeEach(() => {
+    vi.mocked(useToggleBookmark).mockReturnValue({
+      mutate: vi.fn(),
+    } as any);
+  });
+
   it("renders basic metadata and title", () => {
     const data = createMockItemWithSource({
       item: { title: "Test Item Title" },
@@ -84,6 +92,10 @@ describe("ItemReaderLightbox Integration", () => {
       goToPrev: vi.fn(),
       hasNext: true,
       hasPrev: true,
+    } as any);
+
+    vi.mocked(useToggleBookmark).mockReturnValue({
+      mutate: vi.fn(),
     } as any);
   });
 

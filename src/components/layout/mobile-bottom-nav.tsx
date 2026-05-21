@@ -11,6 +11,7 @@ import { FeedMenu } from "@/components/layout/components/feed-menu";
 import { UserMenu } from "@/components/layout/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
 import type { SessionUser } from "@/lib/auth-client";
 
 interface MobileBottomNavProps {
@@ -19,6 +20,7 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ user }: MobileBottomNavProps) {
   const { toggleSidebar } = useSidebar();
+  const [_, setOpen] = useSearchPaletteState();
 
   return (
     <div
@@ -40,7 +42,8 @@ export function MobileBottomNav({ user }: MobileBottomNavProps) {
         variant="ghost"
         size="icon"
         className="size-10"
-        aria-label="Search items"
+        onClick={() => setOpen(true)}
+        aria-label="Search your items"
       >
         <SearchIcon className="size-5" />
       </Button>

@@ -42,7 +42,7 @@ describe("MobileBottomNav", () => {
     render(<MobileBottomNav user={mockUser} />);
 
     expect(screen.getByLabelText(/open sidebar menu/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/search items/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/search your items/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/add new feed/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/feed menu/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/user menu/i)).toBeInTheDocument();

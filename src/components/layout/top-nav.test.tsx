@@ -60,7 +60,9 @@ describe("TopNav", () => {
 
     // Desktop utilities are inside a hidden md:flex div
     // But RTL renders everything in a jsdom environment by default
-    expect(screen.getByLabelText(/search articles/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /search your articles/i }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText(/add feed/i)).toBeInTheDocument();
     expect(screen.getByText("JD")).toBeInTheDocument(); // Avatar fallback for John Doe
   });
