@@ -19,11 +19,9 @@ export function CategoryManagementList() {
         description="You haven't created a category. Create your first one to start organizing your feeds."
         icon={Folder}
         action={
-          <AddCategoryDialog asChild>
-            <Button>
-              <Folder />
-              Create your first category
-            </Button>
+          <AddCategoryDialog>
+            <Folder />
+            Create your first category
           </AddCategoryDialog>
         }
       />

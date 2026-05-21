@@ -33,17 +33,25 @@ import {
 interface AddCategoryDialogProps {
   children?: React.ReactNode;
   asChild?: boolean;
+  triggerProps?: React.ComponentProps<typeof Button>;
 }
 
 export function AddCategoryDialog({
   children,
   asChild,
+  triggerProps,
 }: AddCategoryDialogProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild={asChild}>{children}</DialogTrigger>
+      {asChild ? (
+        <DialogTrigger asChild>{children}</DialogTrigger>
+      ) : children ? (
+        <DialogTrigger asChild>
+          <Button {...triggerProps}>{children}</Button>
+        </DialogTrigger>
+      ) : null}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Category</DialogTitle>

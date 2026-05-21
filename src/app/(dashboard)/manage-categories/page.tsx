@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AddCategoryDialog } from "@/components/category/add-category-dialog";
 import { CategoryManagementList } from "@/components/category/category-management-list";
-import { Button } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -33,15 +32,15 @@ export default async function ManageCategoriesPage() {
             sidebar.
           </p>
         </header>
-        <AddCategoryDialog asChild>
-          <Button
-            variant="ghost"
-            className="text-md"
-            aria-label="Create category"
-          >
-            <Folder className="size-6" />
-            Create
-          </Button>
+        <AddCategoryDialog
+          triggerProps={{
+            variant: "ghost",
+            className: "text-md",
+            "aria-label": "Create category",
+          }}
+        >
+          <Folder className="size-6" />
+          Create
         </AddCategoryDialog>
       </div>
       <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
