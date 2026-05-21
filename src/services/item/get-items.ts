@@ -9,6 +9,8 @@ import {
   isNotNull,
   isNull,
   or,
+  type SQL,
+  sql,
 } from "drizzle-orm";
 import type { DB } from "@/db";
 import {
@@ -25,6 +27,7 @@ import type { ListItemWithSource } from "@/types";
 interface GetItemsOptions {
   limit?: number;
   offset?: number;
+  search?: string;
   feedId?: number | null;
   categoryId?: number | null;
   feedIds?: number[] | null;
@@ -35,8 +38,70 @@ interface GetItemsOptions {
 }
 
 /**
- * Retrieves a paginated list of feed items for a specific user,
- * joined with source information and user-specific read state.
+ * The searchable "Document" definition (Single Source of Truth for tsvector).
+ */
+const searchDoc = sql`(
+  setweight(to_tsvector('english', coalesce(${feedItems.title}, '')), 'A') ||
+  setweight(to_tsvector('english', coalesce(${feedItems.description}, '')), 'B') ||
+  setweight(to_tsvector('english', coalesce(${feedItems.textContent}, '')), 'C')
+)`;
+
+/**
+ * Builds PostgreSQL Full-Text Search fragments (filter, rank, snippet).
+ */
+function buildSearchFragments(search?: string) {
+  if (!search) {
+    return {
+      searchFilter: undefined,
+      rank: undefined,
+      snippet: sql<string | null>`NULL`,
+    };
+  }
+
+  const query = sql`websearch_to_tsquery('english', ${search})`;
+
+  return {
+    searchFilter: sql`${searchDoc} @@ ${query}`,
+    rank: sql`ts_rank(${searchDoc}, ${query})`,
+    snippet: sql<string>`ts_headline('english', 
+        coalesce(${feedItems.textContent}, ${feedItems.description}, ${feedItems.title}, ''), 
+        ${query},
+        'StartSel=<b>, StopSel=</b>, MaxWords=35, MinWords=15, ShortWord=3, MaxFragments=2, FragmentDelimiter="..."'
+      )`,
+  };
+}
+
+/**
+ * Builds the ORDER BY clauses based on search relevance and user preferences.
+ */
+function buildSortClauses(
+  options: Pick<GetItemsOptions, "search" | "sortBy" | "sortOrder"> & {
+    rank?: SQL;
+  },
+) {
+  const { search, sortBy = "publishedAt", sortOrder = "desc", rank } = options;
+  const direction = sortOrder === "asc" ? asc : desc;
+  const clauses = [];
+
+  // When searching, always prioritize relevance (rank)
+  if (search && rank) {
+    clauses.push(desc(rank));
+  }
+
+  clauses.push(
+    sortBy === "bookmarkedAt"
+      ? direction(userItemStates.bookmarkedAt)
+      : direction(feedItems.publishedAt),
+    direction(feedItems.createdAt),
+  );
+
+  return clauses;
+}
+
+/**
+ * Retrieves a paginated list of feed items for a specific user.
+ * Supports weighted Full-Text Search (title, description, content),
+ * dynamic snippets, and user-specific read/bookmark states.
  */
 export async function getItems(
   db: DB,
@@ -46,6 +111,7 @@ export async function getItems(
   const {
     limit = 20,
     offset = 0,
+    search,
     feedId,
     categoryId,
     feedIds,
@@ -55,13 +121,8 @@ export async function getItems(
     sortOrder = "desc",
   } = options;
 
-  const direction = sortOrder === "asc" ? asc : desc;
-  const sortClauses = [
-    sortBy === "bookmarkedAt"
-      ? direction(userItemStates.bookmarkedAt)
-      : direction(feedItems.publishedAt),
-    direction(feedItems.createdAt),
-  ];
+  const { searchFilter, rank, snippet } = buildSearchFragments(search);
+  const sortClauses = buildSortClauses({ search, sortBy, sortOrder, rank });
 
   const {
     rawPayload: _rawPayload,
@@ -80,6 +141,7 @@ export async function getItems(
       subscriptionWatermark: subscriptions.markedAllReadAt,
       categoryName: categories.name,
       categoryColor: categories.color,
+      snippet,
     })
     .from(feedItems)
     .innerJoin(feeds, eq(feedItems.feedId, feeds.id))
@@ -96,6 +158,7 @@ export async function getItems(
     .where(
       and(
         eq(subscriptions.userId, userId),
+        searchFilter,
         feedId ? eq(feedItems.feedId, feedId) : undefined,
         categoryId ? eq(subscriptions.categoryId, categoryId) : undefined,
         feedIds && feedIds.length > 0
@@ -152,6 +215,7 @@ export async function getItems(
       isExcerpt: isExcerpt(row.item),
       categoryName: row.categoryName,
       categoryColor: row.categoryColor,
+      searchSnippet: row.snippet,
     };
   });
 }

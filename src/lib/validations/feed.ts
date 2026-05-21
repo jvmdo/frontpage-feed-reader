@@ -59,6 +59,7 @@ export type MarkAllReadInput = z.infer<typeof markAllReadSchema>;
 export const itemsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(PAGINATION_LIMIT),
   offset: z.coerce.number().int().min(0).default(PAGINATION_INITIAL_OFFSET),
+  search: z.string().trim().min(2).optional(),
   feedId: z.coerce.number().int().nullable().optional(),
   categoryId: z.coerce.number().int().nullable().optional(),
   saved: z

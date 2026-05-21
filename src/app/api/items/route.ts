@@ -12,17 +12,9 @@ export async function GET(request: NextRequest) {
   }
 
   const searchParams = request.nextUrl.searchParams;
-  const parseResult = itemsQuerySchema.safeParse({
-    limit: searchParams.get("limit"),
-    offset: searchParams.get("offset"),
-    feedId: searchParams.get("feedId"),
-    categoryId: searchParams.get("categoryId"),
-    saved: searchParams.get("saved"),
-    unreadOnly: searchParams.get("unreadOnly"),
-    feedIds: searchParams.get("feedIds"),
-    sortBy: searchParams.get("sortBy"),
-    sortOrder: searchParams.get("sortOrder"),
-  });
+  const parseResult = itemsQuerySchema.safeParse(
+    Object.fromEntries(searchParams),
+  );
 
   if (!parseResult.success) {
     return NextResponse.json(
@@ -34,6 +26,7 @@ export async function GET(request: NextRequest) {
   const {
     limit,
     offset,
+    search,
     feedId,
     categoryId,
     saved,
@@ -47,6 +40,7 @@ export async function GET(request: NextRequest) {
     const items = await getItems(db, session.user.id, {
       limit,
       offset,
+      search,
       feedId,
       categoryId,
       bookmarkedOnly: saved,
@@ -55,6 +49,7 @@ export async function GET(request: NextRequest) {
       sortBy,
       sortOrder,
     });
+
     return NextResponse.json(items);
   } catch (error) {
     console.error("[GET /api/items] Error:", error);

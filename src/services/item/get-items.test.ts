@@ -500,4 +500,158 @@ describe("getItems", () => {
       expect(result[1].item.title).toBe("New");
     });
   });
+
+  describe("Full-Text Search (FTS)", () => {
+    test("returns items matching search keywords in title", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      await seedItems(tx, feed.id, [
+        { title: "React context patterns" },
+        { title: "Vue state management" },
+        { title: "React performance tips" },
+      ]);
+
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        search: "React",
+      });
+
+      expect(result).toHaveLength(2);
+      expect(result.every((r) => r.item.title?.includes("React"))).toBe(true);
+    });
+
+    test("returns items matching search keywords in textContent (body)", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      await seedItems(tx, feed.id, [
+        {
+          title: "Article 1",
+          textContent: "This post is about Drizzle ORM and Postgres.",
+        },
+        { title: "Article 2", textContent: "Just a random blog post." },
+      ]);
+
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        search: "Drizzle",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].item.title).toBe("Article 1");
+    });
+
+    test("ranks title matches higher than body matches", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      await seedItems(tx, feed.id, [
+        {
+          title: "Postgres index types",
+          textContent: "Learning about database optimization.",
+        },
+        {
+          title: "A simple guide",
+          textContent: "This article mentions Postgres once.",
+        },
+      ]);
+
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        search: "Postgres",
+      });
+
+      expect(result).toHaveLength(2);
+      // Title match should come first due to higher weight ('A')
+      expect(result[0].item.title).toBe("Postgres index types");
+      expect(result[1].item.title).toBe("A simple guide");
+    });
+
+    test("supports stemming (e.g. 'develop' matches 'development')", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      await seedItems(tx, feed.id, [
+        { title: "Modern web development" },
+        { title: "Personal developer blog" },
+        { title: "Random text" },
+      ]);
+
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        search: "develop",
+      });
+
+      expect(result).toHaveLength(2);
+      expect(
+        result.some((r) => r.item.title === "Modern web development"),
+      ).toBe(true);
+      expect(
+        result.some((r) => r.item.title === "Personal developer blog"),
+      ).toBe(true);
+    });
+
+    test("returns highlighted snippets when searching", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      await seedItems(tx, feed.id, [
+        {
+          title: "The power of Next.js",
+          textContent:
+            "Next.js provides an excellent developer experience and great performance.",
+        },
+      ]);
+
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        search: "performance",
+      });
+
+      expect(result[0].searchSnippet).toContain("<b>performance</b>");
+    });
+
+    test("search results respect user isolation", async ({ tx, testUser }) => {
+      // User 1 subscribed to Feed 1
+      const { feed: feed1 } = await seedFeedWithSubscription(tx, testUser.id);
+      await seedItems(tx, feed1.id, [{ title: "User 1 Article" }]);
+
+      // User 2 (implicitly created or separate) subscribed to Feed 2
+      const feed2 = await seedFeed(tx);
+      await seedItems(tx, feed2.id, [{ title: "User 2 Article" }]);
+
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        search: "Article",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].item.title).toBe("User 1 Article");
+    });
+
+    test("supports web search syntax (exact phrases)", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      await seedItems(tx, feed.id, [
+        { title: "React State Management" },
+        { title: "React Performance State" },
+      ]);
+
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        search: '"React State"',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].item.title).toBe("React State Management");
+    });
+  });
 });
