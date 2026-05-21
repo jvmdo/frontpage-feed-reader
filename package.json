@@ -30,6 +30,7 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "embla-carousel-react": "^8.6.0",
+    "html-to-text": "^10.0.0",
     "input-otp": "^1.4.2",
     "jsdom": "^29.0.2",
     "lucide-react": "^1.8.0",

@@ -34,6 +34,7 @@ export async function ingestItems(db: DB, feedId: number) {
             author: item.author,
             publishedAt: item.publishedAt,
             updatedAt: item.updatedAt,
+            textContent: item.textContent,
             rawPayload: item.rawPayload,
           })),
         )
@@ -47,6 +48,7 @@ export async function ingestItems(db: DB, feedId: number) {
             author: sql`excluded.${sql.raw(feedItems.author.name)}`,
             publishedAt: sql`excluded.${sql.raw(feedItems.publishedAt.name)}`,
             updatedAt: sql`excluded.${sql.raw(feedItems.updatedAt.name)}`,
+            textContent: sql`excluded.${sql.raw(feedItems.textContent.name)}`,
             rawPayload: sql`excluded.${sql.raw(feedItems.rawPayload.name)}`,
           },
         });

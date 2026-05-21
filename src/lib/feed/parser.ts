@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import Parser from "rss-parser";
 import { FeedInvalidFormatError } from "@/lib/errors";
+import { extractText } from "./extractor";
 import {
   cleanText,
   decodeEntities,
@@ -47,6 +48,7 @@ export interface Item {
   title: string;
   description: string;
   content?: string;
+  textContent?: string;
   author?: string;
   publishedAt?: Date;
   updatedAt?: Date;
@@ -89,6 +91,7 @@ export async function parseFeedXml(
       );
       const rawContent = item.contentEncoded || item.content;
 
+      const textContent = rawContent ? extractText(rawContent) : undefined;
       const description = neutralizeHtml(
         sanitizeHtml(cleanText(rawDescription || rawContent)),
       );
@@ -103,6 +106,7 @@ export async function parseFeedXml(
         title,
         description,
         content,
+        textContent,
         author: cleanText(decodeEntities(item.creator || item.author)),
         publishedAt: normalizeDate(item.pubDate || item.isoDate),
         updatedAt: normalizeDate(item.isoDate),
