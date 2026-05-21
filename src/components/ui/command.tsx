@@ -51,6 +51,7 @@ function CommandDialog({
       <DialogContent
         className={cn(
           "top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0",
+          "landscape:inset-y-[10%] lg:landscape:inset-y-auto lg:landscape:top-1/3",
           className,
         )}
         showCloseButton={showCloseButton}
@@ -178,6 +179,8 @@ function CommandShortcut({
   );
 }
 
+const CommandLoading = CommandPrimitive.Loading;
+
 export {
   Command,
   CommandDialog,
@@ -186,6 +189,7 @@ export {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandLoading,
   CommandSeparator,
   CommandShortcut,
 };
