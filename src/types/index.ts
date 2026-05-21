@@ -56,6 +56,7 @@ export type ItemWithSource = {
   isExcerpt: boolean;
   categoryName: string | null;
   categoryColor: string | null;
+  searchSnippet?: string | null;
 };
 
 export type ListItemWithSource = Omit<ItemWithSource, "item"> & {

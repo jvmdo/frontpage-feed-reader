@@ -93,6 +93,7 @@ export function createMockItem(overrides: Partial<Item> = {}): Item {
     title: `Mock Item ${id}`,
     description: "A description for the mock item",
     content: "Full content for the mock item",
+    textContent: null,
     author: "Author Name",
     publishedAt: new Date(),
     updatedAt: new Date(),
@@ -118,6 +119,7 @@ export function createMockItemWithSource(
     isExcerpt?: boolean;
     categoryName?: string | null;
     categoryColor?: string | null;
+    searchSnippet?: string | null;
   }> = {},
 ): ItemWithSource {
   const feed = createMockFeed(overrides.feed);
@@ -135,6 +137,7 @@ export function createMockItemWithSource(
     isExcerpt: overrides.isExcerpt ?? isExcerpt(item),
     categoryName: overrides.categoryName ?? null,
     categoryColor: overrides.categoryColor ?? null,
+    searchSnippet: overrides.searchSnippet ?? null,
   };
 }
 
@@ -148,6 +151,7 @@ export function createMockListItemWithSource(
     isExcerpt?: boolean;
     categoryName?: string | null;
     categoryColor?: string | null;
+    searchSnippet?: string | null;
   }> = {},
 ): ListItemWithSource {
   const feed = createMockFeed(overrides.feed);
@@ -165,6 +169,7 @@ export function createMockListItemWithSource(
     isExcerpt: overrides.isExcerpt ?? isExcerpt(item),
     categoryName: overrides.categoryName ?? null,
     categoryColor: overrides.categoryColor ?? null,
+    searchSnippet: overrides.searchSnippet ?? null,
   };
 }
 

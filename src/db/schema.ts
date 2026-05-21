@@ -163,6 +163,8 @@ export const feedItems = pgTable(
     publishedAt: timestamp("published_at"),
     updatedAt: timestamp("updated_at"),
 
+    textContent: text("text_content"),
+
     rawPayload: jsonb("raw_payload"),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -172,6 +174,14 @@ export const feedItems = pgTable(
     index("idx_feed_items_feed_published").on(
       table.feedId,
       table.publishedAt.desc(),
+    ),
+    index("idx_feed_items_search").using(
+      "gin",
+      sql`(
+        setweight(to_tsvector('english', coalesce(${table.title}, '')), 'A') ||
+        setweight(to_tsvector('english', coalesce(${table.description}, '')), 'B') ||
+        setweight(to_tsvector('english', coalesce(${table.textContent}, '')), 'C')
+      )`,
     ),
   ],
 );

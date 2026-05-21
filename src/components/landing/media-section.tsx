@@ -65,6 +65,7 @@ const MOCK_ITEM: ItemWithSource = {
     updatedAt: new Date(),
     feedId: 1,
     description: null,
+    textContent: "Keeping up with tech content today is scattered...",
     guid: "1",
     author: "Frontpage Team",
   },
