@@ -16,8 +16,25 @@ export async function ingestItems(db: DB, feedId: number) {
   }
 
   try {
-    const xml = await fetchFeedXml(feed.url);
-    const { metadata, items } = await parseFeedXml(xml, feed.url);
+    const fetchResult = await fetchFeedXml(feed.url, {
+      etag: feed.httpEtag,
+      lastModified: feed.httpLastModified,
+    });
+
+    if (fetchResult.status === "not_modified") {
+      await db
+        .update(feeds)
+        .set({
+          healthStatus: "healthy",
+          lastFetchedAt: new Date(),
+          lastSuccessAt: new Date(),
+        })
+        .where(eq(feeds.id, feedId));
+
+      return { success: true, status: "not_modified" };
+    }
+
+    const { metadata, items } = await parseFeedXml(fetchResult.xml, feed.url);
 
     // 1. Upsert items
     if (items.length > 0) {
@@ -54,7 +71,7 @@ export async function ingestItems(db: DB, feedId: number) {
         });
     }
 
-    // 2. Update feed status to healthy
+    // 2. Update feed status to healthy and save caching headers
     await db
       .update(feeds)
       .set({
@@ -64,10 +81,12 @@ export async function ingestItems(db: DB, feedId: number) {
         healthStatus: "healthy",
         lastFetchedAt: new Date(),
         lastSuccessAt: new Date(),
+        httpEtag: fetchResult.etag,
+        httpLastModified: fetchResult.lastModified,
       })
       .where(eq(feeds.id, feedId));
 
-    return { success: true };
+    return { success: true, status: "fetched" };
   } catch (error) {
     // 3. Update feed status to error
     await db

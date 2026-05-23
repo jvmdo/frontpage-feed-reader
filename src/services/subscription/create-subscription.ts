@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import type { DB } from "@/db";
 import { feeds, subscriptions } from "@/db/schema";
+import { FeedUnavailableError } from "@/lib/errors";
 import { parseFeedXml } from "@/lib/feed/parser";
 import { fetchFeedXml } from "@/services/ingestion/fetch-feed-xml";
 
@@ -17,17 +18,33 @@ export async function createSubscription(
   url: string,
   categoryId?: number | null,
 ) {
-  // 1. Check if feed exists (outside transaction)
+  // 1. Check if feed exists
   let feed = await db.query.feeds.findFirst({
     where: eq(feeds.url, url),
   });
 
-  // 2. If it doesn't exist, fetch and parse (outside transaction)
+  // 2. If it doesn't exist, fetch and parse
   let metadata = null;
+  let headers: { etag: string | null; lastModified: string | null } = {
+    etag: null,
+    lastModified: null,
+  };
+
   if (!feed) {
-    const xml = await fetchFeedXml(url);
-    const parsed = await parseFeedXml(xml, url);
+    const fetchResult = await fetchFeedXml(url);
+
+    // If we get a 304 (not_modified) for a new feed we don't have ETags for yet,
+    // it's an unexpected state or server misconfiguration.
+    if (fetchResult.status !== "success") {
+      throw new FeedUnavailableError();
+    }
+
+    const parsed = await parseFeedXml(fetchResult.xml, url);
     metadata = parsed.metadata;
+    headers = {
+      etag: fetchResult.etag,
+      lastModified: fetchResult.lastModified,
+    };
   }
 
   return await db.transaction(async (tx) => {
@@ -43,6 +60,8 @@ export async function createSubscription(
           healthStatus: "healthy",
           lastFetchedAt: new Date(),
           lastSuccessAt: new Date(),
+          httpEtag: headers.etag,
+          httpLastModified: headers.lastModified,
         })
         .onConflictDoNothing()
         .returning();

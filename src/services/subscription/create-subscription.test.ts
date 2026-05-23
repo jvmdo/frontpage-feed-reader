@@ -102,6 +102,18 @@ describe("createSubscription", () => {
     );
   });
 
+  test("throws FeedUnavailableError when server returns 304 Not Modified (unexpected)", async ({
+    tx,
+    testUser,
+  }) => {
+    const url = "https://example.com/304.xml";
+    server.use(http.get(url, () => new HttpResponse(null, { status: 304 })));
+
+    await expect(createSubscription(tx, testUser.id, url)).rejects.toThrow(
+      FeedUnavailableError,
+    );
+  });
+
   test("throws FeedNetworkError when fetch fails", async ({ tx, testUser }) => {
     const url = "https://example.com/network-error.xml";
     server.use(http.get(url, () => HttpResponse.error()));

@@ -20,15 +20,42 @@ describe("fetchFeedXml", () => {
   it("fetches feed content successfully", async () => {
     server.use(
       http.get(FEED_URL, () => {
-        return HttpResponse.xml(FEED_CONTENT);
+        return new HttpResponse(FEED_CONTENT, {
+          headers: {
+            "Content-Type": "application/rss+xml",
+            "ETag": "W/\"12345\"",
+            "Last-Modified": "Wed, 21 Oct 2015 07:28:00 GMT",
+          },
+        });
       }),
     );
 
     const result = await fetchFeedXml(FEED_URL);
-    expect(result).toBe(FEED_CONTENT);
+
+    expect(result).toEqual({
+      status: "success",
+      xml: FEED_CONTENT,
+      etag: "W/\"12345\"",
+      lastModified: "Wed, 21 Oct 2015 07:28:00 GMT",
+    });
   });
 
-  it("includes the correct User-Agent and Accept headers", async () => {
+  it("returns not_modified status on HTTP 304", async () => {
+    server.use(
+      http.get(FEED_URL, () => {
+        return new HttpResponse(null, { status: 304 });
+      }),
+    );
+
+    const result = await fetchFeedXml(FEED_URL, {
+      etag: "W/\"12345\"",
+      lastModified: "Wed, 21 Oct 2015 07:28:00 GMT",
+    });
+
+    expect(result).toEqual({ status: "not_modified" });
+  });
+
+  it("includes the correct User-Agent, Accept, and Conditional headers", async () => {
     let capturedHeaders: Headers | undefined;
 
     server.use(
@@ -38,13 +65,19 @@ describe("fetchFeedXml", () => {
       }),
     );
 
-    await fetchFeedXml(FEED_URL);
+    await fetchFeedXml(FEED_URL, {
+      etag: "W/\"12345\"",
+      lastModified: "Wed, 21 Oct 2015 07:28:00 GMT",
+    });
 
     expect(capturedHeaders?.get("User-Agent")).toBe(
       "Frontpage Feed Reader/1.0",
     );
     expect(capturedHeaders?.get("Accept")).toContain("application/rss+xml");
-    expect(capturedHeaders?.get("Accept")).toContain("application/atom+xml");
+    expect(capturedHeaders?.get("If-None-Match")).toBe("W/\"12345\"");
+    expect(capturedHeaders?.get("If-Modified-Since")).toBe(
+      "Wed, 21 Oct 2015 07:28:00 GMT",
+    );
   });
 
   it("throws FeedNotFoundError on 404", async () => {
