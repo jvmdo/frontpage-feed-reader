@@ -22,13 +22,18 @@ const CATEGORY_COLORS = [
  */
 export async function onboardGuest(db: DB, userId: string) {
   // 1. Initialize user preferences with a 7-day historical watermark
+  const guestWatermark = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
   await db
     .insert(userPreferences)
     .values({
       userId,
-      markedAllReadAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      markedAllReadAt: guestWatermark,
     })
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      target: [userPreferences.userId],
+      set: { markedAllReadAt: guestWatermark },
+    });
 
   // 2. Resolve Database Records for all feeds (Welcome + Curated)
   const curatedUrls = sampleFeeds.categories.flatMap((c) =>

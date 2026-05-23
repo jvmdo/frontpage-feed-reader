@@ -2,6 +2,14 @@ export const PAGINATION_LIMIT = 20;
 export const PAGINATION_INITIAL_OFFSET = 0;
 export const DEFAULT_CATEGORY_COLOR = "#2563eb";
 
+export const DEFAULT_REFRESH_INTERVAL = Number.parseInt(
+  process.env.NEXT_PUBLIC_DEFAULT_REFRESH_INTERVAL || "900",
+  10,
+);
+
+export const REFRESH_CRON_SCHEDULE =
+  process.env.REFRESH_CRON_SCHEDULE || "*/15 * * * *";
+
 export const LANDING_USERS = [
   {
     name: "John Doe",

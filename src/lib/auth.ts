@@ -3,16 +3,34 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createAuthMiddleware } from "better-auth/api";
 import { anonymous, testUtils } from "better-auth/plugins";
 import { db } from "@/db";
+import { userPreferences } from "@/db/schema";
 import { PasswordResetEmail } from "@/emails/password-reset";
 import { generateAnonName } from "@/lib/utils";
 import { convertGuestToMember } from "@/services/auth/convert-guest-account";
 import { onboardGuest } from "@/services/auth/onboard-guest";
+import { DEFAULT_REFRESH_INTERVAL } from "./constants";
 import { resend } from "./resend";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          // Initialize universal preferences for EVERY new user
+          await db
+            .insert(userPreferences)
+            .values({
+              userId: user.id,
+              refreshInterval: DEFAULT_REFRESH_INTERVAL,
+            })
+            .onConflictDoNothing();
+        },
+      },
+    },
+  },
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
       if (ctx.path === "/sign-in/anonymous") {
