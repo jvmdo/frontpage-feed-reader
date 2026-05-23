@@ -1,9 +1,28 @@
-import createDOMPurify from "dompurify";
-import { JSDOM } from "jsdom";
+import DOMPurify from "isomorphic-dompurify";
 import { marked } from "marked";
 
-const window = new JSDOM("").window;
-const DOMPurify = createDOMPurify(window as any);
+let isHookRegistered = false;
+
+function ensureHooks() {
+  if (isHookRegistered) return;
+
+  // Add a hook to only allow video embeds from trusted domains in iframes
+  DOMPurify.addHook("uponSanitizeElement", (node, data) => {
+    if (data.tagName === "iframe") {
+      const el = node as HTMLElement;
+      const src = el.getAttribute("src") || "";
+      const isTrustedVideo =
+        src.startsWith("https://www.youtube.com/embed/") ||
+        src.startsWith("https://player.vimeo.com/video/");
+
+      if (!isTrustedVideo) {
+        el.remove();
+      }
+    }
+  });
+
+  isHookRegistered = true;
+}
 
 /**
  * Sanitizes an HTML string to prevent XSS and other malicious content.
@@ -11,6 +30,8 @@ const DOMPurify = createDOMPurify(window as any);
  */
 export function sanitizeHtml(text: string | undefined | null): string {
   if (!text) return "";
+
+  ensureHooks();
 
   // 1. Convert Markdown/Plain-text to HTML using marked.
   const html = marked.parse(text, { gfm: true, breaks: true }) as string;
@@ -70,18 +91,3 @@ export function sanitizeHtml(text: string | undefined | null): string {
     ADD_ATTR: ["target"],
   });
 }
-
-// Add a hook to only allow video embeds from trusted domains in iframes
-DOMPurify.addHook("uponSanitizeElement", (node, data) => {
-  if (data.tagName === "iframe") {
-    const el = node as HTMLElement;
-    const src = el.getAttribute("src") || "";
-    const isTrustedVideo =
-      src.startsWith("https://www.youtube.com/embed/") ||
-      src.startsWith("https://player.vimeo.com/video/");
-
-    if (!isTrustedVideo) {
-      el.remove();
-    }
-  }
-});
