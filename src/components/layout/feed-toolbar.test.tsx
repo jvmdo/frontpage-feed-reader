@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { markAllReadAction } from "@/actions/feed/mark-all-read-action";
 import { refreshFeedAction } from "@/actions/feed/refresh-feed-action";
+import { useNewItemsPolling } from "@/hooks/feed/use-new-items-polling";
 import { server } from "@/tests/mocks/server";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { FeedToolbar } from "./feed-toolbar";
@@ -23,6 +24,13 @@ vi.mock("@/actions/feed/mark-all-read-action", () => ({
 
 vi.mock("@/actions/feed/refresh-feed-action", () => ({
   refreshFeedAction: vi.fn(),
+}));
+
+vi.mock("@/hooks/feed/use-new-items-polling", () => ({
+  useNewItemsPolling: vi.fn(() => ({
+    newItemsCount: 0,
+    handleLoadNew: vi.fn(),
+  })),
 }));
 
 describe("FeedToolbar", () => {
@@ -333,6 +341,53 @@ describe("FeedToolbar", () => {
       expect(
         screen.getByRole("button", { name: /oldest/i }),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("New Items Notification", () => {
+    it("renders the banner when new items are available", async () => {
+      vi.mocked(useNewItemsPolling).mockReturnValue({
+        newItemsCount: 5,
+        handleLoadNew: vi.fn(),
+      });
+
+      render(<FeedToolbar />);
+
+      expect(
+        await screen.findByText(/5 new items available/i),
+      ).toBeInTheDocument();
+    });
+
+    it("calls handleLoadNew when the banner is clicked", async () => {
+      const user = userEvent.setup();
+      const handleLoadNew = vi.fn();
+      vi.mocked(useNewItemsPolling).mockReturnValue({
+        newItemsCount: 3,
+        handleLoadNew,
+      });
+
+      render(<FeedToolbar />);
+
+      const bannerButton = await screen.findByRole("button", {
+        name: /3 new items available/i,
+      });
+      await user.click(bannerButton);
+
+      expect(handleLoadNew).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not render text when there are no new items", async () => {
+      vi.mocked(useNewItemsPolling).mockReturnValue({
+        newItemsCount: 0,
+        handleLoadNew: vi.fn(),
+      });
+
+      render(<FeedToolbar />);
+
+      // The container might still be there but the button text should not be visible
+      expect(
+        screen.queryByText(/new items available/i),
+      ).not.toBeInTheDocument();
     });
   });
 });

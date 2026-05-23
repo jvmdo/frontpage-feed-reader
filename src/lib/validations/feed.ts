@@ -84,3 +84,11 @@ export const itemsQuerySchema = z.object({
 });
 
 export type ItemsQueryInput = z.infer<typeof itemsQuerySchema>;
+
+export const checkNewItemsSchema = z.object({
+  feedId: z.coerce.number().int().nullable().optional(),
+  categoryId: z.coerce.number().int().nullable().optional(),
+  since: z.coerce.date(),
+});
+
+export type CheckNewItemsInput = z.infer<typeof checkNewItemsSchema>;
