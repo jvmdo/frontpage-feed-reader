@@ -99,7 +99,7 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
               <UserIcon data-icon="inline-start" />
               {user.isAnonymous ? "Save progress" : "Profile"}
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>
+            <DropdownMenuItem onSelect={() => router.push("/settings")}>
               <SettingsIcon data-icon="inline-start" />
               Settings
             </DropdownMenuItem>

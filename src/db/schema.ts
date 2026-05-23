@@ -12,7 +12,10 @@ import {
   timestamp,
   unique,
 } from "drizzle-orm/pg-core";
-import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
+import {
+  DEFAULT_CATEGORY_COLOR,
+  DEFAULT_REFRESH_INTERVAL,
+} from "@/lib/constants";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -33,10 +36,9 @@ export const userPreferences = pgTable("user_preferences", {
     .primaryKey()
     .references(() => user.id, { onDelete: "cascade" }),
 
-  layout: text("layout").default("list"),
-  refreshInterval: integer("refresh_interval").default(300),
-  ordering: text("ordering").default("newest"),
-  extraSettings: jsonb("extra_settings"),
+  refreshInterval: integer("refresh_interval")
+    .default(DEFAULT_REFRESH_INTERVAL)
+    .notNull(),
 
   // Watermark for global "Mark all as read"
   markedAllReadAt: timestamp("marked_all_read_at"),
