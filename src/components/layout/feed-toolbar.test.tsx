@@ -389,5 +389,52 @@ describe("FeedToolbar", () => {
         screen.queryByText(/new items available/i),
       ).not.toBeInTheDocument();
     });
+
+    it("displays detailed health info in the refresh tooltip", async () => {
+      const user = userEvent.setup();
+      const lastChecked = new Date("2024-01-01T12:00:00Z");
+
+      // Setup mock data for feeds with an error
+      server.use(
+        http.get("/api/feeds/subscriptions", () => {
+          return HttpResponse.json({
+            success: true,
+            data: [
+              {
+                feed: {
+                  id: 1,
+                  title: "Broken Feed",
+                  healthStatus: "error",
+                  lastFetchedAt: lastChecked.toISOString(),
+                },
+                subscription: { id: 101 },
+              },
+            ],
+          });
+        }),
+      );
+
+      render(<FeedToolbar />);
+
+      const refreshButton = await screen.findByRole("button", {
+        name: /refresh/i,
+      });
+
+      // Hover to trigger tooltip
+      await user.hover(refreshButton);
+
+      // Verify "Last checked" (use findAllByText as Radix might render portals/clones)
+      expect((await screen.findAllByText(/last checked/i)).length).toBeGreaterThan(
+        0,
+      );
+
+      // Verify failed sources list
+      expect(
+        (await screen.findAllByText(/1 source unreachable/i)).length,
+      ).toBeGreaterThan(0);
+      expect((await screen.findAllByText("Broken Feed")).length).toBeGreaterThan(
+        0,
+      );
+    });
   });
 });

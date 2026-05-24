@@ -3,6 +3,7 @@ import path from "node:path";
 import { eq } from "drizzle-orm";
 import { HttpResponse, http } from "msw";
 import { feedItems, feeds } from "@/db/schema";
+import { FEED_THROTTLE_MS } from "@/lib/constants";
 import { FeedNotFoundError, FeedRecordNotFoundError } from "@/lib/errors";
 import { server } from "@/tests/mocks/server";
 import { seedFeed, seedItems } from "@/tests/seeding";
@@ -201,6 +202,38 @@ describe("ingestItems integration", () => {
 
     expect(updatedFeed.httpEtag).toBe("new-etag");
     expect(updatedFeed.httpLastModified).toBe("new-modified");
+  });
+
+  test("throttles requests if called within the cooldown period", async ({
+    tx,
+  }) => {
+    const insertedFeed = await seedFeed(tx, {
+      url: FEED_URL,
+      lastFetchedAt: new Date(), // Just fetched now
+    });
+
+    const result = await ingestItems(tx, insertedFeed.id);
+
+    expect(result.success).toBe(true);
+    expect(result.status).toBe("throttled");
+  });
+
+  test("allows fetch after cooldown has expired", async ({ tx }) => {
+    const insertedFeed = await seedFeed(tx, {
+      url: FEED_URL,
+      lastFetchedAt: new Date(Date.now() - FEED_THROTTLE_MS - 1000), // Expired
+    });
+
+    server.use(
+      http.get(FEED_URL, () => {
+        return HttpResponse.xml(RSS_CONTENT);
+      }),
+    );
+
+    const result = await ingestItems(tx, insertedFeed.id);
+
+    expect(result.success).toBe(true);
+    expect(result.status).toBe("fetched");
   });
 
   test("updates health_status to error on failure", async ({ tx }) => {

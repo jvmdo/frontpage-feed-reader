@@ -1,6 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
+import { useFeeds } from "@/hooks/feed/use-feeds";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
 import type { RefreshFeedInput } from "@/lib/validations/feed";
@@ -11,6 +12,7 @@ import type { RefreshFeedInput } from "@/lib/validations/feed";
  */
 export function useRefreshUI() {
   const { feedId, categoryId } = useFeedFilter();
+  const { data: feeds } = useFeeds();
   const { mutate: refreshFeed, isPending: isRefreshing } = useRefreshFeed();
 
   const handleRefresh = () => {
@@ -33,17 +35,56 @@ export function useRefreshUI() {
         toast.success(`${label} refreshed`);
       },
       onError: (error) => {
-        toast.error(
-          error.message || `Failed to refresh ${label.toLowerCase()}`,
-        );
+        toast.error(error.message || `Failed to refresh ${label.toLowerCase()}`);
       },
     });
   };
+
+  // Calculate refresh metadata for the current view
+  const { lastFetchedAt, failedFeeds } = (() => {
+    if (!feeds) return { lastFetchedAt: null, failedFeeds: [] };
+
+    let targetSubscriptions = feeds;
+
+    if (feedId) {
+      targetSubscriptions = feeds.filter((f) => f.feed.id === feedId);
+    } else if (categoryId) {
+      targetSubscriptions = feeds.filter(
+        (f) => f.subscription.categoryId === categoryId,
+      );
+    }
+
+    if (targetSubscriptions.length === 0) {
+      return { lastFetchedAt: null, failedFeeds: [] };
+    }
+
+    // 1. Find the most recent fetch attempt
+    const fetchTimes = targetSubscriptions
+      .map((s) =>
+        s.feed.lastFetchedAt ? new Date(s.feed.lastFetchedAt).getTime() : 0,
+      )
+      .filter((t) => t > 0);
+
+    const latestFetch =
+      fetchTimes.length > 0 ? new Date(Math.max(...fetchTimes)) : null;
+
+    // 2. Identify failed feeds
+    const failed = targetSubscriptions
+      .filter((s) => s.feed.healthStatus === "error")
+      .map((s) => s.subscription.customTitle ?? s.feed.title ?? "Untitled Feed");
+
+    return {
+      lastFetchedAt: latestFetch,
+      failedFeeds: failed,
+    };
+  })();
 
   return {
     feedId,
     categoryId,
     isRefreshing,
+    lastFetchedAt,
+    failedFeeds,
     handleRefresh,
   };
 }

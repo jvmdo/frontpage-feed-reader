@@ -10,6 +10,8 @@ export const DEFAULT_REFRESH_INTERVAL = Number.parseInt(
 export const REFRESH_CRON_SCHEDULE =
   process.env.REFRESH_CRON_SCHEDULE || "*/15 * * * *";
 
+export const FEED_THROTTLE_MS = 60000; // 1 minute
+
 export const LANDING_USERS = [
   {
     name: "John Doe",

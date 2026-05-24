@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import type { DB } from "@/db";
 import { feedItems, feeds } from "@/db/schema";
+import { FEED_THROTTLE_MS } from "@/lib/constants";
 import { FeedRecordNotFoundError } from "@/lib/errors";
 import { parseFeedXml } from "@/lib/feed/parser";
 import {
@@ -24,6 +25,16 @@ export async function ingestItems(
 
   if (!feed) {
     throw new FeedRecordNotFoundError(`Feed with ID ${feedId} not found`);
+  }
+
+  // 1. Check for throttling (Global Cooldown)
+  // Skip if fetched recently, unless we have data handoff (initialData)
+  const isRecentlyFetched =
+    feed.lastFetchedAt &&
+    Date.now() - feed.lastFetchedAt.getTime() < FEED_THROTTLE_MS;
+
+  if (isRecentlyFetched && !options.initialData) {
+    return { success: true, status: "throttled" };
   }
 
   try {

@@ -1,20 +1,14 @@
 "use client";
 
-import {
-  CheckCheckIcon,
-  ListPlus,
-  MoreHorizontalIcon,
-  RotateCwIcon,
-} from "lucide-react";
+import { CheckCheckIcon, ListPlus, MoreHorizontalIcon } from "lucide-react";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
 import { NewItemsBanner } from "@/components/feed/new-items-banner";
 import { FeedSortingToggles } from "@/components/layout/components/feed-sorting-toggles";
+import { RefreshButton } from "@/components/layout/components/refresh-button";
 import { Button } from "@/components/ui/button";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useNewItemsPolling } from "@/hooks/feed/use-new-items-polling";
 import { useMarkAllReadUI } from "@/hooks/ui/use-mark-all-read-ui";
-import { useRefreshUI } from "@/hooks/ui/use-refresh-ui";
-import { cn } from "@/lib/utils";
 import { FeedLayoutToggles } from "./components/feed-layout-toggles";
 import { FeedMenu } from "./components/feed-menu";
 import { MarkAllReadDialog } from "./components/mark-all-read-dialog";
@@ -73,27 +67,6 @@ export function FeedToolbar() {
 
       <NewItemsBanner count={newItemsCount} onClick={handleLoadNew} />
     </header>
-  );
-}
-
-function RefreshButton() {
-  const { isRefreshing, handleRefresh } = useRefreshUI();
-
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleRefresh}
-      disabled={isRefreshing}
-      onSelect={(e) => e.preventDefault()}
-      className="text-xs"
-    >
-      <RotateCwIcon
-        className={cn("size-3.5", isRefreshing && "animate-spin")}
-        data-icon="inline-start"
-      />
-      Refresh
-    </Button>
   );
 }
 
