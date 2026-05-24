@@ -1,3 +1,4 @@
+import { subMinutes } from "date-fns";
 import { db } from "@/db";
 import { seedCategory, seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
@@ -40,6 +41,38 @@ test.describe("FeedToolbar Refresh", () => {
       /feed refreshed/i,
     );
     await expect(refreshButton).not.toBeDisabled();
+  });
+
+  test("manual refresh actually ingests new items (bypassing throttling)", async ({
+    authedPage,
+  }) => {
+    const { page, userId } = authedPage;
+
+    // Setup: A feed pointing to a valid fixture but with NO items in DB yet
+    const feedUrl = `http://localhost:3432/rss-2.xml?tenant=${userId}`;
+    const { feed } = await seedFeedWithSubscription(db, userId, {
+      url: feedUrl,
+      title: "Data Refresh Test",
+      // Set lastFetchedAt to 2 minutes ago to bypass the 60s throttle
+      lastFetchedAt: subMinutes(new Date(), 2),
+    });
+
+    // 1. Navigate to the feed view (should be empty initially)
+    await page.goto(`/dashboard?feedId=${feed.id}`);
+    await page.waitForSelector('body[data-hydrated="true"]');
+
+    await expect(page.getByText(/your feed is empty/i)).toBeVisible();
+
+    // 2. Trigger Refresh
+    const toolbar = page.getByRole("toolbar", { name: "Feed toolbar" });
+    await toolbar.getByRole("button", { name: /refresh/i }).click();
+
+    // 3. Verify items from rss-2.xml fixture are now visible
+    // rss-2.xml contains "Making Complex CSS Shapes"
+    await expect(page.getByText(/Making Complex CSS Shapes/i)).toBeVisible();
+    await expect(page.locator("[data-sonner-toast]")).toContainText(
+      /feed refreshed/i,
+    );
   });
 
   test("clicking 'Refresh' in All Items triggers global ingestion", async ({

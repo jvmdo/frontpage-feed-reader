@@ -1,4 +1,4 @@
-import { and, count, eq, gt, inArray, isNull, or } from "drizzle-orm";
+import { and, count, eq, gt, inArray } from "drizzle-orm";
 import type { DB } from "@/db";
 import {
   categories,
@@ -7,6 +7,7 @@ import {
   subscriptions,
   userPreferences,
 } from "@/db/schema";
+import { watermarkFilters } from "../utils";
 
 interface CountNewItemsOptions {
   since: Date;
@@ -16,7 +17,7 @@ interface CountNewItemsOptions {
 }
 
 /**
- * Counts items published after a specific date for a user's subscription scope.
+ * Counts items arrived (createdAt) after a specific date for a user's subscription scope.
  * Used for background polling to show "New items available" banner.
  */
 export async function countNewItems(
@@ -36,8 +37,9 @@ export async function countNewItems(
     .where(
       and(
         eq(subscriptions.userId, userId),
-        // We only care about items published after the "since" date
-        gt(feedItems.publishedAt, since),
+        // We only care about items that arrived (createdAt) after the "since" date.
+        // This ensures backdated items (publishedAt < since) are still counted if they are new to our DB.
+        gt(feedItems.createdAt, since),
         // Scope filters
         feedId ? eq(feedItems.feedId, feedId) : undefined,
         categoryId ? eq(subscriptions.categoryId, categoryId) : undefined,
@@ -45,18 +47,7 @@ export async function countNewItems(
           ? inArray(feedItems.feedId, feedIds)
           : undefined,
         // We only count items that aren't already hidden by watermarks
-        or(
-          isNull(userPreferences.markedAllReadAt),
-          gt(feedItems.createdAt, userPreferences.markedAllReadAt),
-        ),
-        or(
-          isNull(categories.markedAllReadAt),
-          gt(feedItems.createdAt, categories.markedAllReadAt),
-        ),
-        or(
-          isNull(subscriptions.markedAllReadAt),
-          gt(feedItems.createdAt, subscriptions.markedAllReadAt),
-        ),
+        ...watermarkFilters(feedItems.createdAt, feedItems.publishedAt),
       ),
     );
 

@@ -18,9 +18,9 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
   const { isTourActive } = useTourStore();
   const queryClient = useQueryClient();
 
-  // Get the latest item date from the existing cache
+  // Get the latest item date from the existing cache (using arrival time for consistency)
   const { data } = useItems();
-  const latestItemDate = data?.pages?.[0]?.[0]?.item.publishedAt;
+  const latestItemDate = data?.pages?.[0]?.[0]?.item.createdAt;
 
   const { data: newItemsCount } = useQuery({
     queryKey: ["new-items-count", feedId, categoryId],

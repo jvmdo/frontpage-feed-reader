@@ -10,6 +10,7 @@ import {
 } from "@/db/schema";
 import { isExcerpt } from "@/lib/feed/utils";
 import type { ItemWithSource } from "@/types";
+import { calculateIsRead } from "../utils";
 
 /**
  * Retrieves a single feed item with full context, ensuring the user has access.
@@ -51,22 +52,14 @@ export async function getItem(
 
   if (!result) return null;
 
-  const itemTimestamp = result.item.createdAt;
-
-  // Cascading watermark logic
-  const watermarks = [
-    result.globalWatermark,
-    result.categoryWatermark,
-    result.subscriptionWatermark,
-  ].filter((w): w is Date => w !== null);
-
-  const latestWatermark =
-    watermarks.length > 0
-      ? new Date(Math.max(...watermarks.map((w) => w.getTime())))
-      : null;
-
-  const isRead =
-    !!result.readAt || (!!latestWatermark && itemTimestamp <= latestWatermark);
+  const isRead = calculateIsRead({
+    readAt: result.readAt,
+    itemTimestamp: result.item.createdAt,
+    publishedAt: result.item.publishedAt,
+    globalWatermark: result.globalWatermark,
+    categoryWatermark: result.categoryWatermark,
+    subscriptionWatermark: result.subscriptionWatermark,
+  });
 
   return {
     item: result.item,

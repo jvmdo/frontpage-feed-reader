@@ -4,11 +4,9 @@ import {
   desc,
   eq,
   getTableColumns,
-  gt,
   inArray,
   isNotNull,
   isNull,
-  or,
   type SQL,
   sql,
 } from "drizzle-orm";
@@ -23,6 +21,7 @@ import {
 } from "@/db/schema";
 import { isExcerpt } from "@/lib/feed/utils";
 import type { ListItemWithSource } from "@/types";
+import { calculateIsRead, watermarkFilters } from "../utils";
 
 interface GetItemsOptions {
   limit?: number;
@@ -168,18 +167,7 @@ export async function getItems(
         unreadOnly
           ? and(
               isNull(userItemStates.readAt),
-              or(
-                isNull(userPreferences.markedAllReadAt),
-                gt(feedItems.createdAt, userPreferences.markedAllReadAt),
-              ),
-              or(
-                isNull(categories.markedAllReadAt),
-                gt(feedItems.createdAt, categories.markedAllReadAt),
-              ),
-              or(
-                isNull(subscriptions.markedAllReadAt),
-                gt(feedItems.createdAt, subscriptions.markedAllReadAt),
-              ),
+              ...watermarkFilters(feedItems.createdAt, feedItems.publishedAt),
             )
           : undefined,
       ),
@@ -189,22 +177,14 @@ export async function getItems(
     .offset(offset);
 
   return results.map((row) => {
-    const itemTimestamp = row.item.createdAt;
-
-    // Cascading watermark logic
-    const watermarks = [
-      row.globalWatermark,
-      row.categoryWatermark,
-      row.subscriptionWatermark,
-    ].filter((w): w is Date => w !== null);
-
-    const latestWatermark =
-      watermarks.length > 0
-        ? new Date(Math.max(...watermarks.map((w) => w.getTime())))
-        : null;
-
-    const isRead =
-      !!row.readAt || (!!latestWatermark && itemTimestamp <= latestWatermark);
+    const isRead = calculateIsRead({
+      readAt: row.readAt,
+      itemTimestamp: row.item.createdAt,
+      publishedAt: row.item.publishedAt,
+      globalWatermark: row.globalWatermark,
+      categoryWatermark: row.categoryWatermark,
+      subscriptionWatermark: row.subscriptionWatermark,
+    });
 
     return {
       item: row.item,

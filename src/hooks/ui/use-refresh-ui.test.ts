@@ -4,10 +4,12 @@ import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
+import { useFeeds } from "@/hooks/feed/use-feeds";
 import { useRefreshUI } from "./use-refresh-ui";
 
 vi.mock("@/hooks/feed/use-feed-filter");
 vi.mock("@/hooks/feed/use-refresh-feed");
+vi.mock("@/hooks/feed/use-feeds");
 
 describe("useRefreshUI", () => {
   const mockMutate = vi.fn();
@@ -23,6 +25,10 @@ describe("useRefreshUI", () => {
     vi.mocked(useRefreshFeed).mockReturnValue({
       mutate: mockMutate,
       isPending: false,
+    } as any);
+    vi.mocked(useFeeds).mockReturnValue({
+      data: [],
+      isLoading: false,
     } as any);
   });
 

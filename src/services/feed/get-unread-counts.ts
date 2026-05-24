@@ -1,4 +1,4 @@
-import { and, count, eq, gt, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, count, eq, isNotNull, isNull } from "drizzle-orm";
 import type { DB } from "@/db";
 import {
   categories,
@@ -7,6 +7,7 @@ import {
   userItemStates,
   userPreferences,
 } from "@/db/schema";
+import { watermarkFilters } from "../utils";
 
 export interface UnreadCounts {
   global: number;
@@ -27,8 +28,6 @@ export async function getUnreadCounts(
   db: DB,
   userId: string,
 ): Promise<UnreadCounts> {
-  const itemTimestamp = feedItems.createdAt;
-
   const [groupResults, savedResult] = await Promise.all([
     // Query for global, category, and feed counts
     db
@@ -55,18 +54,7 @@ export async function getUnreadCounts(
         and(
           eq(subscriptions.userId, userId),
           isNull(userItemStates.readAt),
-          or(
-            isNull(userPreferences.markedAllReadAt),
-            gt(itemTimestamp, userPreferences.markedAllReadAt),
-          ),
-          or(
-            isNull(categories.markedAllReadAt),
-            gt(itemTimestamp, categories.markedAllReadAt),
-          ),
-          or(
-            isNull(subscriptions.markedAllReadAt),
-            gt(itemTimestamp, subscriptions.markedAllReadAt),
-          ),
+          ...watermarkFilters(feedItems.createdAt, feedItems.publishedAt),
         ),
       )
       .groupBy(feedItems.feedId, subscriptions.categoryId),
@@ -95,18 +83,7 @@ export async function getUnreadCounts(
           eq(subscriptions.userId, userId),
           isNotNull(userItemStates.bookmarkedAt),
           isNull(userItemStates.readAt),
-          or(
-            isNull(userPreferences.markedAllReadAt),
-            gt(itemTimestamp, userPreferences.markedAllReadAt),
-          ),
-          or(
-            isNull(categories.markedAllReadAt),
-            gt(itemTimestamp, categories.markedAllReadAt),
-          ),
-          or(
-            isNull(subscriptions.markedAllReadAt),
-            gt(itemTimestamp, subscriptions.markedAllReadAt),
-          ),
+          ...watermarkFilters(feedItems.createdAt, feedItems.publishedAt),
         ),
       ),
   ]);

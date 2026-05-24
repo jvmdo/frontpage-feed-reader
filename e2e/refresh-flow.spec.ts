@@ -14,11 +14,13 @@ test.describe("Auto-Refresh and Polling", () => {
       url: `https://example.com/e2e-polling?tenant=${userId}`,
     });
 
+    const tenMinutesAgo = subMinutes(new Date(), 10);
     await seedItems(db, feed.id, [
       {
         guid: `initial-${userId}`,
         title: "Initial Item",
-        publishedAt: subMinutes(new Date(), 10),
+        publishedAt: tenMinutesAgo,
+        createdAt: tenMinutesAgo, // Explicitly old arrival
       },
     ]);
 
@@ -35,6 +37,7 @@ test.describe("Auto-Refresh and Polling", () => {
         guid: `new-item-${userId}`,
         title: "Fresh Content",
         publishedAt: new Date(),
+        createdAt: new Date(), // Explicitly set to current JS time (millisecond precision)
       },
     ]);
 
