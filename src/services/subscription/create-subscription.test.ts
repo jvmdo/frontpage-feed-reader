@@ -1,25 +1,35 @@
+import fs from "node:fs";
+import path from "node:path";
 import { eq } from "drizzle-orm";
 import { HttpResponse, http } from "msw";
-import { feeds, subscriptions } from "@/db/schema";
+import { feedItems, feeds, subscriptions } from "@/db/schema";
 import {
   FeedInvalidFormatError,
   FeedNetworkError,
   FeedNotFoundError,
   FeedUnavailableError,
 } from "@/lib/errors";
+import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { server } from "@/tests/mocks/server";
 import { seedFeed } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
 import { createSubscription } from "./create-subscription";
 
 describe("createSubscription", () => {
-  test("adds a new feed and subscription", async ({ tx, testUser }) => {
+  test("adds a new feed and subscription with initial fetch data", async ({
+    tx,
+    testUser,
+  }) => {
     // Arrange
     const userId = testUser.id;
     const url = "https://example.com/feed.xml";
 
     // Act
-    const { subscription, feed } = await createSubscription(tx, userId, url);
+    const { subscription, feed, initialData } = await createSubscription(
+      tx,
+      userId,
+      url,
+    );
 
     // Assert
     expect(subscription).toBeDefined();
@@ -28,9 +38,18 @@ describe("createSubscription", () => {
     expect(feed).toBeDefined();
     expect(feed.title).toBe("Example Feed");
     expect(subscription.feedId).toBe(feed.id);
+
+    // Verify initialData is returned for new feed
+    expect(initialData).toBeDefined();
+    expect(initialData?.status).toBe("success");
+    expect((initialData as any)?.xml).toContain("<title>Example Feed</title>");
+
+    // Verify ETags are NOT saved yet
+    expect(feed.httpEtag).toBeNull();
+    expect(feed.httpLastModified).toBeNull();
   });
 
-  test("reuses existing feed and creates subscription", async ({
+  test("reuses existing feed and returns no initialData", async ({
     tx,
     testUser,
   }) => {
@@ -40,12 +59,17 @@ describe("createSubscription", () => {
       url,
     });
 
-    const { subscription, feed } = await createSubscription(tx, userId, url);
+    const { subscription, feed, initialData } = await createSubscription(
+      tx,
+      userId,
+      url,
+    );
     const allFeeds = await tx.select().from(feeds);
 
     expect(subscription.feedId).toBe(existingFeed.id);
     expect(feed.id).toBe(existingFeed.id);
-    expect(allFeeds.length).toBe(1); // Should not have inserted a new feed
+    expect(allFeeds.length).toBe(1);
+    expect(initialData).toBeUndefined(); // Should not fetch if feed exists
   });
 
   test("is idempotent for the same user and feed", async ({ tx, testUser }) => {
@@ -121,5 +145,62 @@ describe("createSubscription", () => {
     await expect(createSubscription(tx, testUser.id, url)).rejects.toThrow(
       FeedNetworkError,
     );
+  });
+
+  test("Flow: correctly ingests items for a brand new feed using data handoff", async ({
+    tx,
+    testUser,
+  }) => {
+    const url = "https://example.com/brand-new-flow.xml";
+    const fixturesPath = path.join(process.cwd(), "e2e/fixtures");
+    const rssContent = fs.readFileSync(
+      path.join(fixturesPath, "rss-2.xml"),
+      "utf-8",
+    );
+
+    // 1. Setup mock
+    server.use(
+      http.get(url, () => {
+        return new HttpResponse(rssContent, {
+          headers: {
+            "Content-Type": "application/rss+xml",
+            ETag: "initial-etag",
+          },
+        });
+      }),
+    );
+
+    // 2. Link User to Feed (Create)
+    const { feed, initialData } = await createSubscription(
+      tx,
+      testUser.id,
+      url,
+    );
+
+    // 3. Ingest items (Using handoff)
+    // Note: We reset handlers to prove it doesn't fetch from network
+    server.resetHandlers();
+
+    const ingestResult = await ingestItems(tx, feed.id, {
+      initialData: initialData?.status === "success" ? initialData : undefined,
+    });
+
+    // 4. Verify
+    expect(ingestResult.success).toBe(true);
+    expect(ingestResult.status).toBe("fetched");
+
+    const items = await tx
+      .select()
+      .from(feedItems)
+      .where(eq(feedItems.feedId, feed.id));
+
+    expect(items.length).toBe(5);
+    expect(items[0].title).toBe("Making Complex CSS Shapes Using shape()");
+
+    const [updatedFeed] = await tx
+      .select()
+      .from(feeds)
+      .where(eq(feeds.id, feed.id));
+    expect(updatedFeed.httpEtag).toBe("initial-etag");
   });
 });

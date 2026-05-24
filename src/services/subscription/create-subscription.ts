@@ -3,7 +3,10 @@ import type { DB } from "@/db";
 import { feeds, subscriptions } from "@/db/schema";
 import { FeedUnavailableError } from "@/lib/errors";
 import { parseFeedXml } from "@/lib/feed/parser";
-import { fetchFeedXml } from "@/services/ingestion/fetch-feed-xml";
+import {
+  type FetchFeedResult,
+  fetchFeedXml,
+} from "@/services/ingestion/fetch-feed-xml";
 
 /**
  * Create a feed subscription for a user.
@@ -25,10 +28,7 @@ export async function createSubscription(
 
   // 2. If it doesn't exist, fetch and parse
   let metadata = null;
-  let headers: { etag: string | null; lastModified: string | null } = {
-    etag: null,
-    lastModified: null,
-  };
+  let initialData: FetchFeedResult | undefined;
 
   if (!feed) {
     const fetchResult = await fetchFeedXml(url);
@@ -39,15 +39,13 @@ export async function createSubscription(
       throw new FeedUnavailableError();
     }
 
+    initialData = fetchResult;
+
     const parsed = await parseFeedXml(fetchResult.xml, url);
     metadata = parsed.metadata;
-    headers = {
-      etag: fetchResult.etag,
-      lastModified: fetchResult.lastModified,
-    };
   }
 
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     // 3. Resolve feed inside transaction (handles race conditions)
     if (!feed && metadata) {
       const [newFeed] = await tx
@@ -58,10 +56,7 @@ export async function createSubscription(
           description: metadata.description,
           iconUrl: metadata.iconUrl,
           healthStatus: "healthy",
-          lastFetchedAt: new Date(),
-          lastSuccessAt: new Date(),
-          httpEtag: headers.etag,
-          httpLastModified: headers.lastModified,
+          // We don't set ETags here to ensure ingestItems performs the first full sync
         })
         .onConflictDoNothing()
         .returning();
@@ -108,4 +103,6 @@ export async function createSubscription(
 
     return { subscription, feed };
   });
+
+  return { ...result, initialData };
 }

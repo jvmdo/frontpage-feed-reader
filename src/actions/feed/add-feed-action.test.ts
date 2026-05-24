@@ -10,6 +10,11 @@ import {
 import { getCurrentSession } from "@/lib/session";
 import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { createSubscription } from "@/services/subscription/create-subscription";
+import {
+  createMockFeed,
+  createMockSubscription,
+  createMockUser,
+} from "@/tests/factories";
 import { addFeedAction } from "./add-feed-action";
 
 vi.mock("@/services/subscription/create-subscription");
@@ -44,19 +49,22 @@ describe("addFeedAction", () => {
   });
 
   it("returns success and subscription data when addition is successful", async () => {
-    const mockSession = { user: { id: "user-123" } };
+    const mockUser = createMockUser({ id: "user-123" });
+    const mockFeed = createMockFeed({ id: 123 });
+    const mockSubscription = createMockSubscription({
+      id: 456,
+      userId: mockUser.id,
+      feedId: mockFeed.id,
+    });
     const mockResult = {
-      subscription: {
-        id: "sub-123",
-        userId: "user-123",
-        feedId: "feed-123",
-      },
-      feed: {
-        id: "feed-123",
-      },
+      subscription: mockSubscription,
+      feed: mockFeed,
+      initialData: undefined,
     };
 
-    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getCurrentSession).mockResolvedValueOnce({
+      user: mockUser,
+    } as any);
     vi.mocked(createSubscription).mockResolvedValueOnce(mockResult as any);
     vi.mocked(ingestItems).mockResolvedValueOnce({ success: true } as any);
 
@@ -64,32 +72,39 @@ describe("addFeedAction", () => {
 
     expect(result).toEqual({
       success: true,
-      data: mockResult,
+      data: { subscription: mockSubscription, feed: mockFeed },
     });
     expect(createSubscription).toHaveBeenCalledWith(
       expect.anything(),
-      "user-123",
+      mockUser.id,
       "https://example.com/feed.xml",
       undefined,
     );
-    expect(ingestItems).toHaveBeenCalledWith(expect.anything(), "feed-123");
+    expect(ingestItems).toHaveBeenCalledWith(
+      expect.anything(),
+      mockFeed.id,
+      expect.any(Object),
+    );
   });
 
   it("returns success and subscription data when addition with category is successful", async () => {
-    const mockSession = { user: { id: "user-123" } };
+    const mockUser = createMockUser({ id: "user-123" });
+    const mockFeed = createMockFeed({ id: 123 });
+    const mockSubscription = createMockSubscription({
+      id: 456,
+      userId: mockUser.id,
+      feedId: mockFeed.id,
+      categoryId: 10,
+    });
     const mockResult = {
-      subscription: {
-        id: "sub-123",
-        userId: "user-123",
-        feedId: "feed-123",
-        categoryId: 10,
-      },
-      feed: {
-        id: "feed-123",
-      },
+      subscription: mockSubscription,
+      feed: mockFeed,
+      initialData: { status: "success", xml: "<xml />" },
     };
 
-    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(getCurrentSession).mockResolvedValueOnce({
+      user: mockUser,
+    } as any);
     vi.mocked(createSubscription).mockResolvedValueOnce(mockResult as any);
     vi.mocked(ingestItems).mockResolvedValueOnce({ success: true } as any);
 
@@ -100,19 +115,24 @@ describe("addFeedAction", () => {
 
     expect(result).toEqual({
       success: true,
-      data: mockResult,
+      data: { subscription: mockSubscription, feed: mockFeed },
     });
     expect(createSubscription).toHaveBeenCalledWith(
       expect.anything(),
-      "user-123",
+      mockUser.id,
       "https://example.com/feed.xml",
       10,
     );
+    expect(ingestItems).toHaveBeenCalledWith(expect.anything(), mockFeed.id, {
+      initialData: mockResult.initialData,
+    });
   });
 
   it("returns friendly error when FeedNotFoundError is thrown", async () => {
-    const mockSession = { user: { id: "user-123" } };
-    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    const mockUser = createMockUser({ id: "user-123" });
+    vi.mocked(getCurrentSession).mockResolvedValueOnce({
+      user: mockUser,
+    } as any);
     vi.mocked(createSubscription).mockRejectedValueOnce(
       new FeedNotFoundError(),
     );
@@ -127,8 +147,10 @@ describe("addFeedAction", () => {
   });
 
   it("returns friendly error when FeedUnavailableError is thrown", async () => {
-    const mockSession = { user: { id: "user-123" } };
-    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    const mockUser = createMockUser({ id: "user-123" });
+    vi.mocked(getCurrentSession).mockResolvedValueOnce({
+      user: mockUser,
+    } as any);
     vi.mocked(createSubscription).mockRejectedValueOnce(
       new FeedUnavailableError(),
     );
@@ -144,8 +166,10 @@ describe("addFeedAction", () => {
   });
 
   it("returns friendly error when FeedInvalidFormatError is thrown", async () => {
-    const mockSession = { user: { id: "user-123" } };
-    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    const mockUser = createMockUser({ id: "user-123" });
+    vi.mocked(getCurrentSession).mockResolvedValueOnce({
+      user: mockUser,
+    } as any);
     vi.mocked(createSubscription).mockRejectedValueOnce(
       new FeedInvalidFormatError(),
     );
@@ -163,8 +187,10 @@ describe("addFeedAction", () => {
   });
 
   it("returns friendly error when FeedNetworkError is thrown", async () => {
-    const mockSession = { user: { id: "user-123" } };
-    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    const mockUser = createMockUser({ id: "user-123" });
+    vi.mocked(getCurrentSession).mockResolvedValueOnce({
+      user: mockUser,
+    } as any);
     vi.mocked(createSubscription).mockRejectedValueOnce(new FeedNetworkError());
 
     const result = await addFeedAction({
@@ -180,8 +206,10 @@ describe("addFeedAction", () => {
   });
 
   it("returns internal error on unexpected errors", async () => {
-    const mockSession = { user: { id: "user-123" } };
-    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    const mockUser = createMockUser({ id: "user-123" });
+    vi.mocked(getCurrentSession).mockResolvedValueOnce({
+      user: mockUser,
+    } as any);
     vi.mocked(createSubscription).mockRejectedValueOnce(
       new Error("Unexpected"),
     );

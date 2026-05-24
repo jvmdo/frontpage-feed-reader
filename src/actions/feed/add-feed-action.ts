@@ -40,19 +40,22 @@ export async function addFeedAction(input: AddFeedInput) {
 
     const { url, categoryId } = result.data;
 
-    const subscription = await createSubscription(
+    const { subscription, feed, initialData } = await createSubscription(
       db,
       session.user.id,
       url,
       categoryId,
     );
 
-    // Trigger initial ingestion to populate the feed immediately
-    await ingestItems(db, subscription.feed.id);
+    // Trigger initial ingestion to populate the feed immediately.
+    // If this is a brand new feed, `createSubscription` provides the initialData
+    await ingestItems(db, feed.id, {
+      initialData: initialData?.status === "success" ? initialData : undefined,
+    });
 
     return {
       success: true,
-      data: subscription,
+      data: { subscription, feed },
     };
   } catch (error) {
     console.error("[addFeedAction]", error);

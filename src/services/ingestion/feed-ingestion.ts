@@ -3,12 +3,23 @@ import type { DB } from "@/db";
 import { feedItems, feeds } from "@/db/schema";
 import { FeedRecordNotFoundError } from "@/lib/errors";
 import { parseFeedXml } from "@/lib/feed/parser";
-import { fetchFeedXml } from "@/services/ingestion/fetch-feed-xml";
+import {
+  type FetchFeedResult,
+  fetchFeedXml,
+} from "@/services/ingestion/fetch-feed-xml";
+
+export interface IngestItemsOptions {
+  initialData?: Extract<FetchFeedResult, { status: "success" }>;
+}
 
 /**
  * Orchestrates fetching, parsing, and storing items for a single feed.
  */
-export async function ingestItems(db: DB, feedId: number) {
+export async function ingestItems(
+  db: DB,
+  feedId: number,
+  options: IngestItemsOptions = {},
+) {
   const [feed] = await db.select().from(feeds).where(eq(feeds.id, feedId));
 
   if (!feed) {
@@ -16,10 +27,18 @@ export async function ingestItems(db: DB, feedId: number) {
   }
 
   try {
-    const fetchResult = await fetchFeedXml(feed.url, {
-      etag: feed.httpEtag,
-      lastModified: feed.httpLastModified,
-    });
+    let fetchResult: FetchFeedResult;
+
+    if (options.initialData) {
+      // Use the provided initial data (handoff from createSubscription)
+      fetchResult = options.initialData;
+    } else {
+      // Standard fetch from the internet
+      fetchResult = await fetchFeedXml(feed.url, {
+        etag: feed.httpEtag,
+        lastModified: feed.httpLastModified,
+      });
+    }
 
     if (fetchResult.status === "not_modified") {
       await db

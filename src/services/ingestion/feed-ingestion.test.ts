@@ -165,6 +165,44 @@ describe("ingestItems integration", () => {
     expect(updatedItem.title).toBe("Making Complex CSS Shapes Using shape()");
   });
 
+  test("successfully processes feed items using initialData (handoff)", async ({
+    tx,
+  }) => {
+    const insertedFeed = await seedFeed(tx, {
+      url: FEED_URL,
+    });
+
+    // We do NOT set up a mock server handler here.
+    // If ingestItems tries to fetch, it will fail because there is no handler for FEED_URL.
+
+    const result = await ingestItems(tx, insertedFeed.id, {
+      initialData: {
+        status: "success",
+        xml: RSS_CONTENT,
+        etag: "new-etag",
+        lastModified: "new-modified",
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.status).toBe("fetched");
+
+    const items = await tx
+      .select()
+      .from(feedItems)
+      .where(eq(feedItems.feedId, insertedFeed.id));
+
+    expect(items.length).toBe(5);
+
+    const [updatedFeed] = await tx
+      .select()
+      .from(feeds)
+      .where(eq(feeds.id, insertedFeed.id));
+
+    expect(updatedFeed.httpEtag).toBe("new-etag");
+    expect(updatedFeed.httpLastModified).toBe("new-modified");
+  });
+
   test("updates health_status to error on failure", async ({ tx }) => {
     const insertedFeed = await seedFeed(tx, {
       url: FEED_URL,
