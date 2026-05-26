@@ -1,4 +1,4 @@
-import { JSDOM } from "jsdom";
+import { NodeFilter, parseHTML } from "linkedom";
 
 /**
  * Regular expression to match YouTube URLs.
@@ -36,13 +36,11 @@ export function transformEmbeds(html: string): string {
     return html;
   }
 
-  const dom = new JSDOM(`<body>${html}</body>`);
-  const document = dom.window.document;
-
-  const walker = document.createTreeWalker(
-    document.body,
-    dom.window.NodeFilter.SHOW_TEXT,
+  const { document } = parseHTML(
+    `<!DOCTYPE html><html><body>${html}</body></html>`,
   );
+
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
 
   const nodesToReplace: { node: Node; text: string }[] = [];
   let node: Node | null = walker.nextNode();
@@ -50,7 +48,6 @@ export function transformEmbeds(html: string): string {
   while (node) {
     const parent = node.parentElement;
     if (parent) {
-      const _tagName = parent.tagName.toUpperCase();
       const forbiddenTags = [
         "A",
         "CODE",

@@ -1,4 +1,4 @@
-import { JSDOM } from "jsdom";
+import { parseHTML } from "linkedom";
 import hljs from "highlight.js";
 import { decodeEntities } from "./normalizer";
 
@@ -11,8 +11,7 @@ export function highlightCodeBlocks(html: string): string {
     return html;
   }
 
-  const dom = new JSDOM(`<body>${html}</body>`);
-  const document = dom.window.document;
+  const { document } = parseHTML(`<!DOCTYPE html><html><body>${html}</body></html>`);
 
   const codeBlocks = document.querySelectorAll("pre code");
 
