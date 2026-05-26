@@ -28,17 +28,20 @@ export function ReaderView({ data, className }: ReaderViewProps) {
         </h1>
 
         <div className="flex flex-wrap gap-2 items-center justify-between relative -top-3">
-          <div className="flex gap-2 items-center">
-            <RelativeDate
-              date={item.publishedAt || item.createdAt}
-              className="text-text-tertiary "
-            />
-            <Separator orientation="vertical" className="ml-2" />
+          <div className="flex flex-wrap gap-2 items-center">
+            {item.author && (
+              <>
+                <span>{item.author}</span>
+                <Separator orientation="vertical" />
+              </>
+            )}
+            <RelativeDate date={item.publishedAt || item.createdAt} />
+            <Separator orientation="vertical" />
             <Button
               variant="ghost"
               size="xs"
               onClick={() => toggleBookmark({ itemId: item.id })}
-              className="group text-sm"
+              className="group text-sm px-0"
             >
               <BookmarkIcon
                 className={cn(
@@ -48,7 +51,9 @@ export function ReaderView({ data, className }: ReaderViewProps) {
               />
               {isBookmarked ? "Remove from saved" : "Save for later"}
             </Button>
-            <Separator orientation="vertical" className="mr-2" />
+            {!isExcerpt && (
+              <Separator orientation="vertical" className="mr-2" />
+            )}
           </div>
 
           {!isExcerpt && item.url && (

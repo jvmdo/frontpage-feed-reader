@@ -95,9 +95,7 @@ describe("parseFeedXml", () => {
 
     expect(result.metadata.title).toBe("Test & Feed");
     expect(result.items[0].title).toBe("Title 'with' entities & stuff");
-    expect(result.items[0].description).toContain(
-      '<p tabindex="-1">Description <b tabindex="-1">with</b> tags and &amp; entities</p>',
-    );
+    expect(result.items[0].description).toBe("Description with tags and & entities");
   });
 
   it("normalizes relative URLs", async () => {
@@ -193,11 +191,11 @@ describe("parseFeedXml", () => {
     const result = await parseFeedXml(xml);
     const item = result.items[0];
 
-    expect(item.description).toBe('<p tabindex="-1">Safe  text</p>\n');
+    expect(item.description).toBe("Safe text");
     expect(item.content).toBe("<div>Safe</div>");
   });
 
-  it("uses content as fallback for description and neutralizes it", async () => {
+  it("uses content as fallback for description and cleans it", async () => {
     const xml = `
       <rss version="2.0">
         <channel>
@@ -212,7 +210,7 @@ describe("parseFeedXml", () => {
     const result = await parseFeedXml(xml);
     const item = result.items[0];
 
-    expect(item.description).toBe('<p tabindex="-1">This is the content.</p>');
+    expect(item.description).toBe("This is the content.");
     expect(item.content).toBe("<p>This is the content.</p>");
   });
 

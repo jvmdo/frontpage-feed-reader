@@ -84,9 +84,8 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
       }}
       style={{ "--max-width": readerWidth } as React.CSSProperties}
       className={cn(
-        "inset-0 translate-x-0 translate-y-0 max-w-none mx-auto p-0 bg-transparent",
+        "inset-0 translate-x-0 translate-y-0 max-w-none mx-auto p-0 bg-transparent @container",
         "sm:max-w-(--max-width) sm:h-[96vh] sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
-        data?.isExcerpt && "top-auto h-min!",
       )}
     >
       <DialogHeader className="sr-only">

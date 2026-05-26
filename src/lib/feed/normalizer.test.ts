@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cleanText,
   decodeEntities,
+  normalizeAuthor,
   normalizeDate,
   normalizeUrl,
 } from "./normalizer";
@@ -129,5 +130,41 @@ describe("normalizeUrl", () => {
     expect(normalizeUrl(undefined)).toBeUndefined();
     expect(normalizeUrl(null)).toBeUndefined();
     expect(normalizeUrl("  ")).toBeUndefined();
+  });
+});
+
+describe("normalizeAuthor", () => {
+  it("should handle basic names", () => {
+    expect(normalizeAuthor("Jane Doe")).toBe("Jane Doe");
+  });
+
+  it("should remove 'by' prefix", () => {
+    expect(normalizeAuthor("by John Smith")).toBe("John Smith");
+    expect(normalizeAuthor("by, John Smith")).toBe("John Smith");
+    expect(normalizeAuthor("BY John Smith")).toBe("John Smith");
+  });
+
+  it("should return undefined if only 'by' is provided", () => {
+    expect(normalizeAuthor("by")).toBeUndefined();
+    expect(normalizeAuthor("by,")).toBeUndefined();
+    expect(normalizeAuthor("\n\t  by \t")).toBeUndefined();
+  });
+
+  it("should extract name from parentheses (Smashing style)", () => {
+    expect(
+      normalizeAuthor("hello@smashingmagazine.com (Vitaly Friedman)"),
+    ).toBe("Vitaly Friedman");
+    expect(normalizeAuthor("(Cosima Mielke)")).toBe("Cosima Mielke");
+  });
+
+  it("should convert kebab-case slugs to Title Case (MDN style)", () => {
+    expect(normalizeAuthor("yash-raj-bharti")).toBe("Yash Raj Bharti");
+    expect(normalizeAuthor("leo-mcardle")).toBe("Leo Mcardle");
+  });
+
+  it("should handle empty or null input", () => {
+    expect(normalizeAuthor(undefined)).toBeUndefined();
+    expect(normalizeAuthor(null)).toBeUndefined();
+    expect(normalizeAuthor("  ")).toBeUndefined();
   });
 });

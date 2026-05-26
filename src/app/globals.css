@@ -256,7 +256,7 @@
     }
 
     blockquote {
-      @apply pl-6 border-l-4 border-border-subtle italic text-text-tertiary mb-6 py-1;
+      @apply pl-4 border-l-4 border-border-subtle italic mb-6;
     }
 
     ul,
@@ -292,25 +292,61 @@
       @apply p-0 bg-transparent border-0 text-inherit;
     }
 
-    img,
+    img {
+      @apply block mx-auto max-w-full h-auto rounded-lg;
+    }
+
+    /* Only apply border and margin to standalone images or figures */
+    :where(img, figure):not(table *) {
+      @apply my-8;
+    }
+
     figure {
-      @apply my-8 rounded-lg border border-border-subtle mx-auto max-w-full h-auto;
+      @apply border border-border-subtle rounded-lg overflow-hidden;
+      img {
+        @apply rounded-none border-0 my-0;
+      }
+    }
+
+    img:not(figure img, table img) {
+      @apply border border-border-subtle;
     }
 
     figcaption {
-      @apply text-center text-xs text-text-tertiary mt-2 font-sans;
+      @apply text-center text-xs text-text-tertiary py-3 bg-bg-secondary border-t border-border-subtle font-sans;
     }
 
     hr {
-      @apply my-10 border-border-subtle;
+      @apply my-8 border-border-subtle;
+    }
+
+    /* Collapse redundant vertical spacing */
+    hr + br,
+    h1 + br,
+    h2 + br,
+    h3 + br,
+    h4 + br,
+    p + br,
+    br + br {
+      display: none;
     }
 
     iframe {
-      @apply w-full aspect-video rounded-lg border border-border-subtle my-8;
+      @apply block mx-auto max-w-full rounded-lg border border-border-subtle @xl:my-8;
     }
 
     table {
       @apply w-full border-collapse mb-6 overflow-x-auto block md:table;
+
+      img,
+      figure {
+        @apply my-0 border-0 rounded-none inline-block;
+      }
+
+      /* Clear margin on last child to prevent 'extra row' appearance */
+      &:last-child {
+        @apply mb-0;
+      }
     }
 
     th,
@@ -320,6 +356,38 @@
 
     th {
       @apply bg-bg-secondary font-semibold text-left;
+    }
+
+    /* Generic Layout Helpers for Article Blocks */
+    .author-row {
+      @apply flex items-center gap-3 my-4 not-italic;
+
+      img {
+        @apply m-0 rounded-full border-0 size-10;
+      }
+
+      .author-name {
+        @apply font-sans font-medium text-sm no-underline text-text-primary;
+      }
+    }
+
+    .in-article-card {
+      @apply bg-bg-secondary p-5 rounded-xl border border-border-subtle my-6;
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        @apply mt-1 mb-2;
+      }
+
+      .tags {
+        @apply text-xs font-sans uppercase tracking-wider text-text-tertiary flex flex-wrap gap-x-2 gap-y-1 mb-1;
+
+        a {
+          @apply no-underline text-inherit hover:text-primary;
+        }
+      }
     }
   }
 }

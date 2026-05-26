@@ -58,4 +58,19 @@ describe("extractText", () => {
     const input = "Just plain text without tags.";
     expect(extractText(input)).toBe("Just plain text without tags.");
   });
+
+  it("prevents stuck words by adding spaces between tags", () => {
+    const html = "Test<code>code</code>and<a href=\"#\">link</a>";
+    expect(extractText(html)).toBe("Test code and link");
+  });
+
+  it("collapses multiple commas from failed templates", () => {
+    const html = "manage , , , , and from terminal";
+    expect(extractText(html)).toBe("manage, and from terminal");
+  });
+
+  it("skips hr tags to prevent sequences of dashes", () => {
+    const html = "<p>Part 1</p><hr /><p>Part 2</p>";
+    expect(extractText(html)).toBe("Part 1 Part 2");
+  });
 });

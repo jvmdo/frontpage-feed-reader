@@ -15,12 +15,17 @@ export function extractText(html: string | undefined | null): string {
     const decodedOnce = decodeHTML(html);
     const decodedTwice = decodeHTML(decodedOnce);
 
-    // 2. Use html-to-text with search-optimized settings
-    const text = convert(decodedTwice, {
+    // 2. Pre-process HTML: wrap tags in spaces to ensure inline elements
+    // don't result in stuck words (e.g. <b>a</b><i>b</i> -> "a b" instead of "ab")
+    const spacedHtml = decodedTwice.replace(/<\/?[a-z0-9-]+[^>]*>/gi, " $& ");
+
+    // 3. Use html-to-text with search-optimized settings
+    const text = convert(spacedHtml, {
       wordwrap: false, // Don't add arbitrary line breaks
       selectors: [
         { selector: "a", options: { ignoreHref: true } }, // Don't print URLs
         { selector: "img", format: "skip" }, // Don't print alt text for indexing
+        { selector: "hr", format: "skip" },
         { selector: "iframe", format: "skip" },
         { selector: "video", format: "skip" },
         { selector: "h1", options: { uppercase: false } },
@@ -32,9 +37,10 @@ export function extractText(html: string | undefined | null): string {
       ],
     });
 
-    // 3. Final cleanup of whitespace and normalization
+    // 4. Final cleanup of whitespace and normalization
     return text
       .replace(/\s+/g, " ") // Collapse multiple spaces/newlines into one space
+      .replace(/(?:\s*,\s*){2,}/g, ", ") // Collapse multiple commas (failed templates)
       .trim();
   } catch (error) {
     console.error("Failed to extract text from HTML:", error);

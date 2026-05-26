@@ -68,3 +68,43 @@ export function normalizeUrl(
     return trimmedUrl;
   }
 }
+
+/**
+ * Normalizes author names by removing prefixes, extracting from parentheses,
+ * and converting slugs to title case.
+ */
+export function normalizeAuthor(
+  author: string | undefined | null,
+): string | undefined {
+  if (!author) return undefined;
+
+  let name = cleanText(decodeEntities(author));
+
+  // 1. Remove "by" or "by," prefix (case insensitive)
+  // handles: "by Author", "by, Author", "by \t Author"
+  name = name.replace(/^by\s*,?\s*/i, "").trim();
+
+  // 2. If it was just "by", it's empty
+  if (!name || name.toLowerCase() === "by") return undefined;
+
+  // 3. Extract from parentheses (Smashing Magazine style: email@domain.com (Author Name))
+  const parenMatch = name.match(/\(([^)]+)\)/);
+  if (parenMatch) {
+    name = parenMatch[1].trim();
+  }
+
+  // 4. Convert kebab-case slugs to Title Case (MDN style: yash-raj-bharti)
+  // Heuristic: No spaces, has dashes, and is all lowercase
+  if (
+    !name.includes(" ") &&
+    name.includes("-") &&
+    name === name.toLowerCase()
+  ) {
+    name = name
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
+  return name || undefined;
+}

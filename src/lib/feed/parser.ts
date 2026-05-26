@@ -1,14 +1,11 @@
-import { createHash } from "node:crypto";
 import Parser from "rss-parser";
 import { FeedInvalidFormatError } from "@/lib/errors";
-import { extractText } from "./extractor";
 import {
   cleanText,
   decodeEntities,
-  normalizeDate,
   normalizeUrl,
 } from "./normalizer";
-import { sanitizeHtml } from "./sanitizer";
+import { processItem, type ProcessedItem } from "./processor";
 
 /**
  * Custom fields extracted from the XML that aren't in the default RSS/Atom spec
@@ -42,22 +39,9 @@ export interface FeedMetadata {
   iconUrl?: string;
 }
 
-export interface Item {
-  guid: string;
-  url?: string;
-  title: string;
-  description: string;
-  content?: string;
-  textContent?: string;
-  author?: string;
-  publishedAt?: Date;
-  updatedAt?: Date;
-  rawPayload: any;
-}
-
 export interface FullFeed {
   metadata: FeedMetadata;
-  items: Item[];
+  items: ProcessedItem[];
 }
 
 /**
@@ -69,7 +53,6 @@ export async function parseFeedXml(
 ): Promise<FullFeed> {
   try {
     const feed = await parser.parseString(xml);
-
     const feedLink = normalizeUrl(feed.link, sourceUrl);
 
     // Extract icon from the feed or fallback to Google's favicon service
@@ -83,36 +66,9 @@ export async function parseFeedXml(
       }
     }
 
-    const items: Item[] = feed.items.map((item) => {
-      const rawTitle = decodeEntities(item.title) || "Untitled Item";
-      const title = cleanText(rawTitle);
-      const rawDescription = decodeEntities(
-        item.descriptionRaw || item.summary || item.contentSnippet,
-      );
-      const rawContent = item.contentEncoded || item.content;
-
-      const textContent = rawContent ? extractText(rawContent) : undefined;
-      const description = neutralizeHtml(
-        sanitizeHtml(cleanText(rawDescription || rawContent)),
-      );
-      const content = sanitizeHtml(rawContent);
-      const url = normalizeUrl(item.link, feedLink || sourceUrl);
-      const guid =
-        item.guid || item.id || generateDeterministicGuid(url || "", title);
-
-      return {
-        guid,
-        url,
-        title,
-        description,
-        content,
-        textContent,
-        author: cleanText(decodeEntities(item.creator || item.author)),
-        publishedAt: normalizeDate(item.pubDate || item.isoDate),
-        updatedAt: normalizeDate(item.isoDate),
-        rawPayload: item,
-      };
-    });
+    const items = feed.items.map((item) => 
+      processItem(item, sourceUrl, feedLink)
+    );
 
     return {
       metadata: {
@@ -128,23 +84,4 @@ export async function parseFeedXml(
       error instanceof Error && error.message ? error.message : undefined;
     throw new FeedInvalidFormatError(message);
   }
-}
-
-/**
- * Neutralizes all focusable elements in HTML by adding tabindex="-1" to all tags.
- * This is used for descriptions (excerpts) used in the feed list to prevent
- * accidental focus during tabbing while keeping content accessible to AT.
- */
-function neutralizeHtml(html: string): string {
-  if (!html) return "";
-  return html.replace(/<([a-z0-9-]+)(?=[ >/])/gi, '<$1 tabindex="-1"');
-}
-
-/**
- * Generates a deterministic GUID based on URL and Title.
- */
-function generateDeterministicGuid(url: string, title: string): string {
-  const hash = createHash("sha256");
-  hash.update(url + title);
-  return hash.digest("hex");
 }

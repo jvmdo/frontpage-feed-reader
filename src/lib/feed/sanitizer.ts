@@ -1,15 +1,18 @@
 import DOMPurify from "isomorphic-dompurify";
-import { marked } from "marked";
 
 let isHookRegistered = false;
+let currentBaseUrl: string | undefined = undefined;
 
 function ensureHooks() {
   if (isHookRegistered) return;
 
-  // Add a hook to only allow video embeds from trusted domains in iframes
+  // Add a hook for element-level transformations
   DOMPurify.addHook("uponSanitizeElement", (node, data) => {
-    if (data.tagName === "iframe") {
-      const el = node as HTMLElement;
+    const el = node as HTMLElement;
+    const tagName = data.tagName?.toUpperCase();
+
+    // 1. Only allow video embeds from trusted domains in iframes
+    if (tagName === "IFRAME") {
       const src = el.getAttribute("src") || "";
       const isTrustedVideo =
         src.startsWith("https://www.youtube.com/embed/") ||
@@ -19,6 +22,80 @@ function ensureHooks() {
         el.remove();
       }
     }
+
+    // 2. Remove visually empty tags (containing only whitespace or &nbsp;)
+    // We exclude tags that are meant to be empty like img, iframe, hr, br.
+    const emptyTrappableTags = [
+      "P",
+      "DIV",
+      "H1",
+      "H2",
+      "H3",
+      "H4",
+      "H5",
+      "H6",
+      "SECTION",
+      "ARTICLE",
+      "BLOCKQUOTE",
+      "UL",
+      "OL",
+      "LI",
+    ];
+
+    if (tagName && emptyTrappableTags.includes(tagName)) {
+      const content = el.textContent?.replace(/\u00a0/g, " ").trim();
+      if (!content && (!el.children || el.children.length === 0)) {
+        el.remove();
+      }
+    }
+  });
+
+  // Add a hook to ensure all links open in a new tab and resolve relative URLs
+  DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+    const el = node as HTMLElement;
+
+    // 1. Security best practices for links
+    if (el.tagName === "A") {
+      el.setAttribute("target", "_blank");
+      el.setAttribute("rel", "noopener noreferrer");
+    }
+
+    // 2. Resolve relative URLs if a base URL is provided
+    if (currentBaseUrl) {
+      if (el.tagName === "A" && el.hasAttribute("href")) {
+        const href = el.getAttribute("href");
+        if (
+          href &&
+          !href.startsWith("http") &&
+          !href.startsWith("//") &&
+          !href.startsWith("mailto:") &&
+          !href.startsWith("tel:") &&
+          !href.startsWith("#")
+        ) {
+          try {
+            el.setAttribute("href", new URL(href, currentBaseUrl).toString());
+          } catch {
+            // Ignore invalid URLs
+          }
+        }
+      }
+
+      if (el.tagName === "IMG" && el.hasAttribute("src")) {
+        const src = el.getAttribute("src");
+        if (
+          src &&
+          !src.startsWith("http") &&
+          !src.startsWith("//") &&
+          !src.startsWith("data:")
+        ) {
+          try {
+            el.setAttribute("src", new URL(src, currentBaseUrl).toString());
+          } catch {
+            // Ignore invalid URLs
+          }
+        }
+      }
+    }
   });
 
   isHookRegistered = true;
@@ -26,19 +103,19 @@ function ensureHooks() {
 
 /**
  * Sanitizes an HTML string to prevent XSS and other malicious content.
- * Also handles Markdown-style formatting common in some feeds.
  */
-export function sanitizeHtml(text: string | undefined | null): string {
+export function sanitizeHtml(
+  text: string | undefined | null,
+  baseUrl?: string,
+): string {
   if (!text) return "";
 
+  currentBaseUrl = baseUrl;
   ensureHooks();
 
-  // 1. Convert Markdown/Plain-text to HTML using marked.
-  const html = marked.parse(text, { gfm: true, breaks: true }) as string;
-
-  // 2. Clean the resulting HTML with DOMPurify
-  return DOMPurify.sanitize(html, {
-    // Default allowed tags plus figure/figcaption which are common in tech blogs
+  // Clean the HTML with DOMPurify
+  const sanitized = DOMPurify.sanitize(text, {
+    // Default allowed tags plus layout and semantic tags common in tech blogs
     ALLOWED_TAGS: [
       "a",
       "b",
@@ -65,6 +142,15 @@ export function sanitizeHtml(text: string | undefined | null): string {
       "img",
       "figure",
       "figcaption",
+      "table",
+      "thead",
+      "tbody",
+      "tfoot",
+      "tr",
+      "th",
+      "td",
+      "div",
+      "cite",
       "hr",
       "small",
       "span",
@@ -81,6 +167,7 @@ export function sanitizeHtml(text: string | undefined | null): string {
       "title",
       "target",
       "rel",
+      "class",
       "allow",
       "allowfullscreen",
       "frameborder",
@@ -89,5 +176,8 @@ export function sanitizeHtml(text: string | undefined | null): string {
     ],
     // Automatically adds 'rel="noopener noreferrer"' to target="_blank"
     ADD_ATTR: ["target"],
-  });
+  }) as string;
+
+  currentBaseUrl = undefined;
+  return sanitized;
 }

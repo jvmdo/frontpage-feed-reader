@@ -191,14 +191,14 @@ ItemCard.Excerpt = function CardExcerpt({
 
   return (
     <div
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted content from parser
-      dangerouslySetInnerHTML={{ __html: item.description }}
       className={cn(
         "text-sm text-muted-foreground leading-relaxed overflow-hidden pointer-events-none",
         clampLines === 2 ? "line-clamp-2" : "line-clamp-4",
         className,
       )}
-    />
+    >
+      {item.description}
+    </div>
   );
 };
 
