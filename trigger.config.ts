@@ -20,7 +20,4 @@ export default defineConfig({
   },
   dirs: ["./src/trigger"],
   ignorePatterns: ["./src/trigger/*.test.ts"],
-  build: {
-    external: ["isomorphic-dompurify"],
-  },
 });

@@ -13,7 +13,7 @@ describe("sanitizeHtml", () => {
     const malicious =
       '<img src="x" onerror="alert(1)"> <a href="javascript:alert(1)">Link</a>';
     const sanitized = sanitizeHtml(malicious);
-    expect(sanitized.trim()).toBe('<img src="x"> <a target="_blank" rel="noopener noreferrer">Link</a>');
+    expect(sanitized.trim()).toBe('<img src="x" /> <a target="_blank" rel="noopener noreferrer">Link</a>');
   });
 
   it("should strip visually empty tags", () => {
@@ -21,7 +21,7 @@ describe("sanitizeHtml", () => {
     const sanitized = sanitizeHtml(html);
     // p with content and p with br should stay, others should go
     expect(sanitized).toContain('<p>Content</p>');
-    expect(sanitized).toContain('<p><br></p>');
+    expect(sanitized).toContain('<p><br /></p>');
     expect(sanitized).not.toContain('<p> </p>');
     expect(sanitized).not.toContain('<h3>');
   });

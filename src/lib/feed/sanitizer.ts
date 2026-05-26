@@ -1,108 +1,8 @@
-import DOMPurify from "isomorphic-dompurify";
-
-let isHookRegistered = false;
-let currentBaseUrl: string | undefined = undefined;
-
-function ensureHooks() {
-  if (isHookRegistered) return;
-
-  // Add a hook for element-level transformations
-  DOMPurify.addHook("uponSanitizeElement", (node, data) => {
-    const el = node as HTMLElement;
-    const tagName = data.tagName?.toUpperCase();
-
-    // 1. Only allow video embeds from trusted domains in iframes
-    if (tagName === "IFRAME") {
-      const src = el.getAttribute("src") || "";
-      const isTrustedVideo =
-        src.startsWith("https://www.youtube.com/embed/") ||
-        src.startsWith("https://player.vimeo.com/video/");
-
-      if (!isTrustedVideo) {
-        el.remove();
-      }
-    }
-
-    // 2. Remove visually empty tags (containing only whitespace or &nbsp;)
-    // We exclude tags that are meant to be empty like img, iframe, hr, br.
-    const emptyTrappableTags = [
-      "P",
-      "DIV",
-      "H1",
-      "H2",
-      "H3",
-      "H4",
-      "H5",
-      "H6",
-      "SECTION",
-      "ARTICLE",
-      "BLOCKQUOTE",
-      "UL",
-      "OL",
-      "LI",
-    ];
-
-    if (tagName && emptyTrappableTags.includes(tagName)) {
-      const content = el.textContent?.replace(/\u00a0/g, " ").trim();
-      if (!content && (!el.children || el.children.length === 0)) {
-        el.remove();
-      }
-    }
-  });
-
-  // Add a hook to ensure all links open in a new tab and resolve relative URLs
-  DOMPurify.addHook("afterSanitizeAttributes", (node) => {
-    const el = node as HTMLElement;
-
-    // 1. Security best practices for links
-    if (el.tagName === "A") {
-      el.setAttribute("target", "_blank");
-      el.setAttribute("rel", "noopener noreferrer");
-    }
-
-    // 2. Resolve relative URLs if a base URL is provided
-    if (currentBaseUrl) {
-      if (el.tagName === "A" && el.hasAttribute("href")) {
-        const href = el.getAttribute("href");
-        if (
-          href &&
-          !href.startsWith("http") &&
-          !href.startsWith("//") &&
-          !href.startsWith("mailto:") &&
-          !href.startsWith("tel:") &&
-          !href.startsWith("#")
-        ) {
-          try {
-            el.setAttribute("href", new URL(href, currentBaseUrl).toString());
-          } catch {
-            // Ignore invalid URLs
-          }
-        }
-      }
-
-      if (el.tagName === "IMG" && el.hasAttribute("src")) {
-        const src = el.getAttribute("src");
-        if (
-          src &&
-          !src.startsWith("http") &&
-          !src.startsWith("//") &&
-          !src.startsWith("data:")
-        ) {
-          try {
-            el.setAttribute("src", new URL(src, currentBaseUrl).toString());
-          } catch {
-            // Ignore invalid URLs
-          }
-        }
-      }
-    }
-  });
-
-  isHookRegistered = true;
-}
+import sanitize from "sanitize-html";
 
 /**
  * Sanitizes an HTML string to prevent XSS and other malicious content.
+ * Uses sanitize-html for a lightweight, JSDOM-free implementation suitable for background tasks.
  */
 export function sanitizeHtml(
   text: string | undefined | null,
@@ -110,13 +10,9 @@ export function sanitizeHtml(
 ): string {
   if (!text) return "";
 
-  currentBaseUrl = baseUrl;
-  ensureHooks();
-
-  // Clean the HTML with DOMPurify
-  const sanitized = DOMPurify.sanitize(text, {
-    // Default allowed tags plus layout and semantic tags common in tech blogs
-    ALLOWED_TAGS: [
+  const sanitized = sanitize(text, {
+    // 1. Tags allowed for tech blogs and layouts
+    allowedTags: [
       "a",
       "b",
       "i",
@@ -149,7 +45,6 @@ export function sanitizeHtml(
       "tr",
       "th",
       "td",
-      "div",
       "cite",
       "hr",
       "small",
@@ -160,24 +55,93 @@ export function sanitizeHtml(
       "sup",
       "iframe",
     ],
-    ALLOWED_ATTR: [
-      "href",
-      "src",
-      "alt",
-      "title",
-      "target",
-      "rel",
-      "class",
-      "allow",
-      "allowfullscreen",
-      "frameborder",
-      "width",
-      "height",
-    ],
-    // Automatically adds 'rel="noopener noreferrer"' to target="_blank"
-    ADD_ATTR: ["target"],
-  }) as string;
 
-  currentBaseUrl = undefined;
-  return sanitized;
+    // 2. Attributes allowed per tag
+    allowedAttributes: {
+      "*": ["class", "title"],
+      a: ["href", "name", "target", "rel"],
+      img: ["src", "alt", "title", "width", "height"],
+      iframe: [
+        "src",
+        "allow",
+        "allowfullscreen",
+        "frameborder",
+        "width",
+        "height",
+      ],
+    },
+
+    // 3. Trusted video domains for iframes
+    allowedIframeHostnames: ["www.youtube.com", "player.vimeo.com"],
+
+    // 4. Transform tags for security and URL resolution
+    transformTags: {
+      a: (tagName, attribs) => {
+        // Security best practices for links
+        attribs.target = "_blank";
+        attribs.rel = "noopener noreferrer";
+
+        // Resolve relative URLs
+        if (baseUrl && attribs.href) {
+          const href = attribs.href;
+          if (
+            !href.startsWith("http") &&
+            !href.startsWith("//") &&
+            !href.startsWith("mailto:") &&
+            !href.startsWith("tel:") &&
+            !href.startsWith("#")
+          ) {
+            try {
+              attribs.href = new URL(href, baseUrl).toString();
+            } catch {
+              // Ignore invalid URLs
+            }
+          }
+        }
+        return { tagName, attribs };
+      },
+      img: (tagName, attribs) => {
+        // Resolve relative URLs for images
+        if (baseUrl && attribs.src) {
+          const src = attribs.src;
+          if (
+            !src.startsWith("http") &&
+            !src.startsWith("//") &&
+            !src.startsWith("data:")
+          ) {
+            try {
+              attribs.src = new URL(src, baseUrl).toString();
+            } catch {
+              // Ignore invalid URLs
+            }
+          }
+        }
+        return { tagName, attribs };
+      },
+    },
+
+    // 5. Custom filters for security edge cases
+    exclusiveFilter: (frame) => {
+      // Precise prefix check for YouTube and Vimeo embeds
+      if (frame.tag === "iframe") {
+        const src = frame.attribs.src || "";
+        const isTrusted =
+          src.startsWith("https://www.youtube.com/embed/") ||
+          src.startsWith("https://player.vimeo.com/video/");
+        return !isTrusted;
+      }
+      return false;
+    },
+  });
+
+  return (
+    sanitized
+      // 1. Remove visually empty tags
+      // This regex identifies tags that contain only whitespace or &nbsp;
+      .replace(
+        /<(p|div|h[1-6]|section|article|blockquote|ul|ol|li)[^>]*>(?:\s|&nbsp;|\u00a0)*<\/\1>/gi,
+        "",
+      )
+      .trim()
+  );
 }
