@@ -7,6 +7,7 @@ import {
   normalizeUrl,
 } from "./normalizer";
 import { sanitizeHtml } from "./sanitizer";
+import { highlightCodeBlocks } from "./syntax";
 
 export interface ProcessedItem {
   guid: string;
@@ -30,11 +31,11 @@ export interface ProcessedItem {
  * - description: Plain text snippet (for List)
  * - textContent: Full plain text (for Search)
  */
-export function processItem(
+export async function processItem(
   item: any,
   sourceUrl?: string,
   feedLink?: string,
-): ProcessedItem {
+): Promise<ProcessedItem> {
   // 1. Title (Clean Plain Text)
   const rawTitle = decodeEntities(item.title) || "Untitled Item";
   const title = extractText(rawTitle);
@@ -47,7 +48,8 @@ export function processItem(
     item.descriptionRaw ||
     "";
   const embeddedContent = transformEmbeds(rawContent);
-  const content = sanitizeHtml(embeddedContent, feedLink || sourceUrl);
+  const highlightedContent = highlightCodeBlocks(embeddedContent);
+  const content = sanitizeHtml(highlightedContent, feedLink || sourceUrl);
 
   // 3. Plain Text Derivatives
   const textContent = extractText(rawContent);
@@ -62,7 +64,7 @@ export function processItem(
 
   // 5. GUID
   const guid =
-    item.guid || item.id || generateDeterministicGuid(url || "", title);
+    item.guid || item.id || (await generateDeterministicGuid(url || "", title));
 
   return {
     guid,
@@ -79,14 +81,14 @@ export function processItem(
 }
 
 /**
- * Generates a deterministic GUID based on URL and Title.
+ * Generates a deterministic GUID based on URL and Title using the Web Crypto API.
  */
-function generateDeterministicGuid(url: string, title: string): string {
-  // We can't use crypto.createHash easily in edge or some environments if we aren't careful,
-  // but since this is currently running in Node/Bun context it's fine.
-  // Re-using the logic from parser.ts
-  const { createHash } = require("node:crypto");
-  const hash = createHash("sha256");
-  hash.update(url + title);
-  return hash.digest("hex");
+async function generateDeterministicGuid(
+  url: string,
+  title: string,
+): Promise<string> {
+  const data = new TextEncoder().encode(url + title);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }

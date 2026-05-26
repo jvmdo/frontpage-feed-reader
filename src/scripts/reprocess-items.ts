@@ -29,7 +29,7 @@ async function reprocess() {
 
     try {
       // 2. Re-run the processor on the raw payload
-      const processed = processItem(item.rawPayload, feedUrl);
+      const processed = await processItem(item.rawPayload, feedUrl);
 
       // 3. Update the record
       await db

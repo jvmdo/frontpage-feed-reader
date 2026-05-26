@@ -94,6 +94,19 @@ describe("processItem", () => {
     );
   });
 
+  it("applies syntax highlighting in the full pipeline", () => {
+    const raw = {
+      title: "Syntax Test",
+      content: '<pre><code>function pipeline() { return "ok"; }</code></pre>',
+    };
+
+    const result = processItem(raw, sourceUrl);
+    expect(result.content).toContain('class="hljs"');
+    expect(result).toMatchObject({
+      title: "Syntax Test",
+    });
+  });
+
   it("caps description at 500 characters", () => {
     const raw = {
       title: "Long Description",

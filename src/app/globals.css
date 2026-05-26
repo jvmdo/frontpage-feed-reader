@@ -284,6 +284,109 @@
       @apply bg-bg-secondary p-4 rounded-lg overflow-x-auto mb-6 border border-border-subtle font-mono text-sm;
     }
 
+    /* highlight.js theme (GitHub-like) */
+    .hljs {
+      @apply text-text-primary;
+
+      .hljs-keyword,
+      .hljs-selector-tag,
+      .hljs-literal,
+      .hljs-section,
+      .hljs-link {
+        color: #0550ae; /* Blue-ish */
+        @apply font-semibold;
+      }
+
+      &:is(.dark *) {
+        .hljs-keyword,
+        .hljs-selector-tag,
+        .hljs-literal,
+        .hljs-section,
+        .hljs-link {
+          color: #79c0ff; /* Light Blue */
+        }
+      }
+
+      .hljs-function .hljs-keyword {
+        @apply font-normal;
+      }
+
+      .hljs-subst {
+        @apply text-text-primary;
+      }
+
+      .hljs-string,
+      .hljs-title,
+      .hljs-name,
+      .hljs-type,
+      .hljs-attribute,
+      .hljs-symbol,
+      .hljs-bullet,
+      .hljs-addition,
+      .hljs-variable,
+      .hljs-template-tag,
+      .hljs-template-variable {
+        color: #116329; /* Green-ish */
+      }
+
+      &:is(.dark *) {
+        .hljs-string,
+        .hljs-title,
+        .hljs-name,
+        .hljs-type,
+        .hljs-attribute,
+        .hljs-symbol,
+        .hljs-bullet,
+        .hljs-addition,
+        .hljs-variable,
+        .hljs-template-tag,
+        .hljs-template-variable {
+          color: #7ee787; /* Light Green */
+        }
+      }
+
+      .hljs-comment,
+      .hljs-quote,
+      .hljs-deletion,
+      .hljs-meta {
+        @apply text-text-tertiary italic;
+      }
+
+      .hljs-number,
+      .hljs-regexp,
+      .hljs-literal,
+      .hljs-type,
+      .hljs-built_in,
+      .hljs-builtin-name {
+        color: #953800; /* Orange-ish */
+      }
+
+      &:is(.dark *) {
+        .hljs-number,
+        .hljs-regexp,
+        .hljs-literal,
+        .hljs-type,
+        .hljs-built_in,
+        .hljs-builtin-name {
+          color: #ffa657; /* Light Orange */
+        }
+      }
+
+      .hljs-params {
+        @apply text-text-secondary;
+      }
+
+      .hljs-attr {
+        color: #8250df; /* Purple-ish */
+      }
+
+      &:is(.dark *) {
+        .hljs-attr {
+          color: #d2a8ff; /* Light Purple */
+        }
+      }
+    }
+
     code {
       @apply font-mono bg-bg-secondary px-1.5 py-0.5 rounded border border-border-subtle text-[0.9em];
     }

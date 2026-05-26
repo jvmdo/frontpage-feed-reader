@@ -66,8 +66,8 @@ export async function parseFeedXml(
       }
     }
 
-    const items = feed.items.map((item) => 
-      processItem(item, sourceUrl, feedLink)
+    const items = await Promise.all(
+      feed.items.map((item) => processItem(item, sourceUrl, feedLink)),
     );
 
     return {
