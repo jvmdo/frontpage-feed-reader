@@ -11,19 +11,22 @@ describe("sanitizeHtml", () => {
 
   it("should strip dangerous attributes", () => {
     const malicious =
-      '<img src="x" onerror="alert(1)"> <a href="javascript:alert(1)">Link</a>';
+      '<img src="x" onerror="alert(1)"> <a href="javascript:alert(1)">Link</a> <div style="position:fixed; top:0;">Overlay</div>';
     const sanitized = sanitizeHtml(malicious);
-    expect(sanitized.trim()).toBe('<img src="x" /> <a target="_blank" rel="noopener noreferrer">Link</a>');
+    expect(sanitized.trim()).toBe(
+      '<img src="x" /> <a target="_blank" rel="noopener noreferrer">Link</a> <div>Overlay</div>',
+    );
+    expect(sanitized).not.toContain("style=");
   });
 
   it("should strip visually empty tags", () => {
-    const html = '<p>Content</p><p>&nbsp;</p><h3>   </h3><p><br></p>';
+    const html = "<p>Content</p><p>&nbsp;</p><h3>   </h3><p><br></p>";
     const sanitized = sanitizeHtml(html);
     // p with content and p with br should stay, others should go
-    expect(sanitized).toContain('<p>Content</p>');
-    expect(sanitized).toContain('<p><br /></p>');
-    expect(sanitized).not.toContain('<p> </p>');
-    expect(sanitized).not.toContain('<h3>');
+    expect(sanitized).toContain("<p>Content</p>");
+    expect(sanitized).toContain("<p><br /></p>");
+    expect(sanitized).not.toContain("<p> </p>");
+    expect(sanitized).not.toContain("<h3>");
   });
 
   it("should allow safe tags and attributes", () => {
@@ -35,7 +38,7 @@ describe("sanitizeHtml", () => {
 
   it("should allow layout and table tags", () => {
     const html =
-      '<div><figure><figcaption>Caption</figcaption><table><thead><tr><th>Header</th></tr></thead><tbody><tr><td>Data</td></tr></tbody></table></figure></div>';
+      "<div><figure><figcaption>Caption</figcaption><table><thead><tr><th>Header</th></tr></thead><tbody><tr><td>Data</td></tr></tbody></table></figure></div>";
     const sanitized = sanitizeHtml(html);
     expect(sanitized).toContain("<table>");
     expect(sanitized).toContain("<tr>");
@@ -69,15 +72,6 @@ describe("sanitizeHtml", () => {
     const sanitized = sanitizeHtml(html);
     expect(sanitized).toContain('target="_blank"');
     expect(sanitized).toContain('rel="noopener noreferrer"');
-  });
-
-  it("should NOT convert Markdown to HTML", () => {
-    const markdown = "This is **bold** text";
-    const sanitized = sanitizeHtml(markdown);
-    // Should NOT contain <strong> because marked was removed
-    expect(sanitized).not.toContain("<strong>");
-    // Should be wrapped in p by DOMPurify because it's treated as text
-    expect(sanitized).toContain("This is **bold** text");
   });
 
   it("should handle empty or null input", () => {

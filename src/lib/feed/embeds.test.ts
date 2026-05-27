@@ -73,4 +73,15 @@ describe("transformEmbeds", () => {
     const transformed = transformEmbeds(html);
     expect(transformed).toBe(html);
   });
+
+  it("handles malformed video URLs gracefully", () => {
+    const html = `
+      <p>Bad YT: https://www.youtube.com/watch?v=short</p>
+      <p>Bad Vimeo: https://vimeo.com/not-a-number</p>
+    `;
+    const transformed = transformEmbeds(html);
+    expect(transformed).not.toContain("<iframe");
+    expect(transformed).toContain("https://www.youtube.com/watch?v=short");
+    expect(transformed).toContain("https://vimeo.com/not-a-number");
+  });
 });

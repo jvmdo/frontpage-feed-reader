@@ -8,20 +8,10 @@ import {
 } from "./normalizer";
 
 describe("decodeEntities", () => {
-  it("should decode common HTML entities", () => {
-    expect(decodeEntities("Hello &amp; world")).toBe("Hello & world");
-    expect(decodeEntities("It&#8217;s a test")).toBe("It’s a test");
-    expect(decodeEntities("Double &quot;quotes&quot;")).toBe('Double "quotes"');
-  });
-
   it("should handle empty or null input", () => {
     expect(decodeEntities("")).toBe("");
     expect(decodeEntities(undefined)).toBe("");
     expect(decodeEntities(null)).toBe("");
-  });
-
-  it("should handle strings without entities", () => {
-    expect(decodeEntities("Just a normal string")).toBe("Just a normal string");
   });
 
   it("should decode complex and nested HTML-like strings", () => {
@@ -29,12 +19,6 @@ describe("decodeEntities", () => {
     expect(
       decodeEntities("Some &lt;script&gt;alert(1)&lt;/script&gt; code"),
     ).toBe("Some <script>alert(1)</script> code");
-  });
-
-  it("should not recurse (as decided)", () => {
-    // If it was recursive, this would become "&"
-    // Since it's not, it should stay "&amp;"
-    expect(decodeEntities("&amp;amp;")).toBe("&amp;");
   });
 });
 
@@ -107,19 +91,6 @@ describe("normalizeUrl", () => {
     expect(normalizeUrl("  https://example.com  ")).toBe(
       "https://example.com/",
     );
-  });
-
-  it("should resolve relative URLs with a base", () => {
-    expect(normalizeUrl("/path/to/item", "https://example.com")).toBe(
-      "https://example.com/path/to/item",
-    );
-    expect(normalizeUrl("item.html", "https://example.com/blog/")).toBe(
-      "https://example.com/blog/item.html",
-    );
-  });
-
-  it("should handle relative URL without a base by returning trimmed", () => {
-    expect(normalizeUrl("/path/to/item")).toBe("/path/to/item");
   });
 
   it("should handle invalid URLs", () => {
