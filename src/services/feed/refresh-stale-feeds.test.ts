@@ -1,8 +1,9 @@
 import { subSeconds } from "date-fns";
 import { eq } from "drizzle-orm";
 import { feeds, subscriptions, user, userPreferences } from "@/db/schema";
+import { DEFAULT_REFRESH_INTERVAL } from "@/lib/constants";
 import { ingestItems } from "@/services/ingestion/feed-ingestion";
-import { seedFeedWithSubscription } from "@/tests/seeding";
+import { seedFeed, seedFeedWithSubscription } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
 import { refreshStaleFeeds } from "./refresh-stale-feeds";
 
@@ -15,6 +16,65 @@ describe("refreshStaleFeeds", () => {
       success: true,
       status: "fetched",
     });
+  });
+
+  test("refreshes a curated feed with zero subscribers", async ({ tx }) => {
+    // 1. Create a curated feed with no subscriptions
+    const feed = await seedFeed(tx, { isCurated: true, lastFetchedAt: null });
+
+    // 2. Act
+    const result = await refreshStaleFeeds(tx);
+
+    // 3. Assert
+    expect(result.processed).toBe(1);
+    expect(result.success).toBe(1);
+    expect(result.successful?.[0]?.id).toBe(feed.id);
+    expect(ingestItems).toHaveBeenCalledWith(expect.anything(), feed.id);
+  });
+
+  test("refreshes a curated feed that exceeded DEFAULT_REFRESH_INTERVAL", async ({
+    tx,
+  }) => {
+    // 1. Create a curated feed stale by 1 second more than the default
+    const staleTime = DEFAULT_REFRESH_INTERVAL + 1;
+    const feed = await seedFeed(tx, {
+      isCurated: true,
+      lastFetchedAt: subSeconds(new Date(), staleTime),
+    });
+
+    // 2. Act
+    const result = await refreshStaleFeeds(tx);
+
+    // 3. Assert
+    expect(result.processed).toBe(1);
+    expect(ingestItems).toHaveBeenCalledWith(expect.anything(), feed.id);
+  });
+
+  test("skips a curated feed that is not yet stale", async ({ tx }) => {
+    // 1. Create a curated feed refreshed 10 seconds ago
+    await seedFeed(tx, {
+      isCurated: true,
+      lastFetchedAt: subSeconds(new Date(), 10),
+    });
+
+    // 2. Act
+    const result = await refreshStaleFeeds(tx);
+
+    // 3. Assert
+    expect(result.processed).toBe(0);
+    expect(ingestItems).not.toHaveBeenCalled();
+  });
+
+  test("skips a standard feed with zero subscribers", async ({ tx }) => {
+    // 1. Create a standard feed with no subscriptions
+    await seedFeed(tx, { isCurated: false, lastFetchedAt: null });
+
+    // 2. Act
+    const result = await refreshStaleFeeds(tx);
+
+    // 3. Assert
+    expect(result.processed).toBe(0);
+    expect(ingestItems).not.toHaveBeenCalled();
   });
 
   test("refreshes a feed that has never been fetched (NULL lastFetchedAt)", async ({

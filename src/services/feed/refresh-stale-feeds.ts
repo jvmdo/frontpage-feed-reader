@@ -1,21 +1,23 @@
-import { eq, gt, isNull, min, or, sql } from "drizzle-orm";
+import { and, eq, gt, isNull, min, or, sql } from "drizzle-orm";
 import type { DB } from "@/db";
 import { feeds, subscriptions, userPreferences } from "@/db/schema";
+import { DEFAULT_REFRESH_INTERVAL } from "@/lib/constants";
 import { ingestItems } from "@/services/ingestion/feed-ingestion";
 
 /**
  * Identifies feeds that are overdue for a refresh based on their subscribers' preferences
- * and triggers ingestion for them in batches.
+ * OR because they are marked as curated global feeds.
+ * Triggers ingestion for them in batches.
  */
 export async function refreshStaleFeeds(db: DB, batchSize = 20) {
   // 1. Find unique feeds that are overdue.
-  // A feed is overdue if (now - lastFetchedAt) > min(subscriber.refreshInterval).
+
+  // A. Subscribed feeds: overdue if (now - lastFetchedAt) > min(subscriber.refreshInterval)
   // We exclude users who have 'manual' refresh (represented as 0).
-  const staleFeeds = await db
+  const subscribedStale = await db
     .select({
       id: feeds.id,
       url: feeds.url,
-      minInterval: min(userPreferences.refreshInterval),
     })
     .from(feeds)
     .innerJoin(subscriptions, eq(subscriptions.feedId, feeds.id))
@@ -33,13 +35,46 @@ export async function refreshStaleFeeds(db: DB, batchSize = 20) {
     )
     .limit(batchSize);
 
-  if (staleFeeds.length === 0) {
+  // B. Curated feeds: overdue if (now - lastFetchedAt) > DEFAULT_REFRESH_INTERVAL
+  const curatedStale = await db
+    .select({
+      id: feeds.id,
+      url: feeds.url,
+    })
+    .from(feeds)
+    .where(
+      and(
+        eq(feeds.isCurated, true),
+        or(
+          isNull(feeds.lastFetchedAt),
+          sql`EXTRACT(EPOCH FROM now()) - EXTRACT(EPOCH FROM ${feeds.lastFetchedAt}) > ${DEFAULT_REFRESH_INTERVAL}`,
+        ),
+      ),
+    )
+    .limit(batchSize);
+
+  // 2. Combine and Deduplicate
+  const allStale = [...subscribedStale, ...curatedStale];
+  const uniqueFeedsMap = new Map<number, { id: number; url: string }>();
+
+  for (const feed of allStale) {
+    if (!uniqueFeedsMap.has(feed.id)) {
+      uniqueFeedsMap.set(feed.id, feed);
+    }
+  }
+
+  const feedsToRefresh = Array.from(uniqueFeedsMap.values()).slice(
+    0,
+    batchSize,
+  );
+
+  if (feedsToRefresh.length === 0) {
     return { processed: 0 };
   }
 
-  // 2. Process them in parallel
+  // 3. Process them in parallel
   const results = await Promise.allSettled(
-    staleFeeds.map(async (feed) => {
+    feedsToRefresh.map(async (feed) => {
       try {
         const result = await ingestItems(db, feed.id);
         return { id: feed.id, url: feed.url, ...result };
