@@ -8,9 +8,11 @@
     "test:cleanup": "bun run src/tests/cleanup-user.ts",
     "coverage": "vitest run --coverage",
     "dev": "next dev",
-    "build": "bun run db:seed && next build",
+    "build": "next build",
     "start": "next start",
     "db:seed": "bun run src/db/seed.ts",
+    "db:migrate": "bun run src/db/migrate.ts",
+    "type-check": "bun tsc --noEmit",
     "lint": "biome check",
     "format": "biome format --write"
   },
