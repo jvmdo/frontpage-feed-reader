@@ -50,6 +50,13 @@
       "when": 1779520297930,
       "tag": "0006_nostalgic_newton_destine",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1779924823112,
+      "tag": "0007_chilly_sheva_callister",
+      "breakpoints": true
     }
   ]
 }

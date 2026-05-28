@@ -25,6 +25,7 @@ export function createMockFeed(overrides: Partial<Feed> = {}): Feed {
     lastSuccessAt: new Date(),
     lastFailureAt: null,
     healthStatus: "healthy",
+    isCurated: false,
     httpEtag: null,
     httpLastModified: null,
     createdAt: new Date(),

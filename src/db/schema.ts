@@ -77,6 +77,7 @@ export const feeds = pgTable("feeds", {
   description: text("description"),
   language: text("language"),
   iconUrl: text("icon_url"),
+  isCurated: boolean("is_curated").default(false).notNull(),
 
   lastFetchedAt: timestamp("last_fetched_at"),
   lastSuccessAt: timestamp("last_success_at"),
