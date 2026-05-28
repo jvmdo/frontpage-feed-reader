@@ -152,12 +152,14 @@ export async function seedCuratedFeeds(tx: DB) {
       url: WELCOME_FEED_URL,
       title: "Frontpage",
       description: "Welcome to your new favorite way to read the web.",
+      isCurated: true,
     },
     ...sampleFeeds.categories.flatMap((c) =>
       c.feeds.map((f) => ({
         url: f.feedUrl,
         title: f.title,
         description: f.description,
+        isCurated: true,
       })),
     ),
   ];
