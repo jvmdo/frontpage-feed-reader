@@ -1,8 +1,10 @@
 import { and, eq, gt, isNull, min, or, sql } from "drizzle-orm";
 import type { DB } from "@/db";
 import { feeds, subscriptions, userPreferences } from "@/db/schema";
-import { DEFAULT_REFRESH_INTERVAL } from "@/lib/constants";
+import { env } from "@/env";
 import { ingestItems } from "@/services/ingestion/feed-ingestion";
+
+const DEFAULT_REFRESH_INTERVAL = env.NEXT_PUBLIC_DEFAULT_REFRESH_INTERVAL;
 
 /**
  * Identifies feeds that are overdue for a refresh based on their subscribers' preferences

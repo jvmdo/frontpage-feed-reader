@@ -1,22 +1,17 @@
-import "dotenv/config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Client } from "pg";
+import { env } from "@/env";
 
 /**
  * Migration runner script.
  * Applies all pending migrations from the 'drizzle/' folder to the database.
  */
 async function main() {
-  if (!process.env.DATABASE_URL) {
-    console.error("❌ DATABASE_URL is not set.");
-    process.exit(1);
-  }
-
   console.log("🚀 Starting database migrations...");
 
   const client = new Client({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: env.DATABASE_URL,
   });
 
   try {

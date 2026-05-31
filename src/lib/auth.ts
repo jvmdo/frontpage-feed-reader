@@ -5,13 +5,17 @@ import { anonymous, testUtils } from "better-auth/plugins";
 import { db } from "@/db";
 import { userPreferences } from "@/db/schema";
 import { PasswordResetEmail } from "@/emails/password-reset";
+import { env, settings } from "@/env";
 import { generateAnonName } from "@/lib/utils";
 import { convertGuestToMember } from "@/services/auth/convert-guest-account";
 import { onboardGuest } from "@/services/auth/onboard-guest";
-import { DEFAULT_REFRESH_INTERVAL } from "./constants";
 import { resend } from "./resend";
 
 export const auth = betterAuth({
+  baseURL: {
+    allowedHosts: ["localhost:*", "*.vercel.app"],
+    fallback: settings.baseUrl,
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
@@ -24,7 +28,7 @@ export const auth = betterAuth({
             .insert(userPreferences)
             .values({
               userId: user.id,
-              refreshInterval: DEFAULT_REFRESH_INTERVAL,
+              refreshInterval: env.NEXT_PUBLIC_DEFAULT_REFRESH_INTERVAL,
             })
             .onConflictDoNothing();
         },
@@ -50,7 +54,7 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url, token }, _request) => {
       // Don't await - prevents timing attacks
       void resend.emails.send({
-        from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+        from: env.EMAIL_FROM,
         to: [user.email],
         subject: "Reset your password",
         react: PasswordResetEmail({ resetUrl: url }),
@@ -59,8 +63,8 @@ export const auth = betterAuth({
   },
   socialProviders: {
     github: {
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+      clientId: env.GITHUB_CLIENT_ID as string,
+      clientSecret: env.GITHUB_CLIENT_SECRET as string,
     },
   },
   plugins: [

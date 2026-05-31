@@ -1,7 +1,7 @@
 import { subSeconds } from "date-fns";
 import { eq } from "drizzle-orm";
 import { feeds, subscriptions, user, userPreferences } from "@/db/schema";
-import { DEFAULT_REFRESH_INTERVAL } from "@/lib/constants";
+import { env } from "@/env";
 import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { seedFeed, seedFeedWithSubscription } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
@@ -36,7 +36,7 @@ describe("refreshStaleFeeds", () => {
     tx,
   }) => {
     // 1. Create a curated feed stale by 1 second more than the default
-    const staleTime = DEFAULT_REFRESH_INTERVAL + 1;
+    const staleTime = env.NEXT_PUBLIC_DEFAULT_REFRESH_INTERVAL + 1;
     const feed = await seedFeed(tx, {
       isCurated: true,
       lastFetchedAt: subSeconds(new Date(), staleTime),

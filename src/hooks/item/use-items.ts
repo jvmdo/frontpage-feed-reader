@@ -1,4 +1,5 @@
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
+import { settings } from "@/env";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useViewOptions } from "@/hooks/ui/use-view-options";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
@@ -29,10 +30,7 @@ export function useItems() {
     ],
     queryFn: async ({ pageParam }) => {
       const offset = pageParam as number;
-      const baseUrl =
-        typeof window !== "undefined"
-          ? ""
-          : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const baseUrl = typeof window !== "undefined" ? "" : settings.baseUrl;
       let url = `${baseUrl}/api/items?offset=${offset}&limit=${PAGINATION_LIMIT}`;
 
       if (feedId) {
