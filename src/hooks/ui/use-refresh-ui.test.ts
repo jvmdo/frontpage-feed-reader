@@ -3,8 +3,8 @@
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
-import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
 import { useFeeds } from "@/hooks/feed/use-feeds";
+import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
 import { useRefreshUI } from "./use-refresh-ui";
 
 vi.mock("@/hooks/feed/use-feed-filter");

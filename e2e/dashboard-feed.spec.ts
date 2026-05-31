@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { db } from "@/db";
 import { parseFeedXml } from "@/lib/feed/parser";
-import { seedItems, seedFeedWithSubscription } from "@/tests/seeding";
+import { seedFeedWithSubscription, seedItems } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test("renders items from real-world feed fixtures", async ({ authedPage }) => {

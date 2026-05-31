@@ -424,17 +424,17 @@ describe("FeedToolbar", () => {
       await user.hover(refreshButton);
 
       // Verify "Last checked" (use findAllByText as Radix might render portals/clones)
-      expect((await screen.findAllByText(/last checked/i)).length).toBeGreaterThan(
-        0,
-      );
+      expect(
+        (await screen.findAllByText(/last checked/i)).length,
+      ).toBeGreaterThan(0);
 
       // Verify failed sources list
       expect(
         (await screen.findAllByText(/1 source unreachable/i)).length,
       ).toBeGreaterThan(0);
-      expect((await screen.findAllByText("Broken Feed")).length).toBeGreaterThan(
-        0,
-      );
+      expect(
+        (await screen.findAllByText("Broken Feed")).length,
+      ).toBeGreaterThan(0);
     });
   });
 });

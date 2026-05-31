@@ -1,8 +1,8 @@
 "use client";
 
 import { toast } from "sonner";
-import { useFeeds } from "@/hooks/feed/use-feeds";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
+import { useFeeds } from "@/hooks/feed/use-feeds";
 import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
 import type { RefreshFeedInput } from "@/lib/validations/feed";
 
@@ -35,7 +35,9 @@ export function useRefreshUI() {
         toast.success(`${label} refreshed`);
       },
       onError: (error) => {
-        toast.error(error.message || `Failed to refresh ${label.toLowerCase()}`);
+        toast.error(
+          error.message || `Failed to refresh ${label.toLowerCase()}`,
+        );
       },
     });
   };
@@ -71,7 +73,9 @@ export function useRefreshUI() {
     // 2. Identify failed feeds
     const failed = targetSubscriptions
       .filter((s) => s.feed.healthStatus === "error")
-      .map((s) => s.subscription.customTitle ?? s.feed.title ?? "Untitled Feed");
+      .map(
+        (s) => s.subscription.customTitle ?? s.feed.title ?? "Untitled Feed",
+      );
 
     return {
       lastFetchedAt: latestFetch,

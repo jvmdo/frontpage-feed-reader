@@ -28,7 +28,10 @@ test("full onboarding journey as a guest", async ({ page }) => {
   await expect(tourContent).toContainText(/add your first feed/i);
 
   // Click the actual button that is spotlighted
-  await page.locator('[data-tour="add-feed"]').filter({ visible: true }).click();
+  await page
+    .locator('[data-tour="add-feed"]')
+    .filter({ visible: true })
+    .click();
 
   // 6. Step 2: Feed URL input
   await expect(tourContent).toContainText(/feed url input/i);

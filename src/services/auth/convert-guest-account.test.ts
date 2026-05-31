@@ -1,11 +1,13 @@
-import { describe, expect } from "vitest";
 import { eq } from "drizzle-orm";
+import { describe, expect } from "vitest";
 import { account, session, user } from "@/db/schema";
 import { test } from "@/tests/test-extend";
 import { convertGuestToMember } from "./convert-guest-account";
 
 describe("convertGuestToMember", () => {
-  test("should transfer account and session to anonymous ID and upgrade user", async ({ tx }) => {
+  test("should transfer account and session to anonymous ID and upgrade user", async ({
+    tx,
+  }) => {
     const anonId = "anon-123";
     const newUserId = "new-456";
 

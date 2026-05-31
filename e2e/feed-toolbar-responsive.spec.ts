@@ -82,9 +82,7 @@ test.describe("FeedToolbar Responsiveness and View Options", () => {
     ).toBeVisible();
   });
 
-  test("layout toggles update URL state", async ({
-    authedPage,
-  }) => {
+  test("layout toggles update URL state", async ({ authedPage }) => {
     const { page } = authedPage;
 
     await page.goto("/dashboard");

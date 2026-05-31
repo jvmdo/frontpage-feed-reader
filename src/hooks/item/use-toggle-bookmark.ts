@@ -130,10 +130,7 @@ export function useToggleBookmark() {
       ]);
 
       // 3. Identify item context
-      const { isBookmarked, isRead } = findItemInCache(
-        previousQueries,
-        itemId,
-      );
+      const { isBookmarked, isRead } = findItemInCache(previousQueries, itemId);
 
       // 4. Optimistically update item state
       const newBookmarkedAt = isBookmarked ? null : new Date();

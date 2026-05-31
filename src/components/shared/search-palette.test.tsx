@@ -143,7 +143,9 @@ describe("SearchPalette", () => {
         const offset = url.searchParams.get("offset");
 
         if (offset === "10") {
-          return secondPagePromise.then(() => HttpResponse.json([secondPageResult]));
+          return secondPagePromise.then(() =>
+            HttpResponse.json([secondPageResult]),
+          );
         }
 
         // Return 10 items for the first page to trigger hasNextPage

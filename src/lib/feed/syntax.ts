@@ -1,5 +1,5 @@
-import { parseHTML } from "linkedom";
 import hljs from "highlight.js";
+import { parseHTML } from "linkedom";
 import { decodeEntities } from "./normalizer";
 
 /**
@@ -11,7 +11,9 @@ export function highlightCodeBlocks(html: string): string {
     return html;
   }
 
-  const { document } = parseHTML(`<!DOCTYPE html><html><body>${html}</body></html>`);
+  const { document } = parseHTML(
+    `<!DOCTYPE html><html><body>${html}</body></html>`,
+  );
 
   const codeBlocks = document.querySelectorAll("pre code");
 

@@ -1,8 +1,8 @@
 import { db } from "@/db";
 import {
   seedCategory,
-  seedItems,
   seedFeedWithSubscription,
+  seedItems,
 } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 

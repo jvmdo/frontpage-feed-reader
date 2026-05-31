@@ -59,7 +59,9 @@ describe("GuestBanner", () => {
   it("dismisses the banner when the X button is clicked", async () => {
     const { userEvent } = setup(true);
 
-    const dismissButton = screen.getByRole("button", { name: /dismiss banner/i });
+    const dismissButton = screen.getByRole("button", {
+      name: /dismiss banner/i,
+    });
     await userEvent.click(dismissButton);
 
     expect(
@@ -78,7 +80,9 @@ describe("GuestBanner", () => {
     );
 
     // Find the "Ok, got it" button in the dialog footer
-    const dismissButton = await screen.findByRole("button", { name: /ok, got it/i });
+    const dismissButton = await screen.findByRole("button", {
+      name: /ok, got it/i,
+    });
     await userEvent.click(dismissButton);
 
     // Verify both banner and dialog are gone

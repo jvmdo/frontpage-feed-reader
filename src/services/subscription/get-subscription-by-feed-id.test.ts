@@ -33,10 +33,7 @@ describe("getSubscriptionByFeedId", () => {
   }) => {
     // Arrange
     const otherUser = await seedUser(tx);
-    const { feed } = await seedFeedWithSubscription(
-      tx,
-      otherUser.id,
-    );
+    const { feed } = await seedFeedWithSubscription(tx, otherUser.id);
 
     // Act
     const result = await getSubscriptionByFeedId(tx, testUser.id, feed.id);
@@ -66,7 +63,7 @@ describe("getSubscriptionByFeedId", () => {
   }) => {
     // Act
     const result = await getSubscriptionByFeedId(tx, testUser.id, 9999);
-    
+
     // Assert
     expect(result).toBeUndefined();
   });

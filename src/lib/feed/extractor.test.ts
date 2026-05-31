@@ -3,7 +3,8 @@ import { extractText } from "./extractor";
 
 describe("extractText", () => {
   it("strips basic HTML tags", () => {
-    const input = "<h1>Title</h1><p>Paragraph with <strong>bold</strong> text.</p>";
+    const input =
+      "<h1>Title</h1><p>Paragraph with <strong>bold</strong> text.</p>";
     const output = extractText(input);
     expect(output).toBe("Title Paragraph with bold text.");
   });
@@ -60,7 +61,7 @@ describe("extractText", () => {
   });
 
   it("prevents stuck words by adding spaces between tags", () => {
-    const html = "Test<code>code</code>and<a href=\"#\">link</a>";
+    const html = 'Test<code>code</code>and<a href="#">link</a>';
     expect(extractText(html)).toBe("Test code and link");
   });
 
