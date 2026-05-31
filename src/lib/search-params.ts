@@ -1,8 +1,4 @@
-import {
-  parseAsArrayOf,
-  parseAsBoolean,
-  parseAsInteger,
-} from "nuqs";
+import { parseAsArrayOf, parseAsBoolean, parseAsInteger } from "nuqs";
 
 /**
  * Shared parsers for feed filtering to ensure consistency between
@@ -50,4 +46,3 @@ export const dashboardState = {
     unreadOnly: null,
   }),
 };
-

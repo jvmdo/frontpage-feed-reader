@@ -23,7 +23,7 @@ describe("fetchFeedXml", () => {
         return new HttpResponse(FEED_CONTENT, {
           headers: {
             "Content-Type": "application/rss+xml",
-            "ETag": "W/\"12345\"",
+            ETag: 'W/"12345"',
             "Last-Modified": "Wed, 21 Oct 2015 07:28:00 GMT",
           },
         });
@@ -35,7 +35,7 @@ describe("fetchFeedXml", () => {
     expect(result).toEqual({
       status: "success",
       xml: FEED_CONTENT,
-      etag: "W/\"12345\"",
+      etag: 'W/"12345"',
       lastModified: "Wed, 21 Oct 2015 07:28:00 GMT",
     });
   });
@@ -48,7 +48,7 @@ describe("fetchFeedXml", () => {
     );
 
     const result = await fetchFeedXml(FEED_URL, {
-      etag: "W/\"12345\"",
+      etag: 'W/"12345"',
       lastModified: "Wed, 21 Oct 2015 07:28:00 GMT",
     });
 
@@ -66,7 +66,7 @@ describe("fetchFeedXml", () => {
     );
 
     await fetchFeedXml(FEED_URL, {
-      etag: "W/\"12345\"",
+      etag: 'W/"12345"',
       lastModified: "Wed, 21 Oct 2015 07:28:00 GMT",
     });
 
@@ -74,7 +74,7 @@ describe("fetchFeedXml", () => {
       "Frontpage Feed Reader/1.0",
     );
     expect(capturedHeaders?.get("Accept")).toContain("application/rss+xml");
-    expect(capturedHeaders?.get("If-None-Match")).toBe("W/\"12345\"");
+    expect(capturedHeaders?.get("If-None-Match")).toBe('W/"12345"');
     expect(capturedHeaders?.get("If-Modified-Since")).toBe(
       "Wed, 21 Oct 2015 07:28:00 GMT",
     );

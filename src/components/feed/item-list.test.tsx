@@ -251,7 +251,9 @@ describe("ItemList", () => {
     );
 
     // Verify grid scroller is used instead of list scroller
-    expect(await screen.findByTestId("virtuoso-grid-scroller")).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("virtuoso-grid-scroller"),
+    ).toBeInTheDocument();
     expect(screen.queryByTestId("virtuoso-scroller")).not.toBeInTheDocument();
   });
 
@@ -268,8 +270,12 @@ describe("ItemList", () => {
     );
 
     // In tour mode, it renders a plain div, not Virtuoso
-    expect(await screen.findByRole("article", { name: /test item 1\b/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("article", { name: /test item 1\b/i }),
+    ).toBeInTheDocument();
     expect(screen.queryByTestId("virtuoso-scroller")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("virtuoso-grid-scroller")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("virtuoso-grid-scroller"),
+    ).not.toBeInTheDocument();
   });
 });

@@ -45,6 +45,8 @@ export function extractText(html: string | undefined | null): string {
   } catch (error) {
     console.error("Failed to extract text from HTML:", error);
     // Fallback to simple regex if library fails
-    return decodeHTML(html).replace(/<[^>]*>?/gm, "").trim();
+    return decodeHTML(html)
+      .replace(/<[^>]*>?/gm, "")
+      .trim();
   }
 }

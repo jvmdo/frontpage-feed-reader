@@ -57,7 +57,7 @@ export function ResetPasswordForm({
 
     if (error) {
       toast.error(
-        error.message || "Failed to reset password. The link may have expired."
+        error.message || "Failed to reset password. The link may have expired.",
       );
     } else {
       toast.success("Password reset successfully! You can now sign in.");
@@ -105,7 +105,9 @@ export function ResetPasswordForm({
             aria-describedby="error-password"
           />
           {errors.password && (
-            <FieldError id="error-password">{errors.password.message}</FieldError>
+            <FieldError id="error-password">
+              {errors.password.message}
+            </FieldError>
           )}
         </Field>
         <Field data-invalid={!!errors.confirmPassword}>

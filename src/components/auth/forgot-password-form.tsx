@@ -63,15 +63,16 @@ export function ForgotPasswordForm({
             link.
           </p>
         </div>
-        
-          <Alert className="text-left">
-            <Info />
-            <AlertTitle>Delivery Notice</AlertTitle>
-            <AlertDescription>
-              We are using an unverified domain for emails. If you don&apos;t see the email, check your spam or contact the administrator.
-            </AlertDescription>
-          </Alert>
-        
+
+        <Alert className="text-left">
+          <Info />
+          <AlertTitle>Delivery Notice</AlertTitle>
+          <AlertDescription>
+            We are using an unverified domain for emails. If you don&apos;t see
+            the email, check your spam or contact the administrator.
+          </AlertDescription>
+        </Alert>
+
         <Button asChild variant="outline">
           <Link href="/sign-in">Return to sign in</Link>
         </Button>
@@ -94,13 +95,14 @@ export function ForgotPasswordForm({
           </p>
         </div>
 
-          <Alert>
-            <Info />
-            <AlertTitle>Limited Email Delivery</AlertTitle>
-            <AlertDescription>
-              This instance uses an unverified Resend domain. Emails will only be delivered to authorized test addresses.
-            </AlertDescription>
-          </Alert>
+        <Alert>
+          <Info />
+          <AlertTitle>Limited Email Delivery</AlertTitle>
+          <AlertDescription>
+            This instance uses an unverified Resend domain. Emails will only be
+            delivered to authorized test addresses.
+          </AlertDescription>
+        </Alert>
 
         <Field data-invalid={!!errors.email}>
           <FieldLabel htmlFor="email">Email</FieldLabel>

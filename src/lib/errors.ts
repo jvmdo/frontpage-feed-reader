@@ -76,7 +76,9 @@ export class FeedRecordNotFoundError extends Error {
  */
 export class CuratedFeedsMissingError extends Error {
   code = "CURATED_FEEDS_MISSING" as const;
-  constructor(message = "Required curated feeds are missing from the database. Please run bun db:seed.") {
+  constructor(
+    message = "Required curated feeds are missing from the database. Please run bun db:seed.",
+  ) {
     super(message);
     this.name = "CuratedFeedsMissingError";
   }

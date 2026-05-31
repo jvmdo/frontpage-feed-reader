@@ -34,4 +34,3 @@ export function useSearchItems(search: string) {
     staleTime: 1000 * 60, // 1 minute
   });
 }
-

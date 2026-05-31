@@ -17,10 +17,7 @@ export async function toggleBookmark(db: DB, userId: string, itemId: number) {
     .select({ bookmarkedAt: userItemStates.bookmarkedAt })
     .from(userItemStates)
     .where(
-      and(
-        eq(userItemStates.userId, userId),
-        eq(userItemStates.itemId, itemId),
-      ),
+      and(eq(userItemStates.userId, userId), eq(userItemStates.itemId, itemId)),
     )
     .limit(1);
 

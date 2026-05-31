@@ -1,11 +1,7 @@
 import Parser from "rss-parser";
 import { FeedInvalidFormatError } from "@/lib/errors";
-import {
-  cleanText,
-  decodeEntities,
-  normalizeUrl,
-} from "./normalizer";
-import { processItem, type ProcessedItem } from "./processor";
+import { cleanText, decodeEntities, normalizeUrl } from "./normalizer";
+import { type ProcessedItem, processItem } from "./processor";
 
 /**
  * Custom fields extracted from the XML that aren't in the default RSS/Atom spec

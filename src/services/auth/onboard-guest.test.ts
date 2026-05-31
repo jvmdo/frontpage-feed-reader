@@ -7,8 +7,10 @@ import sampleFeeds from "../../../data/sample-feeds.json";
 import { onboardGuest } from "./onboard-guest";
 
 describe("onboardGuest", () => {
-  const TOTAL_EXPECTED_FEEDS =
-    sampleFeeds.categories.reduce((acc, cat) => acc + cat.feeds.length, 0);
+  const TOTAL_EXPECTED_FEEDS = sampleFeeds.categories.reduce(
+    (acc, cat) => acc + cat.feeds.length,
+    0,
+  );
 
   test("successfully onboards a guest user with curated feeds and preferences", async ({
     tx,

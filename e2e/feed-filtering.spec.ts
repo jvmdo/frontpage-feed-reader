@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { seedItems, seedFeedWithSubscription } from "@/tests/seeding";
+import { seedFeedWithSubscription, seedItems } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
 test("loads filtered state directly from URL with prefetched data", async ({

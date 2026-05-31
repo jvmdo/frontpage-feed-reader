@@ -110,7 +110,12 @@ test.describe("Infinite Scroll", () => {
     await db
       .update(require("@/db/schema").subscriptions)
       .set({ categoryId: category.id })
-      .where(require("drizzle-orm").eq(require("@/db/schema").subscriptions.feedId, feed2.id));
+      .where(
+        require("drizzle-orm").eq(
+          require("@/db/schema").subscriptions.feedId,
+          feed2.id,
+        ),
+      );
 
     // Seed items for both
     const items1 = Array.from({ length: PAGINATION_LIMIT + 5 }).map((_, i) => ({
@@ -131,11 +136,18 @@ test.describe("Infinite Scroll", () => {
     // 1. Go to "All Items" in Grid layout
     await page.goto("/dashboard?layout=grid");
     await page.waitForSelector('body[data-hydrated="true"]');
-    await expect(page.getByRole("heading", { name: "F1 Item 0" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "F1 Item 0" }),
+    ).toBeVisible();
 
     // 2. Navigate to specific category via sidebar
-    await page.locator('[data-slot="sidebar"]').getByText("Debug Category").click();
-    await expect(page.getByRole("heading", { name: "F2 Item 0" })).toBeVisible();
+    await page
+      .locator('[data-slot="sidebar"]')
+      .getByText("Debug Category")
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "F2 Item 0" }),
+    ).toBeVisible();
 
     // 3. Scroll to bottom
     for (let i = 0; i < 3; i++) {

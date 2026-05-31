@@ -38,7 +38,11 @@ describe("deleteCategory", () => {
   }) => {
     // Arrange
     const otherUser = await seedUser(tx);
-    const category = await createCategory(tx, otherUser.id, "Other User Category");
+    const category = await createCategory(
+      tx,
+      otherUser.id,
+      "Other User Category",
+    );
 
     // Act & Assert
     await expect(deleteCategory(tx, testUser.id, category.id)).rejects.toThrow(

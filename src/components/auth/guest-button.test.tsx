@@ -89,13 +89,17 @@ describe("GuestButton", () => {
       resolveAction = resolve;
     });
 
-    vi.mocked(authClient.signIn.anonymous).mockReturnValue(pendingPromise as any);
+    vi.mocked(authClient.signIn.anonymous).mockReturnValue(
+      pendingPromise as any,
+    );
 
     const { user } = setup();
 
     await user.click(screen.getByRole("button", { name: /try as guest/i }));
 
-    const guestButton = screen.getByRole("button", { name: /signing in as guest/i });
+    const guestButton = screen.getByRole("button", {
+      name: /signing in as guest/i,
+    });
 
     expect(guestButton).toBeDisabled();
     expect(
