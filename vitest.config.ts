@@ -1,6 +1,10 @@
+import { loadEnvConfig } from "@next/env";
 import react from "@vitejs/plugin-react"; // Required for JSX transformation
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
+
+// Load environment variables before setting up the config
+loadEnvConfig(process.cwd());
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],

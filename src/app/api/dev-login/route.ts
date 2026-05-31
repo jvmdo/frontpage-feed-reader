@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { settings } from "@/env";
 import { createPlaywrightSession } from "@/tests/session";
 
 /**
@@ -6,7 +7,7 @@ import { createPlaywrightSession } from "@/tests/session";
  * Visit /api/dev-login in your browser to get authenticated as a dev user.
  */
 export async function GET() {
-  if (process.env.NODE_ENV !== "development") {
+  if (!settings.isDev) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

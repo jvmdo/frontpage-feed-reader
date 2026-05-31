@@ -3,7 +3,7 @@ import path from "node:path";
 import { eq } from "drizzle-orm";
 import { HttpResponse, http } from "msw";
 import { feedItems, feeds } from "@/db/schema";
-import { FEED_THROTTLE_MS } from "@/lib/constants";
+import { env } from "@/env";
 import { FeedNotFoundError, FeedRecordNotFoundError } from "@/lib/errors";
 import { server } from "@/tests/mocks/server";
 import { seedFeed, seedItems } from "@/tests/seeding";
@@ -221,7 +221,7 @@ describe("ingestItems integration", () => {
   test("allows fetch after cooldown has expired", async ({ tx }) => {
     const insertedFeed = await seedFeed(tx, {
       url: FEED_URL,
-      lastFetchedAt: new Date(Date.now() - FEED_THROTTLE_MS - 1000), // Expired
+      lastFetchedAt: new Date(Date.now() - env.FEED_THROTTLE_MS - 1000), // Expired
     });
 
     server.use(

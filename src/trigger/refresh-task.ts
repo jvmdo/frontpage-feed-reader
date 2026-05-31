@@ -1,6 +1,6 @@
 import { logger, schedules } from "@trigger.dev/sdk";
 import { db } from "@/db";
-import { REFRESH_CRON_SCHEDULE } from "@/lib/constants";
+import { env } from "@/env";
 import { refreshStaleFeeds } from "@/services/feed/refresh-stale-feeds";
 
 export async function refreshFeedsHandler(payload: { timestamp: Date }) {
@@ -28,7 +28,7 @@ export async function refreshFeedsHandler(payload: { timestamp: Date }) {
  */
 export const refreshFeedsTask = schedules.task({
   id: "refresh-feeds",
-  cron: REFRESH_CRON_SCHEDULE,
+  cron: env.REFRESH_CRON_SCHEDULE,
   queue: {
     concurrencyLimit: 10,
   },
