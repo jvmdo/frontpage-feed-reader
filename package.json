@@ -14,7 +14,13 @@
     "db:migrate": "bun run src/db/migrate.ts",
     "type-check": "bun tsc --noEmit",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "**/*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
   },
   "dependencies": {
     "@ark-ui/react": "^5.36.2",
@@ -87,7 +93,9 @@
     "babel-plugin-react-compiler": "1.0.0",
     "drizzle-kit": "^0.31.10",
     "eslint-plugin-testing-library": "^7.16.2",
+    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "lint-staged": "^17.0.6",
     "msw": "^2.13.4",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
