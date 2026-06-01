@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "test": "vitest",
-    "test:e2e": "PLAYWRIGHT_HTML_OPEN=never playwright test --reporter=list",
+    "test:e2e": "DEBUG=pw:webserver PLAYWRIGHT_TEST=true PLAYWRIGHT_HTML_OPEN=never playwright test --reporter=list",
     "test:cleanup": "bun run src/tests/cleanup-user.ts",
     "coverage": "vitest run --coverage",
     "dev": "next dev",
@@ -97,6 +97,7 @@
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.6",
     "msw": "^2.13.4",
+    "serve": "^14.2.6",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5",

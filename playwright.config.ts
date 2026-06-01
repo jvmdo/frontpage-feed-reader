@@ -76,12 +76,16 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: [
     {
-      command: "bun run dev",
+      command: "bun run start",
       url: "http://localhost:3000",
       reuseExistingServer: !process.env.CI,
+      env: {
+        PLAYWRIGHT_TEST: "true",
+      },
     },
     {
-      command: "npx serve -p 3432 ./e2e/fixtures",
+      command: "bun run serve -p 3432 ./e2e/fixtures",
+      url: "http://localhost:3432",
       reuseExistingServer: !process.env.CI,
     },
   ],

@@ -23,7 +23,6 @@ export const env = createEnv({
     // Provided by Vercel
     VERCEL_URL: z.string().optional(),
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
-    NODE_ENV: z.enum(["development", "test", "production"]),
   },
 
   /**
