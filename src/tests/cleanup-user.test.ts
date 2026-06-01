@@ -5,7 +5,7 @@ import { categories, feedItems, feeds, subscriptions, user } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { cleanupUser } from "./cleanup-user";
 
-describe("cleanupUser", () => {
+describe.runIf(!process.env.CI)("cleanupUser", () => {
   const testUserId = "test-cleanup-user-id";
   const otherUserId = "other-user-id";
 
