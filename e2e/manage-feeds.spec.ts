@@ -35,7 +35,7 @@ test("shows empty state when no feeds are subscribed", async ({
 
   // 2. Verify empty state
   await expect(
-    page.getByText(/you haven't subscribed to any rss feeds/i),
+    page.getByRole("main").getByText("You haven't subscribed to any"),
   ).toBeVisible();
 });
 

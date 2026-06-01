@@ -61,7 +61,9 @@ test.describe("FeedToolbar Refresh", () => {
     await page.goto(`/dashboard?feedId=${feed.id}`);
     await page.waitForSelector('body[data-hydrated="true"]');
 
-    await expect(page.getByText(/your feed is empty/i)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /your feed is empty/i }),
+    ).toBeVisible();
 
     // 2. Trigger Refresh
     const toolbar = page.getByRole("toolbar", { name: "Feed toolbar" });

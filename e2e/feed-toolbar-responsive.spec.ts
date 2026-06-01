@@ -17,7 +17,7 @@ test.describe("FeedToolbar Responsiveness and View Options", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
     // Desktop-only buttons should be visible in toolbar
-    await expect(page.getByLabel("List view")).toBeVisible();
+    await expect(page.getByRole("radio", { name: "List view" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Newest" })).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Assign", exact: true }),
@@ -38,7 +38,9 @@ test.describe("FeedToolbar Responsiveness and View Options", () => {
     await page.setViewportSize({ width: 800, height: 800 });
 
     // Desktop-only layout/sorting/refresh buttons should be hidden
-    await expect(page.getByLabel("List view")).not.toBeVisible();
+    await expect(
+      page.getByRole("radio", { name: "List view" }),
+    ).not.toBeVisible();
     await expect(
       page.getByRole("button", { name: "Newest" }),
     ).not.toBeVisible();
@@ -90,13 +92,13 @@ test.describe("FeedToolbar Responsiveness and View Options", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
     // Test Layout Toggles
-    await page.getByLabel("Grid view").click();
+    await page.getByRole("radio", { name: "Grid view" }).click();
     await expect(page).toHaveURL(/layout=grid/);
 
-    await page.getByLabel("Rows view").click();
+    await page.getByRole("radio", { name: "Rows view" }).click();
     await expect(page).toHaveURL(/layout=rows/);
 
-    await page.getByLabel("List view").click();
+    await page.getByRole("radio", { name: "List view" }).click();
     await expect(page).not.toHaveURL(/layout=(grid|rows)/);
   });
 });
