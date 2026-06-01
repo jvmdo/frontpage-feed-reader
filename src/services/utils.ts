@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { subHours } from "date-fns";
 import {
   type AnyColumn,
@@ -91,4 +93,19 @@ export function calculateIsRead(params: {
 
   // Otherwise, it arrived after the watermark and is relatively fresh, so it's unread.
   return false;
+}
+
+/**
+ * Reads the welcome-feed.xml template from disk and processes it,
+ * replacing template variables with the current timestamp and target base URL.
+ *
+ * @param baseUrl - The base URL/origin of the application to replace http://localhost:3000.
+ */
+export function getWelcomeFeedXml(baseUrl: string): string {
+  const filePath = join(process.cwd(), "data", "welcome-feed.xml");
+  const content = readFileSync(filePath, "utf-8");
+  const now = new Date().toUTCString();
+  return content
+    .replaceAll("{{NOW}}", now)
+    .replaceAll("http://localhost:3000", baseUrl);
 }

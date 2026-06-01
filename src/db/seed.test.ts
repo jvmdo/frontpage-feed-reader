@@ -16,10 +16,8 @@ describe("db:seed integration", () => {
     });
   });
 
-  const TOTAL_EXPECTED_FEEDS = sampleFeeds.categories.reduce(
-    (acc, cat) => acc + cat.feeds.length,
-    0,
-  );
+  const TOTAL_EXPECTED_FEEDS =
+    sampleFeeds.categories.reduce((acc, cat) => acc + cat.feeds.length, 0) + 1; // Welcome Feed
 
   test("successfully seeds all curated feeds", { timeout: 20000 }, async ({
     tx,

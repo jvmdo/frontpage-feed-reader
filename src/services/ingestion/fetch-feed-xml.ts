@@ -1,8 +1,11 @@
+import { settings } from "@/env";
+import { WELCOME_FEED_URL } from "@/lib/constants";
 import {
   FeedNetworkError,
   FeedNotFoundError,
   FeedUnavailableError,
 } from "@/lib/errors";
+import { getWelcomeFeedXml } from "@/services/utils";
 
 /**
  * Result of a feed fetch operation.
@@ -25,6 +28,24 @@ export async function fetchFeedXml(
   url: string,
   options: { etag?: string | null; lastModified?: string | null } = {},
 ): Promise<FetchFeedResult> {
+  // Bypasses network request for the local welcome feed to avoid Vercel
+  // preview deployment protection and loopback network issues.
+  if (url === WELCOME_FEED_URL) {
+    try {
+      const xml = getWelcomeFeedXml(settings.baseUrl);
+
+      return {
+        status: "success",
+        xml,
+        etag: null,
+        lastModified: null,
+      };
+    } catch (error) {
+      console.error("[fetchFeedXml] Failed to read local welcome feed:", error);
+      throw new FeedUnavailableError();
+    }
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 

@@ -1,19 +1,12 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { NextResponse } from "next/server";
+import { getWelcomeFeedXml } from "@/services/utils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
     const { origin } = new URL(request.url);
-    const filePath = join(process.cwd(), "data", "welcome-feed.xml");
-    const content = readFileSync(filePath, "utf-8");
-
-    const now = new Date().toUTCString();
-    const xml = content
-      .replaceAll("{{NOW}}", now)
-      .replaceAll("http://localhost:3000", origin);
+    const xml = getWelcomeFeedXml(origin);
 
     return new NextResponse(xml, {
       headers: {
