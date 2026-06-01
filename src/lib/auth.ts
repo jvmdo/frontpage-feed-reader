@@ -80,4 +80,9 @@ export const auth = betterAuth({
     }),
     testUtils(),
   ],
+  advanced: {
+    // Disable secure cookies during E2E tests so they work over localhost
+    useSecureCookies:
+      process.env.NODE_ENV === "production" && !process.env.PLAYWRIGHT_TEST,
+  },
 });

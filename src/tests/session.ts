@@ -21,8 +21,8 @@ async function ensureUserExists(
 }
 
 /**
- * Creates a real session in the database and returns the session token.
- * This token should be injected as a cookie in Playwright.
+ * Creates a real session in the database and returns the session cookies.
+ * These cookies should be injected into Playwright or the response.
  */
 export async function createPlaywrightSession(userId: string) {
   const { test: authTest } = await auth.$context;
@@ -34,20 +34,14 @@ export async function createPlaywrightSession(userId: string) {
     name: "Playwright User",
   });
 
-  const headers = await authTest.getAuthHeaders({ userId });
-  const cookieStr = headers.get("cookie") || headers.get("set-cookie");
-
-  if (!cookieStr) {
-    throw new Error(
-      "[createPlaywrightSession] Failed to generate session cookie",
-    );
-  }
-
-  const tokenMatch = cookieStr.match(/better-auth\.session_token=([^;]+)/);
+  const cookies = await authTest.getCookies({
+    userId,
+    domain: "localhost",
+  });
 
   return {
     user: { id: userId, email },
-    sessionToken: tokenMatch?.[1] ?? null,
+    testCookies: cookies,
     authTest,
   };
 }
