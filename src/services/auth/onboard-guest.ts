@@ -1,8 +1,11 @@
-import { inArray } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 import type { DB } from "@/db";
 import { categories, feeds, subscriptions, userPreferences } from "@/db/schema";
 import { WELCOME_FEED_URL } from "@/lib/constants";
-import { CuratedFeedsMissingError } from "@/lib/errors";
+import {
+  CuratedFeedsMissingError,
+  OnboardingInvariantError,
+} from "@/lib/errors";
 import sampleFeeds from "../../../data/sample-feeds.json";
 
 const CATEGORY_COLORS = [
@@ -54,43 +57,51 @@ export async function onboardGuest(db: DB, userId: string) {
   // Create a bridge to quickly find the Record ID for any URL Definition
   const urlToRecordMap = new Map(feedRecords.map((r) => [r.url, r]));
 
-  // 3. Setup Curated Categories and Subscriptions
-  const curatedCategoryPromises = sampleFeeds.categories.map(
-    async (categoryData, i) => {
-      const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
+  // 3. Setup Curated Categories in a single batch insert
+  const categoryValues = sampleFeeds.categories.map((categoryData, i) => {
+    const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
+    return {
+      userId,
+      name: categoryData.name,
+      color,
+    };
+  });
 
-      // Upsert category record
-      const [categoryRecord] = await db
-        .insert(categories)
-        .values({
-          userId,
-          name: categoryData.name,
-          color,
-        })
-        .onConflictDoUpdate({
-          target: [categories.userId, categories.name],
-          set: { color },
-        })
-        .returning({ id: categories.id });
+  const insertedCategories = await db
+    .insert(categories)
+    .values(categoryValues)
+    .onConflictDoUpdate({
+      target: [categories.userId, categories.name],
+      set: { color: sql`excluded.color` },
+    })
+    .returning({ id: categories.id, name: categories.name });
 
-      // Use the bridge to get the Database Records for the feeds in this category
-      const recordsInCategory = categoryData.feeds.map(
-        (feedDef) => urlToRecordMap.get(feedDef.feedUrl)!,
-      );
-
-      // Create subscription records directly linking user to feed records
-      const subscriptionValues = recordsInCategory.map((feedRecord) => ({
-        userId,
-        feedId: feedRecord.id,
-        categoryId: categoryRecord.id,
-      }));
-
-      await db
-        .insert(subscriptions)
-        .values(subscriptionValues)
-        .onConflictDoNothing();
-    },
+  const categoryNameToIdMap = new Map(
+    insertedCategories.map((c) => [c.name, c.id]),
   );
 
-  await Promise.all(curatedCategoryPromises);
+  // 4. Setup Curated Subscriptions in a single batch insert
+  const subscriptionValues = sampleFeeds.categories.flatMap((categoryData) => {
+    const categoryId = categoryNameToIdMap.get(categoryData.name);
+    if (categoryId === undefined) {
+      throw new OnboardingInvariantError(
+        `Failed to resolve category ID for category: ${categoryData.name}`,
+      );
+    }
+
+    const recordsInCategory = categoryData.feeds.map(
+      (feedDef) => urlToRecordMap.get(feedDef.feedUrl)!,
+    );
+
+    return recordsInCategory.map((feedRecord) => ({
+      userId,
+      feedId: feedRecord.id,
+      categoryId,
+    }));
+  });
+
+  await db
+    .insert(subscriptions)
+    .values(subscriptionValues)
+    .onConflictDoNothing();
 }

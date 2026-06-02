@@ -128,3 +128,15 @@ export class MarkAllReadIdRequiredError extends Error {
     this.name = "MarkAllReadIdRequiredError";
   }
 }
+
+/**
+ * Thrown when an internal invariant is violated during guest onboarding.
+ * This indicates a programming error, not a data or user error.
+ */
+export class OnboardingInvariantError extends Error {
+  code = "ONBOARDING_INVARIANT" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "OnboardingInvariantError";
+  }
+}
