@@ -3,10 +3,12 @@ name: Deploy
 on:
   push:
     branches: ["**"]
+  delete:
   workflow_dispatch:
 
 jobs:
   validate:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +31,7 @@ jobs:
 
   deploy:
     needs: validate
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
     env:
@@ -45,6 +48,35 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      # --- Preview-only: provision a Neon branch for this git branch ---
+
+      - name: Create Neon Branch
+        if: github.ref != 'refs/heads/main'
+        id: neon
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: preview/${{ github.ref_name }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          username: neondb_owner
+
+      # Expose the Neon branch URL to all subsequent steps in this job
+      - name: Set DATABASE_URL to Neon branch
+        if: github.ref != 'refs/heads/main'
+        run: echo "DATABASE_URL=${{ steps.neon.outputs.db_url_with_pooler }}" >> $GITHUB_ENV
+
+      # Scope the DATABASE_URL on Vercel to this git branch so the deployed
+      # serverless functions connect to the right Neon branch at runtime
+      - name: Set DATABASE_URL on Vercel for this branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "$DATABASE_URL" | bun x vercel env add DATABASE_URL preview \
+            "${{ github.ref_name }}" \
+            --yes --force \
+            --token=${{ secrets.VERCEL_TOKEN }}
+
+      # --- Shared steps (main & preview) ---
 
       # 1. Run migrations first (direct DB access)
       - name: Run Database Migrations
@@ -66,3 +98,33 @@ jobs:
       - name: Seed and Warm Database
         run: |
           NEXT_PUBLIC_APP_URL=${{ env.DEPLOY_URL }} bun run db:seed
+
+  # Runs when a git branch is deleted (e.g. after merging a PR on GitHub)
+  cleanup_preview:
+    name: Cleanup Preview Resources
+    if: |
+      github.event_name == 'delete' &&
+      github.event.ref_type == 'branch' &&
+      github.event.ref != 'main'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Delete Neon Branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: preview/${{ github.event.ref }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Remove DATABASE_URL from Vercel for this branch
+        run: |
+          bun x vercel env rm DATABASE_URL preview \
+            "${{ github.event.ref }}" \
+            --yes \
+            --token=${{ secrets.VERCEL_TOKEN }}
