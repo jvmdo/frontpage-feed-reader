@@ -30,8 +30,10 @@ describe("TopNav", () => {
 
     // Verify navigation links
     expect(screen.getByRole("link", { name: /feed/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /digest/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /discover/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /digest/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /discover/i }),
+    ).toBeInTheDocument();
   });
 
   it("highlights the active link based on pathname", () => {
