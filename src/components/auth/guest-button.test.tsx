@@ -101,10 +101,9 @@ describe("GuestButton", () => {
       name: /signing in as guest/i,
     });
 
-    expect(guestButton).toBeDisabled();
-    expect(
-      screen.getByRole("status", { name: /loading/i }),
-    ).toBeInTheDocument();
+    const loadingIndicator = screen.getByRole("status", { name: /loading/i });
+
+    expect(guestButton).toContainElement(loadingIndicator);
 
     resolveAction({ data: { session: {} }, error: null });
 

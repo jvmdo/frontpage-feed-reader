@@ -25,8 +25,11 @@ export function GuestButton({
   const router = useRouter();
 
   const handleGuestSignIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (isLoading) return;
+
     e.preventDefault();
     setIsLoading(true);
+
     try {
       const { error } = await authClient.signIn.anonymous();
       if (error) {
@@ -46,17 +49,26 @@ export function GuestButton({
     <Button
       variant={variant}
       type="button"
-      className={cn(className)}
-      disabled={disabled || isLoading}
+      className={cn(
+        "relative overflow-hidden",
+        isLoading && "pointer-events-none select-none opacity-80",
+        className,
+      )}
+      aria-label={isLoading ? "Signing in as guest" : undefined}
       onClick={handleGuestSignIn}
       {...props}
     >
-      {isLoading ? (
-        <Spinner data-icon="inline-start" />
-      ) : (
-        showIcon && <UserIcon data-icon="inline-start" />
+      {showIcon && <UserIcon data-icon="inline-start" />}
+      {children || "Try as Guest"}
+      {isLoading && (
+        <span
+          role="status"
+          aria-label="Loading"
+          className="absolute bottom-0 left-0 h-0.75 w-full overflow-hidden bg-current/20"
+        >
+          <span className="absolute top-0 bottom-0 left-0 w-1/3 bg-current animate-loading-bar" />
+        </span>
       )}
-      {children || (isLoading ? "Signing in as guest..." : "Try as Guest")}
     </Button>
   );
 }
