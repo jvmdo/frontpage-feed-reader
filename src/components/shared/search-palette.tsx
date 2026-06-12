@@ -1,9 +1,9 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { parseAsBoolean, parseAsInteger, useQueryStates } from "nuqs";
 import { type ReactNode, useState } from "react";
-import { useDebounceValue, useEventListener } from "usehooks-ts";
+import { useDebounceValue } from "usehooks-ts";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { RelativeDate } from "@/components/shared/relative-date";
 import {
@@ -21,12 +21,6 @@ import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
 import { cn } from "@/lib/utils";
 import type { ListItemWithSource } from "@/types";
 
-const isEditableTarget = (target: EventTarget | null) =>
-  target instanceof HTMLInputElement ||
-  target instanceof HTMLTextAreaElement ||
-  target instanceof HTMLSelectElement ||
-  (target instanceof HTMLElement && target.isContentEditable);
-
 /**
  * Global search palette component.
  * Managed via the `searchPalette=true` URL parameter.
@@ -34,6 +28,8 @@ const isEditableTarget = (target: EventTarget | null) =>
 export function SearchPalette() {
   const [search, setSearch] = useState("");
   const [debouncedValue] = useDebounceValue(search, 500);
+  const trimmedDebounced = debouncedValue.trim();
+
   const {
     data,
     isPending,
@@ -41,50 +37,33 @@ export function SearchPalette() {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useSearchItems(debouncedValue);
+  } = useSearchItems(trimmedDebounced);
 
   // Flatten the infinite query pages into a single array
   const results = data?.pages.flat() ?? [];
 
   const [open, setOpen] = useSearchPaletteState();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  // Toggle palette with keyboard shortcuts
-  useEventListener("keydown", (e) => {
-    if (isEditableTarget(e.target)) return;
-
-    const isCmdK = (e.metaKey || e.ctrlKey) && e.key === "k";
-    const isSlash = e.key === "/";
-
-    if (isCmdK || isSlash) {
-      e.preventDefault();
-      setOpen((prev) => !prev);
-    }
-  });
+  const [, setQueryStates] = useQueryStates(
+    {
+      itemId: parseAsInteger,
+      searchPalette: parseAsBoolean,
+    },
+    {
+      history: "push",
+    },
+  );
 
   const onSelect = (item: ListItemWithSource) => {
-    const params = new URLSearchParams(window.location.search);
-    params.set("itemId", item.item.id.toString());
-    params.delete("searchPalette");
-
-    router.push(`${pathname}?${params.toString()}`);
+    setQueryStates({
+      itemId: item.item.id,
+      searchPalette: null,
+    });
   };
 
-  const isStale = search !== debouncedValue;
-  const isSearching = isStale || (debouncedValue.length >= 2 && isPending);
-  const showHint = !isSearching && search.length < 2;
-  const showError = !isSearching && isError;
-  const showEmpty =
-    !isSearching &&
-    !isError &&
-    debouncedValue.length >= 2 &&
-    results.length === 0;
-  const showResults =
-    !isSearching &&
-    !isError &&
-    debouncedValue.length >= 2 &&
-    results.length > 0;
+  const trimmedSearch = search.trim();
+  const isSearching =
+    trimmedSearch.length >= 2 &&
+    (trimmedSearch !== trimmedDebounced || isPending);
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
@@ -96,23 +75,17 @@ export function SearchPalette() {
           className="flex-1"
         />
         <CommandList className="[scrollbar-width:auto] [::-webkit-scrollbar]:block">
-          {showHint && (
+          {trimmedSearch.length < 2 ? (
             <CommandEmpty>Start typing to search (min 2 chars)</CommandEmpty>
-          )}
-
-          {isSearching && <CommandSearching>Searching...</CommandSearching>}
-
-          {showEmpty && (
-            <CommandEmpty>
-              No results found for "{debouncedValue}".
-            </CommandEmpty>
-          )}
-
-          {showError && (
+          ) : isSearching ? (
+            <CommandSearching>Searching...</CommandSearching>
+          ) : isError ? (
             <CommandEmpty>Something went wrong. Please try again.</CommandEmpty>
-          )}
-
-          {showResults && (
+          ) : results.length === 0 ? (
+            <CommandEmpty>
+              No results found for "{trimmedDebounced}".
+            </CommandEmpty>
+          ) : (
             <>
               <CommandGroup heading="Results">
                 {results.map((result) => (
@@ -130,7 +103,7 @@ export function SearchPalette() {
                   onSelect={() => !isFetchingNextPage && fetchNextPage()}
                   aria-disabled={isFetchingNextPage}
                   className={cn(
-                    "flex justify-center text-xs text-muted-foreground data-selected:text-primary cursor-pointer mb-2 md:mx-40 [&>svg]:hidden",
+                    "flex justify-center text-xs text-muted-foreground data-selected:text-primary cursor-pointer mb-2 [&>svg]:hidden",
                     isFetchingNextPage && "opacity-50 cursor-wait",
                   )}
                 >

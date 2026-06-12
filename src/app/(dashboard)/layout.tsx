@@ -4,14 +4,14 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { GuestBanner } from "@/components/auth/guest-banner";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { ClientDialogs } from "@/components/layout/client-dialogs";
 import { SidebarErrorFallback } from "@/components/layout/components/sidebar-error-fallback";
 import { SidebarFeeds } from "@/components/layout/components/sidebar-feeds";
 import { SidebarFeedsSkeleton } from "@/components/layout/components/sidebar-feeds-skeleton";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { TopNav } from "@/components/layout/top-nav";
-import { ItemReaderLightbox } from "@/components/reader/item-reader-lightbox";
 import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
-import { SearchPalette } from "@/components/shared/search-palette";
+import { SearchShortcutListener } from "@/components/shared/search-shortcut-listener";
 import { WelcomeTour } from "@/components/shared/welcome-tour";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { db } from "@/db";
@@ -77,8 +77,9 @@ export default async function DashboardLayout({
           </div>
           {isNewUser && <WelcomeTour />}
         </SidebarProvider>
-        <ItemReaderLightbox />
-        <SearchPalette />
+
+        <ClientDialogs />
+        <SearchShortcutListener />
       </div>
     </HydrationBoundary>
   );

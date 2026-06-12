@@ -3,11 +3,13 @@
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { usePathname, useRouter } from "next/navigation";
+import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
 import { createMockListItemWithSource } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
 import { SearchPalette } from "./search-palette";
+import { SearchShortcutListener } from "./search-shortcut-listener";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
@@ -15,12 +17,16 @@ vi.mock("next/navigation", () => ({
   usePathname: vi.fn(),
 }));
 
-// Mock usehooks-ts to make debounce immediate in tests
+let mockDebouncedValue: string | null = null;
+
 vi.mock("usehooks-ts", async (importOriginal) => {
   const actual = await importOriginal<any>();
   return {
     ...actual,
-    useDebounceValue: (value: any) => [value, vi.fn()],
+    useDebounceValue: (value: any) => [
+      mockDebouncedValue !== null ? mockDebouncedValue : value,
+      vi.fn(),
+    ],
   };
 });
 
@@ -43,6 +49,16 @@ function PaletteTrigger() {
   );
 }
 
+function TestUrlDebugger() {
+  const { activeItemId } = useActiveItem();
+  const [open] = useSearchPaletteState();
+  return (
+    <div data-testid="url-debug">
+      itemId: {activeItemId ?? "none"}, searchPalette: {open ? "true" : "false"}
+    </div>
+  );
+}
+
 describe("SearchPalette", () => {
   const mockPush = vi.fn();
   const mockResult = createMockListItemWithSource({
@@ -51,17 +67,34 @@ describe("SearchPalette", () => {
     searchSnippet: "This is a <b>React</b> guide.",
   });
 
+  const mockSearchItems = (itemsOrResponse: any) => {
+    server.use(
+      http.get("/api/items", () => {
+        if (itemsOrResponse instanceof HttpResponse) {
+          return itemsOrResponse;
+        }
+        return HttpResponse.json(itemsOrResponse);
+      }),
+    );
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useRouter).mockReturnValue({ push: mockPush } as any);
     vi.mocked(usePathname).mockReturnValue("/dashboard");
+    mockSearchItems([mockResult]);
   });
 
-  const setup = (searchParams?: Record<string, string>) => {
-    const user = userEvent.setup();
+  const setup = (
+    searchParams?: Record<string, string>,
+    userOptions?: Parameters<typeof userEvent.setup>[0],
+  ) => {
+    const user = userEvent.setup(userOptions);
     render(
       <>
         <PaletteTrigger />
+        <TestUrlDebugger />
+        <SearchShortcutListener />
         <SearchPalette />
       </>,
       { searchParams },
@@ -94,12 +127,6 @@ describe("SearchPalette", () => {
   });
 
   it("displays search results from the API", async () => {
-    server.use(
-      http.get("/api/items", () => {
-        return HttpResponse.json([mockResult]);
-      }),
-    );
-
     setup({ searchPalette: "true" });
 
     const input = screen.getByPlaceholderText(/search your articles/i);
@@ -109,12 +136,6 @@ describe("SearchPalette", () => {
   });
 
   it("navigates while preserving the current segment and adding itemId", async () => {
-    server.use(
-      http.get("/api/items", () => {
-        return HttpResponse.json([mockResult]);
-      }),
-    );
-
     const { user } = setup({ searchPalette: "true" });
 
     const input = screen.getByPlaceholderText(/search your articles/i);
@@ -123,8 +144,10 @@ describe("SearchPalette", () => {
     const resultItem = await screen.findByText("React Guide");
     await user.click(resultItem);
 
-    // Expect navigation to stay in the same segment (mocked to /dashboard)
-    expect(mockPush).toHaveBeenCalledWith("/dashboard?itemId=1");
+    // Expect the URL states to update
+    expect(screen.getByTestId("url-debug")).toHaveTextContent(
+      "itemId: 1, searchPalette: false",
+    );
   });
 
   it("loads more results and shows loading state during the fetch", async () => {
@@ -149,7 +172,14 @@ describe("SearchPalette", () => {
         }
 
         // Return 10 items for the first page to trigger hasNextPage
-        return HttpResponse.json(Array(10).fill(mockResult));
+        return HttpResponse.json(
+          Array(10)
+            .fill(null)
+            .map((_, i) => ({
+              ...mockResult,
+              item: { ...mockResult.item, id: i + 3 },
+            })),
+        );
       }),
     );
 
@@ -203,11 +233,7 @@ describe("SearchPalette", () => {
   });
 
   it("shows empty state when no results are found", async () => {
-    server.use(
-      http.get("/api/items", () => {
-        return HttpResponse.json([]);
-      }),
-    );
+    mockSearchItems([]);
 
     setup({ searchPalette: "true" });
 
@@ -220,11 +246,7 @@ describe("SearchPalette", () => {
   });
 
   it("shows error state when the API fails", async () => {
-    server.use(
-      http.get("/api/items", () => {
-        return new HttpResponse(null, { status: 500 });
-      }),
-    );
+    mockSearchItems(new HttpResponse(null, { status: 500 }));
 
     setup({ searchPalette: "true" });
 
@@ -234,5 +256,87 @@ describe("SearchPalette", () => {
     expect(
       await screen.findByText(/something went wrong/i),
     ).toBeInTheDocument();
+  });
+
+  it("allows spaces to be typed but trims them before querying", async () => {
+    setup({ searchPalette: "true" });
+
+    const input = screen.getByPlaceholderText(/search your articles/i);
+    await userEvent.type(input, "  React    ");
+
+    expect(await screen.findByText("React Guide")).toBeInTheDocument();
+  });
+
+  it("displays the trimmed search query in the empty state", async () => {
+    mockSearchItems([]);
+
+    setup({ searchPalette: "true" });
+
+    const input = screen.getByPlaceholderText(/search your articles/i);
+    await userEvent.type(input, "  xyz789  ");
+
+    expect(
+      await screen.findByText(/no results found for "xyz789"/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not trigger search when only spaces are typed", async () => {
+    setup({ searchPalette: "true" });
+
+    const input = screen.getByPlaceholderText(/search your articles/i);
+    await userEvent.type(input, "   ");
+
+    expect(screen.getByText(/start typing to search/i)).toBeInTheDocument();
+    expect(screen.queryByText("React Guide")).not.toBeInTheDocument();
+  });
+
+  it("does not trigger search with fewer than 2 non-whitespace characters", async () => {
+    setup({ searchPalette: "true" });
+
+    const input = screen.getByPlaceholderText(/search your articles/i);
+
+    // Type 1 char
+    await userEvent.type(input, "a");
+    expect(screen.getByText(/start typing to search/i)).toBeInTheDocument();
+    expect(screen.queryByText("React Guide")).not.toBeInTheDocument();
+
+    // Type a space
+    await userEvent.type(input, " ");
+    expect(screen.getByText(/start typing to search/i)).toBeInTheDocument();
+    expect(screen.queryByText("React Guide")).not.toBeInTheDocument();
+
+    // Type second char
+    await userEvent.type(input, "b");
+    expect(await screen.findByText("React Guide")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/start typing to search/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("makes display transitions react to live input immediately, not debounced value", async () => {
+    mockDebouncedValue = "xyz789";
+    mockSearchItems([]);
+
+    setup({ searchPalette: "true" });
+
+    const input = screen.getByPlaceholderText(/search your articles/i);
+    // Type query (both raw and debounced are "xyz789")
+    await userEvent.type(input, "xyz789");
+
+    // Empty state should be visible
+    expect(
+      await screen.findByText(/no results found for "xyz789"/i),
+    ).toBeInTheDocument();
+
+    // Simulate clearing the input, but debounced value remains "xyz789" (lagging)
+    await userEvent.clear(input);
+
+    // Display must update immediately: no empty state, show hint
+    expect(
+      screen.queryByText(/no results found for "xyz789"/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/start typing to search/i)).toBeInTheDocument();
+
+    mockDebouncedValue = null;
   });
 });
