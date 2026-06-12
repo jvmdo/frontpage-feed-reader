@@ -1,11 +1,9 @@
 "use client";
 
 import {
-  AlertCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   FoldHorizontalIcon,
-  RefreshCwIcon,
   TextAlignJustifyIcon,
   UnfoldHorizontalIcon,
   XIcon,
@@ -13,12 +11,8 @@ import {
 import { useState } from "react";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { ReaderView } from "@/components/reader/reader-view";
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { ReaderViewError } from "@/components/reader/reader-view-error";
+import { ReaderViewSkeleton } from "@/components/reader/reader-view-skeleton";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,7 +23,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
@@ -158,9 +151,9 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
         {/* Content Area */}
         <ScrollArea className="h-full" data-tour="reader-content">
           {isPending ? (
-            <ReaderSkeleton />
+            <ReaderViewSkeleton />
           ) : isError ? (
-            <ReaderError message={error.message} retry={refetch} />
+            <ReaderViewError message={error.message} retry={refetch} />
           ) : (
             <ReaderView data={data} />
           )}
@@ -200,64 +193,5 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
         </Button>
       </div>
     </DialogContent>
-  );
-}
-
-function ReaderSkeleton() {
-  return (
-    <div aria-busy="true" className="animate-in fade-in duration-500">
-      <span className="sr-only" role="status">
-        Loading item content
-      </span>
-
-      <div
-        aria-hidden="true"
-        className="flex flex-col gap-8 py-12 px-6 md:px-12 max-w-3xl mx-auto"
-      >
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-5 rounded-full" />
-          <Skeleton className="h-4 w-32" />
-          <span className="opacity-40">•</span>
-          <Skeleton className="h-4 w-20" />
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-3/4" />
-        </div>
-
-        <div className="flex flex-col gap-4 pt-4">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-[90%]" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-[95%]" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ReaderError({
-  message,
-  retry,
-}: {
-  message?: string;
-  retry: () => void;
-}) {
-  return (
-    <div className="p-8">
-      <Alert variant="destructive">
-        <AlertCircleIcon className="size-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{message ?? "Failed to load item"}</AlertDescription>
-        <AlertAction>
-          <Button variant="secondary" onClick={() => retry()}>
-            <RefreshCwIcon data-icon="inline-start" />
-            Try again
-          </Button>
-        </AlertAction>
-      </Alert>
-    </div>
   );
 }
