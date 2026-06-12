@@ -1,105 +1,15 @@
 "use client";
 
-import {
-  type InfiniteData,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toggleBookmarkAction } from "@/actions/item/toggle-bookmark-action";
 import type { ToggleBookmarkInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 import type { ItemWithSource, ListItemWithSource } from "@/types";
+import { findInCache, updateInCache } from "./cache";
 
-type CacheData = InfiniteData<ListItemWithSource[]> | ItemWithSource;
+type CacheData = GenericCacheData<ListItemWithSource, ItemWithSource>;
 
-/**
- * Finds an item in the cache and returns its metadata for optimistic updates.
- */
-function findItemInCache(
-  queries: [readonly unknown[], CacheData | undefined][],
-  itemId: number,
-): {
-  isBookmarked: boolean;
-  isRead: boolean;
-  feedId: number | null;
-} {
-  for (const [_, data] of queries) {
-    if (!data) continue;
-
-    if ("pages" in data) {
-      for (const page of data.pages) {
-        if (!Array.isArray(page)) continue;
-        const found = page.find((i) => i.item.id === itemId);
-        if (found) {
-          return {
-            isBookmarked: !!found.isBookmarked,
-            isRead: !!found.isRead,
-            feedId: found.feed.id,
-          };
-        }
-      }
-    } else if (
-      data &&
-      typeof data === "object" &&
-      "item" in data &&
-      data.item &&
-      data.item.id === itemId
-    ) {
-      return {
-        isBookmarked: !!data.isBookmarked,
-        isRead: !!data.isRead,
-        feedId: data.feed.id,
-      };
-    }
-  }
-
-  return { isBookmarked: false, isRead: false, feedId: null };
-}
-
-/**
- * Updates the bookmark status of an item in the cache.
- */
-function toggleBookmarkInCache(
-  old: CacheData | undefined,
-  itemId: number,
-  newBookmarkedAt: Date | null,
-): CacheData | undefined {
-  if (!old) return old;
-
-  if ("pages" in old) {
-    return {
-      ...old,
-      pages: old.pages.map((page) => {
-        if (!Array.isArray(page)) return page;
-        return page.map((i) =>
-          i.item.id === itemId
-            ? {
-                ...i,
-                isBookmarked: !!newBookmarkedAt,
-                bookmarkedAt: newBookmarkedAt,
-              }
-            : i,
-        );
-      }),
-    };
-  }
-
-  if (
-    old &&
-    typeof old === "object" &&
-    "item" in old &&
-    old.item &&
-    old.item.id === itemId
-  ) {
-    return {
-      ...old,
-      isBookmarked: !!newBookmarkedAt,
-      bookmarkedAt: newBookmarkedAt,
-    };
-  }
-
-  return old;
-}
+import type { GenericCacheData } from "./cache";
 
 /**
  * Hook for toggling the bookmark status of an item.
@@ -109,6 +19,7 @@ export function useToggleBookmark() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["feeds", "items", "bookmark"],
     mutationFn: async (input: ToggleBookmarkInput) => {
       const response = await toggleBookmarkAction(input);
       if (!response.success) throw new Error(response.error);
@@ -130,13 +41,24 @@ export function useToggleBookmark() {
       ]);
 
       // 3. Identify item context
-      const { isBookmarked, isRead } = findItemInCache(previousQueries, itemId);
+      const found = findInCache(previousQueries, (i) => i.item.id === itemId);
+      const isBookmarked = found ? !!found.isBookmarked : false;
+      const isRead = found ? !!found.isRead : false;
 
       // 4. Optimistically update item state
       const newBookmarkedAt = isBookmarked ? null : new Date();
       queryClient.setQueriesData<CacheData>(
         { queryKey: ["feeds", "items"] },
-        (old) => toggleBookmarkInCache(old, itemId, newBookmarkedAt),
+        (old) =>
+          updateInCache(
+            old,
+            (i) => i.item.id === itemId,
+            (item) => ({
+              ...item,
+              isBookmarked: !isBookmarked,
+              bookmarkedAt: newBookmarkedAt,
+            }),
+          ),
       );
 
       // 5. Optimistically update unread bookmark count
@@ -157,7 +79,6 @@ export function useToggleBookmark() {
     },
 
     onError: (_err, _variables, context) => {
-      // Rollback on error
       if (context?.previousQueries) {
         for (const [queryKey, data] of context.previousQueries) {
           queryClient.setQueryData(queryKey, data);
@@ -172,12 +93,15 @@ export function useToggleBookmark() {
     },
 
     onSettled: () => {
-      // Always refetch to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
-      queryClient.invalidateQueries({
-        queryKey: ["feeds", "items"],
-        refetchType: "active",
-      });
+      // Only invalidate queries when the last mutation of this key settles
+      if (
+        queryClient.isMutating({
+          mutationKey: ["feeds", "items", "bookmark"],
+        }) === 1
+      ) {
+        queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+        queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
+      }
     },
   });
 }

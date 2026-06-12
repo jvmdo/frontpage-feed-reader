@@ -5,9 +5,13 @@ import {
 } from "@tanstack/react-query";
 import { markAllReadAction } from "@/actions/feed/mark-all-read-action";
 import { useFeeds } from "@/hooks/feed/use-feeds";
+import type { GenericCacheData } from "@/hooks/item/cache";
+import { updateInCache } from "@/hooks/item/cache";
 import type { MarkAllReadInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
-import type { ListItemWithSource } from "@/types";
+import type { ItemWithSource, ListItemWithSource } from "@/types";
+
+type CacheData = GenericCacheData<ListItemWithSource, ItemWithSource>;
 
 /**
  * Custom hook for marking all items in a scope as read.
@@ -18,6 +22,7 @@ export function useMarkAllRead() {
   const { data: subscriptions } = useFeeds();
 
   return useMutation({
+    mutationKey: ["feeds", "items", "mark-all-read"],
     mutationFn: async (input: MarkAllReadInput) => {
       const response = await markAllReadAction(input);
       if (!response.success) {
@@ -88,39 +93,26 @@ export function useMarkAllRead() {
       }
 
       // 4. Optimistically update items in all queries
-      queryClient.setQueriesData<InfiniteData<ListItemWithSource[]>>(
+      queryClient.setQueriesData<CacheData>(
         { queryKey: ["feeds", "items"] },
-        (old) => {
-          if (!old?.pages) return old;
-
-          return {
-            ...old,
-            pages: old.pages.map((page) =>
-              page.map((itemWithSource) => {
-                let shouldMark = false;
-                if (scope === "global") {
-                  shouldMark = true;
-                } else if (scope === "category" && id) {
-                  const sub = (subscriptions || []).find(
-                    (s) => s.feed.id === itemWithSource.feed.id,
-                  );
-                  if (sub?.subscription.categoryId === id) {
-                    shouldMark = true;
-                  }
-                } else if (scope === "feed" && id) {
-                  if (itemWithSource.feed.id === id) {
-                    shouldMark = true;
-                  }
-                }
-
-                if (shouldMark) {
-                  return { ...itemWithSource, isRead: true };
-                }
-                return itemWithSource;
-              }),
-            ),
-          };
-        },
+        (old) =>
+          updateInCache(
+            old,
+            (itemWithSource) => {
+              if (scope === "global") return true;
+              if (scope === "category" && id) {
+                const sub = (subscriptions || []).find(
+                  (s) => s.feed.id === itemWithSource.feed.id,
+                );
+                return sub?.subscription.categoryId === id;
+              }
+              if (scope === "feed" && id) {
+                return itemWithSource.feed.id === id;
+              }
+              return false;
+            },
+            (itemWithSource) => ({ ...itemWithSource, isRead: true }),
+          ),
       );
 
       return { previousCounts };
@@ -137,9 +129,15 @@ export function useMarkAllRead() {
       queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
     },
     onSettled: () => {
-      // Final sync with server
-      queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
+      // Final sync with server, only when last mutation settles
+      if (
+        queryClient.isMutating({
+          mutationKey: ["feeds", "items", "mark-all-read"],
+        }) === 1
+      ) {
+        queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+        queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
+      }
     },
   });
 }

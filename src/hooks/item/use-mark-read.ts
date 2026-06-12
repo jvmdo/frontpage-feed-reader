@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  type InfiniteData,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { markReadAction } from "@/actions/item/mark-read-action";
 import type { MarkReadInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
@@ -13,68 +9,21 @@ import type {
   ItemWithSource,
   ListItemWithSource,
 } from "@/types";
+import { findInCache, updateInCache } from "./cache";
 
-type CacheData = InfiniteData<ListItemWithSource[]> | ItemWithSource;
+type CacheData = GenericCacheData<ListItemWithSource, ItemWithSource>;
 
-function findItemInCache(
-  queries: [readonly unknown[], CacheData | undefined][],
-  itemId: number,
-): { isUnread: boolean; feedId: number | null } {
-  for (const [_, data] of queries) {
-    if (!data) continue;
+import type { GenericCacheData } from "./cache";
 
-    if ("pages" in data) {
-      for (const page of data.pages) {
-        if (!Array.isArray(page)) continue;
-        const found = page.find((i) => i.item.id === itemId);
-        if (found) return { isUnread: !found.isRead, feedId: found.feed.id };
-      }
-    } else if (
-      data &&
-      typeof data === "object" &&
-      "item" in data &&
-      data.item &&
-      data.item.id === itemId
-    ) {
-      return { isUnread: !data.isRead, feedId: data.feed.id };
-    }
-  }
-
-  return { isUnread: false, feedId: null };
-}
-
-function markReadInCache(old: CacheData | undefined, itemId: number) {
-  if (!old) return old;
-
-  if ("pages" in old) {
-    return {
-      ...old,
-      pages: old.pages.map((page) => {
-        if (!Array.isArray(page)) return page;
-        return page.map((i) =>
-          i.item.id === itemId ? { ...i, isRead: true } : i,
-        );
-      }),
-    };
-  }
-
-  if (
-    old &&
-    typeof old === "object" &&
-    "item" in old &&
-    old.item &&
-    old.item.id === itemId
-  ) {
-    return { ...old, isRead: true };
-  }
-
-  return old;
-}
-
+/**
+ * Hook for marking the status of an item as read.
+ * Implements optimistic updates for both the item state and the unread count.
+ */
 export function useMarkRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["feeds", "items", "mark-read"],
     mutationFn: async (input: MarkReadInput) => {
       const response = await markReadAction(input);
       if (!response.success) throw new Error(response.error);
@@ -99,12 +48,22 @@ export function useMarkRead() {
       ]);
 
       // 3. Identify the item context
-      const { isUnread, feedId } = findItemInCache(previousQueries, itemId);
+      const found = findInCache(previousQueries, (i) => i.item.id === itemId);
+      const isUnread = found ? !found.isRead : false;
+      const feedId = found ? found.feed.id : null;
 
       // 4. Update items across all cached queries
       queryClient.setQueriesData<CacheData>(
         { queryKey: ["feeds", "items"] },
-        (old) => markReadInCache(old, itemId),
+        (old) =>
+          updateInCache(
+            old,
+            (i) => i.item.id === itemId,
+            (item) => ({
+              ...item,
+              isRead: true,
+            }),
+          ),
       );
 
       // 5. Update unread counts if the item was unread
@@ -154,11 +113,18 @@ export function useMarkRead() {
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
-      queryClient.invalidateQueries({
-        queryKey: ["feeds", "items"],
-        refetchType: "active",
-      });
+      // Only invalidate queries when the last mutation of this key settles
+      if (
+        queryClient.isMutating({
+          mutationKey: ["feeds", "items", "mark-read"],
+        }) === 1
+      ) {
+        queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+        queryClient.invalidateQueries({
+          queryKey: ["feeds", "items"],
+          refetchType: "active",
+        });
+      }
     },
   });
 }
