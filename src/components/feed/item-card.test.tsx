@@ -3,7 +3,6 @@
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { useActiveItem } from "@/hooks/item/use-active-item";
-import { useMarkRead } from "@/hooks/item/use-mark-read";
 import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
 import { FeedLayout } from "@/hooks/ui/use-view-options";
 import { createMockItemWithSource } from "@/tests/factories";
@@ -11,10 +10,6 @@ import { render, screen } from "@/tests/rtl-utils";
 import { ItemCard } from "./item-card";
 
 // Mock the hooks
-vi.mock("@/hooks/item/use-mark-read", () => ({
-  useMarkRead: vi.fn(),
-}));
-
 vi.mock("@/hooks/item/use-active-item", () => ({
   useActiveItem: vi.fn(),
 }));
@@ -24,15 +19,11 @@ vi.mock("@/hooks/item/use-toggle-bookmark", () => ({
 }));
 
 describe("ItemCard", () => {
-  const mockMarkAsRead = vi.fn();
   const mockSetActiveItem = vi.fn();
   const mockToggleBookmark = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useMarkRead).mockReturnValue({
-      mutate: mockMarkAsRead,
-    } as any);
     vi.mocked(useActiveItem).mockReturnValue({
       setActiveItemId: mockSetActiveItem,
     } as any);
@@ -63,9 +54,9 @@ describe("ItemCard", () => {
     expect(dot).not.toBeInTheDocument();
   });
 
-  it("calls markAsRead and setActiveItemId when clicking an unread item card", async () => {
+  it("calls setActiveItemId when clicking an item card", async () => {
     const user = userEvent.setup();
-    const data = createMockItemWithSource({ isRead: false });
+    const data = createMockItemWithSource();
     render(<ItemCard data={data} layout={FeedLayout.List} />);
 
     const button = screen.getByRole("button", {
@@ -73,21 +64,6 @@ describe("ItemCard", () => {
     });
     await user.click(button);
 
-    expect(mockMarkAsRead).toHaveBeenCalledWith({ itemId: data.item.id });
-    expect(mockSetActiveItem).toHaveBeenCalledWith(data.item.id);
-  });
-
-  it("calls only setActiveItemId when clicking an already read item card", async () => {
-    const user = userEvent.setup();
-    const data = createMockItemWithSource({ isRead: true });
-    render(<ItemCard data={data} layout={FeedLayout.List} />);
-
-    const button = screen.getByRole("button", {
-      name: RegExp(data.item.title!, "i"),
-    });
-    await user.click(button);
-
-    expect(mockMarkAsRead).not.toHaveBeenCalled();
     expect(mockSetActiveItem).toHaveBeenCalledWith(data.item.id);
   });
 
@@ -141,8 +117,7 @@ describe("ItemCard", () => {
     // Verify bookmark click triggered the bookmark hook
     expect(mockToggleBookmark).toHaveBeenCalledWith({ itemId: data.item.id });
 
-    // Verify bookmark click DID NOT trigger the reader view or mark as read
+    // Verify bookmark click DID NOT trigger the reader view
     expect(mockSetActiveItem).not.toHaveBeenCalled();
-    expect(mockMarkAsRead).not.toHaveBeenCalled();
   });
 });

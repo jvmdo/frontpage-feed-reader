@@ -1,6 +1,5 @@
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItems } from "@/hooks/item/use-items";
-import { useMarkRead } from "@/hooks/item/use-mark-read";
 
 /**
  * Hook to handle navigation between feed items in the Reader View.
@@ -10,17 +9,12 @@ import { useMarkRead } from "@/hooks/item/use-mark-read";
 export function useItemReaderNavigation() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useItems();
   const { activeItemId, setActiveItemId } = useActiveItem();
-  const { mutate: markAsRead } = useMarkRead();
 
   const currentIndex = data.findIndex((i) => i.item.id === activeItemId);
   const nextItem = currentIndex !== -1 ? data[currentIndex + 1] : null;
   const prevItem = currentIndex !== -1 ? data[currentIndex - 1] : null;
 
   const navigateTo = (itemId: number) => {
-    const item = data.find((i) => i.item.id === itemId);
-    if (item && !item.isRead) {
-      markAsRead({ itemId: item.item.id });
-    }
     setActiveItemId(itemId);
   };
 

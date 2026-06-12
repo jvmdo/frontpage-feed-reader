@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
+import { useMarkRead } from "@/hooks/item/use-mark-read";
 import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
 import { createMockItemWithSource } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
@@ -16,6 +17,7 @@ vi.mock("@/hooks/item/use-item");
 vi.mock("@/hooks/item/use-item-reader-navigation");
 vi.mock("@/hooks/ui/use-reader-shortcuts");
 vi.mock("@/hooks/item/use-toggle-bookmark");
+vi.mock("@/hooks/item/use-mark-read");
 
 describe("ReaderView", () => {
   beforeEach(() => {
@@ -79,6 +81,8 @@ describe("ReaderView", () => {
 describe("ItemReaderLightbox Integration", () => {
   const mockSetActiveItemId = vi.fn();
 
+  const mockMarkAsRead = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -96,6 +100,10 @@ describe("ItemReaderLightbox Integration", () => {
 
     vi.mocked(useToggleBookmark).mockReturnValue({
       mutate: vi.fn(),
+    } as any);
+
+    vi.mocked(useMarkRead).mockReturnValue({
+      mutate: mockMarkAsRead,
     } as any);
   });
 
@@ -143,5 +151,25 @@ describe("ItemReaderLightbox Integration", () => {
     await userEvent.click(screen.getByRole("button", { name: /close/i }));
 
     expect(mockSetActiveItemId).toHaveBeenCalledWith(null);
+  });
+
+  it("marks an unread item as read when loaded", () => {
+    const data = createMockItemWithSource({ item: { id: 1 }, isRead: false });
+
+    vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
+
+    render(<ItemReaderLightbox />);
+
+    expect(mockMarkAsRead).toHaveBeenCalledWith({ itemId: 1 });
+  });
+
+  it("does not mark an already read item as read when loaded", () => {
+    const data = createMockItemWithSource({ item: { id: 1 }, isRead: true });
+
+    vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
+
+    render(<ItemReaderLightbox />);
+
+    expect(mockMarkAsRead).not.toHaveBeenCalled();
   });
 });

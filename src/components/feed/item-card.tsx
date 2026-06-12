@@ -6,7 +6,6 @@ import { RelativeDate } from "@/components/shared/relative-date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useActiveItem } from "@/hooks/item/use-active-item";
-import { useMarkRead } from "@/hooks/item/use-mark-read";
 import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
 import { FeedLayout } from "@/hooks/ui/use-view-options";
 import { cn } from "@/lib/utils";
@@ -74,14 +73,10 @@ export function ItemCard({
   className,
   "data-tour": dataTour,
 }: ItemCardProps) {
-  const { isRead, item } = data;
-  const { mutate: markAsRead } = useMarkRead();
+  const { item } = data;
   const { setActiveItemId } = useActiveItem();
 
   const handleOpenReader = () => {
-    if (!isRead) {
-      markAsRead({ itemId: item.id });
-    }
     setActiveItemId(item.id);
   };
 

@@ -4,13 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { useItems } from "@/hooks/item/use-items";
-import { useMarkRead } from "@/hooks/item/use-mark-read";
 import { createMockItemWithSource } from "@/tests/factories";
 import { renderHook } from "@/tests/rtl-utils";
 
 vi.mock("@/hooks/item/use-items");
 vi.mock("@/hooks/item/use-active-item");
-vi.mock("@/hooks/item/use-mark-read");
 
 describe("useFeedNavigation", () => {
   const mockItems = [
@@ -31,8 +29,6 @@ describe("useFeedNavigation", () => {
       activeItemId: 2,
       setActiveItemId: vi.fn(),
     } as any);
-
-    vi.mocked(useMarkRead).mockReturnValue({ mutate: vi.fn() } as any);
 
     const { result } = renderHook(() => useItemReaderNavigation());
 
@@ -58,9 +54,8 @@ describe("useFeedNavigation", () => {
     expect(result.current.nextItemId).toBe(2);
   });
 
-  it("should navigate to next and mark as read if unread", () => {
+  it("should navigate to next", () => {
     const setActiveItemId = vi.fn();
-    const markAsRead = vi.fn();
 
     vi.mocked(useItems).mockReturnValue({
       data: mockItems,
@@ -72,19 +67,15 @@ describe("useFeedNavigation", () => {
       setActiveItemId,
     } as any);
 
-    vi.mocked(useMarkRead).mockReturnValue({ mutate: markAsRead } as any);
-
     const { result } = renderHook(() => useItemReaderNavigation());
 
     result.current.goToNext();
 
     expect(setActiveItemId).toHaveBeenCalledWith(2);
-    expect(markAsRead).toHaveBeenCalledWith({ itemId: 2 });
   });
 
-  it("should not mark as read if item is already read", () => {
+  it("should navigate to prev", () => {
     const setActiveItemId = vi.fn();
-    const markAsRead = vi.fn();
 
     vi.mocked(useItems).mockReturnValue({
       data: mockItems,
@@ -95,14 +86,11 @@ describe("useFeedNavigation", () => {
       setActiveItemId,
     } as any);
 
-    vi.mocked(useMarkRead).mockReturnValue({ mutate: markAsRead } as any);
-
     const { result } = renderHook(() => useItemReaderNavigation());
 
     result.current.goToPrev();
 
     expect(setActiveItemId).toHaveBeenCalledWith(1);
-    expect(markAsRead).not.toHaveBeenCalled();
   });
 
   it("should trigger fetchNextPage when navigating near the end of the list", () => {

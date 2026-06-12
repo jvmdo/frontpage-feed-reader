@@ -8,7 +8,7 @@ import {
   UnfoldHorizontalIcon,
   XIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { ReaderView } from "@/components/reader/reader-view";
 import { ReaderViewError } from "@/components/reader/reader-view-error";
@@ -27,6 +27,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
+import { useMarkRead } from "@/hooks/item/use-mark-read";
 import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { cn } from "@/lib/utils";
@@ -55,7 +56,16 @@ export function ItemReaderLightbox() {
 function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
   const { data, isPending, isError, error, refetch } = useItem(activeItemId);
   const { goToNext, goToPrev, hasNext, hasPrev } = useItemReaderNavigation();
+  const { mutate: markAsRead } = useMarkRead();
   const { isTourActive } = useTourStore();
+
+  const shouldMarkAsRead = data && !data.isRead;
+
+  useEffect(() => {
+    if (shouldMarkAsRead) {
+      markAsRead({ itemId: activeItemId });
+    }
+  }, [activeItemId, shouldMarkAsRead]);
 
   const [readerWidth, setReaderWidth] = useState<ReaderWidth>(
     ReaderWidthValues[0],
