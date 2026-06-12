@@ -21,7 +21,7 @@ describe("useFeedNavigation", () => {
 
   it("should identify neighbors correctly", () => {
     vi.mocked(useItems).mockReturnValue({
-      data: { pages: [mockItems] },
+      data: mockItems,
       fetchNextPage: vi.fn(),
       hasNextPage: false,
       isFetchingNextPage: false,
@@ -44,7 +44,7 @@ describe("useFeedNavigation", () => {
 
   it("should return null for neighbors at boundaries", () => {
     vi.mocked(useItems).mockReturnValue({
-      data: { pages: [mockItems] },
+      data: mockItems,
     } as any);
 
     vi.mocked(useActiveItem).mockReturnValue({
@@ -63,7 +63,7 @@ describe("useFeedNavigation", () => {
     const markAsRead = vi.fn();
 
     vi.mocked(useItems).mockReturnValue({
-      data: { pages: [mockItems] },
+      data: mockItems,
       hasNextPage: false,
     } as any);
 
@@ -87,7 +87,7 @@ describe("useFeedNavigation", () => {
     const markAsRead = vi.fn();
 
     vi.mocked(useItems).mockReturnValue({
-      data: { pages: [mockItems] },
+      data: mockItems,
     } as any);
 
     vi.mocked(useActiveItem).mockReturnValue({
@@ -112,7 +112,7 @@ describe("useFeedNavigation", () => {
     );
 
     vi.mocked(useItems).mockReturnValue({
-      data: { pages: [manyItems] },
+      data: manyItems,
       fetchNextPage,
       hasNextPage: true,
       isFetchingNextPage: false,

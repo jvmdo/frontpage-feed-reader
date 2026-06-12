@@ -14,7 +14,11 @@ export function useItems() {
   const sortOrder = urlSortOrder ?? defaultSort.sortOrder;
   const sortBy = urlSortBy ?? defaultSort.sortBy;
 
-  return useSuspenseInfiniteQuery<ListItemWithSource[]>({
+  return useSuspenseInfiniteQuery<
+    ListItemWithSource[],
+    Error,
+    ListItemWithSource[]
+  >({
     queryKey: [
       "feeds",
       "items",
@@ -72,5 +76,6 @@ export function useItems() {
       return allPages.reduce((total, page) => total + page.length, 0);
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    select: (data) => data.pages.flat(),
   });
 }

@@ -65,7 +65,7 @@ export function ItemList() {
     setScrollParent(document.getElementById("feed-container"));
   }, []);
 
-  const items = data?.pages?.flat() ?? [];
+  const items = data ?? [];
 
   const context: VirtuosoContext = {
     isFetching: isFetchingNextPage,

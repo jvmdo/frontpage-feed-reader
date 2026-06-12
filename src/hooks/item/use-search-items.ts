@@ -8,7 +8,7 @@ const SEARCH_PAGE_SIZE = 10;
  * Expects an already-debounced search term.
  */
 export function useSearchItems(search: string) {
-  return useInfiniteQuery<ListItemWithSource[]>({
+  return useInfiniteQuery<ListItemWithSource[], Error, ListItemWithSource[]>({
     queryKey: ["items", "search", search],
     queryFn: async ({ pageParam = 0 }) => {
       if (!search) return [];
@@ -32,5 +32,6 @@ export function useSearchItems(search: string) {
     },
     enabled: search.length >= 2,
     staleTime: 1000 * 60, // 1 minute
+    select: (data) => data.pages.flat(),
   });
 }

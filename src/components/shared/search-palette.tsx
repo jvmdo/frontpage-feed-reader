@@ -40,7 +40,7 @@ export function SearchPalette() {
   } = useSearchItems(trimmedDebounced);
 
   // Flatten the infinite query pages into a single array
-  const results = data?.pages.flat() ?? [];
+  const results = data ?? [];
 
   const [open, setOpen] = useSearchPaletteState();
   const [, setQueryStates] = useQueryStates(
