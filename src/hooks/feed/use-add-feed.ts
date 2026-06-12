@@ -40,9 +40,10 @@ export function useAddFeed() {
         },
       );
 
-      // Invalidate relevant queries when a feed is added.
+      // Invalidate specific dependent queries to sync with the server truth.
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds"] });
+      queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
     },
   });
 }

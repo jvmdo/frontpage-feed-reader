@@ -41,11 +41,9 @@ export function useUpdateFeed() {
         },
       );
 
-      // Invalidate subscriptions to ensure consistency.
+      // Invalidate subscriptions and dependent feed/item queries.
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-
-      // Invalidate all feed items queries. When a categoryId changes,
-      // the existing cached item lists for categories/all-items are no longer valid.
+      queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
       queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
     },
   });

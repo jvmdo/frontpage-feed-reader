@@ -40,9 +40,8 @@ export function useRefreshFeed() {
         );
       }
 
-      // Invalidate to ensure consistent state across other potential queries.
+      // Invalidate to ensure consistent state across other queries.
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds"] });
       queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
       queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
     },

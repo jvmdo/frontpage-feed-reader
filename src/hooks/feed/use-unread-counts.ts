@@ -8,8 +8,8 @@ import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 export function useUnreadCounts() {
   return useSuspenseQuery<UnreadCounts>({
     queryKey: ["feeds", "unread-counts"],
-    queryFn: async () => {
-      const response = await fetch("/api/feeds/unread-counts");
+    queryFn: async ({ signal }) => {
+      const response = await fetch("/api/feeds/unread-counts", { signal });
 
       if (!response.ok) {
         throw new Error("Failed to fetch unread counts");

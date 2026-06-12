@@ -69,3 +69,32 @@ export function updateInCache<TData extends GenericCacheData<any, any>>(
 
   return old;
 }
+
+/**
+ * Filters out matching elements from the cache data structure (supporting both
+ * paginated infinite queries and single-entity layouts).
+ */
+export function filterFromCache<TData extends GenericCacheData<any, any>>(
+  old: TData | undefined,
+  predicate: (item: any) => boolean,
+): TData | undefined {
+  if (!old) return old;
+
+  if (typeof old === "object" && "pages" in old && Array.isArray(old.pages)) {
+    return {
+      ...old,
+      pages: old.pages.map((page) => {
+        if (!Array.isArray(page)) return page;
+        return page.filter((i) => !predicate(i));
+      }),
+    } as TData;
+  }
+
+  if (old && typeof old === "object") {
+    if (predicate(old)) {
+      return undefined;
+    }
+  }
+
+  return old;
+}

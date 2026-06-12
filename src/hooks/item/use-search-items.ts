@@ -10,11 +10,11 @@ const SEARCH_PAGE_SIZE = 10;
 export function useSearchItems(search: string) {
   return useInfiniteQuery<ListItemWithSource[], Error, ListItemWithSource[]>({
     queryKey: ["items", "search", search],
-    queryFn: async ({ pageParam = 0 }) => {
+    queryFn: async ({ pageParam = 0, signal }) => {
       if (!search) return [];
 
       const url = `/api/items?search=${encodeURIComponent(search)}&limit=${SEARCH_PAGE_SIZE}&offset=${pageParam}`;
-      const response = await fetch(url);
+      const response = await fetch(url, { signal });
 
       if (!response.ok) {
         throw new Error("Failed to search items");

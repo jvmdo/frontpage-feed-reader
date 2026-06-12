@@ -8,8 +8,8 @@ import type { FeedWithSubscription } from "@/types";
 export function useFeeds() {
   return useSuspenseQuery<FeedWithSubscription[]>({
     queryKey: ["subscriptions"],
-    queryFn: async () => {
-      const response = await fetch("/api/feeds/subscriptions");
+    queryFn: async ({ signal }) => {
+      const response = await fetch("/api/feeds/subscriptions", { signal });
 
       if (!response.ok) {
         throw new Error("Failed to fetch feeds");

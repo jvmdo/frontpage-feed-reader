@@ -1,7 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { removeFeedAction } from "@/actions/feed/remove-feed-action";
+import type { GenericCacheData } from "@/hooks/item/cache";
+import { filterFromCache } from "@/hooks/item/cache";
 import type { RemoveFeedInput } from "@/lib/validations/feed";
-import type { FeedWithSubscription } from "@/types";
+import type {
+  FeedWithSubscription,
+  ItemWithSource,
+  ListItemWithSource,
+} from "@/types";
+
+type ItemCacheData = GenericCacheData<ListItemWithSource, ItemWithSource>;
 
 /**
  * Custom hook for removing a feed subscription.
@@ -23,7 +31,7 @@ export function useRemoveFeed() {
     onSuccess: (deletedSubscription) => {
       if (!deletedSubscription) return;
 
-      // Manually update the 'subscriptions' cache by filtering out the removed item.
+      // 1. Manually update the 'subscriptions' cache by filtering out the removed item.
       queryClient.setQueryData<FeedWithSubscription[]>(
         ["subscriptions"],
         (old) => {
@@ -35,9 +43,20 @@ export function useRemoveFeed() {
         },
       );
 
-      // Also invalidate both subscriptions and feeds queries.
+      // 2. Manually update the 'items' cache to remove all articles from this deleted feed.
+      queryClient.setQueriesData<ItemCacheData>(
+        { queryKey: ["feeds", "items"] },
+        (old) =>
+          filterFromCache(
+            old,
+            (item) => item.feed.id === deletedSubscription.feedId,
+          ),
+      );
+
+      // 3. Invalidate specific dependent queries to sync with the server truth.
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds"] });
+      queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
     },
   });
 }

@@ -32,7 +32,7 @@ export function useItems() {
         sortOrder,
       },
     ],
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam, signal }) => {
       const offset = pageParam as number;
       const baseUrl = typeof window !== "undefined" ? "" : settings.baseUrl;
       let url = `${baseUrl}/api/items?offset=${offset}&limit=${PAGINATION_LIMIT}`;
@@ -59,7 +59,7 @@ export function useItems() {
 
       url += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, { signal });
 
       if (!response.ok) {
         throw new Error("Failed to fetch feed items");
