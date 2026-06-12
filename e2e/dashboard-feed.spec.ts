@@ -53,9 +53,9 @@ test("renders items from real-world feed fixtures", async ({ authedPage }) => {
     })),
   );
 
-  // 1. Navigate to the dashboard
-  // No need to explicitly wait for hydration because there's no user interactions in this test
+  // 1. Navigate to the dashboard and wait for hydration
   await page.goto("/dashboard");
+  await page.waitForSelector('body[data-hydrated="true"]');
 
   const sidebar = page.locator('[data-slot="sidebar"]');
   const main = page.getByRole("main");
@@ -75,15 +75,24 @@ test("renders items from real-world feed fixtures", async ({ authedPage }) => {
     sidebar.getByRole("link", { name: /standard atom/i }),
   ).toBeVisible();
 
-  // Scroll to bottom to ensure Atom items (older) are rendered by Virtuoso
-  await page.evaluate(() => {
-    const container = document.getElementById("feed-container");
-    if (container) container.scrollTo(0, container.scrollHeight);
+  const olderArticle = main.getByRole("article", {
+    name: /optimizing vercel sandbox/i,
   });
 
-  await expect(
-    main.getByRole("article", { name: /optimizing vercel sandbox/i }),
-  ).toBeVisible();
+  // Gently scroll down gradually until the target article is mounted in the DOM
+  for (let i = 0; i < 10; i++) {
+    if ((await olderArticle.count()) > 0) {
+      break;
+    }
+    await page.evaluate(() => {
+      const container = document.getElementById("feed-container");
+      if (container) container.scrollBy(0, 400);
+    });
+    await page.waitForTimeout(200);
+  }
+
+  await olderArticle.scrollIntoViewIfNeeded();
+  await expect(olderArticle).toBeVisible();
 
   // Scroll back to top to ensure RSS items (newer) are rendered again
   await page.evaluate(() => {
