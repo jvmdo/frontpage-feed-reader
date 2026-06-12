@@ -18,3 +18,16 @@ export function generateAnonName() {
     style: "capital",
   });
 }
+
+/**
+ * Checks if the event target is an editable element (input, textarea, select, or contenteditable).
+ * Used to prevent global keyboard shortcuts from firing when typing.
+ */
+export function isEditableTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  );
+}

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { isEditableTarget } from "@/lib/utils";
 
 interface UseReaderShortcutsOptions {
   onNext: () => void;
@@ -19,12 +20,7 @@ export function useReaderShortcuts({
     if (!enabled) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input/textarea
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        (event.target as HTMLElement).isContentEditable
-      ) {
+      if (isEditableTarget(event.target)) {
         return;
       }
 
