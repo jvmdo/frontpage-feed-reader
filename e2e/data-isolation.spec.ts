@@ -133,4 +133,57 @@ test.describe("Data Isolation", () => {
       page.getByRole("main").getByText(/no feeds yet/i),
     ).toBeVisible();
   });
+
+  test("User switching (logout and login B) does not leak User A's feeds in sidebar", async ({
+    authedPage,
+  }) => {
+    const { page, userId: userAId } = authedPage;
+
+    // 1. Setup: User A is subscribed to a unique feed
+    const feedTitleA = `User A Feed ${crypto.randomUUID()}`;
+    await seedFeedWithSubscription(db, userAId, {
+      title: feedTitleA,
+      url: `https://example.com/usera.xml?tenant=${userAId}`,
+    });
+
+    // 2. User A goes to dashboard and verifies their feed is visible
+    await page.goto("/dashboard");
+    await page.waitForSelector('body[data-hydrated="true"]');
+    await expect(page.getByText(feedTitleA)).toBeVisible();
+
+    // 3. User A logs out
+    await page.getByRole("button", { name: /user menu/i }).click();
+    await page.getByRole("menuitem", { name: /log out/i }).click();
+    await page.waitForURL("**/sign-in");
+
+    // 4. User B signs up
+    const emailB = `isolation-b-${crypto.randomUUID()}@example.com`;
+    const nameB = "User B";
+    const passwordB = "password123";
+
+    await page.goto("/sign-up");
+    await page.waitForSelector('body[data-hydrated="true"]');
+    await page.getByLabel(/full name/i).fill(nameB);
+    await page.getByLabel(/email/i).fill(emailB);
+    await page.getByLabel(/^password$/i).fill(passwordB);
+    await page.getByLabel(/confirm password/i).fill(passwordB);
+    await page.getByRole("button", { name: /^create account$/i }).click();
+
+    // Wait for redirect to dashboard
+    await page.waitForURL("**/dashboard");
+    await page.waitForSelector('body[data-hydrated="true"]');
+
+    // Dismiss welcome dialog for User B if it appears
+    const laterButton = page.getByRole("button", { name: /later/i });
+    if (await laterButton.isVisible()) {
+      await laterButton.click();
+    }
+
+    // 5. Verify: User A's feed is NOT visible in User B's sidebar
+    const sidebar = page.locator('[data-slot="sidebar"]');
+    await expect(sidebar.getByText(feedTitleA)).not.toBeVisible();
+
+    // Cleanup User B
+    await db.delete(user).where(eq(user.email, emailB));
+  });
 });
