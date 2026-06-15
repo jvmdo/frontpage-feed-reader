@@ -108,6 +108,21 @@ describe("useToggleBookmark", () => {
       });
     });
 
+    it("toggles bookmark status in the search results cache", async () => {
+      const searchKey = ["feeds", "items", "search", "react"];
+      queryClient.setQueryData(
+        searchKey,
+        makePagedCache([makeItem({ isBookmarked: false })]),
+      );
+      const { result } = renderHook(() => useToggleBookmark(), { wrapper });
+
+      result.current.mutate({ itemId: ITEM_ID });
+
+      await waitFor(() => {
+        expect(getItemsData(searchKey)?.pages[0][0].isBookmarked).toBe(true);
+      });
+    });
+
     it("increments saved unread count when bookmarking an unread item", async () => {
       seedCache({ isBookmarked: false, isRead: false, savedCount: 5 });
       const { result } = renderHook(() => useToggleBookmark(), { wrapper });

@@ -107,6 +107,21 @@ describe("useSetReadStatus", () => {
       });
     });
 
+    it("marks the item as read in the search results cache", async () => {
+      const searchKey = ["feeds", "items", "search", "react"];
+      queryClient.setQueryData(
+        searchKey,
+        makePagedCache([makeItem({ isRead: false })]),
+      );
+      const { result } = renderHook(() => useSetReadStatus(), { wrapper });
+
+      result.current.mutate({ itemId: ITEM_ID, isRead: true });
+
+      await waitFor(() => {
+        expect(getItemsData(searchKey)?.pages[0][0].isRead).toBe(true);
+      });
+    });
+
     it("decrements global, feed, and category unread counts for an unread item", async () => {
       seedCache({ isRead: false, global: 10, feedCount: 5, catCount: 8 });
       const { result } = renderHook(() => useSetReadStatus(), { wrapper });

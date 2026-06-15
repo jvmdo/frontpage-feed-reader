@@ -9,7 +9,7 @@ const SEARCH_PAGE_SIZE = 10;
  */
 export function useSearchItems(search: string) {
   return useInfiniteQuery<ListItemWithSource[], Error, ListItemWithSource[]>({
-    queryKey: ["items", "search", search],
+    queryKey: ["feeds", "items", "search", search],
     queryFn: async ({ pageParam = 0, signal }) => {
       if (!search) return [];
 
