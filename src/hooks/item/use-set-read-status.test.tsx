@@ -2,11 +2,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { markReadAction } from "@/actions/item/mark-read-action";
-import { useMarkRead } from "@/hooks/item/use-mark-read";
+import { setReadStatusAction } from "@/actions/item/set-read-status-action";
+import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
 import { renderHook, waitFor } from "@/tests/rtl-utils";
 
-vi.mock("@/actions/item/mark-read-action");
+vi.mock("@/actions/item/set-read-status-action");
 
 const FEED_ID = 1;
 const CATEGORY_ID = 10;
@@ -44,7 +44,7 @@ function makeSubscriptions() {
   ];
 }
 
-describe("useMarkRead", () => {
+describe("useSetReadStatus", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -91,14 +91,16 @@ describe("useMarkRead", () => {
   describe("optimistic updates", () => {
     beforeEach(() => {
       // Never resolves — isolates optimistic phase
-      vi.mocked(markReadAction).mockImplementation(() => new Promise(() => {}));
+      vi.mocked(setReadStatusAction).mockImplementation(
+        () => new Promise(() => {}),
+      );
     });
 
     it("marks the item as read in the paginated cache", async () => {
       seedCache({ isRead: false });
-      const { result } = renderHook(() => useMarkRead(), { wrapper });
+      const { result } = renderHook(() => useSetReadStatus(), { wrapper });
 
-      result.current.mutate({ itemId: ITEM_ID });
+      result.current.mutate({ itemId: ITEM_ID, isRead: true });
 
       await waitFor(() => {
         expect(getItemsData()?.pages[0][0].isRead).toBe(true);
@@ -107,9 +109,9 @@ describe("useMarkRead", () => {
 
     it("decrements global, feed, and category unread counts for an unread item", async () => {
       seedCache({ isRead: false, global: 10, feedCount: 5, catCount: 8 });
-      const { result } = renderHook(() => useMarkRead(), { wrapper });
+      const { result } = renderHook(() => useSetReadStatus(), { wrapper });
 
-      result.current.mutate({ itemId: ITEM_ID });
+      result.current.mutate({ itemId: ITEM_ID, isRead: true });
 
       await waitFor(() => {
         const counts = getCountsData();
@@ -121,9 +123,9 @@ describe("useMarkRead", () => {
 
     it("does not decrement counts when item is already read", async () => {
       seedCache({ isRead: true, global: 10, feedCount: 5, catCount: 8 });
-      const { result } = renderHook(() => useMarkRead(), { wrapper });
+      const { result } = renderHook(() => useSetReadStatus(), { wrapper });
 
-      result.current.mutate({ itemId: ITEM_ID });
+      result.current.mutate({ itemId: ITEM_ID, isRead: true });
 
       await waitFor(() => {
         expect(getItemsData()?.pages[0][0].isRead).toBe(true);
@@ -134,13 +136,38 @@ describe("useMarkRead", () => {
       expect(counts?.feeds[FEED_ID]).toBe(5);
     });
 
+    it("marks the item as unread in the paginated cache", async () => {
+      seedCache({ isRead: true });
+      const { result } = renderHook(() => useSetReadStatus(), { wrapper });
+
+      result.current.mutate({ itemId: ITEM_ID, isRead: false });
+
+      await waitFor(() => {
+        expect(getItemsData()?.pages[0][0].isRead).toBe(false);
+      });
+    });
+
+    it("increments global, feed, and category unread counts when marking unread", async () => {
+      seedCache({ isRead: true, global: 10, feedCount: 5, catCount: 8 });
+      const { result } = renderHook(() => useSetReadStatus(), { wrapper });
+
+      result.current.mutate({ itemId: ITEM_ID, isRead: false });
+
+      await waitFor(() => {
+        const counts = getCountsData();
+        expect(counts?.global).toBe(11);
+        expect(counts?.feeds[FEED_ID]).toBe(6);
+        expect(counts?.categories[CATEGORY_ID]).toBe(9);
+      });
+    });
+
     it("still decrements global and feed counts when subscriptions are missing from cache", async () => {
       // Remove subscriptions from cache
       queryClient.removeQueries({ queryKey: SUBS_KEY });
       seedCache({ isRead: false, global: 10, feedCount: 5, catCount: 8 });
 
-      const { result } = renderHook(() => useMarkRead(), { wrapper });
-      result.current.mutate({ itemId: ITEM_ID });
+      const { result } = renderHook(() => useSetReadStatus(), { wrapper });
+      result.current.mutate({ itemId: ITEM_ID, isRead: true });
 
       await waitFor(() => {
         const counts = getCountsData();
@@ -155,7 +182,7 @@ describe("useMarkRead", () => {
   describe("on success", () => {
     it("invalidates items and unread-counts queries", async () => {
       seedCache();
-      vi.mocked(markReadAction).mockResolvedValue({
+      vi.mocked(setReadStatusAction).mockResolvedValue({
         success: true,
         data: {
           itemId: ITEM_ID,
@@ -166,9 +193,9 @@ describe("useMarkRead", () => {
       });
 
       const invalidate = vi.spyOn(queryClient, "invalidateQueries");
-      const { result } = renderHook(() => useMarkRead(), { wrapper });
+      const { result } = renderHook(() => useSetReadStatus(), { wrapper });
 
-      result.current.mutate({ itemId: ITEM_ID });
+      result.current.mutate({ itemId: ITEM_ID, isRead: true });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -184,14 +211,14 @@ describe("useMarkRead", () => {
   describe("on error", () => {
     it("rolls back items and counts cache", async () => {
       seedCache({ isRead: false, global: 10 });
-      vi.mocked(markReadAction).mockResolvedValue({
+      vi.mocked(setReadStatusAction).mockResolvedValue({
         success: false,
         error: "Server error",
         code: "ERROR",
       });
 
-      const { result } = renderHook(() => useMarkRead(), { wrapper });
-      result.current.mutate({ itemId: ITEM_ID });
+      const { result } = renderHook(() => useSetReadStatus(), { wrapper });
+      result.current.mutate({ itemId: ITEM_ID, isRead: true });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
 
@@ -204,10 +231,12 @@ describe("useMarkRead", () => {
     it("marks a single cached item as read", async () => {
       const singleKey = ["feeds", "items", { itemId: ITEM_ID }];
       queryClient.setQueryData(singleKey, makeItem({ isRead: false }));
-      vi.mocked(markReadAction).mockImplementation(() => new Promise(() => {}));
+      vi.mocked(setReadStatusAction).mockImplementation(
+        () => new Promise(() => {}),
+      );
 
-      const { result } = renderHook(() => useMarkRead(), { wrapper });
-      result.current.mutate({ itemId: ITEM_ID });
+      const { result } = renderHook(() => useSetReadStatus(), { wrapper });
+      result.current.mutate({ itemId: ITEM_ID, isRead: true });
 
       await waitFor(() => {
         expect(getItemsData(singleKey)?.isRead).toBe(true);

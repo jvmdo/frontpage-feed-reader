@@ -186,6 +186,15 @@ export async function getItems(
       subscriptionWatermark: row.subscriptionWatermark,
     });
 
+    const isWatermarked = calculateIsRead({
+      readAt: null,
+      itemTimestamp: row.item.createdAt,
+      publishedAt: row.item.publishedAt,
+      globalWatermark: row.globalWatermark,
+      categoryWatermark: row.categoryWatermark,
+      subscriptionWatermark: row.subscriptionWatermark,
+    });
+
     return {
       item: row.item,
       feed: row.feed,
@@ -196,6 +205,7 @@ export async function getItems(
       categoryName: row.categoryName,
       categoryColor: row.categoryColor,
       searchSnippet: row.snippet,
+      isWatermarked,
     };
   });
 }

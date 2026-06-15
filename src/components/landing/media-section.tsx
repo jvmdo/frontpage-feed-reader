@@ -92,4 +92,5 @@ const MOCK_ITEM: ItemWithSource = {
   bookmarkedAt: null,
   categoryName: null,
   categoryColor: null,
+  isWatermarked: false,
 };

@@ -121,6 +121,7 @@ export function createMockItemWithSource(
     categoryName?: string | null;
     categoryColor?: string | null;
     searchSnippet?: string | null;
+    isWatermarked?: boolean;
   }> = {},
 ): ItemWithSource {
   const feed = createMockFeed(overrides.feed);
@@ -139,6 +140,7 @@ export function createMockItemWithSource(
     categoryName: overrides.categoryName ?? null,
     categoryColor: overrides.categoryColor ?? null,
     searchSnippet: overrides.searchSnippet ?? null,
+    isWatermarked: overrides.isWatermarked ?? false,
   };
 }
 
@@ -153,6 +155,7 @@ export function createMockListItemWithSource(
     categoryName?: string | null;
     categoryColor?: string | null;
     searchSnippet?: string | null;
+    isWatermarked?: boolean;
   }> = {},
 ): ListItemWithSource {
   const feed = createMockFeed(overrides.feed);
@@ -171,6 +174,7 @@ export function createMockListItemWithSource(
     categoryName: overrides.categoryName ?? null,
     categoryColor: overrides.categoryColor ?? null,
     searchSnippet: overrides.searchSnippet ?? null,
+    isWatermarked: overrides.isWatermarked ?? false,
   };
 }
 

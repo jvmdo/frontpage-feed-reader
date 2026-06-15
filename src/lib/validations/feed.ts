@@ -36,11 +36,12 @@ export const refreshFeedSchema = z.discriminatedUnion("scope", [
 
 export type RefreshFeedInput = z.infer<typeof refreshFeedSchema>;
 
-export const markReadSchema = z.object({
+export const setReadStatusSchema = z.object({
   itemId: z.number(),
+  isRead: z.boolean().optional(),
 });
 
-export type MarkReadInput = z.infer<typeof markReadSchema>;
+export type SetReadStatusInput = z.infer<typeof setReadStatusSchema>;
 
 export const toggleBookmarkSchema = z.object({
   itemId: z.number(),

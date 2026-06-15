@@ -57,6 +57,7 @@ export type ItemWithSource = {
   categoryName: string | null;
   categoryColor: string | null;
   searchSnippet?: string | null;
+  isWatermarked: boolean;
 };
 
 export type ListItemWithSource = Omit<ItemWithSource, "item"> & {

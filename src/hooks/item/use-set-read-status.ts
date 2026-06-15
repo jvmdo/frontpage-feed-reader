@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { markReadAction } from "@/actions/item/mark-read-action";
-import type { MarkReadInput } from "@/lib/validations/feed";
+import { setReadStatusAction } from "@/actions/item/set-read-status-action";
+import type { SetReadStatusInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 import type {
   FeedWithSubscription,
@@ -16,21 +16,21 @@ type CacheData = GenericCacheData<ListItemWithSource, ItemWithSource>;
 import type { GenericCacheData } from "./cache";
 
 /**
- * Hook for marking the status of an item as read.
+ * Hook for setting the status of an item as read or unread.
  * Implements optimistic updates for both the item state and the unread count.
  */
-export function useMarkRead() {
+export function useSetReadStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["feeds", "items", "mark-read"],
-    mutationFn: async (input: MarkReadInput) => {
-      const response = await markReadAction(input);
+    mutationKey: ["feeds", "items", "set-read-status"],
+    mutationFn: async (input: SetReadStatusInput) => {
+      const response = await setReadStatusAction(input);
       if (!response.success) throw new Error(response.error);
       return response.data;
     },
 
-    onMutate: async ({ itemId }) => {
+    onMutate: async ({ itemId, isRead = true }) => {
       // 1. Cancel outgoing refetches to avoid overwriting optimistic state
       await queryClient.cancelQueries({ queryKey: ["feeds", "items"] });
       await queryClient.cancelQueries({ queryKey: ["feeds", "unread-counts"] });
@@ -49,8 +49,15 @@ export function useMarkRead() {
 
       // 3. Identify the item context
       const found = findInCache(previousQueries, (i) => i.item.id === itemId);
-      const isUnread = found ? !found.isRead : false;
+      const wasRead = found ? found.isRead : false;
       const feedId = found ? found.feed.id : null;
+
+      let countChange = 0;
+      if (isRead && !wasRead) {
+        countChange = -1; // Decrement
+      } else if (!isRead && wasRead) {
+        countChange = 1; // Increment
+      }
 
       // 4. Update items across all cached queries
       queryClient.setQueriesData<CacheData>(
@@ -61,13 +68,13 @@ export function useMarkRead() {
             (i) => i.item.id === itemId,
             (item) => ({
               ...item,
-              isRead: true,
+              isRead: isRead,
             }),
           ),
       );
 
-      // 5. Update unread counts if the item was unread
-      if (isUnread && previousCounts) {
+      // 5. Update unread counts if counts changed
+      if (countChange !== 0 && previousCounts) {
         const next: UnreadCounts = {
           ...previousCounts,
           categories: { ...(previousCounts.categories || {}) },
@@ -78,19 +85,19 @@ export function useMarkRead() {
               : 0,
         };
 
-        // Decrement global
-        next.global = Math.max(0, next.global - 1);
+        // Update global
+        next.global = Math.max(0, next.global + countChange);
 
-        // Decrement feed and category if applicable
+        // Update feed and category if applicable
         if (feedId) {
           const currentFeedCount = next.feeds[feedId] || 0;
-          next.feeds[feedId] = Math.max(0, currentFeedCount - 1);
+          next.feeds[feedId] = Math.max(0, currentFeedCount + countChange);
 
           const sub = (subscriptions || []).find((s) => s.feed.id === feedId);
           if (sub?.subscription.categoryId) {
             const catId = sub.subscription.categoryId;
             const currentCatCount = next.categories[catId] || 0;
-            next.categories[catId] = Math.max(0, currentCatCount - 1);
+            next.categories[catId] = Math.max(0, currentCatCount + countChange);
           }
         }
 
@@ -116,7 +123,7 @@ export function useMarkRead() {
       // Only invalidate queries when the last mutation of this key settles
       if (
         queryClient.isMutating({
-          mutationKey: ["feeds", "items", "mark-read"],
+          mutationKey: ["feeds", "items", "set-read-status"],
         }) === 1
       ) {
         queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });

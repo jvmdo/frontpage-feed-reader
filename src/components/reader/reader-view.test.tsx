@@ -1,10 +1,11 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: test asset */
 
 import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
-import { useMarkRead } from "@/hooks/item/use-mark-read";
+import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
 import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
 import { createMockItemWithSource } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
@@ -17,7 +18,14 @@ vi.mock("@/hooks/item/use-item");
 vi.mock("@/hooks/item/use-item-reader-navigation");
 vi.mock("@/hooks/ui/use-reader-shortcuts");
 vi.mock("@/hooks/item/use-toggle-bookmark");
-vi.mock("@/hooks/item/use-mark-read");
+vi.mock("@/hooks/item/use-set-read-status");
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+  },
+}));
 
 describe("ReaderView", () => {
   beforeEach(() => {
@@ -81,7 +89,7 @@ describe("ReaderView", () => {
 describe("ItemReaderLightbox Integration", () => {
   const mockSetActiveItemId = vi.fn();
 
-  const mockMarkAsRead = vi.fn();
+  const mockSetReadStatus = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -102,8 +110,8 @@ describe("ItemReaderLightbox Integration", () => {
       mutate: vi.fn(),
     } as any);
 
-    vi.mocked(useMarkRead).mockReturnValue({
-      mutate: mockMarkAsRead,
+    vi.mocked(useSetReadStatus).mockReturnValue({
+      mutate: mockSetReadStatus,
     } as any);
   });
 
@@ -160,7 +168,7 @@ describe("ItemReaderLightbox Integration", () => {
 
     render(<ItemReaderLightbox />);
 
-    expect(mockMarkAsRead).toHaveBeenCalledWith({ itemId: 1 });
+    expect(mockSetReadStatus).toHaveBeenCalledWith({ itemId: 1, isRead: true });
   });
 
   it("does not mark an already read item as read when loaded", () => {
@@ -170,6 +178,52 @@ describe("ItemReaderLightbox Integration", () => {
 
     render(<ItemReaderLightbox />);
 
-    expect(mockMarkAsRead).not.toHaveBeenCalled();
+    expect(mockSetReadStatus).not.toHaveBeenCalled();
+  });
+
+  it("toggles read status when clicking the toggle button", async () => {
+    const data = createMockItemWithSource({
+      item: { id: 1 },
+      isRead: true,
+      isWatermarked: false,
+    });
+
+    vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
+
+    render(<ItemReaderLightbox />);
+
+    // Click the toggle button to mark as unread
+    // There are 2 instances of toggle button (desktop and mobile), so we can select by role and label
+    const toggleButtons = screen.getAllByRole("button", {
+      name: /mark as unread/i,
+    });
+    await userEvent.click(toggleButtons[0]);
+
+    expect(mockSetReadStatus).toHaveBeenLastCalledWith({
+      itemId: 1,
+      isRead: false,
+    });
+  });
+
+  it("shows info toast and does not call setReadStatus when toggling a watermarked item", async () => {
+    const data = createMockItemWithSource({
+      item: { id: 1 },
+      isRead: true,
+      isWatermarked: true,
+    });
+
+    vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
+
+    render(<ItemReaderLightbox />);
+
+    const toggleButtons = screen.getAllByRole("button", {
+      name: /mark as unread/i,
+    });
+    await userEvent.click(toggleButtons[0]);
+
+    expect(mockSetReadStatus).not.toHaveBeenCalled();
+    expect(toast.info).toHaveBeenCalledWith(
+      expect.stringContaining("archived by 'Mark all read'"),
+    );
   });
 });

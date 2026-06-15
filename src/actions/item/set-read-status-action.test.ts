@@ -2,19 +2,19 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getCurrentSession } from "@/lib/session";
-import { markRead } from "@/services/item/mark-read";
-import { markReadAction } from "./mark-read-action";
+import { setReadStatus } from "@/services/item/set-read-status";
+import { setReadStatusAction } from "./set-read-status-action";
 
-vi.mock("@/services/item/mark-read");
+vi.mock("@/services/item/set-read-status");
 vi.mock("@/lib/session");
 
-describe("markReadAction", () => {
+describe("setReadStatusAction", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
   it("returns validation error if input is invalid", async () => {
-    const result = await markReadAction({
+    const result = await setReadStatusAction({
       itemId: "not-a-number",
     } as any);
 
@@ -28,7 +28,7 @@ describe("markReadAction", () => {
   it("returns unauthorized error if session is missing", async () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce(null);
 
-    const result = await markReadAction({ itemId: 123 });
+    const result = await setReadStatusAction({ itemId: 123 });
 
     expect(result).toEqual({
       success: false,
@@ -46,23 +46,53 @@ describe("markReadAction", () => {
     };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(markRead).mockResolvedValueOnce(mockState as any);
+    vi.mocked(setReadStatus).mockResolvedValueOnce(mockState as any);
 
-    const result = await markReadAction({ itemId: 123 });
+    const result = await setReadStatusAction({ itemId: 123 });
 
     expect(result).toEqual({
       success: true,
       data: mockState,
     });
-    expect(markRead).toHaveBeenCalledWith(expect.anything(), "user-123", 123);
+    expect(setReadStatus).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-123",
+      123,
+      undefined,
+    );
+  });
+
+  it("returns success and updated state when marking as unread", async () => {
+    const mockSession = { user: { id: "user-123" } };
+    const mockState = {
+      userId: "user-123",
+      itemId: 123,
+      readAt: null,
+    };
+
+    vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
+    vi.mocked(setReadStatus).mockResolvedValueOnce(mockState as any);
+
+    const result = await setReadStatusAction({ itemId: 123, isRead: false });
+
+    expect(result).toEqual({
+      success: true,
+      data: mockState,
+    });
+    expect(setReadStatus).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-123",
+      123,
+      false,
+    );
   });
 
   it("returns internal error if service fails", async () => {
     const mockSession = { user: { id: "user-123" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
-    vi.mocked(markRead).mockRejectedValueOnce(new Error("DB error"));
+    vi.mocked(setReadStatus).mockRejectedValueOnce(new Error("DB error"));
 
-    const result = await markReadAction({ itemId: 123 });
+    const result = await setReadStatusAction({ itemId: 123 });
 
     expect(result).toEqual({
       success: false,

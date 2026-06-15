@@ -2,15 +2,18 @@
 
 import { db } from "@/db";
 import { getCurrentSession } from "@/lib/session";
-import { type MarkReadInput, markReadSchema } from "@/lib/validations/feed";
-import { markRead } from "@/services/item/mark-read";
+import {
+  type SetReadStatusInput,
+  setReadStatusSchema,
+} from "@/lib/validations/feed";
+import { setReadStatus } from "@/services/item/set-read-status";
 
 /**
- * Server action to mark an item as read.
- * @param input - Item ID to mark as read, validated by markReadSchema.
+ * Server action to set the read status of an item.
+ * @param input - Item ID and target read state, validated by setReadStatusSchema.
  */
-export async function markReadAction(input: MarkReadInput) {
-  const result = markReadSchema.safeParse(input);
+export async function setReadStatusAction(input: SetReadStatusInput) {
+  const result = setReadStatusSchema.safeParse(input);
 
   if (!result.success) {
     return {
@@ -30,17 +33,17 @@ export async function markReadAction(input: MarkReadInput) {
     };
   }
 
-  const { itemId } = result.data;
+  const { itemId, isRead } = result.data;
 
   try {
-    const state = await markRead(db, session.user.id, itemId);
+    const state = await setReadStatus(db, session.user.id, itemId, isRead);
 
     return {
       success: true,
       data: state,
     };
   } catch (error) {
-    console.error("[markReadAction]", error);
+    console.error("[setReadStatusAction]", error);
     return {
       success: false,
       error: "An unexpected error occurred. Please try again later.",

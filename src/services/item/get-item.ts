@@ -61,6 +61,15 @@ export async function getItem(
     subscriptionWatermark: result.subscriptionWatermark,
   });
 
+  const isWatermarked = calculateIsRead({
+    readAt: null,
+    itemTimestamp: result.item.createdAt,
+    publishedAt: result.item.publishedAt,
+    globalWatermark: result.globalWatermark,
+    categoryWatermark: result.categoryWatermark,
+    subscriptionWatermark: result.subscriptionWatermark,
+  });
+
   return {
     item: result.item,
     feed: result.feed,
@@ -70,5 +79,6 @@ export async function getItem(
     isExcerpt: isExcerpt(result.item),
     categoryName: result.categoryName,
     categoryColor: result.categoryColor,
+    isWatermarked,
   };
 }
