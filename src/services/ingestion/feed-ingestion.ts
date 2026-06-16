@@ -66,6 +66,17 @@ export async function ingestItems(
 
     const { metadata, items } = await parseFeedXml(fetchResult.xml, feed.url);
 
+    // Validate the icon URL if it is new/changed
+    let validatedIconUrl: string | null = null;
+    if (metadata.iconUrl) {
+      if (metadata.iconUrl === feed.iconUrl) {
+        validatedIconUrl = feed.iconUrl;
+      } else {
+        const isValid = await validateIconUrl(metadata.iconUrl);
+        validatedIconUrl = isValid ? metadata.iconUrl : null;
+      }
+    }
+
     // 1. Upsert items
     if (items.length > 0) {
       await db
@@ -107,7 +118,7 @@ export async function ingestItems(
       .set({
         title: metadata.title,
         description: metadata.description,
-        iconUrl: metadata.iconUrl,
+        iconUrl: validatedIconUrl,
         healthStatus: "healthy",
         lastFetchedAt: new Date(),
         lastSuccessAt: new Date(),
@@ -129,5 +140,34 @@ export async function ingestItems(
       .where(eq(feeds.id, feedId));
 
     throw error;
+  }
+}
+
+/**
+ * Validates if an icon URL is working by performing a HEAD or GET fetch.
+ * Returns true if the URL is accessible and returns a success status.
+ */
+async function validateIconUrl(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, {
+      method: "HEAD",
+      // Short timeout to avoid blocking ingestion
+      signal: AbortSignal.timeout(2000),
+    });
+
+    if (response.ok) return true;
+
+    // Fallback to GET if HEAD is not allowed/supported by the hosting server
+    if (response.status === 405 || response.status === 403) {
+      const getResponse = await fetch(url, {
+        method: "GET",
+        signal: AbortSignal.timeout(2000),
+      });
+      return getResponse.ok;
+    }
+
+    return false;
+  } catch {
+    return false;
   }
 }

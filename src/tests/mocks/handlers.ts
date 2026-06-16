@@ -20,4 +20,17 @@ export const handlers = [
       </rss>
     `);
   }),
+
+  // Mock Google Favicon service HEAD requests (for server-side validation)
+  http.head("https://www.google.com/s2/favicons", () => {
+    return new HttpResponse(null, { status: 200 });
+  }),
+
+  // Mock Google Favicon service GET requests
+  http.get("https://www.google.com/s2/favicons", () => {
+    return new HttpResponse(new Uint8Array([]), {
+      status: 200,
+      headers: { "Content-Type": "image/x-icon" },
+    });
+  }),
 ];

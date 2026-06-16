@@ -263,4 +263,58 @@ describe("ingestItems integration", () => {
   test("handles non existing feed in db", async ({ tx }) => {
     await expect(ingestItems(tx, 123)).rejects.toThrow(FeedRecordNotFoundError);
   });
+
+  test("validates and saves iconUrl when validation succeeds", async ({
+    tx,
+  }) => {
+    const insertedFeed = await seedFeed(tx, {
+      url: FEED_URL,
+    });
+
+    server.use(
+      http.get(FEED_URL, () => {
+        return HttpResponse.xml(RSS_CONTENT);
+      }),
+      // Mock HEAD check for favicon to succeed (200)
+      http.head("https://www.google.com/s2/favicons", () => {
+        return new HttpResponse(null, { status: 200 });
+      }),
+    );
+
+    await ingestItems(tx, insertedFeed.id);
+
+    const [updatedFeed] = await tx
+      .select()
+      .from(feeds)
+      .where(eq(feeds.id, insertedFeed.id));
+
+    expect(updatedFeed.iconUrl).toBe(
+      "https://www.google.com/s2/favicons?domain=css-tricks.com&sz=64",
+    );
+  });
+
+  test("sets iconUrl to null when validation fails", async ({ tx }) => {
+    const insertedFeed = await seedFeed(tx, {
+      url: FEED_URL,
+    });
+
+    server.use(
+      http.get(FEED_URL, () => {
+        return HttpResponse.xml(RSS_CONTENT);
+      }),
+      // Mock HEAD check for favicon to fail (404)
+      http.head("https://www.google.com/s2/favicons", () => {
+        return new HttpResponse(null, { status: 404 });
+      }),
+    );
+
+    await ingestItems(tx, insertedFeed.id);
+
+    const [updatedFeed] = await tx
+      .select()
+      .from(feeds)
+      .where(eq(feeds.id, insertedFeed.id));
+
+    expect(updatedFeed.iconUrl).toBeNull();
+  });
 });

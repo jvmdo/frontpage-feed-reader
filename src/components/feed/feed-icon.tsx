@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +12,9 @@ interface FeedIconProps {
   categoryColor?: string | null;
 }
 
+// Global session-level cache to remember broken icon URLs during the active browser session
+const brokenIcons = new Set<string>();
+
 /**
  * Renders a feed icon using shadcn Avatar with a letter-box fallback.
  */
@@ -21,6 +25,16 @@ export function FeedIcon({
   size = 16,
   categoryColor,
 }: FeedIconProps) {
+  const [isBroken, setIsBroken] = useState(() =>
+    url ? brokenIcons.has(url) : false,
+  );
+
+  useEffect(() => {
+    if (url) {
+      setIsBroken(brokenIcons.has(url));
+    }
+  }, [url]);
+
   const initial = (title || "U").charAt(0).toUpperCase();
 
   return (
@@ -28,11 +42,19 @@ export function FeedIcon({
       className={cn("rounded-sm border-0 after:hidden shrink-0", className)}
       style={{ width: size, height: size }}
     >
-      <AvatarImage
-        src={url || undefined}
-        alt={title || ""}
-        className="rounded-sm object-contain"
-      />
+      {!isBroken && url && (
+        <AvatarImage
+          src={url}
+          alt={title || ""}
+          className="rounded-sm object-contain"
+          onLoadingStatusChange={(status) => {
+            if (status === "error") {
+              brokenIcons.add(url);
+              setIsBroken(true);
+            }
+          }}
+        />
+      )}
       <AvatarFallback
         className={cn(
           "rounded-sm font-bold select-none",
