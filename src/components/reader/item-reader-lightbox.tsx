@@ -4,8 +4,6 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FoldHorizontalIcon,
-  MailIcon,
-  MailOpenIcon,
   TextAlignJustifyIcon,
   UnfoldHorizontalIcon,
   XIcon,
@@ -13,9 +11,6 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FeedIcon } from "@/components/feed/feed-icon";
-import { ReaderView } from "@/components/reader/reader-view";
-import { ReaderViewError } from "@/components/reader/reader-view-error";
-import { ReaderViewSkeleton } from "@/components/reader/reader-view-skeleton";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,11 +22,6 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
@@ -39,6 +29,10 @@ import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
 import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { cn } from "@/lib/utils";
+import { ReaderView } from "./reader-view";
+import { ReaderViewError } from "./reader-view-error";
+import { ReaderViewSkeleton } from "./reader-view-skeleton";
+import { ToggleReadButton } from "./toggle-read-button";
 
 const ReaderWidthValues = ["50vw", "65vw", "80vw"] as const;
 type ReaderWidth = (typeof ReaderWidthValues)[number];
@@ -70,22 +64,25 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
   const lastOpenedItemIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (data && activeItemId && lastOpenedItemIdRef.current !== activeItemId) {
-      if (!data.isRead) {
-        setReadStatus({ itemId: activeItemId, isRead: true });
-      }
-      lastOpenedItemIdRef.current = activeItemId;
+    if (!data || lastOpenedItemIdRef.current === activeItemId) return;
+
+    lastOpenedItemIdRef.current = activeItemId;
+
+    if (!data.isRead) {
+      setReadStatus({ itemId: activeItemId, isRead: true });
     }
   }, [activeItemId, data, setReadStatus]);
 
   const handleToggleRead = () => {
     if (!data) return;
+
     if (data.isWatermarked) {
       toast.info(
         "Articles archived by 'Mark all read' cannot be marked as unread.",
       );
       return;
     }
+
     setReadStatus({ itemId: activeItemId, isRead: !data.isRead });
   };
 
@@ -99,40 +96,6 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
     onToggleRead: handleToggleRead,
     enabled: true,
   });
-
-  const renderToggleReadButton = () => {
-    if (!data) return null;
-
-    const tooltipContent = data.isWatermarked
-      ? "This article was archived by a 'Mark all read' action."
-      : data.isRead
-        ? "Mark as unread (m)"
-        : "Mark as read (m)";
-
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={handleToggleRead}
-            aria-label={data.isRead ? "Mark as unread" : "Mark as read"}
-            disabled={isPending}
-            className={cn(
-              data.isWatermarked && "opacity-50 cursor-not-allowed",
-            )}
-          >
-            {data.isRead ? (
-              <MailIcon className="size-4 md:size-5" />
-            ) : (
-              <MailOpenIcon className="size-4 md:size-5" />
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">{tooltipContent}</TooltipContent>
-      </Tooltip>
-    );
-  };
 
   return (
     <DialogContent
@@ -173,7 +136,11 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
 
           {/* Mobile Nav Controls */}
           <div className="ml-auto flex items-center gap-1 pr-2 sm:hidden">
-            {renderToggleReadButton()}
+            <ToggleReadButton
+              data={data}
+              onClick={handleToggleRead}
+              disabled={isPending}
+            />
             <Button
               variant="secondary"
               size="icon-sm"
@@ -196,7 +163,11 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
 
           {/* Desktop Layout Controls */}
           <div className="hidden ml-auto sm:flex items-center gap-2 pr-4">
-            {renderToggleReadButton()}
+            <ToggleReadButton
+              data={data}
+              onClick={handleToggleRead}
+              disabled={isPending}
+            />
             <ToggleGroup
               type="single"
               value={readerWidth}
@@ -218,7 +189,11 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
         </header>
 
         {/* Content Area */}
-        <ScrollArea className="h-full" data-tour="reader-content">
+        <ScrollArea
+          key={activeItemId}
+          className="h-full"
+          data-tour="reader-content"
+        >
           {isPending ? (
             <ReaderViewSkeleton />
           ) : isError ? (
