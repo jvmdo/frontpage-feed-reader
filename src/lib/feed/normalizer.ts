@@ -29,7 +29,10 @@ export function normalizeDate(dateStr: string | undefined | null): Date {
 
   // Try native Date constructor first
   const date = new Date(dateStr);
-  if (isValid(date)) return date;
+  if (isValid(date)) {
+    const now = new Date();
+    return date > now ? now : date;
+  }
 
   // Common non-standard formats fallback using date-fns
   const formats = [
@@ -42,7 +45,10 @@ export function normalizeDate(dateStr: string | undefined | null): Date {
   for (const formatStr of formats) {
     try {
       const parsedDate = parse(dateStr, formatStr, new Date());
-      if (isValid(parsedDate)) return parsedDate;
+      if (isValid(parsedDate)) {
+        const now = new Date();
+        return parsedDate > now ? now : parsedDate;
+      }
     } catch {}
   }
 

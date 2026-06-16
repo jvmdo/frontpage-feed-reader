@@ -5,7 +5,7 @@ import { toggleBookmarkAction } from "@/actions/item/toggle-bookmark-action";
 import type { ToggleBookmarkInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 import type { ItemWithSource, ListItemWithSource } from "@/types";
-import { findInCache, updateInCache } from "./cache";
+import { filterFromCache, findInCache, updateInCache } from "./cache";
 
 type CacheData = GenericCacheData<ListItemWithSource, ItemWithSource>;
 
@@ -47,19 +47,25 @@ export function useToggleBookmark() {
 
       // 4. Optimistically update item state
       const newBookmarkedAt = isBookmarked ? null : new Date();
-      queryClient.setQueriesData<CacheData>(
-        { queryKey: ["feeds", "items"] },
-        (old) =>
-          updateInCache(
-            old,
-            (i) => i.item.id === itemId,
-            (item) => ({
-              ...item,
-              isBookmarked: !isBookmarked,
-              bookmarkedAt: newBookmarkedAt,
-            }),
-          ),
-      );
+      for (const [queryKey, oldData] of previousQueries) {
+        if (!oldData) continue;
+        const queryKeyFilters = queryKey[2] as any;
+
+        queryClient.setQueryData(
+          queryKey,
+          queryKeyFilters?.bookmarkedOnly && isBookmarked
+            ? filterFromCache(oldData, (i) => i.item.id === itemId)
+            : updateInCache(
+                oldData,
+                (i) => i.item.id === itemId,
+                (item) => ({
+                  ...item,
+                  isBookmarked: !isBookmarked,
+                  bookmarkedAt: newBookmarkedAt,
+                }),
+              ),
+        );
+      }
 
       // 5. Optimistically update unread bookmark count
       if (previousCounts && !isRead) {
@@ -100,7 +106,6 @@ export function useToggleBookmark() {
         }) === 1
       ) {
         queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
-        queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
       }
     },
   });

@@ -7,7 +7,7 @@ import { test } from "@/tests/test-extend";
 import { countNewItems } from "./count-new-items";
 
 describe("countNewItems", () => {
-  test("counts items arrived (createdAt) after the 'since' date for a user's subscription", async ({
+  test("counts items published (publishedAt) after the 'since' date for a user's subscription", async ({
     tx,
     testUser,
   }) => {
@@ -15,23 +15,23 @@ describe("countNewItems", () => {
     const now = new Date();
     const tenMinsAgo = subMinutes(now, 10);
 
-    // 1. Seed items with explicit createdAt
+    // 1. Seed items with explicit publishedAt
     await seedItems(tx, feed.id, [
       {
         publishedAt: subMinutes(now, 15),
         createdAt: subMinutes(now, 15),
         guid: "old-1",
-      }, // Arrived before since
+      }, // Published before since
       {
         publishedAt: subMinutes(now, 5),
         createdAt: subMinutes(now, 5),
         guid: "new-1",
-      }, // Arrived after since
+      }, // Published after since
       {
         publishedAt: subMinutes(now, 2),
         createdAt: subMinutes(now, 2),
         guid: "new-2",
-      }, // Arrived after since
+      }, // Published after since
     ]);
 
     // 2. Act
@@ -44,7 +44,7 @@ describe("countNewItems", () => {
     expect(count).toBe(2);
   });
 
-  test("regression: counts backdated items that arrived (createdAt) after the 'since' date", async ({
+  test("regression: does not count backdated items whose publishedAt is before the 'since' date", async ({
     tx,
     testUser,
   }) => {
@@ -65,8 +65,8 @@ describe("countNewItems", () => {
       since: fiveMinsAgo,
     });
 
-    // It should be counted because its createdAt (now) > since (5m ago)
-    expect(count).toBe(1);
+    // It should NOT be counted because its publishedAt (60m ago) < since (5m ago)
+    expect(count).toBe(0);
   });
 
   test("returns 0 if no new items arrived since the date", async ({
@@ -205,5 +205,28 @@ describe("countNewItems", () => {
     });
 
     expect(count).toBe(2);
+  });
+
+  test("respects unreadOnly filter", async ({ tx, testUser }) => {
+    const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+    const now = new Date();
+
+    const [_, item2] = await seedItems(tx, feed.id, [
+      { publishedAt: now, createdAt: now, guid: "unread-item" },
+      { publishedAt: now, createdAt: now, guid: "read-item" },
+    ]);
+
+    await tx.insert(schema.userItemStates).values({
+      userId: testUser.id,
+      itemId: item2.id,
+      readAt: new Date(),
+    });
+
+    const count = await countNewItems(tx, testUser.id, {
+      since: subMinutes(now, 5),
+      unreadOnly: true,
+    });
+
+    expect(count).toBe(1);
   });
 });

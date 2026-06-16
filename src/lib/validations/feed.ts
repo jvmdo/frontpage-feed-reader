@@ -90,6 +90,8 @@ export const checkNewItemsSchema = z.object({
   feedId: z.coerce.number().int().nullable().optional(),
   categoryId: z.coerce.number().int().nullable().optional(),
   since: z.coerce.date(),
+  unreadOnly: z.coerce.boolean().optional(),
+  feedIds: z.array(z.coerce.number()).optional(),
 });
 
 export type CheckNewItemsInput = z.infer<typeof checkNewItemsSchema>;

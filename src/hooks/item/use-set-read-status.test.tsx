@@ -195,7 +195,7 @@ describe("useSetReadStatus", () => {
   });
 
   describe("on success", () => {
-    it("invalidates items and unread-counts queries", async () => {
+    it("invalidates unread-counts query", async () => {
       seedCache();
       vi.mocked(setReadStatusAction).mockResolvedValue({
         success: true,
@@ -217,7 +217,7 @@ describe("useSetReadStatus", () => {
       expect(invalidate).toHaveBeenCalledWith(
         expect.objectContaining({ queryKey: COUNTS_KEY }),
       );
-      expect(invalidate).toHaveBeenCalledWith(
+      expect(invalidate).not.toHaveBeenCalledWith(
         expect.objectContaining({ queryKey: ["feeds", "items"] }),
       );
     });

@@ -196,7 +196,7 @@ describe("useToggleBookmark", () => {
       expect(invalidate).toHaveBeenCalledWith(
         expect.objectContaining({ queryKey: COUNTS_KEY }),
       );
-      expect(invalidate).toHaveBeenCalledWith(
+      expect(invalidate).not.toHaveBeenCalledWith(
         expect.objectContaining({ queryKey: ["feeds", "items"] }),
       );
     });

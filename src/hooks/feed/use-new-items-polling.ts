@@ -14,16 +14,33 @@ interface UseNewItemsPollingOptions {
  */
 export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
   const { onBeforeRefresh } = options;
-  const { feedId, categoryId, isSaved } = useFeedFilter();
+  const { feedId, categoryId, isSaved, unreadOnly, feedIds } = useFeedFilter();
   const { isTourActive } = useTourStore();
   const queryClient = useQueryClient();
 
-  // Get the latest item date from the existing cache (using arrival time for consistency)
+  // Find the maximum publishedAt timestamp across all items currently loaded in the client cache
   const { data } = useItems();
-  const latestItemDate = data?.[0]?.item.createdAt;
+  const latestItemDate =
+    data?.reduce(
+      (max, item) => {
+        const publishedAt = item.item.publishedAt;
+        if (!publishedAt) return max;
+        const publishedDate = new Date(publishedAt);
+        return !max || publishedDate.getTime() > max.getTime()
+          ? publishedDate
+          : max;
+      },
+      null as Date | null,
+    ) ?? undefined;
 
   const { data: newItemsCount } = useQuery({
-    queryKey: ["new-items-count", feedId, categoryId],
+    queryKey: [
+      "new-items-count",
+      feedId,
+      categoryId,
+      unreadOnly,
+      [...feedIds].sort(),
+    ],
     queryFn: async () => {
       if (!latestItemDate) return 0;
 
@@ -31,6 +48,8 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
         feedId,
         categoryId,
         since: latestItemDate,
+        unreadOnly,
+        feedIds,
       });
 
       return res.success ? (res.data as { count: number }).count : 0;
@@ -42,7 +61,11 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
   const handleLoadNew = () => {
     onBeforeRefresh?.();
     queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
-    queryClient.setQueryData(["new-items-count", feedId, categoryId], 0);
+    queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+    queryClient.setQueryData(
+      ["new-items-count", feedId, categoryId, unreadOnly, [...feedIds].sort()],
+      0,
+    );
   };
 
   return {

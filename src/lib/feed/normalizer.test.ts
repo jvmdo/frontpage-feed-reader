@@ -79,6 +79,13 @@ describe("normalizeDate", () => {
     );
   });
 
+  it("should cap future dates to now", () => {
+    const futureDateStr = "2024-01-02T12:00:00Z";
+    expect(normalizeDate(futureDateStr).toISOString()).toBe(
+      mockNow.toISOString(),
+    );
+  });
+
   it("should fallback to now for missing input", () => {
     expect(normalizeDate(undefined).toISOString()).toBe(mockNow.toISOString());
     expect(normalizeDate(null).toISOString()).toBe(mockNow.toISOString());

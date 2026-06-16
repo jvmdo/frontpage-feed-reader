@@ -77,5 +77,6 @@ export function useItems() {
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     select: (data) => data.pages.flat(),
+    refetchOnWindowFocus: false,
   });
 }
