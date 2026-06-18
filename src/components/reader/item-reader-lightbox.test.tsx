@@ -7,6 +7,7 @@ import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
 import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
+import { useReaderStore } from "@/hooks/ui/use-reader-store";
 import { createMockItemWithSource } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
 import { ItemReaderLightbox } from "./item-reader-lightbox";
@@ -52,6 +53,9 @@ describe("ItemReaderLightbox Integration", () => {
     vi.mocked(useSetReadStatus).mockReturnValue({
       mutate: mockSetReadStatus,
     } as any);
+
+    // Reset store state to avoid bleeding between tests
+    useReaderStore.getState().setReaderWidth("50vw");
   });
 
   it("renders correctly when open and loading", () => {
@@ -163,5 +167,28 @@ describe("ItemReaderLightbox Integration", () => {
     expect(toast.info).toHaveBeenCalledWith(
       expect.stringContaining("archived by 'Mark all read'"),
     );
+  });
+
+  it("persists reader width preference using useReaderStore", async () => {
+    const data = createMockItemWithSource({ item: { id: 1 } });
+    vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
+
+    const user = userEvent.setup();
+    const { rerender } = render(<ItemReaderLightbox />);
+
+    // Find the dialog content wrapper
+    const dialogContent = await screen.findByRole("dialog");
+    expect(dialogContent).toHaveStyle({ "--max-width": "50vw" });
+
+    // Click the 65vw toggle button (the second radio item in ToggleGroup)
+    const toggleButtons = screen.getAllByRole("radio");
+    expect(toggleButtons).toHaveLength(3);
+    await user.click(toggleButtons[1]);
+    expect(dialogContent).toHaveStyle({ "--max-width": "65vw" });
+
+    // Re-render the component to simulate closing and opening a new lightbox
+    rerender(<ItemReaderLightbox />);
+    const dialogContentAfter = await screen.findByRole("dialog");
+    expect(dialogContentAfter).toHaveStyle({ "--max-width": "65vw" });
   });
 });

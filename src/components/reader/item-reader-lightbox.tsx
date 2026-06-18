@@ -8,7 +8,7 @@ import {
   UnfoldHorizontalIcon,
   XIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { Button } from "@/components/ui/button";
@@ -27,15 +27,17 @@ import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
 import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
+import {
+  type ReaderWidth,
+  ReaderWidthValues,
+  useReaderStore,
+} from "@/hooks/ui/use-reader-store";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { cn } from "@/lib/utils";
 import { ReaderView } from "./reader-view";
 import { ReaderViewError } from "./reader-view-error";
 import { ReaderViewSkeleton } from "./reader-view-skeleton";
 import { ToggleReadButton } from "./toggle-read-button";
-
-const ReaderWidthValues = ["50vw", "65vw", "80vw"] as const;
-type ReaderWidth = (typeof ReaderWidthValues)[number];
 
 export function ItemReaderLightbox() {
   const { activeItemId, setActiveItemId } = useActiveItem();
@@ -86,9 +88,7 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
     setReadStatus({ itemId: activeItemId, isRead: !data.isRead });
   };
 
-  const [readerWidth, setReaderWidth] = useState<ReaderWidth>(
-    ReaderWidthValues[0],
-  );
+  const { readerWidth, setReaderWidth } = useReaderStore();
 
   useReaderShortcuts({
     onNext: goToNext,
