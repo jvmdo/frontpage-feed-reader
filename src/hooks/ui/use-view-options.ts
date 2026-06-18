@@ -1,6 +1,7 @@
 "use client";
 
 import { parseAsStringEnum, useQueryStates } from "nuqs";
+import { useEffect } from "react";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { getDefaultSorting } from "@/lib/sorting";
 
@@ -35,11 +36,29 @@ export function useViewOptions() {
     },
   );
 
+  // Sync from localStorage on mount if no layout parameter exists in the URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("layout")) {
+      const savedLayout = localStorage.getItem(
+        "frontpage_feed_layout",
+      ) as FeedLayout;
+      if (savedLayout && Object.values(FeedLayout).includes(savedLayout)) {
+        setOptions({ layout: savedLayout });
+      }
+    }
+  }, [setOptions]);
+
+  const setLayout = (layout: FeedLayout) => {
+    localStorage.setItem("frontpage_feed_layout", layout);
+    setOptions({ layout });
+  };
+
   return {
     layout: options.layout,
     sortBy: options.sortBy,
     sortOrder: options.sortOrder,
-    setLayout: (layout: FeedLayout) => setOptions({ layout }),
+    setLayout,
     setSorting: (
       sortBy: "publishedAt" | "bookmarkedAt" | null,
       sortOrder: "desc" | "asc" | null,
