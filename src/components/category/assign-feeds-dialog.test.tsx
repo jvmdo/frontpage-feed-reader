@@ -17,6 +17,9 @@ import { AssignFeedsDialog } from "./assign-feeds-dialog";
 vi.mock("@/actions/feed/update-feed-action", () => ({
   updateFeedAction: vi.fn(),
 }));
+vi.mock("@/actions/feed/add-feed-action", () => ({
+  addFeedAction: vi.fn(),
+}));
 
 // Mock sonner toast
 vi.mock("sonner", () => ({
@@ -63,6 +66,12 @@ describe("AssignFeedsDialog", () => {
         });
       }),
     );
+
+    // Mock PointerEvent methods for Radix UI Select
+    if (typeof window !== "undefined") {
+      window.HTMLElement.prototype.hasPointerCapture = vi.fn();
+      window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    }
   });
 
   const setup = () => {
@@ -262,5 +271,34 @@ describe("AssignFeedsDialog", () => {
     await waitFor(() => {
       expect(removeButton).toBeEnabled();
     });
+  });
+
+  it("renders empty state with Add Feed button when user has no feeds", async () => {
+    server.use(
+      http.get("/api/feeds/subscriptions", () => {
+        return HttpResponse.json({ success: true, data: [] });
+      }),
+    );
+
+    const { user } = setup();
+
+    await user.click(
+      await screen.findByRole("button", { name: /open dialog/i }),
+    );
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    // Verify empty state is displayed
+    expect(screen.getByText(/no feeds available/i)).toBeInTheDocument();
+
+    // Verify Add Feed button is visible inside the dialog
+    const addFeedBtn = screen.getByRole("button", { name: /add a feed/i });
+    expect(addFeedBtn).toBeInTheDocument();
+
+    // Click "Add Feed" and verify it opens the Add Feed Dialog (checking for its title)
+    await user.click(addFeedBtn);
+    expect(
+      await screen.findByRole("heading", { name: /^add feed$/i }),
+    ).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@
 import { MoveRightIcon, XIcon } from "lucide-react";
 import type * as React from "react";
 import { toast } from "sonner";
+import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,58 +66,74 @@ export function AssignFeedsDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-6 flex-1 min-h-0 overflow-y-auto">
-          {currentCategoryFeeds.length > 0 && (
-            <section
-              className="flex flex-col gap-3"
-              aria-labelledby="current-feeds-header"
-            >
-              <h3
-                id="current-feeds-header"
-                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-              >
-                In this category
-              </h3>
-              <ItemGroup>
-                {currentCategoryFeeds.map((item) => (
-                  <AssignedFeedItem key={item.subscription.id} item={item} />
-                ))}
-              </ItemGroup>
-            </section>
-          )}
-
-          <section
-            className="flex flex-col gap-3"
-            aria-labelledby="available-feeds-header"
-          >
-            <h3
-              id="available-feeds-header"
-              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-            >
-              Available feeds
-            </h3>
-            {availableFeeds.length === 0 ? (
-              <p className="text-sm text-muted-foreground italic px-1">
-                No other feeds available.
+          {subscriptions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-4 text-center">
+              <p className="text-sm text-muted-foreground italic">
+                No feeds available yet.
               </p>
-            ) : (
-              <ItemGroup>
-                {availableFeeds.map((item) => {
-                  const currentCat = categories.find(
-                    (c) => c.id === item.subscription.categoryId,
-                  );
+              <AddFeedDialog asChild>
+                <Button size="sm">Add a feed</Button>
+              </AddFeedDialog>
+            </div>
+          ) : (
+            <>
+              {currentCategoryFeeds.length > 0 && (
+                <section
+                  className="flex flex-col gap-3"
+                  aria-labelledby="current-feeds-header"
+                >
+                  <h3
+                    id="current-feeds-header"
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    In this category
+                  </h3>
+                  <ItemGroup>
+                    {currentCategoryFeeds.map((item) => (
+                      <AssignedFeedItem
+                        key={item.subscription.id}
+                        item={item}
+                      />
+                    ))}
+                  </ItemGroup>
+                </section>
+              )}
 
-                  return (
-                    <AvailableFeedItem
-                      key={item.subscription.id}
-                      item={item}
-                      categoryId={categoryId}
-                      currentCategoryName={currentCat?.name}
-                    />
-                  );
-                })}
-              </ItemGroup>
-            )}
-          </section>
+              <section
+                className="flex flex-col gap-3"
+                aria-labelledby="available-feeds-header"
+              >
+                <h3
+                  id="available-feeds-header"
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                >
+                  Available feeds
+                </h3>
+                {availableFeeds.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic px-1">
+                    No other feeds available.
+                  </p>
+                ) : (
+                  <ItemGroup>
+                    {availableFeeds.map((item) => {
+                      const currentCat = categories.find(
+                        (c) => c.id === item.subscription.categoryId,
+                      );
+
+                      return (
+                        <AvailableFeedItem
+                          key={item.subscription.id}
+                          item={item}
+                          categoryId={categoryId}
+                          currentCategoryName={currentCat?.name}
+                        />
+                      );
+                    })}
+                  </ItemGroup>
+                )}
+              </section>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
