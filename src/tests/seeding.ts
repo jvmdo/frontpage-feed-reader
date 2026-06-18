@@ -67,7 +67,12 @@ export async function seedFeedWithSubscription(
   feedOverrides: Partial<NewFeed> = {},
   subOverrides: Partial<Omit<NewSubscription, "userId" | "feedId">> = {},
 ) {
-  const feed = await seedFeed(tx, feedOverrides);
+  const feed = await seedFeed(tx, {
+    url:
+      feedOverrides.url ??
+      `https://example.com/${Math.random().toString(36).slice(2)}?tenant=${userId}`,
+    ...feedOverrides,
+  });
   const subscription = await seedSubscription(tx, {
     userId,
     feedId: feed.id,

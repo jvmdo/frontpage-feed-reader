@@ -149,7 +149,7 @@ test.describe("Data Isolation", () => {
     // 2. User A goes to dashboard and verifies their feed is visible
     await page.goto("/dashboard");
     await page.waitForSelector('body[data-hydrated="true"]');
-    await expect(page.getByText(feedTitleA)).toBeVisible();
+    await expect(page.getByText(feedTitleA).first()).toBeVisible();
 
     // 3. User A logs out
     await page.getByRole("button", { name: /user menu/i }).click();
