@@ -6,9 +6,7 @@ import {
   InboxIcon,
   PlusIcon,
   RssIcon,
-  SettingsIcon,
 } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 import { AddCategoryDialog } from "@/components/category/add-category-dialog";
@@ -17,6 +15,7 @@ import {
   FeedStatus,
   FeedStatusFallback,
 } from "@/components/layout/components/feed-status";
+import ManagementMenu from "@/components/layout/components/management-menu";
 import { DashboardLink } from "@/components/shared/dashboard-link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -24,9 +23,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupAction,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuBadge,
@@ -135,17 +132,7 @@ export function AppSidebar({ children }: { children: ReactNode }) {
 
           <SidebarSeparator />
 
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Feeds
-            </SidebarGroupLabel>
-            <SidebarGroupAction asChild title="Manage Categories">
-              <Link href="/manage-categories">
-                <SettingsIcon className="size-4" />
-              </Link>
-            </SidebarGroupAction>
-            <SidebarGroupContent>{children}</SidebarGroupContent>
-          </SidebarGroup>
+          <ManagementMenu>{children}</ManagementMenu>
         </ScrollArea>
       </SidebarContent>
 

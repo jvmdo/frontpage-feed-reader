@@ -1,6 +1,14 @@
 "use client";
 
-import { LogOutIcon, SettingsIcon, SparklesIcon, UserIcon } from "lucide-react";
+import {
+  FolderIcon,
+  LogOutIcon,
+  RssIcon,
+  SettingsIcon,
+  SparklesIcon,
+  UserIcon,
+} from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -99,9 +107,23 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
               <UserIcon data-icon="inline-start" />
               {user.isAnonymous ? "Save progress" : "Profile"}
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => router.push("/settings")}>
-              <SettingsIcon data-icon="inline-start" />
-              Settings
+            <DropdownMenuItem asChild>
+              <Link href="/settings">
+                <SettingsIcon data-icon="inline-start" />
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/manage-categories">
+                <FolderIcon data-icon="inline-start" />
+                Manage Categories
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/manage-feeds">
+                <RssIcon data-icon="inline-start" />
+                Manage Feeds
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => resetTour()}>
               <SparklesIcon data-icon="inline-start" />
