@@ -4,6 +4,7 @@ import {
   ArrowDownAZIcon,
   ArrowUpAZIcon,
   CheckCheckIcon,
+  FilterIcon,
   Grid2X2Icon,
   ListIcon,
   ListPlus,
@@ -14,6 +15,13 @@ import type * as React from "react";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
 import { MarkAllReadDialog } from "@/components/layout/components/mark-all-read-dialog";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -21,10 +29,14 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useMarkAllReadUI } from "@/hooks/ui/use-mark-all-read-ui";
+import { useIsMobile } from "@/hooks/ui/use-mobile";
 import { useRefreshUI } from "@/hooks/ui/use-refresh-ui";
 import { FeedLayout, useViewOptions } from "@/hooks/ui/use-view-options";
 import {
@@ -33,6 +45,7 @@ import {
   SORT_OPTIONS,
 } from "@/lib/sorting";
 import { cn } from "@/lib/utils";
+import { FilterMenuItems } from "./filter-dropdown";
 
 interface FeedActionsMenuProps {
   children: React.ReactNode;
@@ -43,7 +56,9 @@ interface FeedActionsMenuProps {
  * Consumes global state (filter, view options) internally.
  */
 export function FeedMenu({ children }: FeedActionsMenuProps) {
-  const { categoryId, isSaved } = useFeedFilter();
+  const isMobile = useIsMobile();
+  const { categoryId, isSaved, status, setStatus, feedIds, setFeedIds } =
+    useFeedFilter();
   const { isDisabled: isMarkAllDisabled } = useMarkAllReadUI();
   const { isRefreshing, handleRefresh } = useRefreshUI();
   const {
@@ -73,6 +88,46 @@ export function FeedMenu({ children }: FeedActionsMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
+        {isMobile ? (
+          <Drawer>
+            <DrawerTrigger asChild>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <FilterIcon className="size-4" data-icon="inline-start" />
+                Filter
+              </DropdownMenuItem>
+            </DrawerTrigger>
+            <DrawerContent className="p-4 pt-0">
+              <DrawerHeader className="sr-only">
+                <DrawerTitle>Filter Items</DrawerTitle>
+              </DrawerHeader>
+              <FilterMenuItems
+                isSaved={isSaved}
+                status={status}
+                setStatus={setStatus}
+                feedIds={feedIds}
+                setFeedIds={setFeedIds}
+              />
+            </DrawerContent>
+          </Drawer>
+        ) : (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <FilterIcon className="size-4" data-icon="inline-start" />
+              Filter
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent className="w-56">
+              <FilterMenuItems
+                isSaved={isSaved}
+                status={status}
+                setStatus={setStatus}
+                feedIds={feedIds}
+                setFeedIds={setFeedIds}
+              />
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        )}
+        <DropdownMenuSeparator />
+
         <DropdownMenuItem
           onClick={handleRefresh}
           disabled={isRefreshing}

@@ -6,7 +6,7 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@/tests/rtl-utils";
 import { ActiveFilterChips } from "./active-filter-chips";
-import { SavedFilterDropdown } from "./saved-filter-dropdown";
+import { FilterDropdown } from "./filter-dropdown";
 
 const CATEGORY_ID = 1;
 const FEED_1_ID = 101;
@@ -33,7 +33,7 @@ const mockFeeds = [
   },
 ];
 
-describe("Saved Filtering Integration", () => {
+describe("FilterDropdown Integration", () => {
   const setup = (searchParams: Record<string, string> = { saved: "true" }) => {
     const user = userEvent.setup();
     const queryClient = new QueryClient({
@@ -48,7 +48,7 @@ describe("Saved Filtering Integration", () => {
       <NuqsTestingAdapter searchParams={searchParams}>
         <QueryClientProvider client={queryClient}>
           <div id="feed-container">
-            <SavedFilterDropdown />
+            <FilterDropdown />
             <ActiveFilterChips />
           </div>
         </QueryClientProvider>
@@ -58,7 +58,7 @@ describe("Saved Filtering Integration", () => {
     return { ...utils, user, queryClient };
   };
 
-  it("filters out categories without feeds from the dropdown", async () => {
+  it("filters out categories without feeds from the dropdown when in saved view", async () => {
     const { user } = setup();
 
     await user.click(screen.getByRole("button", { name: /^filter$/i }));
@@ -67,7 +67,7 @@ describe("Saved Filtering Integration", () => {
     expect(screen.queryByText("Empty Cat")).not.toBeInTheDocument();
   });
 
-  it("implements macro selection: checking category checks all its feeds", async () => {
+  it("implements macro selection: checking category checks all its feeds when in saved view", async () => {
     const { user } = setup();
 
     await user.click(screen.getByRole("button", { name: /^filter$/i }));
@@ -90,7 +90,7 @@ describe("Saved Filtering Integration", () => {
     expect(techFeed2).toHaveAttribute("data-state", "checked");
   });
 
-  it("implements micro selection: checking individual feeds", async () => {
+  it("implements micro selection: checking individual feeds when in saved view", async () => {
     const { user } = setup();
 
     await user.click(screen.getByRole("button", { name: /^filter$/i }));
@@ -103,7 +103,7 @@ describe("Saved Filtering Integration", () => {
     expect(screen.queryByText(/Category: Tech/i)).not.toBeInTheDocument();
   });
 
-  it("implements state compaction: checking all feeds manually collapses to a category chip", async () => {
+  it("implements state compaction: checking all feeds manually collapses to a category chip when in saved view", async () => {
     const { user } = setup();
 
     // Open and check first feed
@@ -124,7 +124,7 @@ describe("Saved Filtering Integration", () => {
     expect(screen.queryByText(/^Tech News 2$/i)).not.toBeInTheDocument();
   });
 
-  it("implements de-compaction: unchecking one feed from a category chip state", async () => {
+  it("implements de-compaction: unchecking one feed from a category chip state when in saved view", async () => {
     // Start with all selected (simulating compaction)
     const { user } = setup({
       saved: "true",
@@ -144,7 +144,7 @@ describe("Saved Filtering Integration", () => {
   });
 
   it("allows removing filters via chips", async () => {
-    const { user } = setup({ saved: "true", unreadOnly: "true" });
+    const { user } = setup({ saved: "true", status: "unread" });
 
     const unreadChip = screen.getByText(/unread only/i);
     expect(unreadChip).toBeInTheDocument();
@@ -160,7 +160,7 @@ describe("Saved Filtering Integration", () => {
   it("clears all filters when clicking Clear All", async () => {
     const { user } = setup({
       saved: "true",
-      unreadOnly: "true",
+      status: "unread",
       feedIds: `${FEED_1_ID}`,
     });
 
@@ -171,5 +171,30 @@ describe("Saved Filtering Integration", () => {
 
     expect(screen.queryByText(/unread only/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/tech news 1/i)).not.toBeInTheDocument();
+  });
+
+  it("only shows read status option and hides category/feed options in general view", async () => {
+    // General view (not saved)
+    const { user } = setup({ saved: "false" });
+
+    await user.click(screen.getByRole("button", { name: /^filter$/i }));
+
+    // Status / radio items should be present
+    expect(screen.getByText(/status/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitemradio", { name: /^all items$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitemradio", { name: /^unread only$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitemradio", { name: /^read only$/i }),
+    ).toBeInTheDocument();
+
+    // Category and feed section labels should not be present
+    expect(screen.queryByText(/categories/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/individual feeds/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Tech")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tech News 1")).not.toBeInTheDocument();
   });
 });

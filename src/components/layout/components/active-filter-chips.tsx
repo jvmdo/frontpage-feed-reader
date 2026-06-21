@@ -7,17 +7,11 @@ import { Button } from "@/components/ui/button";
 import { useCategories } from "@/hooks/category/use-categories";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useFeeds } from "@/hooks/feed/use-feeds";
-import type { Category, FeedWithSubscription } from "@/types";
+import type { Category, FeedWithSubscription, FilterStatus } from "@/types";
 
 export function ActiveFilterChips() {
-  const {
-    isSaved,
-    unreadOnly,
-    setUnreadOnly,
-    feedIds,
-    setFeedIds,
-    clearFilter,
-  } = useFeedFilter();
+  const { isSaved, status, setStatus, feedIds, setFeedIds, clearFilter } =
+    useFeedFilter();
   const { data: categories } = useCategories();
   const { data: feeds } = useFeeds();
 
@@ -25,11 +19,11 @@ export function ActiveFilterChips() {
   if (!isSaved) return null;
 
   const chips = buildFilterChips({
-    unreadOnly,
+    status,
     feedIds,
     categories,
     feeds,
-    setUnreadOnly,
+    setStatus,
     setFeedIds,
   });
 
@@ -94,31 +88,37 @@ type Chip = {
 };
 
 type BuildFilterChipsParams = {
-  unreadOnly: boolean;
+  status: FilterStatus;
   feedIds: number[];
   categories: Category[];
   feeds: FeedWithSubscription[];
-  setUnreadOnly: (value: boolean) => void;
+  setStatus: (value: FilterStatus) => void;
   setFeedIds: (ids: number[]) => void;
 };
 
 function buildFilterChips({
-  unreadOnly,
+  status,
   feedIds,
   categories,
   feeds,
-  setUnreadOnly,
+  setStatus,
   setFeedIds,
 }: BuildFilterChipsParams): Chip[] {
   const chips: Chip[] = [];
   const feedMap = new Map(feeds.map((f) => [f.feed.id, f]));
   const remainingFeedIds = new Set(feedIds);
 
-  if (unreadOnly) {
+  if (status === "unread") {
     chips.push({
       id: "unread",
       label: "Unread only",
-      onRemove: () => setUnreadOnly(false),
+      onRemove: () => setStatus("all"),
+    });
+  } else if (status === "read") {
+    chips.push({
+      id: "read",
+      label: "Read only",
+      onRemove: () => setStatus("all"),
     });
   }
 
