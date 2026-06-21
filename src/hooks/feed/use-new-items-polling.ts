@@ -14,7 +14,7 @@ interface UseNewItemsPollingOptions {
  */
 export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
   const { onBeforeRefresh } = options;
-  const { feedId, categoryId, isSaved, unreadOnly, feedIds } = useFeedFilter();
+  const { feedId, categoryId, isSaved, status, feedIds } = useFeedFilter();
   const { isTourActive } = useTourStore();
   const queryClient = useQueryClient();
 
@@ -33,12 +33,14 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
       null as Date | null,
     ) ?? undefined;
 
+  const isUnreadOnly = status === "unread";
+
   const { data: newItemsCount } = useQuery({
     queryKey: [
       "new-items-count",
       feedId,
       categoryId,
-      unreadOnly,
+      isUnreadOnly,
       [...feedIds].sort(),
     ],
     queryFn: async () => {
@@ -48,7 +50,7 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
         feedId,
         categoryId,
         since: latestItemDate,
-        unreadOnly,
+        unreadOnly: isUnreadOnly,
         feedIds,
       });
 
@@ -63,7 +65,13 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
     queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
     queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
     queryClient.setQueryData(
-      ["new-items-count", feedId, categoryId, unreadOnly, [...feedIds].sort()],
+      [
+        "new-items-count",
+        feedId,
+        categoryId,
+        isUnreadOnly,
+        [...feedIds].sort(),
+      ],
       0,
     );
   };

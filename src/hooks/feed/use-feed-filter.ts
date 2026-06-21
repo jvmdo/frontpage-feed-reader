@@ -2,6 +2,7 @@
 
 import { useQueryStates } from "nuqs";
 import { feedFilterParsers } from "@/lib/search-params";
+import type { FilterStatus } from "@/types";
 
 /**
  * Hook to manage feedId, categoryId, saved, and refinement filters in the URL.
@@ -14,7 +15,7 @@ export function useFeedFilter() {
   const feedId = states.feedId === 0 ? null : states.feedId;
   const categoryId = states.categoryId === 0 ? null : states.categoryId;
   const isSaved = states.saved;
-  const unreadOnly = states.unreadOnly;
+  const status = states.status;
   const feedIds = states.feedIds;
 
   const setFeedId = (id: number | null) =>
@@ -23,7 +24,6 @@ export function useFeedFilter() {
       categoryId: 0,
       saved: false,
       feedIds: [],
-      unreadOnly: false,
     });
 
   const setCategoryId = (id: number | null) =>
@@ -32,7 +32,6 @@ export function useFeedFilter() {
       feedId: 0,
       saved: false,
       feedIds: [],
-      unreadOnly: false,
     });
 
   const goToSaved = () =>
@@ -41,18 +40,17 @@ export function useFeedFilter() {
       feedId: 0,
       categoryId: 0,
       feedIds: [],
-      unreadOnly: false,
     });
 
   const setFeedIds = (ids: number[]) => setStates({ feedIds: ids });
-  const setUnreadOnly = (unread: boolean) => setStates({ unreadOnly: unread });
+  const setStatus = (status: FilterStatus) => setStates({ status });
 
   const clearFilter = () =>
     setStates({
       feedId: 0,
       categoryId: 0,
       feedIds: [],
-      unreadOnly: false,
+      status: "all",
     });
 
   return {
@@ -62,8 +60,8 @@ export function useFeedFilter() {
     setCategoryId,
     isSaved,
     goToSaved,
-    unreadOnly,
-    setUnreadOnly,
+    status,
+    setStatus,
     feedIds,
     setFeedIds,
     clearFilter,

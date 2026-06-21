@@ -8,6 +8,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { feedFilterParsers } from "@/lib/search-params";
 import { cn } from "@/lib/utils";
+import type { FilterStatus } from "@/types";
 
 // Initialize a serializer to generate consistent dashboard URLs
 const serialize = createSerializer(feedFilterParsers);
@@ -20,7 +21,7 @@ type DashboardState = {
   feedId?: number | null;
   categoryId?: number | null;
   saved?: boolean | null;
-  unreadOnly?: boolean | null;
+  status?: FilterStatus | null;
   feedIds?: number[] | null;
 };
 

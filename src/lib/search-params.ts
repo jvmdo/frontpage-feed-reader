@@ -1,4 +1,10 @@
-import { parseAsArrayOf, parseAsBoolean, parseAsInteger } from "nuqs";
+import {
+  parseAsArrayOf,
+  parseAsBoolean,
+  parseAsInteger,
+  parseAsStringEnum,
+} from "nuqs";
+import { FILTER_STATUSES, type FilterStatus } from "@/types";
 
 /**
  * Shared parsers for feed filtering to ensure consistency between
@@ -8,7 +14,9 @@ export const feedFilterParsers = {
   feedId: parseAsInteger.withDefault(0),
   categoryId: parseAsInteger.withDefault(0),
   saved: parseAsBoolean.withDefault(false),
-  unreadOnly: parseAsBoolean.withDefault(false),
+  status: parseAsStringEnum<FilterStatus>([
+    ...FILTER_STATUSES,
+  ] as FilterStatus[]).withDefault("all"),
   feedIds: parseAsArrayOf(parseAsInteger).withDefault([]),
 };
 
@@ -22,27 +30,23 @@ export const dashboardState = {
     categoryId: null,
     saved: false,
     feedIds: null,
-    unreadOnly: null,
   }),
   saved: () => ({
     saved: true,
     feedId: null,
     categoryId: null,
     feedIds: null,
-    unreadOnly: null,
   }),
   feed: (id: number) => ({
     feedId: id,
     categoryId: null,
     saved: false,
     feedIds: null,
-    unreadOnly: null,
   }),
   category: (id: number) => ({
     categoryId: id,
     feedId: null,
     saved: false,
     feedIds: null,
-    unreadOnly: null,
   }),
 };

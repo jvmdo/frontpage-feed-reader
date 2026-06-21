@@ -7,7 +7,7 @@ import { getDefaultSorting } from "@/lib/sorting";
 import type { ListItemWithSource } from "@/types";
 
 export function useItems() {
-  const { feedId, categoryId, isSaved, unreadOnly, feedIds } = useFeedFilter();
+  const { feedId, categoryId, isSaved, status, feedIds } = useFeedFilter();
   const { sortBy: urlSortBy, sortOrder: urlSortOrder } = useViewOptions();
 
   const defaultSort = getDefaultSorting({ isSaved });
@@ -26,7 +26,7 @@ export function useItems() {
         feedId: feedId ?? null,
         categoryId: categoryId ?? null,
         bookmarkedOnly: isSaved,
-        unreadOnly,
+        status,
         feedIds: [...feedIds].sort(),
         sortBy,
         sortOrder,
@@ -49,8 +49,8 @@ export function useItems() {
         url += "&saved=true";
       }
 
-      if (unreadOnly) {
-        url += "&unreadOnly=true";
+      if (status) {
+        url += `&status=${status}`;
       }
 
       if (feedIds.length > 0) {
