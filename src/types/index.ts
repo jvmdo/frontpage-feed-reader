@@ -74,3 +74,6 @@ export type SortConfig = {
   sortBy: "publishedAt" | "bookmarkedAt";
   sortOrder: "desc" | "asc";
 };
+
+export const FILTER_STATUSES = ["all", "unread", "read"] as const;
+export type FilterStatus = (typeof FILTER_STATUSES)[number];

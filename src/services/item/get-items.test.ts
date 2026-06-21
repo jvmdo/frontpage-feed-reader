@@ -250,6 +250,58 @@ describe("getItems", () => {
     });
   });
 
+  describe("filtering by status", () => {
+    test("returns only unread items when status is unread", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      const [item1, item2] = await seedItems(tx, feed.id, [
+        { title: "Unread Item" },
+        { title: "Read Item" },
+      ]);
+
+      await seedUserItemState(tx, {
+        userId: testUser.id,
+        itemId: item2.id,
+        readAt: new Date(),
+      });
+
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        status: "unread",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].item.title).toBe("Unread Item");
+    });
+
+    test("returns only read items when status is read", async ({
+      tx,
+      testUser,
+    }) => {
+      const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+      const [item1, item2] = await seedItems(tx, feed.id, [
+        { title: "Unread Item" },
+        { title: "Read Item" },
+      ]);
+
+      await seedUserItemState(tx, {
+        userId: testUser.id,
+        itemId: item2.id,
+        readAt: new Date(),
+      });
+
+      const result = await getItems(tx, testUser.id, {
+        ...options,
+        status: "read",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].item.title).toBe("Read Item");
+    });
+  });
+
   describe("isRead calculation", () => {
     test("marks item as read if user has explicit read state", async ({
       tx,

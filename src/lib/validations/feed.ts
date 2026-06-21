@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
+import { FILTER_STATUSES } from "@/types";
 
 export const addFeedSchema = z.object({
   url: z.url("Please enter a valid URL").trim(),
@@ -68,11 +69,7 @@ export const itemsQuerySchema = z.object({
     .nullable()
     .optional()
     .transform((val) => val === "true"),
-  unreadOnly: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((val) => val === "true"),
+  status: z.enum(FILTER_STATUSES).optional().default("all"),
   feedIds: z
     .string()
     .nullable()

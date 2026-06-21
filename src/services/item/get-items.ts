@@ -7,6 +7,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  not,
   type SQL,
   sql,
 } from "drizzle-orm";
@@ -20,7 +21,7 @@ import {
   userPreferences,
 } from "@/db/schema";
 import { isExcerpt } from "@/lib/feed/utils";
-import type { ListItemWithSource } from "@/types";
+import type { FilterStatus, ListItemWithSource } from "@/types";
 import { calculateIsRead, watermarkFilters } from "../utils";
 
 interface GetItemsOptions {
@@ -31,7 +32,7 @@ interface GetItemsOptions {
   categoryId?: number | null;
   feedIds?: number[] | null;
   bookmarkedOnly?: boolean;
-  unreadOnly?: boolean;
+  status?: FilterStatus;
   sortBy?: "publishedAt" | "bookmarkedAt";
   sortOrder?: "desc" | "asc";
 }
@@ -115,7 +116,7 @@ export async function getItems(
     categoryId,
     feedIds,
     bookmarkedOnly,
-    unreadOnly,
+    status = "all",
     sortBy = "publishedAt",
     sortOrder = "desc",
   } = options;
@@ -128,6 +129,11 @@ export async function getItems(
     content: _content,
     ...itemColumns
   } = getTableColumns(feedItems);
+
+  const isUnread = and(
+    isNull(userItemStates.readAt),
+    ...watermarkFilters(feedItems.createdAt, feedItems.publishedAt),
+  );
 
   const results = await db
     .select({
@@ -164,12 +170,8 @@ export async function getItems(
           ? inArray(feedItems.feedId, feedIds)
           : undefined,
         bookmarkedOnly ? isNotNull(userItemStates.bookmarkedAt) : undefined,
-        unreadOnly
-          ? and(
-              isNull(userItemStates.readAt),
-              ...watermarkFilters(feedItems.createdAt, feedItems.publishedAt),
-            )
-          : undefined,
+        status === "unread" ? isUnread : undefined,
+        status === "read" ? not(isUnread!) : undefined,
       ),
     )
     .orderBy(...sortClauses)
