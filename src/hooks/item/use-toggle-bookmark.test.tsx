@@ -123,6 +123,47 @@ describe("useToggleBookmark", () => {
       });
     });
 
+    it("optimistically injects newly bookmarked item into the Saved view cache", async () => {
+      const item = makeItem({ id: ITEM_ID, isBookmarked: false });
+      queryClient.setQueryData(ITEMS_KEY, makePagedCache([item]));
+
+      const savedKey = [
+        "feeds",
+        "items",
+        { feedId: null, categoryId: null, bookmarkedOnly: true },
+      ];
+      queryClient.setQueryData(savedKey, makePagedCache([]));
+
+      const { result } = renderHook(() => useToggleBookmark(), { wrapper });
+      result.current.mutate({ itemId: ITEM_ID });
+
+      await waitFor(() => {
+        const savedData = getItemsData(savedKey);
+        expect(savedData?.pages[0]).toHaveLength(1);
+        expect(savedData?.pages[0][0].item.id).toBe(ITEM_ID);
+        expect(savedData?.pages[0][0].isBookmarked).toBe(true);
+      });
+    });
+
+    it("optimistically removes unbookmarked item from the Saved view cache", async () => {
+      const item = makeItem({ id: ITEM_ID, isBookmarked: true });
+      const savedKey = [
+        "feeds",
+        "items",
+        { feedId: null, categoryId: null, bookmarkedOnly: true },
+      ];
+      queryClient.setQueryData(savedKey, makePagedCache([item]));
+      queryClient.setQueryData(ITEMS_KEY, makePagedCache([item]));
+
+      const { result } = renderHook(() => useToggleBookmark(), { wrapper });
+      result.current.mutate({ itemId: ITEM_ID });
+
+      await waitFor(() => {
+        const savedData = getItemsData(savedKey);
+        expect(savedData?.pages[0]).toHaveLength(0);
+      });
+    });
+
     it("increments saved unread count when bookmarking an unread item", async () => {
       seedCache({ isBookmarked: false, isRead: false, savedCount: 5 });
       const { result } = renderHook(() => useToggleBookmark(), { wrapper });

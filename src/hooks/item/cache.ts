@@ -98,3 +98,50 @@ export function filterFromCache<TData extends GenericCacheData<any, any>>(
 
   return old;
 }
+
+/**
+ * Checks if an element is present in a single query cache data structure.
+ */
+export function hasInCache<TElement, TSingle = TElement>(
+  data: GenericCacheData<TElement, TSingle> | undefined,
+  predicate: (item: any) => boolean,
+): boolean {
+  if (!data) return false;
+
+  if (
+    typeof data === "object" &&
+    "pages" in data &&
+    Array.isArray(data.pages)
+  ) {
+    return data.pages.some(
+      (page) => Array.isArray(page) && page.some(predicate),
+    );
+  }
+
+  return predicate(data);
+}
+
+/**
+ * Prepends an element to the first page of an infinite query cache.
+ */
+export function prependToCache<TData extends GenericCacheData<any, any>>(
+  old: TData | undefined,
+  item: any,
+): TData | undefined {
+  if (!old) return old;
+
+  if (typeof old === "object" && "pages" in old && Array.isArray(old.pages)) {
+    const pages = [...old.pages];
+    if (pages.length === 0) {
+      pages.push([item]);
+    } else {
+      pages[0] = [item, ...pages[0]];
+    }
+    return {
+      ...old,
+      pages,
+    } as TData;
+  }
+
+  return old;
+}

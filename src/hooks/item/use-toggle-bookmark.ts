@@ -5,7 +5,13 @@ import { toggleBookmarkAction } from "@/actions/item/toggle-bookmark-action";
 import type { ToggleBookmarkInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 import type { ItemWithSource, ListItemWithSource } from "@/types";
-import { filterFromCache, findInCache, updateInCache } from "./cache";
+import {
+  filterFromCache,
+  findInCache,
+  hasInCache,
+  prependToCache,
+  updateInCache,
+} from "./cache";
 
 type CacheData = GenericCacheData<ListItemWithSource, ItemWithSource>;
 
@@ -51,11 +57,19 @@ export function useToggleBookmark() {
         if (!oldData) continue;
         const queryKeyFilters = queryKey[2] as any;
 
-        queryClient.setQueryData(
-          queryKey,
-          queryKeyFilters?.bookmarkedOnly && isBookmarked
-            ? filterFromCache(oldData, (i) => i.item.id === itemId)
-            : updateInCache(
+        // If the query is "Saved Only" and the item is currently bookmarked,
+        // unbookmarking it should filter it out.
+        if (queryKeyFilters?.bookmarkedOnly && isBookmarked) {
+          queryClient.setQueryData(
+            queryKey,
+            filterFromCache(oldData, (i) => i.item.id === itemId),
+          );
+        } else {
+          if (hasInCache(oldData, (i) => i.item.id === itemId)) {
+            // Just update its attributes in place
+            queryClient.setQueryData(
+              queryKey,
+              updateInCache(
                 oldData,
                 (i) => i.item.id === itemId,
                 (item) => ({
@@ -64,7 +78,26 @@ export function useToggleBookmark() {
                   bookmarkedAt: newBookmarkedAt,
                 }),
               ),
-        );
+            );
+          } else if (
+            queryKeyFilters?.bookmarkedOnly &&
+            !isBookmarked &&
+            found
+          ) {
+            // It's the Saved view cache, we are bookmarking, and the item isn't in it yet.
+            // Optimistically prepend it to the first page.
+            const updatedItem = {
+              ...found,
+              isBookmarked: true,
+              bookmarkedAt: newBookmarkedAt,
+            };
+
+            queryClient.setQueryData(
+              queryKey,
+              prependToCache(oldData, updatedItem),
+            );
+          }
+        }
       }
 
       // 5. Optimistically update unread bookmark count
