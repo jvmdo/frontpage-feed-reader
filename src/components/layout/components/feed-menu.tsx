@@ -4,7 +4,6 @@ import {
   ArrowDownAZIcon,
   ArrowUpAZIcon,
   CheckCheckIcon,
-  FilterIcon,
   Grid2X2Icon,
   ListIcon,
   ListPlus,
@@ -45,7 +44,7 @@ import {
   SORT_OPTIONS,
 } from "@/lib/sorting";
 import { cn } from "@/lib/utils";
-import { FilterMenuItems } from "./filter-dropdown";
+import { FilterMenuItems, FilterTriggerContent } from "./filter-dropdown";
 
 interface FeedActionsMenuProps {
   children: React.ReactNode;
@@ -77,6 +76,8 @@ export function FeedMenu({ children }: FeedActionsMenuProps) {
   const activeValue =
     REVERSE_SORT_LOOKUP[`${sortBy}-${sortOrder}`] || "newest_published";
 
+  const isFilterActive = status !== "all";
+
   const handleValueChange = (v: string) => {
     const config = SORT_OPTIONS[v as keyof typeof SORT_OPTIONS];
     if (config) {
@@ -91,9 +92,11 @@ export function FeedMenu({ children }: FeedActionsMenuProps) {
         {isMobile ? (
           <Drawer>
             <DrawerTrigger asChild>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <FilterIcon className="size-4" data-icon="inline-start" />
-                Filter
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                className={cn(isFilterActive && "text-primary")}
+              >
+                <FilterTriggerContent isFilterActive={isFilterActive} />
               </DropdownMenuItem>
             </DrawerTrigger>
             <DrawerContent className="p-4 pt-0">
@@ -111,9 +114,10 @@ export function FeedMenu({ children }: FeedActionsMenuProps) {
           </Drawer>
         ) : (
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <FilterIcon className="size-4" data-icon="inline-start" />
-              Filter
+            <DropdownMenuSubTrigger
+              className={cn(isFilterActive && "text-primary")}
+            >
+              <FilterTriggerContent isFilterActive={isFilterActive} />
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="w-56">
               <FilterMenuItems

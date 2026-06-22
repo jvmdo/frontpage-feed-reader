@@ -197,4 +197,28 @@ describe("FilterDropdown Integration", () => {
     expect(screen.queryByText("Tech")).not.toBeInTheDocument();
     expect(screen.queryByText("Tech News 1")).not.toBeInTheDocument();
   });
+
+  it("displays the filter button in active state when status is unread", () => {
+    setup({ saved: "false", status: "unread" });
+
+    expect(
+      screen.getByRole("button", { name: /\(active\) filter/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("displays the filter button in active state when status is read", () => {
+    setup({ saved: "false", status: "read" });
+
+    expect(
+      screen.getByRole("button", { name: /\(active\) filter$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("displays the filter button in inactive state when status is all", () => {
+    setup({ saved: "false", status: "all" });
+
+    expect(
+      screen.getByRole("button", { name: /^filter$/i }),
+    ).toBeInTheDocument();
+  });
 });

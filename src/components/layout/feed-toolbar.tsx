@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useNewItemsPolling } from "@/hooks/feed/use-new-items-polling";
 import { useMarkAllReadUI } from "@/hooks/ui/use-mark-all-read-ui";
+import { cn } from "@/lib/utils";
 import { FeedLayoutToggles } from "./components/feed-layout-toggles";
 import { FeedMenu } from "./components/feed-menu";
 import { FilterDropdown } from "./components/filter-dropdown";
@@ -16,7 +17,7 @@ import { MarkAllReadDialog } from "./components/mark-all-read-dialog";
 import { ToolbarTitle } from "./components/toolbar-title";
 
 export function FeedToolbar() {
-  const { feedId, categoryId, isSaved } = useFeedFilter();
+  const { feedId, categoryId, isSaved, status } = useFeedFilter();
 
   const { newItemsCount, handleLoadNew } = useNewItemsPolling({
     onBeforeRefresh: () => {
@@ -26,6 +27,8 @@ export function FeedToolbar() {
       });
     },
   });
+
+  const isFilterActive = status !== "all";
 
   return (
     <header
@@ -40,14 +43,23 @@ export function FeedToolbar() {
           <div className="hidden md:flex">
             <FeedMenu>
               <Button
-                variant="outline"
-                className="hidden md:inline-flex lg:hidden"
+                variant={isFilterActive ? "secondary" : "outline"}
+                className={cn(
+                  "hidden md:inline-flex lg:hidden relative gap-1.5",
+                  isFilterActive &&
+                    "border-primary/20 text-primary bg-primary/10 hover:bg-primary/15",
+                )}
                 aria-label="Feed menu"
               >
-                <MoreHorizontalIcon
-                  className="size-4"
-                  data-icon="inline-start"
-                />
+                <div className="relative flex items-center shrink-0">
+                  <MoreHorizontalIcon
+                    className="size-4"
+                    data-icon="inline-start"
+                  />
+                  {isFilterActive && (
+                    <span className="absolute -top-1 -right-1 flex h-1.5 w-1.5 rounded-full bg-primary" />
+                  )}
+                </div>
                 Menu
               </Button>
             </FeedMenu>

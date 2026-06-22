@@ -1,5 +1,3 @@
-"use client";
-
 import { FilterIcon } from "lucide-react";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { Button } from "@/components/ui/button";
@@ -17,14 +15,100 @@ import {
 import { useCategories } from "@/hooks/category/use-categories";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useFeeds } from "@/hooks/feed/use-feeds";
+import { cn } from "@/lib/utils";
 import type { FilterStatus } from "@/types";
 
-interface RefinementFiltersProps {
-  feedIds: number[];
-  setFeedIds: (ids: number[]) => void;
+export function FilterDropdown() {
+  const { isSaved, status, setStatus, feedIds, setFeedIds } = useFeedFilter();
+  const isFilterActive = status !== "all";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant={isFilterActive ? "secondary" : "outline"}
+          className={cn(
+            "lg:h-8",
+            isFilterActive &&
+              "text-primary border-primary/20 bg-primary/10 hover:bg-primary/15",
+          )}
+        >
+          <FilterTriggerContent isFilterActive={isFilterActive} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <FilterMenuItems
+          isSaved={isSaved}
+          status={status}
+          setStatus={setStatus}
+          feedIds={feedIds}
+          setFeedIds={setFeedIds}
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
-function RefinementFilters({ feedIds, setFeedIds }: RefinementFiltersProps) {
+export function FilterTriggerContent({
+  isFilterActive,
+}: {
+  isFilterActive: boolean;
+}) {
+  return (
+    <>
+      <div className="relative">
+        <FilterIcon className="size-4 lg:size-3.5" data-icon="inline-start" />
+        {isFilterActive && (
+          <span className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-primary" />
+        )}
+        {isFilterActive && <span className="sr-only">(active)</span>}
+      </div>
+      <span className="lg:text-xs">Filter</span>
+    </>
+  );
+}
+
+export function FilterMenuItems({
+  isSaved,
+  status,
+  setStatus,
+  feedIds,
+  setFeedIds,
+}: {
+  isSaved: boolean;
+  status: FilterStatus;
+  setStatus: (status: FilterStatus) => void;
+  feedIds: number[];
+  setFeedIds: (ids: number[]) => void;
+}) {
+  return (
+    <>
+      <DropdownMenuLabel>Status</DropdownMenuLabel>
+      <DropdownMenuRadioGroup
+        value={status || "all"}
+        onValueChange={(val) => setStatus(val as FilterStatus)}
+      >
+        <DropdownMenuRadioItem value="all">All items</DropdownMenuRadioItem>
+        <DropdownMenuRadioItem value="unread">
+          Unread only
+        </DropdownMenuRadioItem>
+        <DropdownMenuRadioItem value="read">Read only</DropdownMenuRadioItem>
+      </DropdownMenuRadioGroup>
+
+      {isSaved && (
+        <RefinementFilters feedIds={feedIds} setFeedIds={setFeedIds} />
+      )}
+    </>
+  );
+}
+
+function RefinementFilters({
+  feedIds,
+  setFeedIds,
+}: {
+  feedIds: number[];
+  setFeedIds: (ids: number[]) => void;
+}) {
   const { data: categories } = useCategories();
   const { data: feeds } = useFeeds();
 
@@ -108,63 +192,5 @@ function RefinementFilters({ feedIds, setFeedIds }: RefinementFiltersProps) {
         ))}
       </DropdownMenuGroup>
     </>
-  );
-}
-
-export function FilterMenuItems({
-  isSaved,
-  status,
-  setStatus,
-  feedIds,
-  setFeedIds,
-}: {
-  isSaved: boolean;
-  status: FilterStatus;
-  setStatus: (status: FilterStatus) => void;
-  feedIds: number[];
-  setFeedIds: (ids: number[]) => void;
-}) {
-  return (
-    <>
-      <DropdownMenuLabel>Status</DropdownMenuLabel>
-      <DropdownMenuRadioGroup
-        value={status || "all"}
-        onValueChange={(val) => setStatus(val as FilterStatus)}
-      >
-        <DropdownMenuRadioItem value="all">All items</DropdownMenuRadioItem>
-        <DropdownMenuRadioItem value="unread">
-          Unread only
-        </DropdownMenuRadioItem>
-        <DropdownMenuRadioItem value="read">Read only</DropdownMenuRadioItem>
-      </DropdownMenuRadioGroup>
-
-      {isSaved && (
-        <RefinementFilters feedIds={feedIds} setFeedIds={setFeedIds} />
-      )}
-    </>
-  );
-}
-
-export function FilterDropdown() {
-  const { isSaved, status, setStatus, feedIds, setFeedIds } = useFeedFilter();
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="lg:h-8">
-          <FilterIcon className="size-4 lg:size-3.5" data-icon="inline-start" />
-          <span className="lg:text-xs">Filter</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <FilterMenuItems
-          isSaved={isSaved}
-          status={status}
-          setStatus={setStatus}
-          feedIds={feedIds}
-          setFeedIds={setFeedIds}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

@@ -11,6 +11,7 @@ import { FeedMenu } from "@/components/layout/components/feed-menu";
 import { UserMenu } from "@/components/layout/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
 import type { SessionUser } from "@/lib/auth-client";
 
@@ -21,6 +22,9 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({ user }: MobileBottomNavProps) {
   const { toggleSidebar } = useSidebar();
   const [_, setOpen] = useSearchPaletteState();
+  const { status } = useFeedFilter();
+
+  const isFilterActive = status !== "all";
 
   return (
     <div
@@ -64,10 +68,13 @@ export function MobileBottomNav({ user }: MobileBottomNavProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="size-10"
+          className={"size-10 relative"}
           aria-label="Feed menu"
         >
           <MoreHorizontalIcon className="size-5" />
+          {isFilterActive && (
+            <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary" />
+          )}
         </Button>
       </FeedMenu>
 
