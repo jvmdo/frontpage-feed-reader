@@ -1,13 +1,30 @@
+import userEvent from "@testing-library/user-event";
 import { subDays, subMinutes } from "date-fns";
 import { HttpResponse, http } from "msw";
+import { toast } from "sonner";
+import { vi } from "vitest";
+import { refreshFeedAction } from "@/actions/feed/refresh-feed-action";
 import {
   createMockCategory,
   createMockFeedWithSubscription,
 } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
-import { render, screen } from "@/tests/rtl-utils";
+import { render, screen, waitFor, within } from "@/tests/rtl-utils";
 import type { FeedWithSubscription } from "@/types";
 import { FeedTable } from "./feed-table";
+
+// Mock the refresh server action
+vi.mock("@/actions/feed/refresh-feed-action", () => ({
+  refreshFeedAction: vi.fn(),
+}));
+
+// Mock sonner toast
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 const mockCategories = [
   createMockCategory({ id: 1, name: "Tech" }),
@@ -53,13 +70,16 @@ describe("FeedTable", () => {
     render(<FeedTable data={mockData} />);
 
     expect(
-      await screen.findByRole("columnheader", { name: /title/i }),
+      await screen.findByRole("columnheader", { name: /status/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: /title/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("columnheader", { name: /url/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("columnheader", { name: /health status/i }),
+      screen.getByRole("columnheader", { name: /category/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("columnheader", { name: /last fetched/i }),
@@ -67,6 +87,14 @@ describe("FeedTable", () => {
     expect(
       screen.getByRole("columnheader", { name: /actions/i }),
     ).toBeInTheDocument();
+  });
+
+  it("renders correct category names and badges", async () => {
+    render(<FeedTable data={mockData} />);
+
+    expect(await screen.findByText("Tech")).toBeInTheDocument();
+    expect(screen.getByText("Design")).toBeInTheDocument();
+    expect(screen.getByText("Uncategorized")).toBeInTheDocument();
   });
 
   it("renders custom title when provided, otherwise feed title", async () => {
@@ -102,5 +130,93 @@ describe("FeedTable", () => {
     render(<FeedTable data={dataWithNullSuccess} />);
 
     expect(await screen.findByText(/never/i)).toBeInTheDocument();
+  });
+
+  it("displays loading state while refreshing feed and resolves successfully", async () => {
+    const user = userEvent.setup();
+    const { promise, resolve } = Promise.withResolvers<any>();
+
+    vi.mocked(refreshFeedAction).mockReturnValue(promise);
+
+    render(<FeedTable data={mockData} />);
+
+    // Wait for suspense to resolve
+    await screen.findByText("My Custom Title");
+
+    // 1. Find the first feed row
+    const rows = screen.getAllByRole("row");
+    const firstRow = rows[1];
+
+    // 2. Open the action menu for the first feed
+    const actionButton = within(firstRow).getByRole("button", {
+      name: /open menu/i,
+    });
+    await user.click(actionButton);
+
+    // 3. Click the refresh button
+    const refreshButton = await screen.findByRole("menuitem", {
+      name: /refresh/i,
+    });
+    await user.click(refreshButton);
+
+    // 4. Verify it calls refreshFeedAction
+    expect(refreshFeedAction).toHaveBeenCalledWith({
+      scope: "feed",
+      id: mockData[0].feed.id,
+    });
+
+    // 5. Verify the row shows the loading status (accessible live region)
+    const statusEl = within(firstRow).getByRole("status");
+    expect(statusEl).toHaveTextContent(/refreshing feed/i);
+
+    // 5. Resolve the promise
+    resolve({ success: true, data: mockData[0] });
+
+    // 6. Verify loading state is removed (status is empty) and success toast is shown
+    await waitFor(() => {
+      expect(statusEl).toHaveTextContent("");
+      expect(toast.success).toHaveBeenCalledWith("Feed refreshed");
+    });
+  });
+
+  it("displays loading state while refreshing feed and handles errors successfully", async () => {
+    const user = userEvent.setup();
+    const { promise, resolve } = Promise.withResolvers<any>();
+
+    vi.mocked(refreshFeedAction).mockReturnValue(promise);
+
+    render(<FeedTable data={mockData} />);
+
+    // Wait for suspense to resolve
+    await screen.findByText("My Custom Title");
+
+    // 1. Find the first feed row
+    const rows = screen.getAllByRole("row");
+    const firstRow = rows[1];
+
+    // 2. Open the action menu for the first feed
+    const actionButton = within(firstRow).getByRole("button", {
+      name: /open menu/i,
+    });
+    await user.click(actionButton);
+
+    // 3. Click the refresh button
+    const refreshButton = await screen.findByRole("menuitem", {
+      name: /refresh/i,
+    });
+    await user.click(refreshButton);
+
+    // Verify the row shows the loading status (accessible live region)
+    const statusEl = within(firstRow).getByRole("status");
+    expect(statusEl).toHaveTextContent(/refreshing feed/i);
+
+    // 4. Resolve the promise with an error
+    resolve({ success: false, error: "Failed to fetch XML feed" });
+
+    // 5. Verify loading state is removed (status is empty) and error toast is shown
+    await waitFor(() => {
+      expect(statusEl).toHaveTextContent("");
+      expect(toast.error).toHaveBeenCalledWith("Failed to fetch XML feed");
+    });
   });
 });

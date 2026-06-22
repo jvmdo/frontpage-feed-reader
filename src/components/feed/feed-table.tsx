@@ -14,13 +14,14 @@ interface FeedTableProps {
 
 export function FeedTable({ data }: FeedTableProps) {
   return (
-    <div className="rounded-lg border bg-surface px-2">
+    <div className="rounded-lg border px-2">
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-25">Status</TableHead>
             <TableHead className="w-75">Title</TableHead>
             <TableHead>URL</TableHead>
-            <TableHead className="w-35">Health Status</TableHead>
+            <TableHead>Category</TableHead>
             <TableHead className="w-45">Last Fetched</TableHead>
             <TableHead className="w-25 text-right">Actions</TableHead>
           </TableRow>

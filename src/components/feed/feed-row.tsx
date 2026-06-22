@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Edit2,
   Loader2Icon,
@@ -19,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { useCategories } from "@/hooks/category/use-categories";
 import { useRefreshFeed } from "@/hooks/feed/use-refresh-feed";
 import type { Feed, Subscription } from "@/types";
 import { EditFeedDialog } from "./edit-feed-dialog";
@@ -60,10 +59,8 @@ const HEALTH_STATUS_CONFIG: Record<
 };
 
 export function FeedRow({ subscription, feed }: FeedRowProps) {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
-
-  const { mutate: refreshFeed, isPending: isRefreshing } = useRefreshFeed();
+  const { mutate: refreshFeed, isPending } = useRefreshFeed();
+  const { data: categories } = useCategories();
 
   const handleRefresh = () => {
     refreshFeed(
@@ -79,66 +76,123 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
     );
   };
 
+  const category = categories?.find((c) => c.id === subscription.categoryId);
   const status =
     HEALTH_STATUS_CONFIG[feed.healthStatus] ?? HEALTH_STATUS_CONFIG.unknown;
 
   return (
-    <>
-      <TableRow>
-        <TableCell className="font-medium">
-          <div className="flex items-center gap-3">
-            <FeedIcon url={feed.iconUrl} title={feed.title} size={24} />
-            <span className="truncate">
-              {subscription.customTitle ?? feed.title ?? "Untitled"}
-            </span>
+    <TableRow>
+      <TableCell>
+        <Badge variant={status.variant} className={status.className}>
+          {status.label}
+        </Badge>
+      </TableCell>
+      <TableCell className="font-medium">
+        <div className="flex items-center gap-3">
+          <FeedIcon url={feed.iconUrl} title={feed.title} size={24} />
+          {subscription.customTitle ?? feed.title ?? "Untitled"}
+        </div>
+      </TableCell>
+      <TableCell>{feed.url}</TableCell>
+      <TableCell>
+        {category ? (
+          <div className="flex items-center gap-1.5">
+            {category.color && (
+              <span
+                className="size-1.5 rounded-full"
+                style={{ backgroundColor: category.color }}
+              />
+            )}
+            <span className="text-sm font-medium">{category.name}</span>
           </div>
-        </TableCell>
-        <TableCell className="text-muted-foreground truncate max-w-75">
-          {feed.url}
-        </TableCell>
-        <TableCell>
-          <Badge variant={status.variant} className={status.className}>
-            {status.label}
-          </Badge>
-        </TableCell>
-        <TableCell>
-          <LastFetched date={feed.lastSuccessAt} isRefreshing={isRefreshing} />
-        </TableCell>
-        <TableCell className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal data-icon="inline" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleRefresh} disabled={isRefreshing}>
-                {isRefreshing ? (
-                  <Loader2Icon
-                    data-icon="inline-start"
-                    className="animate-spin"
-                  />
-                ) : (
-                  <RefreshCw data-icon="inline-start" />
-                )}
-                Refresh
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-                <Edit2 data-icon="inline-start" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => setIsRemoveDialogOpen(true)}
-              >
-                <Trash2 data-icon="inline-start" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TableCell>
-      </TableRow>
+        ) : (
+          <span className="text-xs text-muted-foreground italic">
+            Uncategorized
+          </span>
+        )}
+      </TableCell>
+      <TableCell>
+        <LastFetched date={feed.lastSuccessAt} isRefreshing={isPending} />
+      </TableCell>
+      <TableCell className="text-right">
+        <ActionsMenu
+          feed={feed}
+          subscription={subscription}
+          isRefreshing={isPending}
+          onRefresh={handleRefresh}
+        />
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function LastFetched({
+  date,
+  isRefreshing,
+}: {
+  date: Date | string | null;
+  isRefreshing: boolean;
+}) {
+  if (!date) return "Never";
+
+  return (
+    <div
+      className={isRefreshing ? "animate-pulse opacity-50" : ""}
+      aria-busy={isRefreshing}
+    >
+      <RelativeDate date={date} />
+      <span role="status" className="sr-only">
+        {isRefreshing ? "Refreshing feed..." : ""}
+      </span>
+    </div>
+  );
+}
+
+interface ActionsMenuProps extends FeedRowProps {
+  isRefreshing: boolean;
+  onRefresh: () => void;
+}
+
+function ActionsMenu({
+  feed,
+  subscription,
+  isRefreshing,
+  onRefresh,
+}: ActionsMenuProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <MoreHorizontal data-icon="inline" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onRefresh} disabled={isRefreshing}>
+            {isRefreshing ? (
+              <Loader2Icon data-icon="inline-start" className="animate-spin" />
+            ) : (
+              <RefreshCw data-icon="inline-start" />
+            )}
+            Refresh
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+            <Edit2 data-icon="inline-start" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => setIsRemoveDialogOpen(true)}
+          >
+            <Trash2 data-icon="inline-start" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <EditFeedDialog
         subscription={subscription}
@@ -154,21 +208,5 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
         onOpenChange={setIsRemoveDialogOpen}
       />
     </>
-  );
-}
-
-function LastFetched({
-  date,
-  isRefreshing,
-}: {
-  date: Date | string | null;
-  isRefreshing: boolean;
-}) {
-  if (!date) return "Never";
-
-  return (
-    <div className={isRefreshing ? "animate-pulse opacity-50" : ""}>
-      <RelativeDate date={date} />
-    </div>
   );
 }
