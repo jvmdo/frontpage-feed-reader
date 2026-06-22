@@ -11,13 +11,13 @@ export function GuestBanner() {
   const [isDismissed, setIsDismissed] = useState(false);
   const session = authClient.useSession();
 
-  if (isDismissed || !session.data?.user.isAnonymous) {
+  if (isDismissed || (session.data && !session.data.user.isAnonymous)) {
     return null;
   }
 
   return (
     <>
-      <div className="relative flex justify-end items-center gap-4 bg-warning px-2 py-2 text-primary-foreground md:px-4">
+      <div className="relative flex justify-end items-center gap-4 bg-warning px-2 text-primary-foreground md:px-4">
         <button
           type="button"
           className="lg:absolute inset-0 flex items-center justify-center gap-2 font-medium text-xs sm:text-sm"

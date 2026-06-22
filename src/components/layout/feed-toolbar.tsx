@@ -73,7 +73,7 @@ export function FeedToolbar() {
 function AssignButton({ categoryId }: { categoryId: number }) {
   return (
     <AssignFeedsDialog categoryId={categoryId}>
-      <Button variant="outline" size="sm">
+      <Button variant="outline" size="sm" className="text-xs">
         <ListPlus className="size-3.5" data-icon="inline-start" />
         Assign
       </Button>
