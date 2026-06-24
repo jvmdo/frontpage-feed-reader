@@ -39,13 +39,21 @@ test("full onboarding journey as a guest", async ({ onboardingPage }) => {
   // Click Next on the tour step
   await tourContent.getByRole("button", { name: /next/i }).click();
 
-  // 6. Step 3: Subscribe to a feed
+  // 6. Step 3: Verify the feed
+  await expect(tourContent).toContainText(/verify feed/i);
+  await page.locator('[data-tour="add-feed-verify"]').click();
+
+  // 7. Step 4: Feed preview
+  await expect(tourContent).toContainText(/feed preview/i);
+  await tourContent.getByRole("button", { name: /next/i }).click();
+
+  // 8. Step 5: Subscribe to a feed
   await expect(tourContent).toContainText(/subscribe to a feed/i);
 
   // Submit the form
   await page.locator('[data-tour="add-feed-submit"]').click();
 
-  // 7. Step 4: View your feeds (Wait for Sidebar item)
+  // 9. Step 6: View your feeds (Wait for Sidebar item)
   // The tour automatically transitions once the feed appears
   await expect(tourContent).toContainText(/view your feeds/i);
   const welcomeFeed = page.locator('[data-tour="welcome-feed"]');
@@ -54,7 +62,7 @@ test("full onboarding journey as a guest", async ({ onboardingPage }) => {
   // Click the feed in sidebar
   await welcomeFeed.click();
 
-  // 8. Step 5: Read an article (Wait for Item Card)
+  // 10. Step 7: Read an article (Wait for Item Card)
   await expect(tourContent).toContainText(/read an article/i);
   const welcomeItem = page.locator('[data-tour="welcome-item"]');
   await expect(welcomeItem).toBeVisible();
@@ -62,7 +70,7 @@ test("full onboarding journey as a guest", async ({ onboardingPage }) => {
   // Click the item to open reader
   await welcomeItem.click();
 
-  // 9. Step 6: Immersive Reading (Floating Step)
+  // 11. Step 8: Immersive Reading (Floating Step)
   await expect(tourContent).toContainText(/immersive reading/i);
   const reader = page.getByRole("dialog", { name: /item reader/i });
   await expect(reader).toBeVisible();
@@ -70,7 +78,7 @@ test("full onboarding journey as a guest", async ({ onboardingPage }) => {
   // Click 'Next' to finish
   await tourContent.getByRole("button", { name: /next/i }).click();
 
-  // 10. Step 7: Completion Dialog
+  // 12. Step 9: Completion Dialog
   await expect(tourContent).toContainText(/you're all set/i);
   await tourContent
     .getByRole("button", { name: /close tour/i })

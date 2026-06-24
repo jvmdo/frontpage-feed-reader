@@ -21,7 +21,7 @@ export function FeedPreviewCard({
   if (!feed) return null;
 
   return (
-    <Item variant="outline" size="default">
+    <Item variant="outline" size="default" data-tour="feed-preview-card">
       <ItemMedia>
         <FeedIcon url={feed.iconUrl} title={feed.title} size={48} />
       </ItemMedia>

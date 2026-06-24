@@ -85,6 +85,49 @@ export const steps: Tour.StepDetails[] = [
     },
   },
   {
+    id: "add-feed-form-verify",
+    type: "tooltip",
+    title: "Verify feed",
+    description:
+      "Click 'Verify Feed' to check if entered URL points to a valid feed.",
+    target: () => document.querySelector('[data-tour="add-feed-verify"]'),
+    effect({ next, target, show, update }) {
+      show();
+      let cancelWait: (() => void) | undefined;
+      const [promise, cancel] = waitForEvent(target, "click");
+
+      promise.then(() => {
+        const [waitPromise, cancelWaitFn] = waitForElement(
+          () => document.querySelector('[data-tour="add-feed-submit"]'),
+          { timeout: 10000 },
+        );
+        cancelWait = cancelWaitFn;
+        waitPromise
+          .then(() => safeNext(next))
+          .catch(() =>
+            endTourWithError(update, show, "Verification took too long."),
+          );
+      });
+
+      return () => {
+        cancel();
+        cancelWait?.();
+      };
+    },
+  },
+  {
+    id: "add-feed-preview",
+    type: "tooltip",
+    title: "Feed preview",
+    description:
+      "Verify that the title, description, and status of the feed are correct.",
+    target: () => document.querySelector('[data-tour="feed-preview-card"]'),
+    actions: [{ label: "Next", action: "next" }],
+    effect({ show }) {
+      show();
+    },
+  },
+  {
     id: "add-feed-form-submit",
     type: "tooltip",
     title: "Subscribe to a feed",
