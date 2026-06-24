@@ -24,19 +24,13 @@ const CATEGORY_COLORS = [
  * @throws `CuratedFeedsMissingError` If any required curated feed is missing from the database.
  */
 export async function onboardGuest(db: DB, userId: string) {
-  // 1. Initialize user preferences with a 7-day historical watermark
-  const guestWatermark = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
+  // 1. Initialize user preferences if they don't exist yet
   await db
     .insert(userPreferences)
     .values({
       userId,
-      markedAllReadAt: guestWatermark,
     })
-    .onConflictDoUpdate({
-      target: [userPreferences.userId],
-      set: { markedAllReadAt: guestWatermark },
-    });
+    .onConflictDoNothing();
 
   // 2. Resolve Database Records for all feeds (Welcome + Curated)
   const curatedUrls = sampleFeeds.categories.flatMap((c) =>

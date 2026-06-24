@@ -37,8 +37,6 @@ describe("ItemCard", () => {
     render(<ItemCard data={data} layout={FeedLayout.List} />);
 
     const article = screen.getByRole("article");
-    expect(article).not.toHaveClass("opacity-60");
-
     const dot = article.querySelector(".bg-unread-indicator");
     expect(dot).toBeInTheDocument();
   });
@@ -48,8 +46,6 @@ describe("ItemCard", () => {
     render(<ItemCard data={data} layout={FeedLayout.List} />);
 
     const article = screen.getByRole("article");
-    expect(article).toHaveClass("opacity-60");
-
     const dot = article.querySelector(".bg-unread-indicator");
     expect(dot).not.toBeInTheDocument();
   });

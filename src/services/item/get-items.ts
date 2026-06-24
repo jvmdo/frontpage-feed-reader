@@ -144,6 +144,7 @@ export async function getItems(
       globalWatermark: userPreferences.markedAllReadAt,
       categoryWatermark: categories.markedAllReadAt,
       subscriptionWatermark: subscriptions.markedAllReadAt,
+      subscriptionCreatedAt: subscriptions.createdAt,
       categoryName: categories.name,
       categoryColor: categories.color,
       snippet,
@@ -186,6 +187,7 @@ export async function getItems(
       globalWatermark: row.globalWatermark,
       categoryWatermark: row.categoryWatermark,
       subscriptionWatermark: row.subscriptionWatermark,
+      subscriptionCreatedAt: row.subscriptionCreatedAt,
     });
 
     const isWatermarked = calculateIsRead({
@@ -195,6 +197,7 @@ export async function getItems(
       globalWatermark: row.globalWatermark,
       categoryWatermark: row.categoryWatermark,
       subscriptionWatermark: row.subscriptionWatermark,
+      subscriptionCreatedAt: row.subscriptionCreatedAt,
     });
 
     return {

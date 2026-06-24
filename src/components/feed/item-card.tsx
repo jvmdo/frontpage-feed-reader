@@ -50,13 +50,12 @@ function CardShell({
   children: React.ReactNode;
 }) {
   const { data } = useItemCard();
-  const { isRead, item } = data;
+  const { item } = data;
 
   return (
     <article
       className={cn(
         "group relative border-b border-border overflow-hidden transition-all hover:bg-accent/60 cursor-pointer",
-        isRead && "opacity-60",
         className,
       )}
       aria-labelledby={`title-${item.id}`}

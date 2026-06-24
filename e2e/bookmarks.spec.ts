@@ -57,11 +57,13 @@ test.describe("Bookmarks / Save for Later", () => {
       .filter({ hasText: "Saved News Item" });
 
     await card1.getByRole("button", { name: /save for later/i }).click();
-    await card2.getByRole("button", { name: /save for later/i }).click();
-
-    // Verify visual feedback (filled icon/aria-label change)
     await expect(
       card1.getByRole("button", { name: /remove from saved/i }),
+    ).toBeVisible();
+
+    await card2.getByRole("button", { name: /save for later/i }).click();
+    await expect(
+      card2.getByRole("button", { name: /remove from saved/i }),
     ).toBeVisible();
 
     // 4. Navigate to Saved view via sidebar

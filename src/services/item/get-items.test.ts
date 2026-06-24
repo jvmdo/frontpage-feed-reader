@@ -443,6 +443,44 @@ describe("getItems", () => {
       // Should be false because createdAt (now) > watermark (5m ago)
       expect(item?.isRead).toBe(false);
     });
+
+    test("items created before subscription date are always read", async ({
+      tx,
+      testUser,
+    }) => {
+      const now = new Date();
+      const tenMinutesAgo = new Date(now.getTime() - 10 * 60000);
+      const fiveMinutesAgo = new Date(now.getTime() - 5 * 60000);
+
+      // Create subscription 5 minutes ago (baseline)
+      const { feed } = await seedFeedWithSubscription(
+        tx,
+        testUser.id,
+        {},
+        { createdAt: fiveMinutesAgo },
+      );
+
+      // Seed old and new items
+      await seedItems(tx, feed.id, [
+        {
+          title: "Old Item",
+          publishedAt: tenMinutesAgo,
+          createdAt: tenMinutesAgo,
+        },
+        {
+          title: "New Item",
+          publishedAt: now,
+          createdAt: now,
+        },
+      ]);
+
+      const result = await getItems(tx, testUser.id, options);
+      const oldItem = result.find((r) => r.item.title === "Old Item");
+      const newItem = result.find((r) => r.item.title === "New Item");
+
+      expect(oldItem?.isRead).toBe(true);
+      expect(newItem?.isRead).toBe(false);
+    });
   });
 
   describe("sorting and decoupling", () => {

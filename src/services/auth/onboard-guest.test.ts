@@ -29,13 +29,14 @@ describe("onboardGuest", () => {
       .where(eq(subscriptions.userId, testUser.id));
 
     expect(dbSubscriptions).toHaveLength(TOTAL_EXPECTED_FEEDS);
+    expect(dbSubscriptions.every((s) => s.markedAllReadAt === null)).toBe(true);
 
     // 3. Assert: User Preferences
     const dbPrefs = await tx.query.userPreferences.findFirst({
       where: eq(userPreferences.userId, testUser.id),
     });
     expect(dbPrefs).toBeDefined();
-    expect(dbPrefs?.markedAllReadAt).toBeDefined();
+    expect(dbPrefs?.markedAllReadAt).toBeNull();
   });
 
   test("is idempotent and doesn't create duplicate records", async ({

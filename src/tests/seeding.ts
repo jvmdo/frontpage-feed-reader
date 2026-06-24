@@ -53,7 +53,10 @@ export async function seedFeed(tx: DB, overrides: Partial<NewFeed> = {}) {
 export async function seedSubscription(tx: DB, overrides: NewSubscription) {
   const [inserted] = await tx
     .insert(schema.subscriptions)
-    .values(overrides)
+    .values({
+      createdAt: new Date(Date.now() - 60 * 60 * 1000), // Default to 1 hour ago in tests
+      ...overrides,
+    })
     .returning();
   return inserted;
 }
@@ -138,6 +141,7 @@ export async function seedItems(
     guid: item.guid ?? `guid-${index}-${Math.random().toString(36).slice(2)}`,
     title: item.title ?? `Item ${index}`,
     publishedAt: item.publishedAt ?? new Date(),
+    createdAt: item.createdAt ?? new Date(),
     ...item,
   }));
 

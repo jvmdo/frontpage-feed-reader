@@ -41,6 +41,7 @@ export function watermarkFilters(
     );
 
   return [
+    sql`${ca} > ${subscriptions.createdAt}`,
     isUnread(userPreferences.markedAllReadAt),
     isUnread(categories.markedAllReadAt),
     isUnread(subscriptions.markedAllReadAt),
@@ -60,6 +61,7 @@ export function calculateIsRead(params: {
   globalWatermark: Date | null;
   categoryWatermark: Date | null;
   subscriptionWatermark: Date | null;
+  subscriptionCreatedAt: Date;
 }) {
   const {
     readAt,
@@ -68,9 +70,11 @@ export function calculateIsRead(params: {
     globalWatermark,
     categoryWatermark,
     subscriptionWatermark,
+    subscriptionCreatedAt,
   } = params;
 
   if (readAt) return true;
+  if (itemTimestamp <= subscriptionCreatedAt) return true;
 
   const watermarks = [
     globalWatermark,
