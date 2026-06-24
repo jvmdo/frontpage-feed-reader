@@ -3,6 +3,7 @@ import { HttpResponse, http } from "msw";
 import { Suspense } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addFeedAction } from "@/actions/feed/add-feed-action";
+import { verifyFeedAction } from "@/actions/feed/verify-feed-action";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import {
   createMockCategory,
@@ -32,6 +33,10 @@ vi.mock("next/link", async () => {
 // Mock the server actions
 vi.mock("@/actions/feed/add-feed-action", () => ({
   addFeedAction: vi.fn(),
+}));
+
+vi.mock("@/actions/feed/verify-feed-action", () => ({
+  verifyFeedAction: vi.fn(),
 }));
 
 vi.mock("@/actions/feed/remove-feed-action", () => ({
@@ -121,6 +126,17 @@ describe("AppSidebar Integration", () => {
       return { success: true, data: newSub };
     });
 
+    // Mock verification to succeed
+    vi.mocked(verifyFeedAction).mockResolvedValueOnce({
+      success: true,
+      alreadySubscribed: false,
+      feed: {
+        title: "New Feed",
+        description: "New Description",
+        iconUrl: null,
+      },
+    });
+
     render(
       <SidebarProvider>
         <AppSidebar>
@@ -139,10 +155,13 @@ describe("AppSidebar Integration", () => {
     const addFeedButton = screen.getByRole("button", { name: /add feed/i });
     await user.click(addFeedButton);
 
-    // Fill the form and submit
+    // Fill the form and verify, then submit
     const urlInput = screen.getByLabelText(/feed url/i);
     await user.type(urlInput, "https://newfeed.com");
-    await user.click(screen.getByRole("button", { name: /add/i }));
+    await user.click(screen.getByRole("button", { name: /verify/i }));
+
+    const submitButton = await screen.findByRole("button", { name: /add/i });
+    await user.click(submitButton);
 
     // Verify that the new feed appears in the sidebar
     expect(await screen.findByText(/new feed/i)).toBeInTheDocument();
@@ -259,9 +278,11 @@ describe("AppSidebar Integration", () => {
         screen.getByRole("heading", { name: /add feed/i }),
       ).toBeInTheDocument();
 
-      // Verify input and add button
+      // Verify input and verify button
       expect(screen.getByLabelText(/feed url/i)).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /add/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /verify/i }),
+      ).toBeInTheDocument();
     });
   });
 });
