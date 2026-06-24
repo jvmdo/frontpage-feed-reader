@@ -142,6 +142,7 @@ test("malicious feeds are sanitized before rendering", async ({
   await dialog
     .getByRole("textbox", { name: /feed url/i })
     .fill(maliciousFeedUrl);
+  await dialog.getByRole("button", { name: /verify/i }).click();
   await dialog.getByRole("button", { name: /add feed/i, exact: true }).click();
 
   // 3. Verify success and dialog to close

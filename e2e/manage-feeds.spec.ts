@@ -59,6 +59,7 @@ test("transitions from empty state to table when a feed is added", async ({
   const dialog = page.getByRole("dialog", { name: /add feed/i });
 
   await dialog.getByLabel(/feed url/i).fill(feedUrl);
+  await dialog.getByRole("button", { name: /verify/i }).click();
   await dialog.getByRole("button", { name: /add/i, exact: true }).click();
 
   // 4. Verify transition to table

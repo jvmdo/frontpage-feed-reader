@@ -32,6 +32,7 @@ for (const { file } of FEED_TYPES) {
     const dialog = page.getByRole("dialog", { name: /add feed/i });
 
     await dialog.getByLabel(/feed url/i).fill(feedUrl);
+    await dialog.getByRole("button", { name: /verify/i }).click();
     await dialog.getByRole("button", { name: /add/i }).click();
 
     // 3. Assert toast shows up
@@ -68,10 +69,11 @@ test("successfully adds a feed and assigns it to a category", async ({
 
   const dialog = page.getByRole("dialog", { name: /add feed/i });
 
-  // 4. Fill URL
+  // 4. Fill URL & Verify
   await dialog.getByLabel(/feed url/i).fill(feedUrl);
+  await dialog.getByRole("button", { name: /verify/i }).click();
 
-  // 5. Select Category
+  // 5. Select Category (visible after verification)
   await dialog.getByRole("combobox", { name: /category/i }).click();
   await page.getByRole("option", { name: "Tech News" }).click();
 
@@ -114,13 +116,10 @@ test("handles non-existent feed with friendly error", async ({
   const dialog = page.getByRole("dialog", { name: /add feed/i });
 
   await dialog.getByLabel(/feed url/i).fill(feed404Url);
-  await dialog.getByRole("button", { name: /add/i }).click();
+  await dialog.getByRole("button", { name: /verify/i }).click();
 
-  // 3. Verify error Toast appears
-  const toast = page.locator("[data-sonner-toast]");
-
-  await expect(toast).toBeVisible();
-  await expect(toast).toContainText(/We couldn't reach this URL/i);
+  // 3. Verify error message appears on the field
+  await expect(dialog.getByText(/We couldn't reach this URL/i)).toBeVisible();
 
   // Dialog should stay open
   await expect(dialog).toBeVisible();
@@ -146,15 +145,14 @@ for (const { file } of BAD_FEED_TYPES) {
     const dialog = page.getByRole("dialog", { name: /add feed/i });
 
     await dialog.getByLabel(/feed url/i).fill(badFeedUrl);
-    await dialog.getByRole("button", { name: /add/i }).click();
+    await dialog.getByRole("button", { name: /verify/i }).click();
 
-    // Assert toast shows up with validation error
-    const toast = page.locator("[data-sonner-toast]");
-
-    await expect(toast).toBeVisible();
-    await expect(toast).toContainText(
-      /This link doesn't seem to be a valid RSS or Atom feed/i,
-    );
+    // Assert error message appears on the field
+    await expect(
+      dialog.getByText(
+        /This link doesn't seem to be a valid RSS or Atom feed/i,
+      ),
+    ).toBeVisible();
 
     // Dialog should stay open for correction
     await expect(dialog).toBeVisible();

@@ -19,6 +19,7 @@ test("marking an item as read updates the UI and unread counts", async ({
   const dialog = page.getByRole("dialog", { name: /add feed/i });
 
   await dialog.getByLabel(/feed url/i).fill(feedUrl);
+  await dialog.getByRole("button", { name: /verify/i }).click();
   await dialog.getByRole("button", { name: /add/i, exact: true }).click();
 
   // 3. Wait for success toast and feed to be processed

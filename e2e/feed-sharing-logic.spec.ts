@@ -23,6 +23,7 @@ test.describe("Feed Sharing and First-Fetch Logic", () => {
 
     const dialog = page.getByRole("dialog", { name: /add feed/i });
     await dialog.getByLabel(/feed url/i).fill(feedUrl);
+    await dialog.getByRole("button", { name: /verify/i }).click();
     await dialog.getByRole("button", { name: /add/i }).click();
 
     // 3. Verify items are visible immediately
@@ -70,6 +71,7 @@ test.describe("Feed Sharing and First-Fetch Logic", () => {
 
     const dialog = page.getByRole("dialog", { name: /add feed/i });
     await dialog.getByLabel(/feed url/i).fill(sharedUrl);
+    await dialog.getByRole("button", { name: /verify/i }).click();
     await dialog.getByRole("button", { name: /add/i }).click();
 
     // 3. Verify success
