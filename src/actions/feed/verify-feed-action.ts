@@ -1,22 +1,19 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { feeds, subscriptions } from "@/db/schema";
 import {
   FeedInvalidFormatError,
   FeedNetworkError,
   FeedNotFoundError,
   FeedUnavailableError,
 } from "@/lib/errors";
-import { parseFeedXml } from "@/lib/feed/parser";
 import { getCurrentSession } from "@/lib/session";
-import { fetchFeedXml } from "@/services/ingestion/fetch-feed-xml";
+import { verifyFeed } from "@/services/feed/verify-feed";
 import type { Feed } from "@/types";
 
 const verifyFeedSchema = z.object({
-  url: z.string().url("Please enter a valid URL").trim(),
+  url: z.url("Please enter a valid URL").trim(),
 });
 
 export type VerifyFeedInput = z.infer<typeof verifyFeedSchema>;
@@ -31,15 +28,6 @@ export interface VerifiedFeedResult {
 
 /**
  * Server action to verify a feed URL before subscribing.
- *
- * NOTE FOR REVIEW:
- * This action is designed to be read-only to avoid DB write side-effects (orphaned feeds)
- * if the user decides not to complete the subscription.
- *
- * 1. Checks if the URL matches an existing feed in our database.
- * 2. If it exists, checks if the current user is already subscribed to prevent duplicates.
- * 3. If it doesn't exist, fetches the feed XML from the internet, parses it to retrieve
- *    metadata (title, description, icon), and returns it without inserting it into the database.
  */
 export async function verifyFeedAction(
   input: VerifyFeedInput,
@@ -66,50 +54,11 @@ export async function verifyFeedAction(
     }
 
     const { url } = result.data;
-
-    // 1. Check if feed already exists in the database
-    const existingFeed = await db.query.feeds.findFirst({
-      where: eq(feeds.url, url),
-    });
-
-    if (existingFeed) {
-      // Check if user is already subscribed to this feed
-      const userSub = await db.query.subscriptions.findFirst({
-        where: and(
-          eq(subscriptions.userId, session.user.id),
-          eq(subscriptions.feedId, existingFeed.id),
-        ),
-      });
-
-      return {
-        success: true,
-        alreadySubscribed: !!userSub,
-        feed: {
-          title: existingFeed.title,
-          description: existingFeed.description,
-          iconUrl: existingFeed.iconUrl,
-        },
-      };
-    }
-
-    // 2. Fetch and parse the feed XML (read-only verification)
-    const fetchResult = await fetchFeedXml(url);
-
-    if (fetchResult.status !== "success") {
-      throw new FeedUnavailableError();
-    }
-
-    const parsed = await parseFeedXml(fetchResult.xml, url);
-    const { metadata } = parsed;
+    const verificationResult = await verifyFeed(db, session.user.id, url);
 
     return {
       success: true,
-      alreadySubscribed: false,
-      feed: {
-        title: metadata.title,
-        description: metadata.description,
-        iconUrl: metadata.iconUrl ?? null,
-      },
+      ...verificationResult,
     };
   } catch (error) {
     console.error("[verifyFeedAction]", error);

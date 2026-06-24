@@ -90,6 +90,39 @@ describe("createSubscription", () => {
     expect(userSubs.length).toBe(1);
   });
 
+  test("normalizes URLs and prevents duplicates (trailing slash)", async ({
+    tx,
+    testUser,
+  }) => {
+    // 1. Setup
+    const userId = testUser.id;
+    const urlWithoutSlash = "https://example.com/feed.xml";
+    const urlWithSlash = "https://example.com/feed.xml/";
+
+    // 2. Subscribe to urlWithoutSlash
+    const { feed: feed1, subscription: sub1 } = await createSubscription(
+      tx,
+      userId,
+      urlWithoutSlash,
+    );
+
+    // 3. Subscribe to urlWithSlash
+    const { feed: feed2, subscription: sub2 } = await createSubscription(
+      tx,
+      userId,
+      urlWithSlash,
+    );
+
+    // 4. Verify they resolved to the exact same feed record
+    expect(feed1.id).toBe(feed2.id);
+    expect(feed1.url).toBe(urlWithoutSlash);
+    expect(feed2.url).toBe(urlWithoutSlash);
+    expect(sub1.id).toBe(sub2.id);
+
+    const allFeeds = await tx.select().from(feeds);
+    expect(allFeeds.length).toBe(1);
+  });
+
   test("throws FeedNotFoundError when server returns 404", async ({
     tx,
     testUser,

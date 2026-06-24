@@ -1,34 +1,18 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: testing asset */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { db } from "@/db";
 import {
   FeedInvalidFormatError,
   FeedNetworkError,
   FeedNotFoundError,
   FeedUnavailableError,
 } from "@/lib/errors";
-import { parseFeedXml } from "@/lib/feed/parser";
 import { getCurrentSession } from "@/lib/session";
-import { fetchFeedXml } from "@/services/ingestion/fetch-feed-xml";
-import { createMockFeed, createMockUser } from "@/tests/factories";
+import { verifyFeed } from "@/services/feed/verify-feed";
+import { createMockUser } from "@/tests/factories";
 import { verifyFeedAction } from "./verify-feed-action";
 
-vi.mock("@/db", () => ({
-  db: {
-    query: {
-      feeds: {
-        findFirst: vi.fn(),
-      },
-      subscriptions: {
-        findFirst: vi.fn(),
-      },
-    },
-  },
-}));
-
-vi.mock("@/services/ingestion/fetch-feed-xml");
-vi.mock("@/lib/feed/parser");
+vi.mock("@/services/feed/verify-feed");
 vi.mock("@/lib/session");
 
 describe("verifyFeedAction", () => {
@@ -60,24 +44,21 @@ describe("verifyFeedAction", () => {
     });
   });
 
-  it("returns alreadySubscribed: true if feed exists in DB and user is subscribed", async () => {
+  it("returns success and verification data when service resolves", async () => {
     const mockUser = createMockUser({ id: "user-123" });
-    const mockFeed = createMockFeed({
-      id: 123,
-      title: "Existing Feed",
-      description: "Desc",
-      iconUrl: "https://example.com/icon.png",
-    });
+    const mockServiceResult = {
+      alreadySubscribed: true,
+      feed: {
+        title: "Mock Title",
+        description: "Mock Description",
+        iconUrl: "https://example.com/icon.png",
+      },
+    };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce({
       user: mockUser,
     } as any);
-    vi.mocked(db.query.feeds.findFirst as any).mockResolvedValueOnce(mockFeed);
-    vi.mocked(db.query.subscriptions.findFirst as any).mockResolvedValueOnce({
-      id: 789,
-      userId: mockUser.id,
-      feedId: mockFeed.id,
-    });
+    vi.mocked(verifyFeed).mockResolvedValueOnce(mockServiceResult);
 
     const result = await verifyFeedAction({
       url: "https://example.com/feed.xml",
@@ -87,86 +68,15 @@ describe("verifyFeedAction", () => {
       success: true,
       alreadySubscribed: true,
       feed: {
-        title: "Existing Feed",
-        description: "Desc",
+        title: "Mock Title",
+        description: "Mock Description",
         iconUrl: "https://example.com/icon.png",
       },
     });
-    expect(fetchFeedXml).not.toHaveBeenCalled();
-  });
 
-  it("returns alreadySubscribed: false if feed exists in DB but user is NOT subscribed", async () => {
-    const mockUser = createMockUser({ id: "user-123" });
-    const mockFeed = createMockFeed({
-      id: 123,
-      title: "Existing Feed",
-      description: "Desc",
-      iconUrl: "https://example.com/icon.png",
-    });
-
-    vi.mocked(getCurrentSession).mockResolvedValueOnce({
-      user: mockUser,
-    } as any);
-    vi.mocked(db.query.feeds.findFirst as any).mockResolvedValueOnce(mockFeed);
-    vi.mocked(db.query.subscriptions.findFirst as any).mockResolvedValueOnce(
-      null,
-    );
-
-    const result = await verifyFeedAction({
-      url: "https://example.com/feed.xml",
-    });
-
-    expect(result).toEqual({
-      success: true,
-      alreadySubscribed: false,
-      feed: {
-        title: "Existing Feed",
-        description: "Desc",
-        iconUrl: "https://example.com/icon.png",
-      },
-    });
-    expect(fetchFeedXml).not.toHaveBeenCalled();
-  });
-
-  it("fetches, parses, and returns metadata if feed is NOT in DB", async () => {
-    const mockUser = createMockUser({ id: "user-123" });
-    vi.mocked(getCurrentSession).mockResolvedValueOnce({
-      user: mockUser,
-    } as any);
-    vi.mocked(db.query.feeds.findFirst as any).mockResolvedValueOnce(null);
-
-    vi.mocked(fetchFeedXml).mockResolvedValueOnce({
-      status: "success",
-      xml: "<xml></xml>",
-      etag: null,
-      lastModified: null,
-    });
-
-    vi.mocked(parseFeedXml).mockResolvedValueOnce({
-      metadata: {
-        title: "Fetched Feed",
-        description: "Fetched Description",
-        iconUrl: "https://example.com/fetched-icon.png",
-      },
-      items: [],
-    });
-
-    const result = await verifyFeedAction({
-      url: "https://example.com/feed.xml",
-    });
-
-    expect(result).toEqual({
-      success: true,
-      alreadySubscribed: false,
-      feed: {
-        title: "Fetched Feed",
-        description: "Fetched Description",
-        iconUrl: "https://example.com/fetched-icon.png",
-      },
-    });
-    expect(fetchFeedXml).toHaveBeenCalledWith("https://example.com/feed.xml");
-    expect(parseFeedXml).toHaveBeenCalledWith(
-      "<xml></xml>",
+    expect(verifyFeed).toHaveBeenCalledWith(
+      expect.anything(),
+      mockUser.id,
       "https://example.com/feed.xml",
     );
   });
@@ -204,8 +114,7 @@ describe("verifyFeedAction", () => {
         vi.mocked(getCurrentSession).mockResolvedValueOnce({
           user: mockUser,
         } as any);
-        vi.mocked(db.query.feeds.findFirst as any).mockResolvedValueOnce(null);
-        vi.mocked(fetchFeedXml).mockRejectedValueOnce(exception);
+        vi.mocked(verifyFeed).mockRejectedValueOnce(exception);
 
         const result = await verifyFeedAction({
           url: "https://example.com/feed.xml",
@@ -218,5 +127,23 @@ describe("verifyFeedAction", () => {
         });
       });
     }
+
+    it("returns internal error on unexpected errors", async () => {
+      const mockUser = createMockUser({ id: "user-123" });
+      vi.mocked(getCurrentSession).mockResolvedValueOnce({
+        user: mockUser,
+      } as any);
+      vi.mocked(verifyFeed).mockRejectedValueOnce(new Error("Unexpected"));
+
+      const result = await verifyFeedAction({
+        url: "https://example.com/feed.xml",
+      });
+
+      expect(result).toEqual({
+        success: false,
+        error: "An unexpected error occurred. Please try again later.",
+        code: "INTERNAL_ERROR",
+      });
+    });
   });
 });

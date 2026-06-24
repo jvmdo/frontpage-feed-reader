@@ -3,6 +3,7 @@ import type { DB } from "@/db";
 import { feeds, subscriptions } from "@/db/schema";
 import { FeedUnavailableError } from "@/lib/errors";
 import { parseFeedXml } from "@/lib/feed/parser";
+import { normalizeUrl } from "@/lib/utils";
 import {
   type FetchFeedResult,
   fetchFeedXml,
@@ -21,9 +22,11 @@ export async function createSubscription(
   url: string,
   categoryId?: number | null,
 ) {
+  const normalizedUrl = normalizeUrl(url);
+
   // 1. Check if feed exists
   let feed = await db.query.feeds.findFirst({
-    where: eq(feeds.url, url),
+    where: eq(feeds.url, normalizedUrl),
   });
 
   // 2. If it doesn't exist, fetch and parse
@@ -31,7 +34,7 @@ export async function createSubscription(
   let initialData: FetchFeedResult | undefined;
 
   if (!feed) {
-    const fetchResult = await fetchFeedXml(url);
+    const fetchResult = await fetchFeedXml(normalizedUrl);
 
     // If we get a 304 (not_modified) for a new feed we don't have ETags for yet,
     // it's an unexpected state or server misconfiguration.
@@ -41,7 +44,7 @@ export async function createSubscription(
 
     initialData = fetchResult;
 
-    const parsed = await parseFeedXml(fetchResult.xml, url);
+    const parsed = await parseFeedXml(fetchResult.xml, normalizedUrl);
     metadata = parsed.metadata;
   }
 
@@ -51,7 +54,7 @@ export async function createSubscription(
       const [newFeed] = await tx
         .insert(feeds)
         .values({
-          url,
+          url: normalizedUrl,
           title: metadata.title,
           description: metadata.description,
           iconUrl: metadata.iconUrl,
@@ -64,7 +67,7 @@ export async function createSubscription(
       if (!newFeed) {
         // Find the feed that was created by a concurrent request
         const existingFeed = await tx.query.feeds.findFirst({
-          where: eq(feeds.url, url),
+          where: eq(feeds.url, normalizedUrl),
         });
         if (!existingFeed) {
           throw new Error("Failed to resolve feed after conflict");
