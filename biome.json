@@ -16,7 +16,7 @@
   },
   "linter": {
     "enabled": true,
-    "includes": ["src", "e2e"],
+    "includes": ["src/**/*", "e2e/**/*"],
     "rules": {
       "recommended": true,
       "suspicious": {
