@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { CategoryDot } from "@/components/category/category-dot";
 import { RelativeDate } from "@/components/shared/relative-date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,12 +98,7 @@ export function FeedRow({ subscription, feed }: FeedRowProps) {
       <TableCell>
         {category ? (
           <div className="flex items-center gap-1.5">
-            {category.color && (
-              <span
-                className="size-1.5 rounded-full"
-                style={{ backgroundColor: category.color }}
-              />
-            )}
+            <CategoryDot color={category.color} size="sm" />
             <span className="text-sm font-medium">{category.name}</span>
           </div>
         ) : (

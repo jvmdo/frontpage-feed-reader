@@ -3,6 +3,7 @@
 import { Edit2, Folder, Plus, Trash2 } from "lucide-react";
 import { AddCategoryDialog } from "@/components/category/add-category-dialog";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
+import { CategoryDot } from "@/components/category/category-dot";
 import { DeleteCategoryDialog } from "@/components/category/delete-category-dialog";
 import { EditCategoryDialog } from "@/components/category/edit-category-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -36,12 +37,7 @@ export function CategoryManagementList() {
           className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div
-              className="size-3 rounded-full shrink-0 border border-border"
-              style={{ backgroundColor: category.color }}
-              aria-hidden="true"
-              data-testid="category-color-indicator"
-            />
+            <CategoryDot color={category.color} size="lg" />
             <span className="font-medium truncate">{category.name}</span>
           </div>
 

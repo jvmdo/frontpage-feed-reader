@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import { CategoryDot } from "@/components/category/category-dot";
 import {
   Field,
   FieldDescription,
@@ -105,17 +106,14 @@ export function CategorySelectFieldInner({
               <SelectGroup>
                 <SelectItem value="none">
                   <span className="flex items-center gap-2">
-                    <span className="size-2 rounded-full shrink-0 bg-slate-400" />
+                    <CategoryDot hasBorder />
                     <span>Uncategorized</span>
                   </span>
                 </SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     <span className="flex items-center gap-2">
-                      <span
-                        className="size-2 rounded-full shrink-0"
-                        style={{ backgroundColor: category.color }}
-                      />
+                      <CategoryDot color={category.color} />
                       <span>{category.name}</span>
                     </span>
                   </SelectItem>

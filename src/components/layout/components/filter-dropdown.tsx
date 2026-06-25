@@ -1,4 +1,5 @@
 import { FilterIcon } from "lucide-react";
+import { CategoryDot } from "@/components/category/category-dot";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -162,12 +163,7 @@ function RefinementFilters({
             onCheckedChange={() => toggleCategory(category.id)}
             className="gap-1"
           >
-            {category.color && (
-              <span
-                className="size-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: category.color }}
-              />
-            )}
+            <CategoryDot color={category.color} size="sm" />
             {category.name}
           </DropdownMenuCheckboxItem>
         ))}

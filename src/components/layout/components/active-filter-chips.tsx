@@ -1,6 +1,7 @@
 "use client";
 
 import { XIcon } from "lucide-react";
+import { CategoryDot } from "@/components/category/category-dot";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,12 +42,7 @@ export function ActiveFilterChips() {
             variant="secondary"
             className="pr-1 bg-background border-border gap-0 lg:text-sm"
           >
-            {chip.color && (
-              <span
-                className="size-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: chip.color }}
-              />
-            )}
+            {chip.color && <CategoryDot color={chip.color} size="sm" />}
             {chip.iconUrl && <FeedIcon url={chip.iconUrl} size={12} />}
             <span className="pl-1">{chip.label}</span>
             <Button

@@ -2,6 +2,7 @@
 
 import { ChevronRight } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
+import { CategoryDot } from "@/components/category/category-dot";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { DashboardLink } from "@/components/shared/dashboard-link";
 import {
@@ -91,14 +92,7 @@ function CategoryGroup({
               state={dashboardState.category(category.id)}
               label={category.name}
               unreadCount={unreadCount}
-              icon={
-                <span
-                  className="size-2 rounded-full shrink-0"
-                  style={{ backgroundColor: category.color }}
-                  aria-hidden="true"
-                  data-testid="sidebar-category-dot"
-                />
-              }
+              icon={<CategoryDot color={category.color} />}
               suffix={
                 <ChevronRight className="size-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 text-muted-foreground shrink-0" />
               }
