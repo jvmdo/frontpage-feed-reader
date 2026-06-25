@@ -32,6 +32,7 @@ import {
   ReaderWidthValues,
   useReaderStore,
 } from "@/hooks/ui/use-reader-store";
+import { useScrollShortcuts } from "@/hooks/ui/use-scroll-shortcuts";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { cn } from "@/lib/utils";
 import { ReaderView } from "./reader-view";
@@ -47,6 +48,11 @@ export function ItemReaderLightbox() {
       setActiveItemId(null);
     }
   };
+
+  useScrollShortcuts({
+    selector: '[role="dialog"] [data-slot="scroll-area-viewport"]',
+    enabled: !!activeItemId,
+  });
 
   return (
     <Dialog open={!!activeItemId} onOpenChange={handleOpenChange}>
@@ -193,6 +199,7 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
           key={activeItemId}
           className="h-full"
           data-tour="reader-content"
+          type="scroll"
         >
           {isPending ? (
             <ReaderViewSkeleton />
