@@ -103,10 +103,21 @@ export function CategorySelectFieldInner({
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="none">Uncategorized</SelectItem>
+                <SelectItem value="none">
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full shrink-0 bg-slate-400" />
+                    <span>Uncategorized</span>
+                  </span>
+                </SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="size-2 rounded-full shrink-0"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <span>{category.name}</span>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectGroup>

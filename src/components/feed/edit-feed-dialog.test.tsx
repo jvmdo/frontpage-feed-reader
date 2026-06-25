@@ -95,11 +95,10 @@ describe("EditFeedDialog", () => {
     );
     expect(screen.queryByLabelText(/feed url/i)).not.toBeInTheDocument();
 
-    const selectValue = await screen.findByText("Tech", {
-      selector: "[data-slot='select-value']",
+    const selectTrigger = await screen.findByRole("combobox", {
+      name: /category/i,
     });
-
-    expect(selectValue).toBeInTheDocument();
+    expect(selectTrigger).toHaveTextContent(/Tech/i);
   });
 
   it("shows validation error when title is cleared", async () => {
