@@ -1,13 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Suspense, useEffect, useState } from "react";
-import {
-  Controller,
-  FormProvider,
-  useForm,
-  useFormContext,
-} from "react-hook-form";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { FeedPreviewCard } from "@/components/feed/feed-preview-card";
 import { Button } from "@/components/ui/button";
@@ -20,29 +15,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FieldGroup } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
-import { useCategories } from "@/hooks/category/use-categories";
 import { useAddFeed } from "@/hooks/feed/use-add-feed";
 import { useVerifyFeed } from "@/hooks/feed/use-verify-feed";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { type AddFeedInput, addFeedSchema } from "@/lib/validations/feed";
 import type { Feed } from "@/types";
+import { CategorySelectField, FeedUrlField } from "./feed-form-fields";
 
 interface AddFeedDialogProps {
   children: React.ReactNode;
@@ -160,22 +140,13 @@ function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
           onCancel={onCancel}
         />
       ) : (
-        <Suspense
-          fallback={
-            <ConfigureFeedStepSkeleton
-              feed={verifyResult?.feed}
-              alreadySubscribed={alreadySubscribed}
-            />
-          }
-        >
-          <ConfigureFeedStep
-            feed={verifyResult?.feed}
-            alreadySubscribed={alreadySubscribed}
-            isSubmitting={isPending}
-            onSubmit={handleSubmit}
-            onBack={resetVerification}
-          />
-        </Suspense>
+        <ConfigureFeedStep
+          feed={verifyResult?.feed}
+          alreadySubscribed={alreadySubscribed}
+          isSubmitting={isPending}
+          onSubmit={handleSubmit}
+          onBack={resetVerification}
+        />
       )}
     </FormProvider>
   );
@@ -193,12 +164,7 @@ function VerifyFeedStep({
   onCancel,
 }: VerifyFeedStepProps) {
   const { isTourActive } = useTourStore();
-  const {
-    register,
-    handleSubmit,
-    trigger,
-    formState: { errors },
-  } = useFormContext<AddFeedInput>();
+  const { handleSubmit, trigger } = useFormContext<AddFeedInput>();
 
   const handleFormSubmit = async () => {
     // Validate only URL on Step 1 client-side
@@ -214,26 +180,11 @@ function VerifyFeedStep({
       className="flex flex-col gap-6"
     >
       <FieldGroup>
-        <Field
-          data-invalid={!!errors.url}
-          data-disabled={isVerifying}
+        <FeedUrlField
+          disabled={isVerifying}
+          isTourActive={isTourActive}
           data-tour="add-feed-url"
-        >
-          <FieldLabel htmlFor="feed-url">Feed URL</FieldLabel>
-          <Input
-            id="feed-url"
-            placeholder="https://example.com/feed.xml"
-            disabled={isVerifying}
-            readOnly={isTourActive}
-            {...register("url")}
-            aria-invalid={!!errors.url}
-            aria-describedby={errors.url ? "url-error" : undefined}
-            data-tour="add-feed-url"
-          />
-          {errors.url && (
-            <FieldError id="url-error">{errors.url.message}</FieldError>
-          )}
-        </Field>
+        />
       </FieldGroup>
 
       <DialogFooter>
@@ -273,12 +224,7 @@ function ConfigureFeedStep({
   onSubmit,
   onBack,
 }: ConfigureFeedStepProps) {
-  const { data: categories } = useCategories();
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useFormContext<AddFeedInput>();
+  const { handleSubmit } = useFormContext<AddFeedInput>();
 
   const showCategory = !alreadySubscribed;
 
@@ -288,53 +234,7 @@ function ConfigureFeedStep({
         <FeedPreviewCard feed={feed} alreadySubscribed={alreadySubscribed} />
 
         {showCategory && (
-          <Field data-invalid={!!errors.categoryId}>
-            <FieldLabel htmlFor="category-id">Category</FieldLabel>
-            <FieldDescription className="-mt-2">
-              It's optional. You can always add this feed to any category later.
-            </FieldDescription>
-            <Controller
-              control={control}
-              name="categoryId"
-              render={({ field }) => (
-                <Select
-                  value={field.value?.toString() ?? "none"}
-                  onValueChange={(value) =>
-                    field.onChange(value === "none" ? null : Number(value))
-                  }
-                  disabled={isSubmitting}
-                >
-                  <SelectTrigger
-                    id="category-id"
-                    aria-invalid={!!errors.categoryId}
-                    aria-describedby={
-                      errors.categoryId ? "category-error" : undefined
-                    }
-                  >
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="none">Uncategorized</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id.toString()}
-                        >
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.categoryId && (
-              <FieldError id="category-error">
-                {errors.categoryId.message}
-              </FieldError>
-            )}
-          </Field>
+          <CategorySelectField disabled={isSubmitting} showDescription />
         )}
       </FieldGroup>
 
@@ -357,37 +257,5 @@ function ConfigureFeedStep({
         </Button>
       </DialogFooter>
     </form>
-  );
-}
-
-interface ConfigureFeedStepSkeletonProps {
-  feed: Pick<Feed, "title" | "description" | "iconUrl"> | undefined;
-  alreadySubscribed: boolean;
-}
-
-function ConfigureFeedStepSkeleton({
-  feed,
-  alreadySubscribed,
-}: ConfigureFeedStepSkeletonProps) {
-  return (
-    <div className="flex flex-col gap-6">
-      <FieldGroup>
-        <FeedPreviewCard feed={feed} alreadySubscribed={alreadySubscribed} />
-
-        {!alreadySubscribed && (
-          <Field>
-            <div className="h-4 w-16 bg-muted animate-pulse rounded" />
-            <div className="h-9 w-full bg-muted/40 animate-pulse rounded border border-input/30" />
-          </Field>
-        )}
-      </FieldGroup>
-
-      <DialogFooter>
-        <Button variant="outline" disabled>
-          Edit URL
-        </Button>
-        <Button disabled>Add Feed</Button>
-      </DialogFooter>
-    </div>
   );
 }

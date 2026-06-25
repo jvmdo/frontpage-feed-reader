@@ -20,7 +20,7 @@ import {
 } from "@/tests/rtl-utils";
 import { EditFeedDialog } from "./edit-feed-dialog";
 
-// Mock the server action
+// Mock the server actions
 vi.mock("@/actions/feed/update-feed-action", () => ({
   updateFeedAction: vi.fn(),
 }));
@@ -34,7 +34,10 @@ vi.mock("sonner", () => ({
 }));
 
 describe("EditFeedDialog", () => {
-  const mockFeed = createMockFeed({ title: "Original Feed" });
+  const mockFeed = createMockFeed({
+    title: "Original Feed",
+    url: "https://example.com/original-feed",
+  });
   const mockSubscription = createMockSubscription({
     feedId: mockFeed.id,
     customTitle: "My Custom Title",
@@ -90,9 +93,8 @@ describe("EditFeedDialog", () => {
     expect(await screen.findByLabelText(/title/i)).toHaveValue(
       "My Custom Title",
     );
+    expect(screen.queryByLabelText(/feed url/i)).not.toBeInTheDocument();
 
-    // Select is a bit trickier to check value directly, but we can verify the trigger text.
-    // We use a more specific selector to avoid matching the hidden native <option>
     const selectValue = await screen.findByText("Tech", {
       selector: "[data-slot='select-value']",
     });
@@ -248,12 +250,10 @@ describe("EditFeedDialog", () => {
   });
 
   it("displays loading state while updating", async () => {
-    let resolveAction!: (reason: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
+    const { promise: pendingPromise, resolve: resolveAction } =
+      Promise.withResolvers<any>();
 
-    vi.mocked(updateFeedAction).mockReturnValue(pendingPromise as any);
+    vi.mocked(updateFeedAction).mockReturnValue(pendingPromise);
 
     const { user } = setup();
 
@@ -265,7 +265,7 @@ describe("EditFeedDialog", () => {
     expect(saveButton).toBeDisabled();
     expect(saveButton).toHaveTextContent(/saving/i);
 
-    resolveAction({ success: true, data: mockFeed });
+    resolveAction({ success: true, data: mockSubscription });
 
     await waitForElementToBeRemoved(screen.queryByRole("dialog"));
   });
