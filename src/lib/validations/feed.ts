@@ -1,9 +1,14 @@
 import { z } from "zod";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
+import { preprocessUrlInput } from "@/lib/url";
 import { FILTER_STATUSES } from "@/types";
 
 export const addFeedSchema = z.object({
-  url: z.url("Please enter a valid URL").trim(),
+  url: z
+    .string()
+    .trim()
+    .transform(preprocessUrlInput)
+    .pipe(z.url("Please enter a valid URL")),
   categoryId: z.number().nullable().optional(),
 });
 

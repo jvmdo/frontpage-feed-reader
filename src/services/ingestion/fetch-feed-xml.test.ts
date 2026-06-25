@@ -37,6 +37,7 @@ describe("fetchFeedXml", () => {
       xml: FEED_CONTENT,
       etag: 'W/"12345"',
       lastModified: "Wed, 21 Oct 2015 07:28:00 GMT",
+      finalUrl: FEED_URL,
     });
   });
 

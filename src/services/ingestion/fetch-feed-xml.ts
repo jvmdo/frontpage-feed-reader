@@ -16,6 +16,7 @@ export type FetchFeedResult =
       xml: string;
       etag: string | null;
       lastModified: string | null;
+      finalUrl: string;
     }
   | { status: "not_modified" };
 
@@ -39,6 +40,7 @@ export async function fetchFeedXml(
         xml,
         etag: null,
         lastModified: null,
+        finalUrl: url,
       };
     } catch (error) {
       console.error("[fetchFeedXml] Failed to read local welcome feed:", error);
@@ -97,6 +99,7 @@ export async function fetchFeedXml(
       xml,
       etag,
       lastModified,
+      finalUrl: response.url,
     };
   } finally {
     clearTimeout(timeoutId);

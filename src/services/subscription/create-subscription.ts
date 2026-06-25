@@ -23,8 +23,9 @@ export async function createSubscription(
   categoryId?: number | null,
 ) {
   const normalizedUrl = normalizeUrl(url);
+  let resolvedUrl = normalizedUrl;
 
-  // 1. Check if feed exists
+  // 1. Check if feed exists by normalized input URL
   let feed = await db.query.feeds.findFirst({
     where: eq(feeds.url, normalizedUrl),
   });
@@ -43,9 +44,19 @@ export async function createSubscription(
     }
 
     initialData = fetchResult;
+    resolvedUrl = normalizeUrl(fetchResult.finalUrl);
 
-    const parsed = await parseFeedXml(fetchResult.xml, normalizedUrl);
-    metadata = parsed.metadata;
+    // Double check if the feed exists by final redirected URL
+    const existingFeedByFinalUrl = await db.query.feeds.findFirst({
+      where: eq(feeds.url, resolvedUrl),
+    });
+
+    if (existingFeedByFinalUrl) {
+      feed = existingFeedByFinalUrl;
+    } else {
+      const parsed = await parseFeedXml(fetchResult.xml, resolvedUrl);
+      metadata = parsed.metadata;
+    }
   }
 
   const result = await db.transaction(async (tx) => {
@@ -54,7 +65,7 @@ export async function createSubscription(
       const [newFeed] = await tx
         .insert(feeds)
         .values({
-          url: normalizedUrl,
+          url: resolvedUrl,
           title: metadata.title,
           description: metadata.description,
           iconUrl: metadata.iconUrl,
@@ -67,7 +78,7 @@ export async function createSubscription(
       if (!newFeed) {
         // Find the feed that was created by a concurrent request
         const existingFeed = await tx.query.feeds.findFirst({
-          where: eq(feeds.url, normalizedUrl),
+          where: eq(feeds.url, resolvedUrl),
         });
         if (!existingFeed) {
           throw new Error("Failed to resolve feed after conflict");

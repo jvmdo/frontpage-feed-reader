@@ -182,6 +182,7 @@ describe("ingestItems integration", () => {
         xml: RSS_CONTENT,
         etag: "new-etag",
         lastModified: "new-modified",
+        finalUrl: FEED_URL,
       },
     });
 

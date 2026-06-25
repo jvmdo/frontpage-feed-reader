@@ -123,6 +123,60 @@ describe("createSubscription", () => {
     expect(allFeeds.length).toBe(1);
   });
 
+  test("resolves redirects and prevents duplicates (e.g. www vs non-www)", async ({
+    tx,
+    testUser,
+  }) => {
+    const userId = testUser.id;
+    const url1 = "https://example.com/feed.xml";
+    const url2 = "https://www.example.com/feed.xml";
+
+    const feedContent = `
+      <rss version="2.0">
+        <channel>
+          <title>Redirect Test Feed</title>
+          <link>https://example.com</link>
+          <description>Description</description>
+        </channel>
+      </rss>
+    `;
+
+    // Simulate url1 redirecting to url2
+    server.use(
+      http.get(url1, () => {
+        return HttpResponse.redirect(url2, 301);
+      }),
+      http.get(url2, () => {
+        return new HttpResponse(feedContent, {
+          headers: { "Content-Type": "application/rss+xml" },
+        });
+      }),
+    );
+
+    // 1. Subscribe using url1 (which redirects to url2)
+    const { feed: feed1, subscription: sub1 } = await createSubscription(
+      tx,
+      userId,
+      url1,
+    );
+
+    // 2. Subscribe directly using url2
+    const { feed: feed2, subscription: sub2 } = await createSubscription(
+      tx,
+      userId,
+      url2,
+    );
+
+    // 3. Verify both resolved to the same feed record (using url2 as the canonical one)
+    expect(feed1.id).toBe(feed2.id);
+    expect(feed1.url).toBe(url2);
+    expect(feed2.url).toBe(url2);
+    expect(sub1.id).toBe(sub2.id);
+
+    const allFeeds = await tx.select().from(feeds);
+    expect(allFeeds.length).toBe(1);
+  });
+
   test("throws FeedNotFoundError when server returns 404", async ({
     tx,
     testUser,

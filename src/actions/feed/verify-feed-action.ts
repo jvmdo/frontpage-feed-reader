@@ -9,11 +9,16 @@ import {
   FeedUnavailableError,
 } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
+import { preprocessUrlInput } from "@/lib/url";
 import { verifyFeed } from "@/services/feed/verify-feed";
 import type { Feed } from "@/types";
 
 const verifyFeedSchema = z.object({
-  url: z.url("Please enter a valid URL").trim(),
+  url: z
+    .string()
+    .trim()
+    .transform(preprocessUrlInput)
+    .pipe(z.url("Please enter a valid URL")),
 });
 
 export type VerifyFeedInput = z.infer<typeof verifyFeedSchema>;

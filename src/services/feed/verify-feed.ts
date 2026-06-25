@@ -47,7 +47,32 @@ export async function verifyFeed(db: DB, userId: string, url: string) {
     throw new FeedUnavailableError();
   }
 
-  const parsed = await parseFeedXml(fetchResult.xml, normalizedUrl);
+  const resolvedUrl = normalizeUrl(fetchResult.finalUrl);
+
+  // Double check if the feed exists by final redirected URL
+  const existingFeedByFinalUrl = await db.query.feeds.findFirst({
+    where: eq(feeds.url, resolvedUrl),
+  });
+
+  if (existingFeedByFinalUrl) {
+    const userSub = await db.query.subscriptions.findFirst({
+      where: and(
+        eq(subscriptions.userId, userId),
+        eq(subscriptions.feedId, existingFeedByFinalUrl.id),
+      ),
+    });
+
+    return {
+      alreadySubscribed: !!userSub,
+      feed: {
+        title: existingFeedByFinalUrl.title ?? "Untitled Feed",
+        description: existingFeedByFinalUrl.description ?? "",
+        iconUrl: existingFeedByFinalUrl.iconUrl,
+      },
+    };
+  }
+
+  const parsed = await parseFeedXml(fetchResult.xml, resolvedUrl);
   const { metadata } = parsed;
 
   return {

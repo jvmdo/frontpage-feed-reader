@@ -4,6 +4,7 @@ import {
   FeedNotFoundError,
   FeedUnavailableError,
 } from "@/lib/errors";
+import { preprocessUrlInput } from "@/lib/url";
 import { server } from "@/tests/mocks/server";
 import { seedFeed, seedFeedWithSubscription } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
@@ -135,5 +136,81 @@ describe("verifyFeed service", () => {
     await expect(verifyFeed(tx, testUser.id, url)).rejects.toThrow(
       FeedInvalidFormatError,
     );
+  });
+
+  test("resolves combinations of protocol, subdomain, trailing slash, and bare domain variations to the canonical subscription", async ({
+    tx,
+    testUser,
+  }) => {
+    const canonicalUrl = "https://css-tricks.com/feed";
+    const feedTitle = "CSS-Tricks Feed";
+
+    // 1. Seed the database with the canonical feed and subscription
+    await seedFeedWithSubscription(tx, testUser.id, {
+      url: canonicalUrl,
+      title: feedTitle,
+    });
+
+    const feedXml = `
+      <rss version="2.0">
+        <channel>
+          <title>${feedTitle}</title>
+          <link>https://css-tricks.com</link>
+          <description>Tips, Tricks, and Techniques</description>
+        </channel>
+      </rss>
+    `;
+
+    // 2. Mock network redirects for all variants to the canonical URL
+    const variations = [
+      "https://www.css-tricks.com/feed",
+      "https://www.css-tricks.com/feed/",
+      "www.css-tricks.com/feed/",
+      "www.css-tricks.com/feed",
+      "https://css-tricks.com/feed",
+      "https://css-tricks.com/feed/",
+      "css-tricks.com/feed/",
+      "css-tricks.com/feed",
+    ];
+
+    server.use(
+      // The canonical URL returns the RSS feed content
+      http.get(canonicalUrl, () => {
+        return new HttpResponse(feedXml, {
+          headers: { "Content-Type": "application/rss+xml" },
+        });
+      }),
+      // Other HTTPS/HTTP variants redirect to the canonical URL
+      http.get("https://www.css-tricks.com/feed", () =>
+        HttpResponse.redirect(canonicalUrl, 301),
+      ),
+      http.get("https://www.css-tricks.com/feed/", () =>
+        HttpResponse.redirect(canonicalUrl, 301),
+      ),
+      http.get("https://css-tricks.com/feed/", () =>
+        HttpResponse.redirect(canonicalUrl, 301),
+      ),
+      http.get("http://css-tricks.com/feed", () =>
+        HttpResponse.redirect(canonicalUrl, 301),
+      ),
+      http.get("http://css-tricks.com/feed/", () =>
+        HttpResponse.redirect(canonicalUrl, 301),
+      ),
+      http.get("http://www.css-tricks.com/feed", () =>
+        HttpResponse.redirect(canonicalUrl, 301),
+      ),
+      http.get("http://www.css-tricks.com/feed/", () =>
+        HttpResponse.redirect(canonicalUrl, 301),
+      ),
+    );
+
+    // 3. Verify all 8 inputs resolve to the canonical subscription
+    for (const input of variations) {
+      const preprocessed = preprocessUrlInput(input);
+      const result = await verifyFeed(tx, testUser.id, preprocessed);
+
+      expect(result.alreadySubscribed).toBe(true);
+      expect(result.feed.title).toBe(feedTitle);
+    }
   });
 });
