@@ -4,12 +4,32 @@
     "better-auth-best-practices": {
       "source": "better-auth/skills",
       "sourceType": "github",
+      "skillPath": "better-auth/best-practices/SKILL.md",
       "computedHash": "a4c830509e85557b59339d8d93a4e243e9e59c686e7678854d39230e12c2a6dc"
+    },
+    "create-auth-skill": {
+      "source": "better-auth/skills",
+      "sourceType": "github",
+      "skillPath": "better-auth/create-auth/SKILL.md",
+      "computedHash": "31c027d02dbf1faa37f58191f574b9443143042fb2b684fe32df53ab0270487c"
     },
     "drizzle-orm-patterns": {
       "source": "giuseppe-trisciuoglio/developer-kit",
       "sourceType": "github",
+      "skillPath": "plugins/developer-kit-typescript/skills/drizzle-orm-patterns/SKILL.md",
       "computedHash": "d63e6d73a9f579b505a5694af2f3b3200c2b5eeea147e88b9b6d1e5fce23bcbb"
+    },
+    "email-and-password-best-practices": {
+      "source": "better-auth/skills",
+      "sourceType": "github",
+      "skillPath": "better-auth/emailAndPassword/SKILL.md",
+      "computedHash": "747d7f73bd9e2ec5317b8ef88dc70f97df716d00e3d02de4051feebaa48b062d"
+    },
+    "github-actions-docs": {
+      "source": "xixu-me/skills",
+      "sourceType": "github",
+      "skillPath": "skills/github-actions-docs/SKILL.md",
+      "computedHash": "e9ac24e79715ef3060bd4ae376052f8d863b830604e69cb513b39764bf47ee53"
     },
     "landing-page-guide-v2": {
       "source": "bear2u/my-skills",
@@ -25,62 +45,62 @@
     "nuqs": {
       "source": "pproenca/dot-skills",
       "sourceType": "github",
-      "computedHash": "573a1b8ab42c339b6efc8ab55e720faf75e4902071bdc2f65c006972accfd551"
+      "skillPath": "skills/.curated/nuqs/SKILL.md",
+      "computedHash": "aa0d2b2d72da6839d34d7d30378d41cbaa5837cc21ba705c06f1f0df6b50151c"
     },
     "playwright-best-practices": {
       "source": "currents-dev/playwright-best-practices-skill",
       "sourceType": "github",
+      "skillPath": "SKILL.md",
       "computedHash": "320eaf861e3a0a923bfaad0726cb311a3fe30093378f8d26c89b9c5ae5c42b35"
     },
     "react-hook-form-zod": {
       "source": "ovachiever/droid-tings",
       "sourceType": "github",
+      "skillPath": "skills/react-hook-form-zod/SKILL.md",
       "computedHash": "1ee0fc6e35b6b6973d6117657e644605a5646bd7e6c2d0c55f52ec073679ac65"
     },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
-      "computedHash": "507f011a70e8b3ae242bdc0bb5b39fd91a1d4049a0f3c281991ccf84973d591c"
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "ac9d0d69caac7de1d1e5647f3db3bcd2f13af355d6b3a78780fbf7fc80e8dca0"
     },
     "tailwind-css-patterns": {
       "source": "giuseppe-trisciuoglio/developer-kit",
       "sourceType": "github",
+      "skillPath": "plugins/developer-kit-typescript/skills/tailwind-css-patterns/SKILL.md",
       "computedHash": "6092620c3af955a46ea2b94ca8a40197ac8392e6bbdc8c7515659328b186c770"
-    },
-    "tailwind-v4": {
-      "source": "existential-birds/beagle",
-      "sourceType": "github",
-      "computedHash": "1765f9873060271fe9a0ba7c06465b8fbd6137a0a285a56cb5c38295c6057a5e"
-    },
-    "tailwind4-expert": {
-      "source": "yuniorglez/gemini-elite-core",
-      "sourceType": "github",
-      "computedHash": "3dcddf39c282db7cf03bacfbcffe771b279c147b5781355c8f0b5c841c5c874a"
     },
     "tanstack-query-best-practices": {
       "source": "deckardger/tanstack-agent-skills",
       "sourceType": "github",
+      "skillPath": "skills/tanstack-query/SKILL.md",
       "computedHash": "21d2e8b7468a81d772b6527ad8ca178cc2f3f08af777bb9061333013ee88a0c9"
     },
     "vercel-composition-patterns": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
-      "computedHash": "f98931159fa9c7fed043bcd18a891a46dcf89ababa38df13a4c5b7b30dc0ce07"
+      "skillPath": "skills/composition-patterns/SKILL.md",
+      "computedHash": "575757e3e25761c8c562d6e395d29f0b76c98b1273c0bd72d88e6ab1bc9c7d42"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
-      "computedHash": "b1142c5e1bc7b77e8479db09dbabf671f44e1f2d4d9d3eed8cc20cc2c90aeb20"
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
     },
     "vitest": {
-      "source": "pproenca/dot-skills",
+      "source": "antfu/skills",
       "sourceType": "github",
-      "computedHash": "84d2d291054736df0cdee47d1a9a8d3ceb5b9e5a06afb879edff51f55ef30816"
+      "skillPath": "skills/vitest/SKILL.md",
+      "computedHash": "943d436114c677802426741980146c07560bf375297666b03062444f4b98a785"
     },
     "zod": {
       "source": "pproenca/dot-skills",
       "sourceType": "github",
-      "computedHash": "e5d8e35002d0d6b03db0b0daad54e1b82c9c10804f8a745025c07db5ea685655"
+      "skillPath": "skills/.curated/zod/SKILL.md",
+      "computedHash": "c69b5133b65643317236707f2cd3e521b4fc6e5ee5fd6c6c00cf62a37dfd0144"
     }
   }
 }
