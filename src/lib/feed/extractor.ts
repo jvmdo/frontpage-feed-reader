@@ -10,14 +10,25 @@ export function extractText(html: string | undefined | null): string {
   if (!html) return "";
 
   try {
-    // 1. Double decode to handle double-encoded tags (e.g. &amp;lt;p&amp;gt;)
-    // Some feeds are notoriously messy with encoding.
-    const decodedOnce = decodeHTML(html);
-    const decodedTwice = decodeHTML(decodedOnce);
+    let processedHtml = html;
+
+    // Heuristic: If the input has no raw HTML tags but has encoded tags (common in double-encoded feeds),
+    // decode it first to get the HTML tags for the converter to parse. Otherwise, keep it raw
+    // to avoid decoding legitimate code entities (e.g. &lt;div&gt;) into actual tags.
+    const hasRawTags = /<[a-z0-9/!-]+[^>]*>/i.test(processedHtml);
+    const hasEncodedTags = /&(?:amp;)?lt;[a-z0-9/!-]+/i.test(processedHtml);
+
+    if (!hasRawTags && hasEncodedTags) {
+      processedHtml = decodeHTML(processedHtml);
+      // Double check in case of double encoding
+      if (!/<[a-z0-9/!-]+[^>]*>/i.test(processedHtml)) {
+        processedHtml = decodeHTML(processedHtml);
+      }
+    }
 
     // 2. Pre-process HTML: wrap tags in spaces to ensure inline elements
     // don't result in stuck words (e.g. <b>a</b><i>b</i> -> "a b" instead of "ab")
-    const spacedHtml = decodedTwice.replace(/<\/?[a-z0-9-]+[^>]*>/gi, " $& ");
+    const spacedHtml = processedHtml.replace(/<\/?[a-z0-9-]+[^>]*>/gi, " $& ");
 
     // 3. Use html-to-text with search-optimized settings
     const text = convert(spacedHtml, {
@@ -38,7 +49,9 @@ export function extractText(html: string | undefined | null): string {
     });
 
     // 4. Final cleanup of whitespace and normalization
-    return text
+    const decodedText = decodeHTML(text);
+    return decodedText
+      .replace(/[\u200B\u200C\uFEFF]/g, "") // Remove zero-width formatting characters (ZWSP, ZWNJ, BOM)
       .replace(/\s+/g, " ") // Collapse multiple spaces/newlines into one space
       .replace(/(?:\s*,\s*){2,}/g, ", ") // Collapse multiple commas (failed templates)
       .trim();
@@ -46,6 +59,7 @@ export function extractText(html: string | undefined | null): string {
     console.error("Failed to extract text from HTML:", error);
     // Fallback to simple regex if library fails
     return decodeHTML(html)
+      .replace(/[\u200B\u200C\uFEFF]/g, "")
       .replace(/<[^>]*>?/gm, "")
       .trim();
   }

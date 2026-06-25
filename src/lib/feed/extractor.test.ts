@@ -74,4 +74,16 @@ describe("extractText", () => {
     const html = "<p>Part 1</p><hr /><p>Part 2</p>";
     expect(extractText(html)).toBe("Part 1 Part 2");
   });
+
+  it("strips zero-width characters and collapses their adjacent whitespaces", () => {
+    const input =
+      "Time to read: under 3 minutes &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;... #527 May 14, 2025";
+    const output = extractText(input);
+    expect(output).toBe("Time to read: under 3 minutes ... #527 May 14, 2025");
+  });
+
+  it("preserves encoded code snippets and tags in text nodes", () => {
+    const html = "<p>In React, use <code>&lt;div&gt;</code> elements.</p>";
+    expect(extractText(html)).toBe("In React, use <div> elements.");
+  });
 });
