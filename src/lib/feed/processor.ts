@@ -4,7 +4,7 @@ import {
   decodeEntities,
   normalizeAuthor,
   normalizeDate,
-  normalizeUrl,
+  resolveRelativeUrl,
 } from "./normalizer";
 import { sanitizeHtml } from "./sanitizer";
 import { highlightCodeBlocks } from "./syntax";
@@ -57,7 +57,7 @@ export async function processItem(
   const description = extractText(rawDescription).slice(0, 500).trim();
 
   // 4. Metadata & URLs
-  const url = normalizeUrl(item.link, feedLink || sourceUrl);
+  const url = resolveRelativeUrl(item.link, feedLink || sourceUrl);
   const author = normalizeAuthor(item.creator || item.author);
   const publishedAt = normalizeDate(item.pubDate || item.isoDate);
   const updatedAt = normalizeDate(item.isoDate);

@@ -1,6 +1,6 @@
 import Parser from "rss-parser";
 import { FeedInvalidFormatError } from "@/lib/errors";
-import { cleanText, decodeEntities, normalizeUrl } from "./normalizer";
+import { cleanText, decodeEntities, resolveRelativeUrl } from "./normalizer";
 import { type ProcessedItem, processItem } from "./processor";
 
 /**
@@ -49,7 +49,7 @@ export async function parseFeedXml(
 ): Promise<FullFeed> {
   try {
     const feed = await parser.parseString(xml);
-    const feedLink = normalizeUrl(feed.link, sourceUrl);
+    const feedLink = resolveRelativeUrl(feed.link, sourceUrl);
 
     // Extract icon from the feed or fallback to Google's favicon service
     let iconUrl = feed.image?.url;

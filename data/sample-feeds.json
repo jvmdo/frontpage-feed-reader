@@ -8,14 +8,14 @@
       "feeds": [
         {
           "title": "CSS-Tricks",
-          "feedUrl": "https://css-tricks.com/feed/",
+          "feedUrl": "https://css-tricks.com/feed",
           "siteUrl": "https://css-tricks.com/",
           "description": "Tips, Tricks, and Techniques on using Cascading Style Sheets.",
           "format": "rss2"
         },
         {
           "title": "Smashing Magazine",
-          "feedUrl": "https://www.smashingmagazine.com/feed/",
+          "feedUrl": "https://www.smashingmagazine.com/feed",
           "siteUrl": "https://www.smashingmagazine.com/",
           "description": "For web designers and developers.",
           "format": "rss2"
@@ -64,21 +64,21 @@
         },
         {
           "title": "Nielsen Norman Group",
-          "feedUrl": "https://www.nngroup.com/feed/rss/",
+          "feedUrl": "https://www.nngroup.com/feed/rss",
           "siteUrl": "https://www.nngroup.com/",
           "description": "Evidence-based user experience research, training, and consulting.",
           "format": "rss2"
         },
         {
-          "title": "Figma Blog",
-          "feedUrl": "https://www.figma.com/blog/feed/",
-          "siteUrl": "https://www.figma.com/blog/",
-          "description": "Stories about how products are designed at Figma and beyond.",
+          "title": "Web Designer Depot",
+          "feedUrl": "https://feeds2.feedburner.com/webdesignerdepot?format=html",
+          "siteUrl": "https://feeds2.feedburner.com/",
+          "description": "Forward-looking blog providing digital creators with the latest insights, trends, and strategies in UX, UI, web development, and AI.",
           "format": "rss2"
         },
         {
           "title": "A List Apart",
-          "feedUrl": "https://alistapart.com/main/feed/",
+          "feedUrl": "https://alistapart.com/main/feed",
           "siteUrl": "https://alistapart.com/",
           "description": "For people who make websites.",
           "format": "rss2",
@@ -99,7 +99,7 @@
       "feeds": [
         {
           "title": "Cloudflare Blog",
-          "feedUrl": "https://blog.cloudflare.com/rss/",
+          "feedUrl": "https://blog.cloudflare.com/rss",
           "siteUrl": "https://blog.cloudflare.com/",
           "description": "The Cloudflare Blog.",
           "format": "rss2",
@@ -115,16 +115,16 @@
         },
         {
           "title": "The GitHub Blog",
-          "feedUrl": "https://github.blog/feed/",
+          "feedUrl": "https://github.blog/feed",
           "siteUrl": "https://github.blog/",
           "description": "Updates, ideas, and inspiration from GitHub.",
           "format": "rss2"
         },
         {
-          "title": "Netlify Blog",
-          "feedUrl": "https://www.netlify.com/blog/index.xml",
-          "siteUrl": "https://www.netlify.com/blog/",
-          "description": "News and posts from Netlify.",
+          "title": "AWS Blog",
+          "feedUrl": "https://aws.amazon.com/blogs/devops/feed",
+          "siteUrl": "https://aws.amazon.com/blogs/devops/",
+          "description": "AWS DevOps & Developer Productivity Blog",
           "format": "rss2"
         }
       ]
@@ -134,7 +134,7 @@
       "feeds": [
         {
           "title": "The Pragmatic Engineer",
-          "feedUrl": "https://blog.pragmaticengineer.com/rss/",
+          "feedUrl": "https://blog.pragmaticengineer.com/rss",
           "siteUrl": "https://blog.pragmaticengineer.com/",
           "description": "Observations across the software engineering industry.",
           "format": "rss2",
@@ -155,7 +155,7 @@
       "feeds": [
         {
           "title": "Simon Willison's Weblog",
-          "feedUrl": "https://simonwillison.net/atom/everything/",
+          "feedUrl": "https://simonwillison.net/atom/everything",
           "siteUrl": "https://simonwillison.net/",
           "description": "Simon Willison's weblog, covering AI, Python, and web development.",
           "format": "atom",
@@ -182,7 +182,7 @@
     },
     {
       "title": "Duplicate — Simon Willison",
-      "feedUrl": "https://simonwillison.net/atom/everything/",
+      "feedUrl": "https://simonwillison.net/atom/everything",
       "siteUrl": "https://simonwillison.net/",
       "description": "Duplicate of the Simon Willison feed in the AI category.",
       "format": "atom",

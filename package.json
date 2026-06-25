@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "vitest",
+    "test": "vitest --run",
     "test:e2e": "DEBUG=pw:webserver PLAYWRIGHT_TEST=true PLAYWRIGHT_HTML_OPEN=never playwright test --reporter=list",
     "test:cleanup": "bun run src/tests/cleanup-user.ts",
     "coverage": "vitest run --coverage",
@@ -47,6 +47,7 @@
     "motion": "^12.38.0",
     "next": "16.2.4",
     "next-themes": "^0.4.6",
+    "normalize-url": "^9.0.1",
     "nuqs": "^2.8.9",
     "pg": "^8.20.0",
     "radix-ui": "^1.4.3",

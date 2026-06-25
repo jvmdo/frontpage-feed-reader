@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
+import normalizeUrlLib from "normalize-url";
 import { twMerge } from "tailwind-merge";
 import {
   adjectives,
@@ -33,27 +34,17 @@ export function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 /**
- * Normalizes a URL string by trimming whitespace, converting protocol/host to lowercase,
- * removing trailing slashes from the pathname (if not the root path "/"),
- * and removing hash fragments.
+ * Normalizes a URL string, converting protocol/host to lowercase,
+ * removing trailing slashes from the pathname, stripping hash fragments, and sorting query parameters.
  */
 export function normalizeUrl(urlString: string): string {
   try {
-    const trimmed = urlString.trim();
-    if (!trimmed) return "";
-
-    const url = new URL(trimmed);
-    let pathname = url.pathname;
-
-    // Remove trailing slash if pathname is longer than "/"
-    if (pathname.length > 1 && pathname.endsWith("/")) {
-      pathname = pathname.slice(0, -1);
-    }
-
-    // Remove hash
-    url.hash = "";
-
-    return `${url.protocol}//${url.host}${pathname}${url.search}`;
+    return normalizeUrlLib(urlString, {
+      stripWWW: false,
+      stripHash: true,
+      removeTrailingSlash: true,
+      sortQueryParameters: true,
+    });
   } catch {
     return urlString.trim();
   }

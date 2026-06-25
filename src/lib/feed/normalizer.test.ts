@@ -4,7 +4,7 @@ import {
   decodeEntities,
   normalizeAuthor,
   normalizeDate,
-  normalizeUrl,
+  resolveRelativeUrl,
 } from "./normalizer";
 
 describe("decodeEntities", () => {
@@ -93,21 +93,21 @@ describe("normalizeDate", () => {
   });
 });
 
-describe("normalizeUrl", () => {
+describe("resolveRelativeUrl", () => {
   it("should return absolute URL as is (but trimmed)", () => {
-    expect(normalizeUrl("  https://example.com  ")).toBe(
+    expect(resolveRelativeUrl("  https://example.com  ")).toBe(
       "https://example.com/",
     );
   });
 
   it("should handle invalid URLs", () => {
-    expect(normalizeUrl("not-a-url")).toBe("not-a-url");
+    expect(resolveRelativeUrl("not-a-url")).toBe("not-a-url");
   });
 
   it("should return undefined for missing input", () => {
-    expect(normalizeUrl(undefined)).toBeUndefined();
-    expect(normalizeUrl(null)).toBeUndefined();
-    expect(normalizeUrl("  ")).toBeUndefined();
+    expect(resolveRelativeUrl(undefined)).toBeUndefined();
+    expect(resolveRelativeUrl(null)).toBeUndefined();
+    expect(resolveRelativeUrl("  ")).toBeUndefined();
   });
 });
 

@@ -58,7 +58,7 @@ export function normalizeDate(dateStr: string | undefined | null): Date {
 /**
  * Normalizes a URL, resolving relative paths if a base is provided.
  */
-export function normalizeUrl(
+export function resolveRelativeUrl(
   url: string | undefined | null,
   base?: string,
 ): string | undefined {
