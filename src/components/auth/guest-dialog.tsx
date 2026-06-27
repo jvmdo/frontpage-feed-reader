@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@/lib/auth-client";
+import { useConvertGuest } from "@/hooks/user/use-convert-guest";
 import {
   type GuestConversionInput,
   guestConversionSchema,
@@ -38,36 +38,34 @@ export function GuestDialog({
   onOpenChange,
   dismissBanner,
 }: GuestDialogProps) {
+  const { mutate: convertGuest, isPending } = useConvertGuest();
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     reset,
   } = useForm<GuestConversionInput>({
     resolver: zodResolver(guestConversionSchema),
     defaultValues: {
       email: "",
+      password: "",
     },
   });
 
-  const onSubmit = async (data: GuestConversionInput) => {
-    const { error } = await authClient.signUp.email({
-      email: data.email,
-      password: Math.random().toString(36).slice(-12),
-      name: "Guest User",
-      callbackURL: "/dashboard",
+  const onSubmit = (data: GuestConversionInput) => {
+    convertGuest(data, {
+      onSuccess: () => {
+        toast.success("Account created successfully!", {
+          description:
+            "We recommend setting your personal info in profile page.",
+        });
+        reset();
+        onOpenChange(false);
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
     });
-
-    if (error) {
-      toast.error(error.message || "An error occurred during conversion.");
-    } else {
-      toast.success("Account created successfully!", {
-        description:
-          "We recommend setting your personal info in account settings.",
-      });
-      reset();
-      onOpenChange(false);
-    }
   };
 
   return (
@@ -76,8 +74,8 @@ export function GuestDialog({
         <DialogHeader>
           <DialogTitle>Create an account</DialogTitle>
           <DialogDescription>
-            Enter your email to convert your guest session into a permanent
-            account. Your current progress will be preserved.
+            Enter your email and password to convert your guest session into a
+            permanent account. Your current progress will be preserved.
           </DialogDescription>
         </DialogHeader>
         <form noValidate onSubmit={handleSubmit(onSubmit)}>
@@ -88,7 +86,7 @@ export function GuestDialog({
                 id="email"
                 type="email"
                 placeholder="m@example.com"
-                disabled={isSubmitting}
+                disabled={isPending}
                 {...register("email")}
                 aria-describedby="error-email"
               />
@@ -96,9 +94,25 @@ export function GuestDialog({
                 <FieldError id="error-email">{errors.email.message}</FieldError>
               )}
             </Field>
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting && <Spinner data-icon="inline-start" />}
-              {isSubmitting ? "Saving..." : "Create Account"}
+            <Field data-invalid={!!errors.password}>
+              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                disabled={isPending}
+                {...register("password")}
+                aria-describedby="error-password"
+              />
+              {errors.password && (
+                <FieldError id="error-password">
+                  {errors.password.message}
+                </FieldError>
+              )}
+            </Field>
+            <Button type="submit" disabled={isPending} className="w-full">
+              {isPending && <Spinner data-icon="inline-start" />}
+              {isPending ? "Saving..." : "Create Account"}
             </Button>
           </FieldGroup>
         </form>

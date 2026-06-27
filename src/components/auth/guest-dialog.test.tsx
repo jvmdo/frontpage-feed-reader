@@ -64,6 +64,7 @@ describe("GuestDialog", () => {
       screen.getByLabelText(/email address/i),
       "john@example.com",
     );
+    await user.type(screen.getByLabelText(/^password$/i), "password123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(authClient.signUp.email).toHaveBeenCalledWith(
@@ -96,6 +97,7 @@ describe("GuestDialog", () => {
       screen.getByLabelText(/email address/i),
       "john@example.com",
     );
+    await user.type(screen.getByLabelText(/^password$/i), "password123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     await waitFor(() => {
@@ -119,6 +121,7 @@ describe("GuestDialog", () => {
       screen.getByLabelText(/email address/i),
       "john@example.com",
     );
+    await user.type(screen.getByLabelText(/^password$/i), "password123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     const submitButton = screen.getByRole("button", { name: /saving/i });
