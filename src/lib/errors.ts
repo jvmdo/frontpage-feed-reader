@@ -140,3 +140,16 @@ export class OnboardingInvariantError extends Error {
     this.name = "OnboardingInvariantError";
   }
 }
+
+/**
+ * Thrown when a credential provider exists but no current password was supplied.
+ */
+export class PasswordRequiredError extends Error {
+  code = "PASSWORD_REQUIRED" as const;
+  constructor(
+    message = "Current password is required to change your password.",
+  ) {
+    super(message);
+    this.name = "PasswordRequiredError";
+  }
+}

@@ -21,6 +21,20 @@ export function generateAnonName() {
 }
 
 /**
+ * Generates initials from a full name (up to 2 characters).
+ */
+export function getInitials(name?: string | null): string {
+  if (!name) return "U";
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+/**
  * Checks if the event target is an editable element (input, textarea, select, or contenteditable).
  * Used to prevent global keyboard shortcuts from firing when typing.
  */
