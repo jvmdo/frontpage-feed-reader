@@ -40,6 +40,7 @@ export type ListItem = Omit<Item, "content">;
 
 export type Session = typeof session.$inferSelect;
 export type Account = typeof account.$inferSelect;
+export type NewAccount = typeof account.$inferInsert;
 export type Verification = typeof verification.$inferSelect;
 
 export type FeedWithSubscription = {

@@ -1,6 +1,7 @@
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { isExcerpt } from "@/lib/feed/utils";
 import type {
+  Account,
   Category,
   Feed,
   FeedWithSubscription,
@@ -187,6 +188,27 @@ export function createMockUser(overrides: Partial<User> = {}): User {
     emailVerified: true,
     image: null,
     isAnonymous: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+export function createMockAccount(overrides: Partial<Account> = {}): Account {
+  const id = overrides.id ?? `acc-${Math.floor(Math.random() * 1000)}`;
+  const userId = overrides.userId ?? "user-1";
+  return {
+    id,
+    userId,
+    accountId: overrides.accountId ?? userId,
+    providerId: overrides.providerId ?? "credential",
+    accessToken: null,
+    refreshToken: null,
+    idToken: null,
+    accessTokenExpiresAt: null,
+    refreshTokenExpiresAt: null,
+    scope: null,
+    password: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

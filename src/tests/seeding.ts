@@ -5,6 +5,7 @@ import * as schema from "@/db/schema";
 import { WELCOME_FEED_URL } from "@/lib/constants";
 import { parseFeedXml } from "@/lib/feed/parser";
 import type {
+  NewAccount,
   NewCategory,
   NewFeed,
   NewItem,
@@ -26,6 +27,27 @@ export async function seedUser(tx: DB, overrides: Partial<NewUser> = {}) {
       id,
       name: "Test User",
       email: `${id}@example.com`,
+      ...overrides,
+    })
+    .returning();
+  return inserted;
+}
+
+/**
+ * Seeds a Better Auth account into the database.
+ */
+export async function seedAccount(
+  tx: DB,
+  overrides: Partial<NewAccount> & { userId: string },
+) {
+  const id = overrides.id ?? `acc_${Math.random().toString(36).slice(2)}`;
+  const providerId = overrides.providerId ?? "credential";
+  const [inserted] = await tx
+    .insert(schema.account)
+    .values({
+      id,
+      accountId: overrides.accountId ?? overrides.userId,
+      providerId,
       ...overrides,
     })
     .returning();
