@@ -110,7 +110,6 @@ describe("SignupForm", () => {
       email: "john@example.com",
       password: "password123",
       name: "John Doe",
-      callbackURL: "/dashboard",
     });
 
     await waitFor(() => {

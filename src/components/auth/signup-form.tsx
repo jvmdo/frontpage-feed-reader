@@ -47,7 +47,6 @@ export function SignupForm({
       email: data.email,
       password: data.password,
       name: data.name,
-      callbackURL: "/dashboard",
     });
 
     if (error) {
