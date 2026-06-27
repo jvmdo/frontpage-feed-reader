@@ -19,6 +19,11 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
+  account: {
+    accountLinking: {
+      allowDifferentEmails: true,
+    },
+  },
   databaseHooks: {
     user: {
       create: {
