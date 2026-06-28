@@ -42,22 +42,21 @@ test("marking a category as read updates all items and counts", async ({
   const items = page.getByRole("article", { name: /item \d/i });
 
   // 2. Verify initial state in Toolbar (it also guarantees hydration is complete)
+  const toolbar = page.getByRole("toolbar", { name: "Feed toolbar" });
   await expect(page.getByRole("heading", { name: "Tech News" })).toBeVisible();
-  await expect(page.getByText(/3 unread/i)).toBeVisible();
+  await expect(toolbar.getByText(/3 unread/i)).toBeVisible();
 
   // 3. Verify initial state in Sidebar
   await expect(category.getByLabel(/unread items/i)).toHaveText("3");
   await expect(items.filter({ hasText: /\bunread\b/i })).toHaveCount(3);
 
   // 4. Trigger "Mark all as read"
-  const toolbar = page.getByRole("toolbar", { name: "Feed toolbar" });
   await toolbar.getByRole("button", { name: /mark all read/i }).click();
 
   // 5. Confirm the dialog
-  await page
-    .getByRole("alertdialog")
-    .getByRole("button", { name: /mark all as read/i })
-    .click();
+  const alertDialog = page.getByRole("alertdialog");
+  await alertDialog.getByRole("button", { name: /mark all as read/i }).click();
+  await expect(alertDialog).not.toBeVisible();
 
   // 6. Verify everything is marked as read
   // Indicators should be gone
