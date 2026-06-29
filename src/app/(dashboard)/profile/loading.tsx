@@ -1,5 +1,5 @@
 import { UserStatsGridSkeleton } from "@/components/user/user-stats-grid";
-import { ProfileDetailsSkeleton } from "./profile-client";
+import { ProfileDetailsSkeleton } from "../../../components/user/profile-client";
 
 export default function ProfileLoading() {
   return (

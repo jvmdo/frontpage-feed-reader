@@ -11,7 +11,7 @@ import { auth } from "@/lib/auth";
 import { getQueryClient } from "@/lib/get-query-client";
 import { getCurrentSession } from "@/lib/session";
 import { getUserStats } from "@/services/user/get-user-stats";
-import { ProfileClient } from "./profile-client";
+import { ProfileClient } from "../../../components/user/profile-client";
 
 /**
  * Server component for the Profile route.
