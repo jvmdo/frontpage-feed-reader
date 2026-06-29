@@ -153,3 +153,36 @@ export class PasswordRequiredError extends Error {
     this.name = "PasswordRequiredError";
   }
 }
+
+/**
+ * Thrown when the user tries to update to an email that is already in use.
+ */
+export class EmailAlreadyInUseError extends Error {
+  code = "EMAIL_ALREADY_IN_USE" as const;
+  constructor(message = "This email is already in use by another account.") {
+    super(message);
+    this.name = "EmailAlreadyInUseError";
+  }
+}
+
+/**
+ * Thrown when the user has no credential provider account.
+ */
+export class CredentialAccountRequiredError extends Error {
+  code = "METHOD_NOT_ALLOWED" as const;
+  constructor(message = "You must set a password before changing your email.") {
+    super(message);
+    this.name = "CredentialAccountRequiredError";
+  }
+}
+
+/**
+ * Thrown when auth.api.verifyPassword or equivalent check rejects.
+ */
+export class InvalidPasswordError extends Error {
+  code = "INVALID_PASSWORD" as const;
+  constructor(message = "The password you entered is incorrect.") {
+    super(message);
+    this.name = "InvalidPasswordError";
+  }
+}
