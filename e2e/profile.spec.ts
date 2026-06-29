@@ -13,8 +13,13 @@ const testUser = {
   newPassword: "newpassword123",
 };
 
+let newEmail: string | null = null;
+
 test.afterAll(async () => {
   // Clean up the test user
+  if (newEmail) {
+    await db.delete(user).where(eq(user.email, newEmail));
+  }
   await db.delete(user).where(eq(user.email, testUser.email));
 });
 
@@ -95,6 +100,21 @@ omegaTest("profile page management flow", async ({ page }) => {
       .locator("[data-sonner-toast]")
       .filter({ hasText: /password changed/i }),
   ).toBeVisible();
+
+  // 5. Change Email Address
+  newEmail = `profile-test-updated-${crypto.randomUUID()}@example.com`;
+  await page.getByLabel(/new email address/i).fill(newEmail);
+  await page.getByLabel(/confirm password/i).fill("new-pass");
+  await page.getByRole("button", { name: /update email/i }).click();
+
+  // Verify success toast
+  await expect(
+    page
+      .locator("[data-sonner-toast]")
+      .filter({ hasText: /email address updated/i }),
+  ).toBeVisible();
+  // Verify reactivity
+  await expect(page.getByText(newEmail)).toBeVisible();
 });
 
 test("password setup flow for user without credentials", async ({
