@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmailChangeForm } from "@/components/user/email-change-form";
 import { OAuthProviders } from "@/components/user/oauth-providers";
 import { PasswordChangeForm } from "@/components/user/password-change-form";
 import { ProfileForm } from "@/components/user/profile-form";
@@ -22,6 +23,10 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
 
       {!currentUser.isAnonymous && (
         <>
+          <Suspense fallback={<PasswordChangeFormSkeleton />}>
+            <EmailChangeForm />
+          </Suspense>
+
           <Suspense fallback={<PasswordChangeFormSkeleton />}>
             <PasswordChangeForm />
           </Suspense>
