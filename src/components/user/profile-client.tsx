@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DeleteAccountForm } from "@/components/user/delete-account-form";
 import { EmailChangeForm } from "@/components/user/email-change-form";
 import { OAuthProviders } from "@/components/user/oauth-providers";
 import { PasswordChangeForm } from "@/components/user/password-change-form";
@@ -36,6 +37,10 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
           </Suspense>
         </>
       )}
+
+      <Suspense fallback={<PasswordChangeFormSkeleton />}>
+        <DeleteAccountForm />
+      </Suspense>
     </div>
   );
 }
