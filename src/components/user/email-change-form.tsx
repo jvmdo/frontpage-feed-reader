@@ -18,6 +18,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
 import { useChangeEmail } from "@/hooks/user/use-change-email";
 import { useUserAccounts } from "@/hooks/user/use-user-accounts";
@@ -90,13 +91,15 @@ export function EmailChangeForm() {
               )}
             </Field>
 
-            <Field data-invalid={!!errors.password}>
-              <FieldLabel htmlFor="confirm-change-password">
+            <PasswordInput.Root
+              data-invalid={!!errors.password}
+              autoComplete="current-password"
+            >
+              <PasswordInput.Label htmlFor="confirm-change-password">
                 Confirm Password
-              </FieldLabel>
-              <Input
+              </PasswordInput.Label>
+              <PasswordInput.Control
                 id="confirm-change-password"
-                type="password"
                 placeholder="••••••••"
                 disabled={isPending}
                 {...register("password")}
@@ -106,7 +109,7 @@ export function EmailChangeForm() {
                   {errors.password.message}
                 </FieldError>
               )}
-            </Field>
+            </PasswordInput.Root>
           </FieldGroup>
         </CardContent>
       </Card>

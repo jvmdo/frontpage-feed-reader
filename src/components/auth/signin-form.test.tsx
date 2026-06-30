@@ -61,7 +61,7 @@ describe("SigninForm", () => {
       );
     });
 
-    expect(screen.getByLabelText(/password/i)).toHaveAccessibleDescription(
+    expect(screen.getByLabelText(/^password$/i)).toHaveAccessibleDescription(
       /password is required/i,
     );
 
@@ -77,7 +77,7 @@ describe("SigninForm", () => {
     const { user } = setup();
 
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
-    await user.type(screen.getByLabelText(/password/i), "password123");
+    await user.type(screen.getByLabelText(/^password$/i), "password123");
     await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     expect(authClient.signIn.email).toHaveBeenCalledWith({
@@ -103,7 +103,7 @@ describe("SigninForm", () => {
     const { user } = setup();
 
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
-    await user.type(screen.getByLabelText(/password/i), "wrongpassword");
+    await user.type(screen.getByLabelText(/^password$/i), "wrongpassword");
     await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     await waitFor(() => {
@@ -145,7 +145,7 @@ describe("SigninForm", () => {
     const { user } = setup();
 
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
-    await user.type(screen.getByLabelText(/password/i), "password123");
+    await user.type(screen.getByLabelText(/^password$/i), "password123");
     await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     const submitButton = screen.getByRole("button", { name: /signing in/i });

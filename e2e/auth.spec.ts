@@ -52,7 +52,7 @@ test("full journey: sign up, sign out, and sign in", async ({ page }) => {
 
   // 3. Sign In
   await page.getByLabel(/email/i).fill(testUser.email);
-  await page.getByLabel(/password/i).fill(testUser.password);
+  await page.getByLabel(/^password$/i).fill(testUser.password);
   await page.getByRole("button", { name: /^sign in$/i }).click();
 
   // Verify redirect to dashboard and user initials

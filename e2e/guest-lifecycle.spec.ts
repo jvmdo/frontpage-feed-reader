@@ -85,7 +85,7 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
 
   const email = `guest-convert-${crypto.randomUUID()}@example.com`;
   await page.getByLabel(/email address/i).fill(email);
-  await page.getByLabel(/password/i).fill("password123");
+  await page.getByLabel(/^password$/i).fill("password123");
 
   await page.getByRole("button", { name: /create account/i }).click();
 

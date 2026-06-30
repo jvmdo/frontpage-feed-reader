@@ -11,13 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { FieldError, FieldGroup } from "@/components/ui/field";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
 import { useChangePassword } from "@/hooks/user/use-change-password";
 import { useUserAccounts } from "@/hooks/user/use-user-accounts";
@@ -33,6 +28,7 @@ export function PasswordChangeForm() {
     handleSubmit,
     reset,
     formState: { errors },
+    watch,
   } = useForm<ChangePasswordInput>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: {
@@ -59,6 +55,8 @@ export function PasswordChangeForm() {
     });
   };
 
+  const passwordValue = watch("newPassword");
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <Card className="*:w-full *:mx-auto xl:*:min-w-xl xl:*:max-w-3xl xl:*:mx-56">
@@ -75,13 +73,15 @@ export function PasswordChangeForm() {
         <CardContent className="space-y-4">
           <FieldGroup>
             {hasPassword && (
-              <Field data-invalid={!!errors.currentPassword}>
-                <FieldLabel htmlFor="current-password">
+              <PasswordInput.Root
+                data-invalid={!!errors.currentPassword}
+                autoComplete="current-password"
+              >
+                <PasswordInput.Label htmlFor="current-password">
                   Current Password
-                </FieldLabel>
-                <Input
+                </PasswordInput.Label>
+                <PasswordInput.Control
                   id="current-password"
-                  type="password"
                   disabled={isPending}
                   {...register("currentPassword")}
                 />
@@ -90,31 +90,38 @@ export function PasswordChangeForm() {
                     {errors.currentPassword.message}
                   </FieldError>
                 )}
-              </Field>
+              </PasswordInput.Root>
             )}
 
-            <Field data-invalid={!!errors.newPassword}>
-              <FieldLabel htmlFor="new-password">New Password</FieldLabel>
-              <Input
+            <PasswordInput.Root
+              data-invalid={!!errors.newPassword}
+              autoComplete="new-password"
+            >
+              <PasswordInput.Label htmlFor="new-password">
+                New Password
+              </PasswordInput.Label>
+              <PasswordInput.Control
                 id="new-password"
-                type="password"
                 disabled={isPending}
                 {...register("newPassword")}
               />
+              <PasswordInput.StrengthMeter password={passwordValue} />
               {errors.newPassword && (
                 <FieldError id="new-password-error">
                   {errors.newPassword.message}
                 </FieldError>
               )}
-            </Field>
+            </PasswordInput.Root>
 
-            <Field data-invalid={!!errors.confirmPassword}>
-              <FieldLabel htmlFor="confirm-password">
+            <PasswordInput.Root
+              data-invalid={!!errors.confirmPassword}
+              autoComplete="new-password"
+            >
+              <PasswordInput.Label htmlFor="confirm-password">
                 Confirm New Password
-              </FieldLabel>
-              <Input
+              </PasswordInput.Label>
+              <PasswordInput.Control
                 id="confirm-password"
-                type="password"
                 disabled={isPending}
                 {...register("confirmPassword")}
               />
@@ -123,7 +130,7 @@ export function PasswordChangeForm() {
                   {errors.confirmPassword.message}
                 </FieldError>
               )}
-            </Field>
+            </PasswordInput.Root>
           </FieldGroup>
         </CardContent>
       </Card>

@@ -29,6 +29,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDeleteAccount } from "@/hooks/user/use-delete-account";
 import { useUserAccounts } from "@/hooks/user/use-user-accounts";
@@ -103,13 +104,15 @@ export function DeleteAccountForm() {
 
                 {hasPassword && (
                   <FieldGroup className="py-4">
-                    <Field data-invalid={!!errors.password}>
-                      <FieldLabel htmlFor="delete-account-password">
+                    <PasswordInput.Root
+                      data-invalid={!!errors.password}
+                      autoComplete="current-password"
+                    >
+                      <PasswordInput.Label htmlFor="delete-account-password">
                         Confirm Password
-                      </FieldLabel>
-                      <Input
+                      </PasswordInput.Label>
+                      <PasswordInput.Control
                         id="delete-account-password"
-                        type="password"
                         placeholder="••••••••"
                         disabled={isPending}
                         {...register("password")}
@@ -119,7 +122,7 @@ export function DeleteAccountForm() {
                           {errors.password.message}
                         </FieldError>
                       )}
-                    </Field>
+                    </PasswordInput.Root>
                   </FieldGroup>
                 )}
 

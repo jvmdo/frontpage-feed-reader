@@ -17,6 +17,7 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ export function SignupForm({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
   } = useForm<SignUpInput>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -41,6 +43,8 @@ export function SignupForm({
       confirmPassword: "",
     },
   });
+
+  const passwordValue = watch("password");
 
   const onSubmit = async (data: SignUpInput) => {
     const { error } = await authClient.signUp.email({
@@ -99,15 +103,18 @@ export function SignupForm({
             <FieldError id="error-email">{errors.email.message}</FieldError>
           )}
         </Field>
-        <Field data-invalid={!!errors.password}>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
-          <Input
+        <PasswordInput.Root
+          data-invalid={!!errors.password}
+          autoComplete="new-password"
+        >
+          <PasswordInput.Label htmlFor="password">Password</PasswordInput.Label>
+          <PasswordInput.Control
             id="password"
-            type="password"
             disabled={isSubmitting}
             {...register("password")}
             aria-describedby="error-password"
           />
+          <PasswordInput.StrengthMeter password={passwordValue} />
           <FieldDescription>
             Must be between 6 and 32 characters long.
           </FieldDescription>
@@ -116,12 +123,16 @@ export function SignupForm({
               {errors.password.message}
             </FieldError>
           )}
-        </Field>
-        <Field data-invalid={!!errors.confirmPassword}>
-          <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
-          <Input
+        </PasswordInput.Root>
+        <PasswordInput.Root
+          data-invalid={!!errors.confirmPassword}
+          autoComplete="new-password"
+        >
+          <PasswordInput.Label htmlFor="confirm-password">
+            Confirm Password
+          </PasswordInput.Label>
+          <PasswordInput.Control
             id="confirm-password"
-            type="password"
             disabled={isSubmitting}
             {...register("confirmPassword")}
             aria-describedby="error-confirm"
@@ -131,7 +142,7 @@ export function SignupForm({
               {errors.confirmPassword.message}
             </FieldError>
           )}
-        </Field>
+        </PasswordInput.Root>
         <Field>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Spinner data-icon="inline-start" />}

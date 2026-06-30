@@ -17,6 +17,7 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -83,9 +84,14 @@ export function SigninForm({
             <FieldError id="error-email">{errors.email.message}</FieldError>
           )}
         </Field>
-        <Field data-invalid={!!errors.password}>
+        <PasswordInput.Root
+          data-invalid={!!errors.password}
+          autoComplete="current-password"
+        >
           <div className="flex items-center justify-between">
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <PasswordInput.Label htmlFor="password">
+              Password
+            </PasswordInput.Label>
             <Link
               href="/forgot-password"
               className="text-xs underline underline-offset-4 hover:text-accent-hover"
@@ -93,9 +99,8 @@ export function SigninForm({
               Forgot password?
             </Link>
           </div>
-          <Input
+          <PasswordInput.Control
             id="password"
-            type="password"
             disabled={isSubmitting}
             {...register("password")}
             aria-describedby="error-password"
@@ -105,7 +110,7 @@ export function SigninForm({
               {errors.password.message}
             </FieldError>
           )}
-        </Field>
+        </PasswordInput.Root>
         <Field>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Spinner data-icon="inline-start" />}

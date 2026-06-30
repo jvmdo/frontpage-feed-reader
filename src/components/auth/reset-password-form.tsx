@@ -6,13 +6,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { Field, FieldError, FieldGroup } from "@/components/ui/field";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -36,6 +31,7 @@ export function ResetPasswordForm({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
   } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
@@ -43,6 +39,8 @@ export function ResetPasswordForm({
       confirmPassword: "",
     },
   });
+
+  const passwordValue = watch("password");
 
   const onSubmit = async (data: ResetPasswordInput) => {
     if (!token) {
@@ -95,26 +93,35 @@ export function ResetPasswordForm({
             Enter your new password below.
           </p>
         </div>
-        <Field data-invalid={!!errors.password}>
-          <FieldLabel htmlFor="password">New Password</FieldLabel>
-          <Input
+        <PasswordInput.Root
+          data-invalid={!!errors.password}
+          autoComplete="new-password"
+        >
+          <PasswordInput.Label htmlFor="password">
+            New Password
+          </PasswordInput.Label>
+          <PasswordInput.Control
             id="password"
-            type="password"
             disabled={isSubmitting}
             {...register("password")}
             aria-describedby="error-password"
           />
+          <PasswordInput.StrengthMeter password={passwordValue} />
           {errors.password && (
             <FieldError id="error-password">
               {errors.password.message}
             </FieldError>
           )}
-        </Field>
-        <Field data-invalid={!!errors.confirmPassword}>
-          <FieldLabel htmlFor="confirm">Confirm Password</FieldLabel>
-          <Input
+        </PasswordInput.Root>
+        <PasswordInput.Root
+          data-invalid={!!errors.confirmPassword}
+          autoComplete="new-password"
+        >
+          <PasswordInput.Label htmlFor="confirm">
+            Confirm Password
+          </PasswordInput.Label>
+          <PasswordInput.Control
             id="confirm"
-            type="password"
             disabled={isSubmitting}
             {...register("confirmPassword")}
             aria-describedby="error-confirm"
@@ -124,7 +131,7 @@ export function ResetPasswordForm({
               {errors.confirmPassword.message}
             </FieldError>
           )}
-        </Field>
+        </PasswordInput.Root>
         <Field>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Spinner data-icon="inline-start" />}

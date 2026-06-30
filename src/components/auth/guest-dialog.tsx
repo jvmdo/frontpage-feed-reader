@@ -19,6 +19,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { useConvertGuest } from "@/hooks/user/use-convert-guest";
@@ -44,6 +45,7 @@ export function GuestDialog({
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<GuestConversionInput>({
     resolver: zodResolver(guestConversionSchema),
     defaultValues: {
@@ -67,6 +69,8 @@ export function GuestDialog({
       },
     });
   };
+
+  const passwordValue = watch("password");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -94,22 +98,27 @@ export function GuestDialog({
                 <FieldError id="error-email">{errors.email.message}</FieldError>
               )}
             </Field>
-            <Field data-invalid={!!errors.password}>
-              <FieldLabel htmlFor="password">Password</FieldLabel>
-              <Input
+            <PasswordInput.Root
+              data-invalid={!!errors.password}
+              autoComplete="new-password"
+            >
+              <PasswordInput.Label htmlFor="password">
+                Password
+              </PasswordInput.Label>
+              <PasswordInput.Control
                 id="password"
-                type="password"
                 placeholder="••••••••"
                 disabled={isPending}
                 {...register("password")}
                 aria-describedby="error-password"
               />
+              <PasswordInput.StrengthMeter password={passwordValue} />
               {errors.password && (
                 <FieldError id="error-password">
                   {errors.password.message}
                 </FieldError>
               )}
-            </Field>
+            </PasswordInput.Root>
             <Button type="submit" disabled={isPending} className="w-full">
               {isPending && <Spinner data-icon="inline-start" />}
               {isPending ? "Saving..." : "Create Account"}
