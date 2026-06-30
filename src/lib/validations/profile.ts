@@ -32,3 +32,9 @@ export const changeEmailSchema = z.object({
 });
 
 export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
+
+export const deleteAccountSchema = z.object({
+  password: z.string().optional(),
+});
+
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;

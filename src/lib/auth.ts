@@ -24,6 +24,9 @@ export const auth = betterAuth({
       enabled: true,
       updateEmailWithoutVerification: true,
     },
+    deleteUser: {
+      enabled: true,
+    },
   },
   account: {
     accountLinking: {
