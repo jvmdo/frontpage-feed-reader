@@ -37,10 +37,10 @@ test.describe("Bookmarks / Save for Later", () => {
       { categoryId: cat2.id },
     );
 
-    const [item1] = await seedItems(db, f1.id, [
+    const [_item1] = await seedItems(db, f1.id, [
       { title: "Saved Tech Item", publishedAt: new Date() },
     ]);
-    const [item2] = await seedItems(db, f2.id, [
+    const [_item2] = await seedItems(db, f2.id, [
       { title: "Saved News Item", publishedAt: new Date() },
     ]);
 

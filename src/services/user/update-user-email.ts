@@ -72,9 +72,11 @@ export async function updateUserEmail(
       },
       headers,
     });
-  } catch (error: any) {
-    const status = error?.status;
-    const message = error?.body?.message;
+  } catch (error) {
+    // biome-ignore lint/suspicious/noExplicitAny: API Error mapping
+    const err = error as any;
+    const status = err?.status;
+    const message = err?.body?.message;
 
     if (
       status === "BAD_REQUEST" &&

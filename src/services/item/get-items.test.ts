@@ -256,7 +256,7 @@ describe("getItems", () => {
       testUser,
     }) => {
       const { feed } = await seedFeedWithSubscription(tx, testUser.id);
-      const [item1, item2] = await seedItems(tx, feed.id, [
+      const [_item1, item2] = await seedItems(tx, feed.id, [
         { title: "Unread Item" },
         { title: "Read Item" },
       ]);
@@ -281,7 +281,7 @@ describe("getItems", () => {
       testUser,
     }) => {
       const { feed } = await seedFeedWithSubscription(tx, testUser.id);
-      const [item1, item2] = await seedItems(tx, feed.id, [
+      const [_item1, item2] = await seedItems(tx, feed.id, [
         { title: "Unread Item" },
         { title: "Read Item" },
       ]);

@@ -7,7 +7,7 @@ import { decodeEntities } from "./normalizer";
  * using highlight.js with automatic language detection.
  */
 export function highlightCodeBlocks(html: string): string {
-  if (!html || !html.includes("<pre")) {
+  if (!html?.includes("<pre")) {
     return html;
   }
 

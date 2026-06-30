@@ -1,8 +1,4 @@
-import {
-  type InfiniteData,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { markAllReadAction } from "@/actions/feed/mark-all-read-action";
 import { useFeeds } from "@/hooks/feed/use-feeds";
 import type { GenericCacheData } from "@/hooks/item/cache";

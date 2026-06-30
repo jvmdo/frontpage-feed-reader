@@ -205,7 +205,7 @@ describe("getUnreadCounts", () => {
   describe("bookmarks", () => {
     test("counts unread bookmarked items", async ({ tx, testUser }) => {
       const { feed } = await seedFeedWithSubscription(tx, testUser.id);
-      const [item1, item2] = await seedItems(tx, feed.id, [
+      const [item1, _item2] = await seedItems(tx, feed.id, [
         { title: "I1" },
         { title: "I2" },
       ]);

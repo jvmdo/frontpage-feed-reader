@@ -1,7 +1,6 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: test asset */
 
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
-import userEvent from "@testing-library/user-event";
 import { RssIcon } from "lucide-react";
 import { delay, HttpResponse, http } from "msw";
 import { Suspense } from "react";

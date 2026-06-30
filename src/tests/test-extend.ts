@@ -7,7 +7,6 @@ import * as schema from "@/db/schema";
 import { user } from "@/db/schema";
 
 export const test = baseTest
-  // biome-ignore lint/correctness/noEmptyPattern: Mandatory Vitest syntax
   .extend("db", { scope: "file" }, async ({}, { onCleanup }) => {
     // File-scoped DB
     const client = new PGlite();
