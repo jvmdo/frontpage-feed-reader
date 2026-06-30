@@ -115,6 +115,17 @@ omegaTest("profile page management flow", async ({ page }) => {
   ).toBeVisible();
   // Verify reactivity
   await expect(page.getByText(newEmail)).toBeVisible();
+
+  // 6. Delete User
+  await page.getByRole("button", { name: /delete account/i }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByLabel(/confirm password/i)
+    .fill("new-pass");
+  await page.getByRole("button", { name: /yes, delete my account/i }).click();
+
+  // Verify redirect to the landing page
+  await expect(page).toHaveURL("/");
 });
 
 test("password setup flow for user without credentials", async ({
