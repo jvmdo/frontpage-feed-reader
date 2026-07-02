@@ -1,17 +1,26 @@
 import crypto from "node:crypto";
-import { test as baseTest, expect, type Page } from "@playwright/test";
-import { like } from "drizzle-orm";
+import {
+  type BrowserContext,
+  test as baseTest,
+  expect,
+  type Page,
+} from "@playwright/test";
+import { eq, like } from "drizzle-orm";
 import { db } from "@/db";
-import { feeds } from "@/db/schema";
+import { feeds, session } from "@/db/schema";
+import { auth } from "@/lib/auth";
 import { createPlaywrightSession } from "@/tests/session";
 
 type Fixtures = {
   authedPage: { page: Page; userId: string };
   onboardingPage: { page: Page; userId: string };
+  guestTracker: {
+    trackCurrentUser: (context: BrowserContext) => Promise<void>;
+  };
 };
 
 export const test = baseTest.extend<Fixtures>({
-  authedPage: async ({ page, context, baseURL }, use) => {
+  authedPage: async ({ page, context }, use) => {
     const uniqueId = crypto.randomUUID();
     const { testCookies, authTest } = await createPlaywrightSession(uniqueId);
 
@@ -37,7 +46,7 @@ export const test = baseTest.extend<Fixtures>({
     await db.delete(feeds).where(like(feeds.url, `%tenant=${uniqueId}%`));
   },
 
-  onboardingPage: async ({ page, context, baseURL }, use) => {
+  onboardingPage: async ({ page, context }, use) => {
     const uniqueId = crypto.randomUUID();
     const { testCookies, authTest } = await createPlaywrightSession(uniqueId);
 
@@ -60,6 +69,38 @@ export const test = baseTest.extend<Fixtures>({
     // TEARDOWN
     await authTest.deleteUser(uniqueId);
     await db.delete(feeds).where(like(feeds.url, `%tenant=${uniqueId}%`));
+  },
+
+  // biome-ignore lint/correctness/noEmptyPattern: no prop is used
+  guestTracker: async ({}, use) => {
+    let guestUserId: string | undefined;
+
+    await use({
+      /**
+       * CRITICAL: Always ensure the page has finished navigating (e.g. `await expect(page).toHaveURL(...)`)
+       * before calling this function! Otherwise, you will hit a race condition where the server
+       * hasn't set the session cookie yet, and the teardown will silently fail to clean up the user.
+       */
+      trackCurrentUser: async (context) => {
+        const cookies = await context.cookies();
+        const sessionCookie = cookies.find(
+          (c) => c.name === "better-auth.session_token",
+        );
+        if (sessionCookie) {
+          const token = sessionCookie.value.split(".")[0];
+          const dbSession = await db.query.session.findFirst({
+            where: eq(session.token, token),
+          });
+          guestUserId = dbSession?.userId;
+        }
+      },
+    });
+
+    if (guestUserId) {
+      const { test: authTest } = await auth.$context;
+      await authTest.deleteUser(guestUserId);
+      await db.delete(feeds).where(like(feeds.url, `%tenant=${guestUserId}%`));
+    }
   },
 });
 

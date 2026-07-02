@@ -1,27 +1,18 @@
 import crypto from "node:crypto";
-import { expect, test } from "@playwright/test";
-import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { session } from "@/db/schema";
-import { auth } from "@/lib/auth";
 import { seedCuratedFeeds } from "@/tests/seeding";
-
-let userToCleanup: string | undefined;
+import { expect, test } from "./fixtures/test-extend";
 
 test.beforeAll(async () => {
   // Pre-seed the feeds table
   await seedCuratedFeeds(db);
 });
 
-test.afterEach(async () => {
-  if (userToCleanup) {
-    const { test: authTest } = await auth.$context;
-    await authTest.deleteUser(userToCleanup);
-    userToCleanup = undefined;
-  }
-});
-
-test("full guest-to-member conversion journey", async ({ page, context }) => {
+test("full guest-to-member conversion journey", async ({
+  page,
+  context,
+  guestTracker,
+}) => {
   // 1. Try as Guest
   await page.goto("/sign-in");
   await page.waitForSelector('body[data-hydrated="true"]');
@@ -30,22 +21,8 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
 
   await expect(page).toHaveURL(/\/dashboard/);
 
-  // Deterministically get the ID of the anonymous user from session cookie
-  const cookies = await context.cookies();
-  const sessionCookie = cookies.find(
-    (c) => c.name === "better-auth.session_token",
-  );
-  if (!sessionCookie) throw new Error("Session cookie not found");
-
-  // Better Auth format is token.signature
-  const token = sessionCookie.value.split(".")[0];
-  const dbSession = await db.query.session.findFirst({
-    where: eq(session.token, token),
-  });
-
-  if (!dbSession) throw new Error("Session not found in DB");
-
-  userToCleanup = dbSession.userId;
+  // Track the guest user for cleanup
+  await guestTracker.trackCurrentUser(context);
 
   // Dismiss welcome dialog
   await page
@@ -117,4 +94,39 @@ test("full guest-to-member conversion journey", async ({ page, context }) => {
   ).toBeVisible();
 
   await expect(firstArticle.getByRole("heading", { level: 3 })).toBeVisible();
+});
+
+test("guest can explicitly sign out and lose data", async ({
+  page,
+  context,
+  guestTracker,
+}) => {
+  // 1. Try as Guest
+  await page.goto("/sign-in");
+  await page.waitForSelector('body[data-hydrated="true"]');
+  await page.getByRole("button", { name: /try as guest/i }).click();
+  await expect(page).toHaveURL(/\/dashboard/);
+
+  // Track the guest user for cleanup
+  await guestTracker.trackCurrentUser(context);
+
+  // Dismiss welcome dialog
+  await page
+    .getByRole("alertdialog", { name: /welcome/i })
+    .getByRole("button", { name: /later/i })
+    .click();
+
+  // 2. Trigger Logout
+  await page.getByRole("button", { name: /user menu/i }).click();
+  await page.getByRole("menuitem", { name: /log out/i }).click();
+
+  // 3. The Alert Dialog should appear
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog).toBeVisible();
+
+  // 4. Confirm destructive action
+  await dialog.getByRole("button", { name: /yes/i }).click();
+
+  // 5. Verify redirection
+  await expect(page).toHaveURL(/\/sign-in/);
 });
