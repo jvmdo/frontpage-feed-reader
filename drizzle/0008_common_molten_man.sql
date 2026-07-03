@@ -1,0 +1,2 @@
+ALTER TABLE "user_preferences" ADD COLUMN "auto_mark_read_mode" text DEFAULT 'immediately' NOT NULL;--> statement-breakpoint
+ALTER TABLE "user_preferences" ADD COLUMN "auto_mark_read_delay" integer DEFAULT 5 NOT NULL;

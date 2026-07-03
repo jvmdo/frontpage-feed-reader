@@ -38,6 +38,13 @@ export const userPreferences = pgTable("user_preferences", {
     .default(env.NEXT_PUBLIC_DEFAULT_REFRESH_INTERVAL)
     .notNull(),
 
+  autoMarkReadMode: text("auto_mark_read_mode")
+    .default("immediately")
+    .notNull()
+    .$type<"immediately" | "delayed" | "manual">(),
+
+  autoMarkReadDelay: integer("auto_mark_read_delay").default(5).notNull(),
+
   // Watermark for global "Mark all as read"
   markedAllReadAt: timestamp("marked_all_read_at"),
 

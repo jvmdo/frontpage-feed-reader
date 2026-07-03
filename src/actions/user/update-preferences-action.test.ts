@@ -28,7 +28,11 @@ describe("updatePreferencesAction", () => {
   it("returns unauthorized error if session is missing", async () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce(null);
 
-    const result = await updatePreferencesAction({ refreshInterval: 900 });
+    const result = await updatePreferencesAction({
+      refreshInterval: 900,
+      autoMarkReadMode: "immediately",
+      autoMarkReadDelay: 5,
+    });
 
     expect(result).toEqual({
       success: false,
@@ -39,7 +43,11 @@ describe("updatePreferencesAction", () => {
 
   it("returns success when preference update is successful", async () => {
     const mockSession = { user: { id: "user-123" } };
-    const input = { refreshInterval: 1800 };
+    const input = {
+      refreshInterval: 1800,
+      autoMarkReadMode: "delayed" as const,
+      autoMarkReadDelay: 10,
+    };
 
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
     vi.mocked(updateUserPreferences).mockResolvedValueOnce({} as any);
@@ -63,7 +71,11 @@ describe("updatePreferencesAction", () => {
       new Error("DB Down"),
     );
 
-    const result = await updatePreferencesAction({ refreshInterval: 3600 });
+    const result = await updatePreferencesAction({
+      refreshInterval: 3600,
+      autoMarkReadMode: "manual",
+      autoMarkReadDelay: 5,
+    });
 
     expect(result).toEqual({
       success: false,
