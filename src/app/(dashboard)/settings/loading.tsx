@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { SettingsFormSkeleton } from "@/components/user/settings-form";
 
 export default function SettingsLoading() {
   return (
@@ -19,12 +19,7 @@ export default function SettingsLoading() {
         </p>
       </header>
 
-      <div className="max-w-2xl space-y-6">
-        <Skeleton className="h-64 w-full" />
-        <div className="flex justify-end">
-          <Skeleton className="h-10 w-32" />
-        </div>
-      </div>
+      <SettingsFormSkeleton />
     </section>
   );
 }

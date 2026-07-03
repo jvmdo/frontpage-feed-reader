@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
-import { SettingsForm } from "@/components/user/settings-form";
+import { Suspense } from "react";
+import {
+  SettingsForm,
+  SettingsFormSkeleton,
+} from "@/components/user/settings-form";
 import { db } from "@/db";
 import { getCurrentSession } from "@/lib/session";
 import { getUserPreferences } from "@/services/user/get-user-preferences";
@@ -13,8 +17,6 @@ export default async function SettingsPage() {
   if (!session?.user) {
     redirect("/sign-in");
   }
-
-  const preferences = await getUserPreferences(db, session.user.id);
 
   return (
     <section className="flex flex-col gap-6" aria-labelledby="settings-title">
@@ -30,7 +32,17 @@ export default async function SettingsPage() {
         </p>
       </header>
 
-      <SettingsForm initialData={preferences} />
+      <Suspense fallback={<SettingsFormSkeleton />}>
+        <SettingsFormContainer userId={session.user.id} />
+      </Suspense>
     </section>
   );
+}
+
+/**
+ * Server component wrapper that queries user pref.
+ */
+async function SettingsFormContainer({ userId }: { userId: string }) {
+  const preferences = await getUserPreferences(db, userId);
+  return <SettingsForm initialData={preferences} />;
 }
