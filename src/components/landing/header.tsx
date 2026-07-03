@@ -1,6 +1,7 @@
 import { RssIcon } from "lucide-react";
 import Link from "next/link";
 import { GuestButton } from "@/components/auth/guest-button";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
@@ -31,6 +32,7 @@ export function Header() {
           </Link>
         </nav>
         <div className="flex items-center gap-2 sm:gap-4">
+          <ThemeToggle />
           <Button variant="ghost" asChild>
             <Link href="/sign-in">Sign In</Link>
           </Button>

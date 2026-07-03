@@ -1,6 +1,7 @@
 import { RssIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 export default function AuthLayout({
   children,
@@ -29,6 +30,9 @@ export default function AuthLayout({
             backgroundSize: "150px 150px",
           }}
         />
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+          <ThemeToggle />
+        </div>
         <Link href="/" className="flex">
           <span className="font-serif font-bold tracking-tight">Frontpage</span>
           <RssIcon size={12} className="text-primary" />

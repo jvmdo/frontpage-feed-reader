@@ -3,12 +3,16 @@
 import {
   FolderIcon,
   LogOutIcon,
+  MonitorIcon,
+  MoonIcon,
   RssIcon,
   SettingsIcon,
   SparklesIcon,
+  SunIcon,
   UserIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { LogoutFlow } from "@/components/auth/logout-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,30 +25,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { authClient, type SessionUser } from "@/lib/auth-client";
+import { getInitials } from "@/lib/utils";
 
 interface UserMenuProps {
   user: SessionUser;
 }
 
 /**
- * User menu component that displays user info and logout action.
+ * Dropdown that displays user info, routes, reset tour and logout action.
  */
 export function UserMenu({ user: initialUser }: UserMenuProps) {
   const { data: session } = authClient.useSession();
+  const { setTheme, theme } = useTheme();
   const resetTour = useTourStore((s) => s.reset);
 
   const user = session?.user ?? initialUser;
-
-  const initials = user.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : user.email[0].toUpperCase();
+  const initials = getInitials(user.name);
 
   return (
     <LogoutFlow isUserAnonymous={user.isAnonymous}>
@@ -63,6 +62,7 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
@@ -77,7 +77,9 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
                 </p>
               </div>
             </DropdownMenuLabel>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link href="/profile">
@@ -92,24 +94,51 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
                   Settings
                 </Link>
               </DropdownMenuItem>
+
               <DropdownMenuItem asChild>
                 <Link href="/manage-categories">
                   <FolderIcon data-icon="inline-start" />
                   Manage Categories
                 </Link>
               </DropdownMenuItem>
+
               <DropdownMenuItem asChild>
                 <Link href="/manage-feeds">
                   <RssIcon data-icon="inline-start" />
                   Manage Feeds
                 </Link>
               </DropdownMenuItem>
+
               <DropdownMenuItem onSelect={() => resetTour()}>
                 <SparklesIcon data-icon="inline-start" />
                 Take the tour again
               </DropdownMenuItem>
             </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
+
+            <div className="flex items-center justify-between px-2 py-1">
+              <span className="text-sm">Theme</span>
+              <ToggleGroup
+                type="single"
+                value={theme}
+                onValueChange={setTheme}
+                variant="outline"
+              >
+                <ToggleGroupItem value="light" aria-label="Light theme">
+                  <SunIcon className="size-3.5" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="dark" aria-label="Dark theme">
+                  <MoonIcon className="size-3.5" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="system" aria-label="System theme">
+                  <MonitorIcon className="size-3.5" />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+
+            <DropdownMenuSeparator />
+
             <DropdownMenuItem
               variant="destructive"
               onSelect={handleLogout}

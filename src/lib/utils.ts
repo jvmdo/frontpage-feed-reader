@@ -24,7 +24,7 @@ export function generateAnonName() {
  * Generates initials from a full name (up to 2 characters).
  */
 export function getInitials(name?: string | null): string {
-  if (!name) return "U";
+  if (!name) return "CS";
   return name
     .split(" ")
     .filter(Boolean)

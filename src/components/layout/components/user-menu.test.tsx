@@ -1,6 +1,16 @@
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// Mock next-themes
+const mockSetTheme = vi.fn();
+vi.mock("next-themes", () => ({
+  useTheme: () => ({
+    theme: "system",
+    setTheme: mockSetTheme,
+  }),
+}));
+
 import { authClient } from "@/lib/auth-client";
 import { createMockUser } from "@/tests/factories";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
@@ -161,5 +171,17 @@ describe("UserMenu Integration", () => {
     await actor.click(screen.getByRole("menuitem", { name: /log out/i }));
 
     expect(toast.error).toHaveBeenCalledWith("Network connection lost.");
+  });
+
+  it("allows selecting a theme", async () => {
+    const user = setupUser(false);
+    const actor = userEvent.setup();
+    render(<UserMenu user={user} />);
+
+    await actor.click(screen.getByRole("button", { name: /user menu/i }));
+    const darkItem = screen.getByRole("radio", { name: /dark theme/i });
+    await actor.click(darkItem);
+
+    expect(mockSetTheme).toHaveBeenCalledWith("dark");
   });
 });

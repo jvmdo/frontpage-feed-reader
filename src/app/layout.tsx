@@ -5,6 +5,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import HydrationFlagProvider from "@/components/providers/hydration-flag-provider";
 import { ReactQueryClientProvider } from "@/components/providers/query-client-provider";
 import { ServerTimeProvider } from "@/components/providers/server-time-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning={true}
       className={cn(
         "h-full",
         "antialiased",
@@ -39,16 +41,22 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
-        <ReactQueryClientProvider>
-          <NuqsAdapter>
-            <ServerTimeProvider serverNow={new Date().toISOString()}>
-              <TooltipProvider>
-                <HydrationFlagProvider>{children}</HydrationFlagProvider>
-              </TooltipProvider>
-            </ServerTimeProvider>
-          </NuqsAdapter>
-        </ReactQueryClientProvider>
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem={true}
+        >
+          <ReactQueryClientProvider>
+            <NuqsAdapter>
+              <ServerTimeProvider serverNow={new Date().toISOString()}>
+                <TooltipProvider>
+                  <HydrationFlagProvider>{children}</HydrationFlagProvider>
+                </TooltipProvider>
+              </ServerTimeProvider>
+            </NuqsAdapter>
+          </ReactQueryClientProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
