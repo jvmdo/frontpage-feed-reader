@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
-export default function ProfileError({
+export default function DashboardError({
   error,
   unstable_retry,
 }: {
@@ -16,15 +16,17 @@ export default function ProfileError({
   const { reset: resetQueries } = useQueryErrorResetBoundary();
 
   useEffect(() => {
-    console.error("[Profile Page]:", error);
+    console.error("[Dashboard Error]:", error);
   }, [error]);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Something went wrong
+        </h1>
         <p className="text-muted-foreground text-sm">
-          There was an error loading your profile page.
+          We encountered an error loading this section of the dashboard.
         </p>
       </div>
 
@@ -35,11 +37,11 @@ export default function ProfileError({
 
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-semibold tracking-tight">
-            Unable to load profile
+            Unable to load content
           </h2>
           <p className="mx-auto max-w-md text-sm text-muted-foreground leading-relaxed">
-            We encountered a problem while fetching your profile or reading
-            statistics. Please check your connection and try again.
+            This could be due to a temporary network issue or a server-side
+            error. Please try again.
           </p>
         </div>
 
