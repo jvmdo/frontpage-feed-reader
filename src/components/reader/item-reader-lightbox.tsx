@@ -26,6 +26,7 @@ import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
+import { usePreferencesStore } from "@/hooks/ui/use-preferences-store";
 import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
 import {
   type ReaderWidth,
@@ -68,18 +69,29 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
   const { goToNext, goToPrev, hasNext, hasPrev } = useItemReaderNavigation();
   const { mutate: setReadStatus } = useSetReadStatus();
   const { isTourActive } = useTourStore();
+  const autoMarkReadMode = usePreferencesStore((s) => s.autoMarkReadMode);
+  const autoMarkReadDelay = usePreferencesStore((s) => s.autoMarkReadDelay);
 
   const lastOpenedItemIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!data || lastOpenedItemIdRef.current === activeItemId) return;
-
+    if (!data || lastOpenedItemIdRef.current === activeItemId || data.isRead)
+      return;
     lastOpenedItemIdRef.current = activeItemId;
 
-    if (!data.isRead) {
+    if (autoMarkReadMode === "immediately") {
       setReadStatus({ itemId: activeItemId, isRead: true });
+      return;
     }
-  }, [activeItemId, data, setReadStatus]);
+
+    if (autoMarkReadMode === "delayed") {
+      const timer = setTimeout(() => {
+        setReadStatus({ itemId: activeItemId, isRead: true });
+      }, autoMarkReadDelay * 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [activeItemId, data, autoMarkReadMode, autoMarkReadDelay, setReadStatus]);
 
   const handleToggleRead = () => {
     if (!data) return;

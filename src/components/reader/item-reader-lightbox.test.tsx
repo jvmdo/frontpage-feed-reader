@@ -7,6 +7,7 @@ import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
 import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
+import { usePreferencesStore } from "@/hooks/ui/use-preferences-store";
 import { useReaderStore } from "@/hooks/ui/use-reader-store";
 import { createMockItemWithSource } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
@@ -56,6 +57,7 @@ describe("ItemReaderLightbox Integration", () => {
 
     // Reset store state to avoid bleeding between tests
     useReaderStore.getState().setReaderWidth("50vw");
+    usePreferencesStore.getState().setAutoMarkRead("immediately", 5);
   });
 
   it("renders correctly when open and loading", () => {
@@ -104,7 +106,8 @@ describe("ItemReaderLightbox Integration", () => {
     expect(mockSetActiveItemId).toHaveBeenCalledWith(null);
   });
 
-  it("marks an unread item as read when loaded", () => {
+  it("marks an unread item as read when loaded immediately", () => {
+    usePreferencesStore.getState().setAutoMarkRead("immediately", 5);
     const data = createMockItemWithSource({ item: { id: 1 }, isRead: false });
 
     vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
@@ -115,6 +118,7 @@ describe("ItemReaderLightbox Integration", () => {
   });
 
   it("does not mark an already read item as read when loaded", () => {
+    usePreferencesStore.getState().setAutoMarkRead("immediately", 5);
     const data = createMockItemWithSource({ item: { id: 1 }, isRead: true });
 
     vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
@@ -122,6 +126,66 @@ describe("ItemReaderLightbox Integration", () => {
     render(<ItemReaderLightbox />);
 
     expect(mockSetReadStatus).not.toHaveBeenCalled();
+  });
+
+  it("does not mark item as read automatically in manual mode", () => {
+    usePreferencesStore.getState().setAutoMarkRead("manual", 5);
+    const data = createMockItemWithSource({ item: { id: 1 }, isRead: false });
+
+    vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
+
+    render(<ItemReaderLightbox />);
+
+    expect(mockSetReadStatus).not.toHaveBeenCalled();
+  });
+
+  describe("automatic read state with timer", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("does not call setReadStatus before delay completes", () => {
+      usePreferencesStore.getState().setAutoMarkRead("delayed", 5);
+      const data = createMockItemWithSource({ item: { id: 1 }, isRead: false });
+      vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
+
+      render(<ItemReaderLightbox />);
+
+      vi.advanceTimersByTime(4999);
+      expect(mockSetReadStatus).not.toHaveBeenCalled();
+    });
+
+    it("calls setReadStatus after delay completes", () => {
+      usePreferencesStore.getState().setAutoMarkRead("delayed", 5);
+      const data = createMockItemWithSource({ item: { id: 1 }, isRead: false });
+      vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
+
+      render(<ItemReaderLightbox />);
+
+      vi.advanceTimersByTime(5000);
+      expect(mockSetReadStatus).toHaveBeenCalledWith({
+        itemId: 1,
+        isRead: true,
+      });
+    });
+
+    it("cancels timer if lightbox closes (unmounts) before delay completes", () => {
+      usePreferencesStore.getState().setAutoMarkRead("delayed", 5);
+      const data = createMockItemWithSource({ item: { id: 1 }, isRead: false });
+      vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
+
+      const { unmount } = render(<ItemReaderLightbox />);
+
+      vi.advanceTimersByTime(2000);
+      unmount();
+
+      vi.advanceTimersByTime(3000);
+      expect(mockSetReadStatus).not.toHaveBeenCalled();
+    });
   });
 
   it("toggles read status when clicking the toggle button", async () => {
