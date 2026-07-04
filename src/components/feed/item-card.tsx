@@ -38,16 +38,19 @@ interface ItemCardProps {
   className?: string;
   "data-tour"?: string;
   layout: FeedLayout;
+  isFocused?: boolean;
 }
 
 function CardShell({
   className,
   dataTour,
   children,
+  isFocused,
 }: {
   className?: string;
   dataTour?: string;
   children: React.ReactNode;
+  isFocused?: boolean;
 }) {
   const { data } = useItemCard();
   const { item } = data;
@@ -55,11 +58,12 @@ function CardShell({
   return (
     <article
       className={cn(
-        "group relative border-b border-border overflow-hidden transition-all hover:bg-accent/60 cursor-pointer",
+        "group relative border-b border-border overflow-hidden transition-all hover:bg-accent/60 data-[focused=true]:bg-accent/60 cursor-pointer ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
         className,
       )}
       aria-labelledby={`title-${item.id}`}
       data-tour={dataTour}
+      data-focused={isFocused}
     >
       {children}
     </article>
@@ -71,6 +75,7 @@ export function ItemCard({
   layout,
   className,
   "data-tour": dataTour,
+  isFocused,
 }: ItemCardProps) {
   const { item } = data;
   const { setActiveItemId } = useActiveItem();
@@ -84,11 +89,23 @@ export function ItemCard({
   return (
     <ItemCardContext.Provider value={contextValue}>
       {layout === FeedLayout.Grid ? (
-        <GridCardContent className={className} dataTour={dataTour} />
+        <GridCardContent
+          className={className}
+          dataTour={dataTour}
+          isFocused={isFocused}
+        />
       ) : layout === FeedLayout.Rows ? (
-        <RowCardContent className={className} dataTour={dataTour} />
+        <RowCardContent
+          className={className}
+          dataTour={dataTour}
+          isFocused={isFocused}
+        />
       ) : (
-        <ListCardContent className={className} dataTour={dataTour} />
+        <ListCardContent
+          className={className}
+          dataTour={dataTour}
+          isFocused={isFocused}
+        />
       )}
     </ItemCardContext.Provider>
   );
@@ -163,7 +180,7 @@ ItemCard.Title = function CardTitle({
       </h3>
       <button
         type="button"
-        className="absolute inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset z-10"
+        className="absolute inset-0 focus-visible:outline-none z-10"
         aria-label={`Open reader for ${item.title || "item"}`}
         onClick={handleOpenReader}
       />
@@ -274,9 +291,11 @@ ItemCard.UnreadIndicator = function CardUnreadIndicator({
 function GridCardContent({
   className,
   dataTour,
+  isFocused,
 }: {
   className?: string;
   dataTour?: string;
+  isFocused?: boolean;
 }) {
   return (
     <CardShell
@@ -285,6 +304,7 @@ function GridCardContent({
         className,
       )}
       dataTour={dataTour}
+      isFocused={isFocused}
     >
       <header className="flex items-center justify-between gap-3 mb-1">
         <ItemCard.Source />
@@ -306,14 +326,17 @@ function GridCardContent({
 function RowCardContent({
   className,
   dataTour,
+  isFocused,
 }: {
   className?: string;
   dataTour?: string;
+  isFocused?: boolean;
 }) {
   return (
     <CardShell
       className={cn("flex gap-3 p-2 md:p-3", className)}
       dataTour={dataTour}
+      isFocused={isFocused}
     >
       <ItemCard.UnreadIndicator className="w-2 items-center" />
       <div className="flex-1 space-y-1 min-w-0">
@@ -331,14 +354,17 @@ function RowCardContent({
 function ListCardContent({
   className,
   dataTour,
+  isFocused,
 }: {
   className?: string;
   dataTour?: string;
+  isFocused?: boolean;
 }) {
   return (
     <CardShell
       className={cn("flex gap-4 p-4 lg:p-6", className)}
       dataTour={dataTour}
+      isFocused={isFocused}
     >
       <ItemCard.UnreadIndicator className="pt-2 w-2" />
       <div className="flex-1 min-w-0">

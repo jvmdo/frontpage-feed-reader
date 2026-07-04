@@ -1,7 +1,7 @@
 "use client";
 
 import { FolderIcon, RssIcon } from "lucide-react";
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Virtuoso, VirtuosoGrid } from "react-virtuoso";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
 import { ItemCard } from "@/components/feed/item-card";
@@ -10,7 +10,11 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { useCategories } from "@/hooks/category/use-categories";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
+import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItems } from "@/hooks/item/use-items";
+import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
+import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
+import { useFeedListShortcuts } from "@/hooks/ui/use-feed-list-shortcuts";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { FeedLayout, useViewOptions } from "@/hooks/ui/use-view-options";
 import { WELCOME_FEED_URL } from "@/lib/constants";
@@ -20,6 +24,7 @@ import type { Category, ListItemWithSource } from "@/types";
 interface VirtuosoContext {
   isFetching: boolean;
   isGrid: boolean;
+  focusedIndex: number | null;
 }
 
 /**
@@ -57,8 +62,12 @@ export function ItemList() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useItems();
   const { isTourActive } = useTourStore();
   const { layout } = useViewOptions();
+  const { activeItemId, setActiveItemId } = useActiveItem();
+  const { mutate: setReadStatus } = useSetReadStatus();
+  const { mutate: toggleBookmark } = useToggleBookmark();
 
   const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
+  const virtuosoRef = useRef<any>(null);
 
   // Identify the scroll container on mount
   useLayoutEffect(() => {
@@ -66,10 +75,27 @@ export function ItemList() {
   }, []);
 
   const items = data ?? [];
+  const listKey = `feed-${feedId || "all"}-cat-${categoryId || "none"}-saved-${isSaved}`;
+
+  const { focusedIndex } = useFeedListShortcuts({
+    totalItems: items.length,
+    virtuosoRef,
+    onOpen: (idx) => setActiveItemId(items[idx].item.id),
+    onToggleRead: (idx) => {
+      const it = items[idx];
+      if (!it.isWatermarked) {
+        setReadStatus({ itemId: it.item.id, isRead: !it.isRead });
+      }
+    },
+    onToggleBookmark: (idx) => toggleBookmark({ itemId: items[idx].item.id }),
+    enabled: !activeItemId && !isTourActive,
+    resetKey: `${layout}-${listKey}`,
+  });
 
   const context: VirtuosoContext = {
     isFetching: isFetchingNextPage,
     isGrid: layout === FeedLayout.Grid,
+    focusedIndex,
   };
 
   if (!items.length) {
@@ -105,6 +131,7 @@ export function ItemList() {
               index === firstWelcomeItemIndex ? "welcome-item" : undefined
             }
             layout={layout}
+            isFocused={index === focusedIndex}
           />
         ))}
       </div>
@@ -114,11 +141,12 @@ export function ItemList() {
   const sharedProps = {
     customScrollParent: scrollParent || undefined,
     data: items,
-    itemContent: (_: number, itemWithSource: ListItemWithSource) => (
+    itemContent: (index: number, itemWithSource: ListItemWithSource) => (
       <ItemCard
         key={itemWithSource.item.id}
         data={itemWithSource}
         layout={layout}
+        isFocused={index === context.focusedIndex}
       />
     ),
     endReached: () => {
@@ -131,11 +159,10 @@ export function ItemList() {
     overscan: 400, // Buffer for smoother scrolling
   };
 
-  const listKey = `feed-${feedId || "all"}-cat-${categoryId || "none"}-saved-${isSaved}`;
-
   if (layout === FeedLayout.Grid) {
     return (
       <VirtuosoGrid
+        ref={virtuosoRef}
         {...sharedProps}
         key={`grid-${listKey}`}
         listClassName="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-4 p-2 mt-2"
@@ -144,7 +171,9 @@ export function ItemList() {
     );
   }
 
-  return <Virtuoso {...sharedProps} key={`list-${listKey}`} />;
+  return (
+    <Virtuoso ref={virtuosoRef} {...sharedProps} key={`list-${listKey}`} />
+  );
 }
 
 function FeedEmptyState({
