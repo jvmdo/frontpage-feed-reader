@@ -1,3 +1,4 @@
+import { RssIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import { ReaderView } from "@/components/reader/reader-view";
 import type { ItemWithSource } from "@/types";
@@ -9,31 +10,68 @@ export function MediaSection() {
         <div className="group/preview relative mx-auto max-w-5xl">
           {/* Desktop Preview */}
           <div className="group/desktop hidden md:block relative z-10 rounded-xl border border-border bg-background shadow-2xl overflow-hidden aspect-video cursor-default">
+            {/* Light Mode Desktop */}
             <Image
               src="/screenshot.png"
-              alt="Frontpage screenshot preview"
+              alt="Frontpage desktop screenshot preview"
               fill={true}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1024px"
+              className="dark:hidden block object-cover"
+            />
+            {/* Dark Mode Desktop */}
+            <Image
+              src="/screenshot-dark.png"
+              alt="Frontpage desktop screenshot preview (dark mode)"
+              fill={true}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1024px"
+              className="hidden dark:block object-cover"
             />
 
-            {/* Reader drawer - Only visible on hover-capable devices */}
-            <div className="absolute z-20 inset-y-0 right-0 w-4/5 bg-background border-l border-border shadow-2xl group-hover/desktop:translate-x-0 translate-x-full transition-transform duration-500 ease-in-out overflow-hidden [@media(hover:none)]:hidden">
-              <div className="scale-75 origin-top-left w-[133%] pt-2">
-                <ReaderView data={MOCK_ITEM} className="py-4 px-6" />
+            {/* Lightbox Backdrop */}
+            <div className="absolute z-10 inset-0 bg-black/20 opacity-0 group-hover/desktop:opacity-100 transition-opacity duration-300 [@media(hover:none)]:hidden pointer-events-none" />
+
+            {/* Lightbox Modal */}
+            <div className="absolute z-20 inset-y-8 inset-x-30 bg-background rounded-xl shadow-2xl border border-border opacity-0 scale-95 group-hover/desktop:opacity-100 group-hover/desktop:scale-100 transition-all duration-300 ease-out flex flex-col overflow-hidden [@media(hover:none)]:hidden">
+              {/* Mock Toolbar */}
+              <div className="shrink-0 h-10 border-b border-border flex items-center px-3 gap-2">
+                <div className="size-6 rounded-md hover:bg-muted flex items-center justify-center text-text-tertiary">
+                  <XIcon size={18} />
+                </div>
+                <div className="h-5 w-px bg-border mx-1" />
+                <div className="size-4 rounded-sm bg-primary/20 flex items-center justify-center text-primary">
+                  <RssIcon size={12} />
+                </div>
+                <span className="text-xs text-text-secondary">
+                  Frontpage Blog
+                </span>
+              </div>
+
+              {/* Content Container2 */}
+              <div className="overflow-y-auto">
+                <div className="scale-[0.8] origin-top mx-[-10%]">
+                  <ReaderView data={MOCK_ITEM} />
+                </div>
               </div>
             </div>
-
-            {/* Drawer shadow */}
-            <div className="absolute z-10 inset-0 opacity-0 group-hover/desktop:opacity-15 transition-opacity bg-linear-to-r from-black to-background [@media(hover:none)]:hidden" />
           </div>
 
           {/* Mobile Preview */}
           <div className="group-hover/preview:opacity-0 transition-opacity relative z-20 mx-auto w-70 rounded-lg border-2 border-border shadow-2xl overflow-hidden aspect-9/19 md:absolute md:-bottom-12 md:right-6 md:mx-0 md:w-40 lg:w-56 xl:w-64 xl:-right-12">
+            {/* Light Mode Mobile */}
             <Image
               src="/screenshot-mobile.png"
               alt="Frontpage mobile preview"
               fill={true}
               sizes="(max-width: 768px) 280px, (max-width: 1024px) 160px, (max-width: 1280px) 224px, 256px"
+              className="dark:hidden block object-cover"
+            />
+            {/* Dark Mode Mobile */}
+            <Image
+              src="/screenshot-mobile-dark.png"
+              alt="Frontpage mobile preview (dark mode)"
+              fill={true}
+              sizes="(max-width: 768px) 280px, (max-width: 1024px) 160px, (max-width: 1280px) 224px, 256px"
+              className="hidden dark:block object-cover"
             />
           </div>
         </div>

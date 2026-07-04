@@ -135,6 +135,12 @@
     pointer-events: none;
     background-image: var(--noise-filter);
   }
+
+  &:is(.dark *) {
+    &::before {
+      opacity: 0.01;
+    }
+  }
 }
 
 :root {
@@ -541,5 +547,6 @@
 }
 
 .cn-toast [data-title] {
+  /* biome-ignore lint/complexity/noImportantStyles: it's necessary */
   font-weight: 600 !important;
 }
