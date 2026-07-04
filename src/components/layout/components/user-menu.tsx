@@ -2,6 +2,7 @@
 
 import {
   FolderIcon,
+  KeyboardIcon,
   LogOutIcon,
   MonitorIcon,
   MoonIcon,
@@ -22,10 +23,12 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useKeyboardShortcutsStore } from "@/hooks/ui/use-keyboard-shortcuts-store";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { authClient, type SessionUser } from "@/lib/auth-client";
 import { getInitials } from "@/lib/utils";
@@ -41,6 +44,7 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
   const { data: session } = authClient.useSession();
   const { setTheme, theme } = useTheme();
   const resetTour = useTourStore((s) => s.reset);
+  const setShortcutsOpen = useKeyboardShortcutsStore((s) => s.setOpen);
 
   const user = session?.user ?? initialUser;
   const initials = getInitials(user.name);
@@ -107,6 +111,12 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
                   <RssIcon data-icon="inline-start" />
                   Manage Feeds
                 </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onSelect={() => setShortcutsOpen(true)}>
+                <KeyboardIcon data-icon="inline-start" />
+                Keyboard Shortcuts
+                <DropdownMenuShortcut>?</DropdownMenuShortcut>
               </DropdownMenuItem>
 
               <DropdownMenuItem onSelect={() => resetTour()}>

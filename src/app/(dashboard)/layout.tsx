@@ -11,6 +11,7 @@ import { SidebarFeeds } from "@/components/layout/components/sidebar-feeds";
 import { SidebarFeedsSkeleton } from "@/components/layout/components/sidebar-feeds-skeleton";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { TopNav } from "@/components/layout/top-nav";
+import { KeyboardShortcutsDialog } from "@/components/shared/keyboard-shortcuts-dialog";
 import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
 import { SearchShortcutListener } from "@/components/shared/search-shortcut-listener";
 import { WelcomeTour } from "@/components/shared/welcome-tour";
@@ -92,6 +93,7 @@ export default async function DashboardLayout({
 
         <ClientDialogs />
         <SearchShortcutListener />
+        <KeyboardShortcutsDialog />
       </div>
     </HydrationBoundary>
   );
