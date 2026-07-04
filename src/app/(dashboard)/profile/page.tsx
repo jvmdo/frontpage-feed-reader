@@ -1,4 +1,5 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -12,6 +13,10 @@ import { getQueryClient } from "@/lib/get-query-client";
 import { getCurrentSession } from "@/lib/session";
 import { getUserStats } from "@/services/user/get-user-stats";
 import { ProfileClient } from "../../../components/user/profile-client";
+
+export const metadata: Metadata = {
+  title: "Profile",
+};
 
 /**
  * Server component for the Profile route.

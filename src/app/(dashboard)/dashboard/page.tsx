@@ -1,4 +1,5 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ItemList } from "@/components/feed/item-list";
@@ -13,6 +14,10 @@ import { getCurrentSession } from "@/lib/session";
 import { getDefaultSorting } from "@/lib/sorting";
 import { itemsQuerySchema } from "@/lib/validations/feed";
 import { getItems } from "@/services/item/get-items";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 interface DashboardPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

@@ -6,7 +6,7 @@ import { CategoryManagementList } from "@/components/category/category-managemen
 import { getCurrentSession } from "@/lib/session";
 
 export const metadata: Metadata = {
-  title: "Manage Categories | Frontpage",
+  title: "Manage Categories",
   description: "Create, rename or delete your categories.",
 };
 

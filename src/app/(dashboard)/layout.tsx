@@ -1,5 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { differenceInHours } from "date-fns";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { GuestBanner } from "@/components/auth/guest-banner";
@@ -20,6 +21,17 @@ import { getCurrentSession } from "@/lib/session";
 import { getCategories } from "@/services/category/get-categories";
 import { getUnreadCounts } from "@/services/feed/get-unread-counts";
 import { getSubscriptions } from "@/services/subscription/get-subscriptions";
+
+export const metadata: Metadata = {
+  title: {
+    default: "App",
+    template: "%s | Frontpage",
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function DashboardLayout({
   children,

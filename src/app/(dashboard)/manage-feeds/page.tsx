@@ -1,8 +1,13 @@
 import { Plus } from "lucide-react";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { FeedManager } from "@/components/feed/feed-manager";
 import { getCurrentSession } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "Manage Feeds",
+};
 
 export default async function ManageFeedsPage() {
   const session = await getCurrentSession();

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import {
@@ -7,6 +8,10 @@ import {
 import { db } from "@/db";
 import { getCurrentSession } from "@/lib/session";
 import { getUserPreferences } from "@/services/user/get-user-preferences";
+
+export const metadata: Metadata = {
+  title: "Settings",
+};
 
 /**
  * Settings page where users can manage their preferences.

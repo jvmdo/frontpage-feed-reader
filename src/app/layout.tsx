@@ -8,6 +8,7 @@ import { ServerTimeProvider } from "@/components/providers/server-time-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { settings } from "@/env";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -18,9 +19,40 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Frontpage | Your personalized front page for tech content",
+  metadataBase: new URL(settings.baseUrl),
+  title: {
+    default: "Frontpage | Your personalized front page for tech content",
+    template: "%s | Frontpage",
+  },
   description:
     "A customizable content aggregator for developers and designers. Keep up with your favorite blogs, newsletters, and changelogs in one clean, editorial-style interface.",
+  openGraph: {
+    title: "Frontpage",
+    description:
+      "A customizable content aggregator for developers and designers. Keep up with your favorite blogs, newsletters, and changelogs in one clean, editorial-style interface.",
+    url: "/",
+    siteName: "Frontpage",
+    images: [
+      {
+        url: "/screenshot.png",
+        width: 1200,
+        height: 630,
+        alt: "Frontpage Screenshot",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Frontpage | Your personalized front page for tech content",
+    description:
+      "A customizable content aggregator for developers and designers. Keep up with your favorite blogs, newsletters, and changelogs in one clean, editorial-style interface.",
+    images: ["/screenshot.png"],
+  },
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function RootLayout({
