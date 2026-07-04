@@ -1,8 +1,7 @@
 "use client";
 
-import { useEventListener } from "usehooks-ts";
+import { useHotkeys } from "react-hotkeys-hook";
 import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
-import { isEditableTarget } from "@/lib/utils";
 
 /**
  * SearchShortcutListener registers global keyboard shortcuts for the search palette.
@@ -12,17 +11,14 @@ import { isEditableTarget } from "@/lib/utils";
 export function SearchShortcutListener() {
   const [, setOpen] = useSearchPaletteState();
 
-  useEventListener("keydown", (e) => {
-    if (isEditableTarget(e.target)) return;
-
-    const isCmdK = (e.metaKey || e.ctrlKey) && e.key === "k";
-    const isSlash = e.key === "/";
-
-    if (isCmdK || isSlash) {
+  useHotkeys(
+    ["meta+k", "ctrl+k", "Slash"],
+    (e) => {
       e.preventDefault();
       setOpen((prev) => !prev);
-    }
-  });
+    },
+    { enableOnFormTags: false },
+  );
 
   return null;
 }

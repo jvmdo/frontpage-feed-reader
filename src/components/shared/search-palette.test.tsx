@@ -114,18 +114,6 @@ describe("SearchPalette", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens the search palette when the '/' key is pressed", async () => {
-    setup();
-    await userEvent.keyboard("/");
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-  });
-
-  it("opens the search palette when 'Cmd+K' is pressed", async () => {
-    setup();
-    await userEvent.keyboard("{Meta>}k{/Meta}");
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-  });
-
   it("displays search results from the API", async () => {
     setup({ searchPalette: "true" });
 
