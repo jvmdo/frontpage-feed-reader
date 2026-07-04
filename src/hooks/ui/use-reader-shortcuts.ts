@@ -1,10 +1,11 @@
-import { useEffect } from "react";
-import { isEditableTarget } from "@/lib/utils";
+import { useHotkeys } from "react-hotkeys-hook";
 
 interface UseReaderShortcutsOptions {
   onNext: () => void;
   onPrev: () => void;
+  onClose: () => void;
   onToggleRead?: () => void;
+  onToggleBookmark?: () => void;
   enabled: boolean;
 }
 
@@ -15,42 +16,65 @@ interface UseReaderShortcutsOptions {
 export function useReaderShortcuts({
   onNext,
   onPrev,
+  onClose,
   onToggleRead,
+  onToggleBookmark,
   enabled,
 }: UseReaderShortcutsOptions) {
-  useEffect(() => {
-    if (!enabled) return;
+  useHotkeys(
+    ["j", "arrowright"],
+    (e) => {
+      e.preventDefault();
+      onNext();
+    },
+    { enabled, enableOnFormTags: false, scopes: ["reader"] },
+  );
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (isEditableTarget(event.target)) {
-        return;
-      }
+  useHotkeys(
+    ["k", "arrowleft"],
+    (e) => {
+      e.preventDefault();
+      onPrev();
+    },
+    { enabled, enableOnFormTags: false, scopes: ["reader"] },
+  );
 
-      const key = event.key.toLowerCase();
-
-      // 1. Navigation Shortcuts
-      if (key === "arrowright" || key === "j") {
-        event.preventDefault();
-        onNext();
-        return;
-      }
-
-      if (key === "arrowleft" || key === "k") {
-        event.preventDefault();
-        onPrev();
-        return;
-      }
-
-      // 2. Action Shortcuts
-      if (key === "m" && onToggleRead) {
-        event.preventDefault();
+  useHotkeys(
+    "m",
+    (e) => {
+      if (onToggleRead) {
+        e.preventDefault();
         onToggleRead();
-        return;
       }
-    };
+    },
+    {
+      enabled: enabled && !!onToggleRead,
+      enableOnFormTags: false,
+      scopes: ["reader"],
+    },
+  );
 
-    window.addEventListener("keydown", handleKeyDown);
+  useHotkeys(
+    ["s", "b"],
+    (e) => {
+      if (onToggleBookmark) {
+        e.preventDefault();
+        onToggleBookmark();
+      }
+    },
+    {
+      enabled: enabled && !!onToggleBookmark,
+      enableOnFormTags: false,
+      scopes: ["reader"],
+    },
+  );
 
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onNext, onPrev, onToggleRead, enabled]);
+  useHotkeys(
+    "o",
+    (e) => {
+      e.preventDefault();
+      onClose();
+    },
+    { enabled, enableOnFormTags: false, scopes: ["reader"] },
+  );
 }

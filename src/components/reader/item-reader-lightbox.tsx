@@ -9,6 +9,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { useHotkeysContext } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
+import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
 import { usePreferencesStore } from "@/hooks/ui/use-preferences-store";
 import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
 import {
@@ -68,9 +70,22 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
   const { data, isPending, isError, error, refetch } = useItem(activeItemId);
   const { goToNext, goToPrev, hasNext, hasPrev } = useItemReaderNavigation();
   const { mutate: setReadStatus } = useSetReadStatus();
+  const { mutate: toggleBookmark } = useToggleBookmark();
+  const { enableScope, disableScope } = useHotkeysContext();
+  const { readerWidth, setReaderWidth } = useReaderStore();
   const { isTourActive } = useTourStore();
+  const { setActiveItemId } = useActiveItem();
   const autoMarkReadMode = usePreferencesStore((s) => s.autoMarkReadMode);
   const autoMarkReadDelay = usePreferencesStore((s) => s.autoMarkReadDelay);
+
+  useEffect(() => {
+    enableScope("reader");
+    disableScope("list");
+    return () => {
+      disableScope("reader");
+      enableScope("list");
+    };
+  }, [enableScope, disableScope]);
 
   const lastOpenedItemIdRef = useRef<number | null>(null);
 
@@ -106,12 +121,16 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
     setReadStatus({ itemId: activeItemId, isRead: !data.isRead });
   };
 
-  const { readerWidth, setReaderWidth } = useReaderStore();
+  const handleToggleBookmark = () => {
+    toggleBookmark({ itemId: activeItemId });
+  };
 
   useReaderShortcuts({
     onNext: goToNext,
     onPrev: goToPrev,
+    onClose: () => setActiveItemId(null),
     onToggleRead: handleToggleRead,
+    onToggleBookmark: handleToggleBookmark,
     enabled: true,
   });
 
@@ -193,13 +212,22 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
                 setReaderWidth(val as ReaderWidth);
               }}
             >
-              <ToggleGroupItem value={ReaderWidthValues[0]}>
+              <ToggleGroupItem
+                value={ReaderWidthValues[0]}
+                aria-label="Narrow width"
+              >
                 <FoldHorizontalIcon className="size-4" />
               </ToggleGroupItem>
-              <ToggleGroupItem value={ReaderWidthValues[1]}>
+              <ToggleGroupItem
+                value={ReaderWidthValues[1]}
+                aria-label="Medium width"
+              >
                 <TextAlignJustifyIcon className="size-4" />
               </ToggleGroupItem>
-              <ToggleGroupItem value={ReaderWidthValues[2]}>
+              <ToggleGroupItem
+                value={ReaderWidthValues[2]}
+                aria-label="Wide width"
+              >
                 <UnfoldHorizontalIcon className="size-4" />
               </ToggleGroupItem>
             </ToggleGroup>
