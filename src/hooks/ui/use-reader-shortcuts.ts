@@ -1,4 +1,5 @@
-import { useHotkeys } from "react-hotkeys-hook";
+import { useEffect } from "react";
+import { useHotkeys, useHotkeysContext } from "react-hotkeys-hook";
 
 interface UseReaderShortcutsOptions {
   onNext: () => void;
@@ -21,6 +22,19 @@ export function useReaderShortcuts({
   onToggleBookmark,
   enabled,
 }: UseReaderShortcutsOptions) {
+  const { enableScope, disableScope } = useHotkeysContext();
+
+  useEffect(() => {
+    if (enabled) {
+      enableScope("reader");
+      disableScope("list");
+      return () => {
+        disableScope("reader");
+        enableScope("list");
+      };
+    }
+  }, [enabled, enableScope, disableScope]);
+
   useHotkeys(
     ["j", "arrowright"],
     (e) => {

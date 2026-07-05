@@ -1,47 +1,30 @@
 "use client";
 
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  FoldHorizontalIcon,
-  TextAlignJustifyIcon,
-  UnfoldHorizontalIcon,
-  XIcon,
-} from "lucide-react";
-import { useEffect, useRef } from "react";
-import { useHotkeysContext } from "react-hotkeys-hook";
 import { toast } from "sonner";
-import { FeedIcon } from "@/components/feed/feed-icon";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useActiveItem } from "@/hooks/item/use-active-item";
+import { useAutoMarkAsRead } from "@/hooks/item/use-auto-mark-as-read";
 import { useItem } from "@/hooks/item/use-item";
 import { useItemReaderNavigation } from "@/hooks/item/use-item-reader-navigation";
 import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
 import { useToggleBookmark } from "@/hooks/item/use-toggle-bookmark";
-import { usePreferencesStore } from "@/hooks/ui/use-preferences-store";
 import { useReaderShortcuts } from "@/hooks/ui/use-reader-shortcuts";
-import {
-  type ReaderWidth,
-  ReaderWidthValues,
-  useReaderStore,
-} from "@/hooks/ui/use-reader-store";
+import { useReaderStore } from "@/hooks/ui/use-reader-store";
 import { useScrollShortcuts } from "@/hooks/ui/use-scroll-shortcuts";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { cn } from "@/lib/utils";
+import { ReaderFloatingNav } from "./reader-floating-nav";
+import { ReaderToolbar } from "./reader-toolbar";
 import { ReaderView } from "./reader-view";
 import { ReaderViewError } from "./reader-view-error";
 import { ReaderViewSkeleton } from "./reader-view-skeleton";
-import { ToggleReadButton } from "./toggle-read-button";
 
 export function ItemReaderLightbox() {
   const { activeItemId, setActiveItemId } = useActiveItem();
@@ -71,42 +54,11 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
   const { goToNext, goToPrev, hasNext, hasPrev } = useItemReaderNavigation();
   const { mutate: setReadStatus } = useSetReadStatus();
   const { mutate: toggleBookmark } = useToggleBookmark();
-  const { enableScope, disableScope } = useHotkeysContext();
-  const { readerWidth, setReaderWidth } = useReaderStore();
+  const { readerWidth } = useReaderStore();
   const { isTourActive } = useTourStore();
   const { setActiveItemId } = useActiveItem();
-  const autoMarkReadMode = usePreferencesStore((s) => s.autoMarkReadMode);
-  const autoMarkReadDelay = usePreferencesStore((s) => s.autoMarkReadDelay);
 
-  useEffect(() => {
-    enableScope("reader");
-    disableScope("list");
-    return () => {
-      disableScope("reader");
-      enableScope("list");
-    };
-  }, [enableScope, disableScope]);
-
-  const lastOpenedItemIdRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!data || lastOpenedItemIdRef.current === activeItemId || data.isRead)
-      return;
-    lastOpenedItemIdRef.current = activeItemId;
-
-    if (autoMarkReadMode === "immediately") {
-      setReadStatus({ itemId: activeItemId, isRead: true });
-      return;
-    }
-
-    if (autoMarkReadMode === "delayed") {
-      const timer = setTimeout(() => {
-        setReadStatus({ itemId: activeItemId, isRead: true });
-      }, autoMarkReadDelay * 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [activeItemId, data, autoMarkReadMode, autoMarkReadDelay, setReadStatus]);
+  useAutoMarkAsRead({ activeItemId, data, setReadStatus });
 
   const handleToggleRead = () => {
     if (!data) return;
@@ -156,88 +108,21 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
       </DialogHeader>
 
       {/* Main Surface */}
-      <div className="bg-background sm:rounded-xl overflow-hidden">
-        {/* Toolbar */}
-        <header className="sticky top-0 z-20 flex items-center border-b bg-background">
-          <DialogClose asChild>
-            <Button variant="ghost" aria-label="Close" data-tour="reader-close">
-              <XIcon className="size-4 md:size-5 text-text-tertiary" />
-            </Button>
-          </DialogClose>
-          <div className="h-10 flex gap-1 items-center min-w-0 border-l pl-1 md:h-14 md:pl-2">
-            <FeedIcon url={data?.feed.iconUrl} size={20} />
-            <span className="text-text-secondary text-xs truncate md:text-base">
-              {data?.feed.title}
-            </span>
-          </div>
-
-          {/* Mobile Nav Controls */}
-          <div className="ml-auto flex items-center gap-1 pr-2 sm:hidden">
-            <ToggleReadButton
-              data={data}
-              onClick={handleToggleRead}
-              disabled={isPending}
-            />
-            <Button
-              variant="secondary"
-              size="icon-sm"
-              onClick={goToPrev}
-              disabled={!hasPrev}
-              aria-label="Previous article"
-            >
-              <ChevronLeftIcon />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon-sm"
-              onClick={goToNext}
-              disabled={!hasNext}
-              aria-label="Next article"
-            >
-              <ChevronRightIcon />
-            </Button>
-          </div>
-
-          {/* Desktop Layout Controls */}
-          <div className="hidden ml-auto sm:flex items-center gap-2 pr-4">
-            <ToggleReadButton
-              data={data}
-              onClick={handleToggleRead}
-              disabled={isPending}
-            />
-            <ToggleGroup
-              type="single"
-              value={readerWidth}
-              onValueChange={(val) => {
-                setReaderWidth(val as ReaderWidth);
-              }}
-            >
-              <ToggleGroupItem
-                value={ReaderWidthValues[0]}
-                aria-label="Narrow width"
-              >
-                <FoldHorizontalIcon className="size-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value={ReaderWidthValues[1]}
-                aria-label="Medium width"
-              >
-                <TextAlignJustifyIcon className="size-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value={ReaderWidthValues[2]}
-                aria-label="Wide width"
-              >
-                <UnfoldHorizontalIcon className="size-4" />
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-        </header>
+      <div className="bg-background sm:rounded-xl overflow-hidden h-full flex flex-col">
+        <ReaderToolbar
+          data={data}
+          isPending={isPending}
+          onToggleRead={handleToggleRead}
+          goToPrev={goToPrev}
+          goToNext={goToNext}
+          hasPrev={hasPrev}
+          hasNext={hasNext}
+        />
 
         {/* Content Area */}
         <ScrollArea
           key={activeItemId}
-          className="h-full"
+          className="flex-1 min-h-0"
           data-tour="reader-content"
           type="scroll"
         >
@@ -251,38 +136,12 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
         </ScrollArea>
       </div>
 
-      {/* Floating Controls */}
-      <div className="hidden sm:block fixed -left-16 top-1/2 -translate-y-1/2">
-        <Button
-          variant="secondary"
-          size="icon"
-          className={cn(
-            "size-12 rounded-full hover:scale-110 active:scale-95",
-            !hasPrev && "opacity-20",
-          )}
-          onClick={goToPrev}
-          disabled={!hasPrev}
-          aria-label="Previous item"
-        >
-          <ChevronLeftIcon className="size-6" />
-        </Button>
-      </div>
-
-      <div className="hidden sm:block fixed -right-16 top-1/2 -translate-y-1/2">
-        <Button
-          variant="secondary"
-          size="icon"
-          className={cn(
-            "size-12 rounded-full hover:scale-110 active:scale-95",
-            !hasNext && "opacity-20",
-          )}
-          onClick={goToNext}
-          disabled={!hasNext}
-          aria-label="Next item"
-        >
-          <ChevronRightIcon className="size-6" />
-        </Button>
-      </div>
+      <ReaderFloatingNav
+        goToPrev={goToPrev}
+        goToNext={goToNext}
+        hasPrev={hasPrev}
+        hasNext={hasNext}
+      />
     </DialogContent>
   );
 }
