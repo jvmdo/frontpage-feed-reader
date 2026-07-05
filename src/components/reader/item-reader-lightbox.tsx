@@ -20,7 +20,7 @@ import { useReaderStore } from "@/hooks/ui/use-reader-store";
 import { useScrollShortcuts } from "@/hooks/ui/use-scroll-shortcuts";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { cn } from "@/lib/utils";
-import { ReaderFloatingNav } from "./reader-floating-nav";
+import { ReaderFloatingControls } from "./reader-floating-controls";
 import { ReaderToolbar } from "./reader-toolbar";
 import { ReaderView } from "./reader-view";
 import { ReaderViewError } from "./reader-view-error";
@@ -94,6 +94,15 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
           e.preventDefault();
         }
       }}
+      onCloseAutoFocus={(e) => {
+        // Radix Dialog sometimes fails to return focus to a sibling dialog.
+        // If the search palette is open, we manually restore focus to it.
+        const palette = document.querySelector<HTMLInputElement>("[cmdk-root]");
+        if (palette) {
+          e.preventDefault();
+          palette.focus();
+        }
+      }}
       style={{ "--max-width": readerWidth } as React.CSSProperties}
       className={cn(
         "inset-0 translate-x-0 translate-y-0 max-w-none mx-auto p-0 bg-transparent @container",
@@ -136,7 +145,7 @@ function ItemReaderLightboxContent({ activeItemId }: { activeItemId: number }) {
         </ScrollArea>
       </div>
 
-      <ReaderFloatingNav
+      <ReaderFloatingControls
         goToPrev={goToPrev}
         goToNext={goToNext}
         hasPrev={hasPrev}

@@ -134,7 +134,7 @@ describe("SearchPalette", () => {
 
     // Expect the URL states to update
     expect(screen.getByTestId("url-debug")).toHaveTextContent(
-      "itemId: 1, searchPalette: false",
+      "itemId: 1, searchPalette: true",
     );
   });
 

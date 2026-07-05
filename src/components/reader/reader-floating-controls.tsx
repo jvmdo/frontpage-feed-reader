@@ -1,20 +1,25 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
 import { cn } from "@/lib/utils";
 
-interface ReaderFloatingNavProps {
+interface ReaderFloatingControlsProps {
   goToPrev: () => void;
   goToNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
 }
 
-export function ReaderFloatingNav({
+export function ReaderFloatingControls({
   goToPrev,
   goToNext,
   hasPrev,
   hasNext,
-}: ReaderFloatingNavProps) {
+}: ReaderFloatingControlsProps) {
+  const [isPaletteOpen] = useSearchPaletteState();
+
+  if (isPaletteOpen) return null;
+
   return (
     <>
       <div className="hidden sm:block fixed -left-16 top-1/2 -translate-y-1/2">

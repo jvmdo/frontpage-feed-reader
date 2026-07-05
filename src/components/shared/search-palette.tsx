@@ -54,10 +54,7 @@ export function SearchPalette() {
   );
 
   const onSelect = (item: ListItemWithSource) => {
-    setQueryStates({
-      itemId: item.item.id,
-      searchPalette: null,
-    });
+    setQueryStates({ itemId: item.item.id });
   };
 
   const trimmedSearch = search.trim();

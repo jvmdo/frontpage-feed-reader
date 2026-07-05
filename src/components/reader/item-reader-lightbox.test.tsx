@@ -171,4 +171,16 @@ describe("ItemReaderLightbox Integration", () => {
     const dialogContent = screen.getByRole("dialog");
     expect(dialogContent).toHaveStyle({ "--max-width": "65vw" });
   });
+
+  it("hides navigation controls when the search palette is open", () => {
+    const data = createMockItemWithSource({ item: { id: 1 } });
+    vi.mocked(useItem).mockReturnValue({ data, isLoading: false } as any);
+
+    render(<ItemReaderLightbox />, { searchParams: { searchPalette: "true" } });
+
+    expect(
+      screen.queryByLabelText(/previous article/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/next article/i)).not.toBeInTheDocument();
+  });
 });

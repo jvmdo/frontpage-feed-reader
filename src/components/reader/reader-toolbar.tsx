@@ -2,6 +2,7 @@ import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react";
 import { FeedIcon } from "@/components/feed/feed-icon";
 import { Button } from "@/components/ui/button";
 import { DialogClose } from "@/components/ui/dialog";
+import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
 import type { ItemWithSource } from "@/types";
 import { ReaderWidthControls } from "./reader-width-controls";
 import { ToggleReadButton } from "./toggle-read-button";
@@ -25,6 +26,8 @@ export function ReaderToolbar({
   hasPrev,
   hasNext,
 }: ReaderToolbarProps) {
+  const [isPaletteOpen] = useSearchPaletteState();
+
   return (
     <header className="sticky top-0 z-20 flex items-center border-b bg-background">
       <DialogClose asChild>
@@ -46,24 +49,28 @@ export function ReaderToolbar({
           onClick={onToggleRead}
           disabled={isPending}
         />
-        <Button
-          variant="secondary"
-          size="icon-sm"
-          onClick={goToPrev}
-          disabled={!hasPrev}
-          aria-label="Previous article"
-        >
-          <ChevronLeftIcon />
-        </Button>
-        <Button
-          variant="secondary"
-          size="icon-sm"
-          onClick={goToNext}
-          disabled={!hasNext}
-          aria-label="Next article"
-        >
-          <ChevronRightIcon />
-        </Button>
+        {!isPaletteOpen && (
+          <>
+            <Button
+              variant="secondary"
+              size="icon-sm"
+              onClick={goToPrev}
+              disabled={!hasPrev}
+              aria-label="Previous article"
+            >
+              <ChevronLeftIcon />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon-sm"
+              onClick={goToNext}
+              disabled={!hasNext}
+              aria-label="Next article"
+            >
+              <ChevronRightIcon />
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Desktop Layout Controls */}
