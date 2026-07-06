@@ -93,6 +93,7 @@ function buildSortClauses(
       ? direction(userItemStates.bookmarkedAt)
       : direction(feedItems.publishedAt),
     direction(feedItems.createdAt),
+    direction(feedItems.id), // Guaranteed unique tie-breaker
   );
 
   return clauses;

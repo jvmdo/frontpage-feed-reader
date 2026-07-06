@@ -79,6 +79,5 @@ export function useItems() {
     // Infinity prevents automatic background refetches on component mounts/remounts.
     staleTime: Infinity,
     select: (data) => data.pages.flat(),
-    refetchOnWindowFocus: false,
   });
 }

@@ -134,6 +134,45 @@ describe("getItems", () => {
     expect(offsetResult[1].item.title).toBe("Item 3");
   });
 
+  test("maintains stable pagination when timestamps collide (deterministic sorting)", async ({
+    tx,
+    testUser,
+  }) => {
+    const { feed } = await seedFeedWithSubscription(tx, testUser.id);
+
+    // Create 10 items with the EXACT same publishedAt and createdAt timestamps
+    const exactSameTime = new Date("2026-01-01T12:00:00.000Z");
+    const items = Array.from({ length: 10 }).map((_, i) => ({
+      title: `Collision Item ${i}`,
+      publishedAt: exactSameTime,
+      createdAt: exactSameTime,
+    }));
+
+    await seedItems(tx, feed.id, items);
+
+    // Fetch page 1 (limit 5, offset 0)
+    const page1 = await getItems(tx, testUser.id, {
+      limit: 5,
+      offset: 0,
+    });
+
+    // Fetch page 2 (limit 5, offset 5)
+    const page2 = await getItems(tx, testUser.id, {
+      limit: 5,
+      offset: 5,
+    });
+
+    expect(page1).toHaveLength(5);
+    expect(page2).toHaveLength(5);
+
+    // Combine the pages and ensure ALL 10 distinct items were returned
+    // If pagination is unstable, some items would be duplicated and some would be missing
+    const allTitles = [...page1, ...page2].map((r) => r.item.title);
+    const uniqueTitles = new Set(allTitles);
+
+    expect(uniqueTitles.size).toBe(10);
+  });
+
   describe("filtering by feedId", () => {
     test("returns only items from the specified feedId", async ({
       tx,
