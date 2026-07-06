@@ -166,6 +166,70 @@ describe("ingestItems integration", () => {
     expect(updatedItem.title).toBe("Making Complex CSS Shapes Using shape()");
   });
 
+  test("updates publishedAt for existing items if they were ingested within the 24-hour grace period", async ({
+    tx,
+  }) => {
+    const insertedFeed = await seedFeed(tx, { url: FEED_URL });
+    const originalDate = new Date(Date.now() - 2 * 60 * 60 * 1000); // 2 hours ago
+
+    await seedItems(tx, insertedFeed.id, [
+      {
+        guid: "https://css-tricks.com/?p=392986",
+        publishedAt: originalDate,
+        createdAt: originalDate,
+      },
+    ]);
+
+    server.use(
+      http.get(FEED_URL, () => {
+        return HttpResponse.xml(RSS_CONTENT);
+      }),
+    );
+
+    await ingestItems(tx, insertedFeed.id);
+
+    const [updatedItem] = await tx
+      .select()
+      .from(feedItems)
+      .where(eq(feedItems.guid, "https://css-tricks.com/?p=392986"));
+
+    // The RSS_CONTENT has pubDate: Tue, 09 Jan 2024 16:29:43 +0000
+    // It should have overwritten originalDate because originalDate is within the 24h grace period
+    expect(updatedItem.publishedAt?.getTime()).not.toBe(originalDate.getTime());
+  });
+
+  test("ignores publishedAt updates for existing items if they were ingested more than 24 hours ago", async ({
+    tx,
+  }) => {
+    const insertedFeed = await seedFeed(tx, { url: FEED_URL });
+    const originalDate = new Date(Date.now() - 48 * 60 * 60 * 1000); // 48 hours ago
+
+    await seedItems(tx, insertedFeed.id, [
+      {
+        guid: "https://css-tricks.com/?p=392986",
+        publishedAt: originalDate,
+        createdAt: originalDate,
+      },
+    ]);
+
+    server.use(
+      http.get(FEED_URL, () => {
+        return HttpResponse.xml(RSS_CONTENT);
+      }),
+    );
+
+    await ingestItems(tx, insertedFeed.id);
+
+    const [updatedItem] = await tx
+      .select()
+      .from(feedItems)
+      .where(eq(feedItems.guid, "https://css-tricks.com/?p=392986"));
+
+    // Because createdAt is 48h ago, the grace period has expired.
+    // The publishedAt date from the RSS_CONTENT should be completely ignored.
+    expect(updatedItem.publishedAt?.getTime()).toBe(originalDate.getTime());
+  });
+
   test("successfully processes feed items using initialData (handoff)", async ({
     tx,
   }) => {

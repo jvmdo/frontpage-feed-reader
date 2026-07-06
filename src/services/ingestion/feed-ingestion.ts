@@ -104,7 +104,15 @@ export async function ingestItems(
             description: sql`excluded.${sql.raw(feedItems.description.name)}`,
             content: sql`excluded.${sql.raw(feedItems.content.name)}`,
             author: sql`excluded.${sql.raw(feedItems.author.name)}`,
-            publishedAt: sql`excluded.${sql.raw(feedItems.publishedAt.name)}`,
+            // 24-hour grace period: Only accept publication date changes if the item was ingested recently.
+            // This prevents old posts from "date-bumping" their way back to the top of the feed.
+            publishedAt: sql`
+              CASE 
+                WHEN ${feedItems.createdAt} > now() - interval '24 hours' 
+                THEN excluded.${sql.raw(feedItems.publishedAt.name)}
+                ELSE ${feedItems.publishedAt}
+              END
+            `,
             updatedAt: sql`excluded.${sql.raw(feedItems.updatedAt.name)}`,
             textContent: sql`excluded.${sql.raw(feedItems.textContent.name)}`,
             rawPayload: sql`excluded.${sql.raw(feedItems.rawPayload.name)}`,
