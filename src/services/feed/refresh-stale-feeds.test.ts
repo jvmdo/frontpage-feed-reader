@@ -256,4 +256,80 @@ describe("refreshStaleFeeds", () => {
       error: "Network Timeout",
     });
   });
+
+  test("respects the batch size limit", async ({ tx }) => {
+    // 1. Create multiple stale curated feeds (more than the batch size of 2)
+    await seedFeed(tx, { isCurated: true, lastFetchedAt: null });
+    await seedFeed(tx, { isCurated: true, lastFetchedAt: null });
+    await seedFeed(tx, { isCurated: true, lastFetchedAt: null });
+
+    // 2. Act with a batch size of 2
+    const result = await refreshStaleFeeds(tx, 2);
+
+    // 3. Assert
+    expect(result.processed).toBe(2);
+    expect(result.success).toBe(2);
+    expect(ingestItems).toHaveBeenCalledTimes(2);
+  });
+
+  test("deduplicates feeds that are both curated and subscribed", async ({
+    tx,
+    testUser,
+  }) => {
+    // 1. Create a feed that is curated and stale
+    const feed = await seedFeed(tx, { isCurated: true, lastFetchedAt: null });
+
+    // 2. Subscribe a user to the same feed
+    await tx.insert(userPreferences).values({
+      userId: testUser.id,
+      refreshInterval: 900,
+    });
+    await tx.insert(subscriptions).values({
+      userId: testUser.id,
+      feedId: feed.id,
+    });
+
+    // 3. Act with a large batch size
+    const result = await refreshStaleFeeds(tx, 10);
+
+    // 4. Assert
+    expect(result.processed).toBe(1);
+    expect(result.success).toBe(1);
+    // Ensure ingestItems was only called once for this feed!
+    expect(ingestItems).toHaveBeenCalledTimes(1);
+    expect(ingestItems).toHaveBeenCalledWith(expect.anything(), feed.id);
+  });
+
+  test("prioritizes feeds that have been waiting the longest, including never fetched feeds (NULLS FIRST)", async ({
+    tx,
+  }) => {
+    // 1. Create three curated feeds with different staleness
+    // DEFAULT_REFRESH_INTERVAL is usually 600s (10 mins). These are all stale.
+    const oneHourAgo = subSeconds(new Date(), 3600);
+    const twentyMinsAgo = subSeconds(new Date(), 1200);
+
+    const neverFetchedFeed = await seedFeed(tx, {
+      isCurated: true,
+      lastFetchedAt: null,
+    });
+    const olderFeed = await seedFeed(tx, {
+      isCurated: true,
+      lastFetchedAt: oneHourAgo,
+    });
+    const oldFeed = await seedFeed(tx, {
+      isCurated: true,
+      lastFetchedAt: twentyMinsAgo,
+    });
+
+    // 2. Act with a batch size of 2
+    const result = await refreshStaleFeeds(tx, 2);
+
+    // 3. Assert: should pick the null feed and the older feed
+    expect(result.processed).toBe(2);
+
+    const processedIds = result.successful?.map((r) => r.id);
+    expect(processedIds).toContain(neverFetchedFeed.id);
+    expect(processedIds).toContain(olderFeed.id);
+    expect(processedIds).not.toContain(oldFeed.id);
+  });
 });

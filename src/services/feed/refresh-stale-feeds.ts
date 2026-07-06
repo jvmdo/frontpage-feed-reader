@@ -35,6 +35,7 @@ export async function refreshStaleFeeds(db: DB, batchSize = 20) {
         sql`EXTRACT(EPOCH FROM now()) - EXTRACT(EPOCH FROM ${min(feeds.lastFetchedAt)}) > ${min(userPreferences.refreshInterval)}`,
       ),
     )
+    .orderBy(sql`${feeds.lastFetchedAt} ASC NULLS FIRST`)
     .limit(batchSize);
 
   // B. Curated feeds: overdue if (now - lastFetchedAt) > DEFAULT_REFRESH_INTERVAL
@@ -53,6 +54,7 @@ export async function refreshStaleFeeds(db: DB, batchSize = 20) {
         ),
       ),
     )
+    .orderBy(sql`${feeds.lastFetchedAt} ASC NULLS FIRST`)
     .limit(batchSize);
 
   // 2. Combine and Deduplicate
