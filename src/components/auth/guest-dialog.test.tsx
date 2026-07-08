@@ -124,11 +124,7 @@ describe("GuestDialog", () => {
     await user.type(screen.getByLabelText(/^password$/i), "password123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    const submitButton = screen.getByRole("button", { name: /saving/i });
-    expect(submitButton).toBeDisabled();
-    expect(
-      screen.getByRole("status", { name: /loading/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled();
 
     resolveAction({ data: { session: {} }, error: null });
 

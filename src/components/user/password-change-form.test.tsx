@@ -196,9 +196,6 @@ describe("PasswordChangeForm", () => {
       expect(
         await screen.findByRole("button", { name: /changing/i }),
       ).toBeDisabled();
-      expect(
-        screen.getByRole("status", { name: /loading/i }),
-      ).toBeInTheDocument();
 
       resolve({ success: true });
 

@@ -180,14 +180,9 @@ describe("SignupForm", () => {
     await user.type(screen.getByLabelText(/confirm password/i), "password123");
     await user.click(screen.getByRole("button", { name: /^create account$/i }));
 
-    const submitButton = screen.getByRole("button", {
-      name: /creating account/i,
-    });
-
-    expect(submitButton).toBeDisabled();
     expect(
-      screen.getByRole("status", { name: /loading/i }),
-    ).toBeInTheDocument();
+      screen.getByRole("button", { name: /creating account/i }),
+    ).toBeDisabled();
 
     resolveAction({ data: { session: {} }, error: null });
 

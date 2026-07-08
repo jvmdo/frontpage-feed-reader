@@ -168,7 +168,7 @@ function AssignedFeedItem({ item }: { item: FeedWithSubscription }) {
       >
         {isPending ? (
           <>
-            <Spinner />
+            <Spinner data-icon="inline-end" />
             <span className="sr-only">Removing...</span>
           </>
         ) : (

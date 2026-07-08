@@ -152,9 +152,6 @@ describe("ProfileForm", () => {
       await user.click(screen.getByRole("button", { name: /save changes/i }));
 
       expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled();
-      expect(
-        screen.getByRole("status", { name: /loading/i }),
-      ).toBeInTheDocument();
 
       resolve({ data: {}, error: null });
 

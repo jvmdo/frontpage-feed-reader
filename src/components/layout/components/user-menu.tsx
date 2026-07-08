@@ -155,7 +155,7 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
               disabled={isPending}
             >
               {isPending ? (
-                <Spinner data-icon="inline-start" aria-hidden={true} />
+                <Spinner data-icon="inline-start" />
               ) : (
                 <LogOutIcon data-icon="inline-start" />
               )}

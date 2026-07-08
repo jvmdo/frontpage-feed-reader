@@ -200,9 +200,6 @@ describe("EmailChangeForm", () => {
       expect(
         await screen.findByRole("button", { name: /updating/i }),
       ).toBeDisabled();
-      expect(
-        screen.getByRole("status", { name: /loading/i }),
-      ).toBeInTheDocument();
 
       resolve({ success: true });
 

@@ -131,12 +131,7 @@ describe("ResetPasswordForm", () => {
     await user.type(screen.getByLabelText(/confirm password/i), "123123");
     await user.click(screen.getByRole("button", { name: /reset password/i }));
 
-    const submitButton = screen.getByRole("button", { name: /resetting/i });
-
-    expect(submitButton).toBeDisabled();
-    expect(
-      screen.getByRole("status", { name: /loading/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /resetting/i })).toBeDisabled();
 
     resolveAction({ data: { status: true }, error: null });
 

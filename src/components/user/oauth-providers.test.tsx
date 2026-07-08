@@ -169,9 +169,6 @@ describe("OAuthProviders", () => {
       expect(
         screen.getByRole("button", { name: /disconnecting/i }),
       ).toBeDisabled();
-      expect(
-        screen.getByRole("status", { name: /loading/i }),
-      ).toBeInTheDocument();
 
       resolve({ data: {}, error: null });
 

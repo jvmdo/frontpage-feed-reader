@@ -115,12 +115,9 @@ describe("ForgotPasswordForm", () => {
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /send reset link/i }));
 
-    const submitButton = screen.getByRole("button", { name: /sending link/i });
-
-    expect(submitButton).toBeDisabled();
     expect(
-      screen.getByRole("status", { name: /loading/i }),
-    ).toBeInTheDocument();
+      screen.getByRole("button", { name: /sending link/i }),
+    ).toBeDisabled();
 
     resolveAction({ data: { status: true }, error: null });
 

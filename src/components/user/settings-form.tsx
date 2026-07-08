@@ -203,7 +203,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
 
       <div className="flex justify-end mx-auto xl:min-w-xl xl:max-w-3xl xl:mx-50">
         <Button type="submit" disabled={isPending}>
-          {isPending && <Spinner data-icon="inline-start" aria-hidden={true} />}
+          {isPending && <Spinner data-icon="inline-start" />}
           {isPending ? "Saving..." : "Save changes"}
         </Button>
       </div>
