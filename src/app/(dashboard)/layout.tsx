@@ -1,5 +1,4 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { differenceInHours } from "date-fns";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -22,6 +21,7 @@ import { getCurrentSession } from "@/lib/session";
 import { getCategories } from "@/services/category/get-categories";
 import { getUnreadCounts } from "@/services/feed/get-unread-counts";
 import { getSubscriptions } from "@/services/subscription/get-subscriptions";
+import { shouldShowWelcomeTour } from "@/services/user/should-show-welcome-tour";
 
 export const metadata: Metadata = {
   title: {
@@ -62,10 +62,6 @@ export default async function DashboardLayout({
     queryFn: () => getUnreadCounts(db, session.user.id),
   });
 
-  const isNewUser =
-    session.user.isAnonymous ||
-    differenceInHours(session.user.createdAt, Date.now()) <= 24;
-
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="flex h-screen flex-col">
@@ -88,7 +84,12 @@ export default async function DashboardLayout({
 
             <MobileBottomNav user={session.user} />
           </div>
-          {isNewUser && <WelcomeTour />}
+          <Suspense fallback={null}>
+            <CheckWelcomeTour
+              userId={session.user.id}
+              isAnonymous={session.user.isAnonymous}
+            />
+          </Suspense>
         </SidebarProvider>
 
         <ClientDialogs />
@@ -97,4 +98,18 @@ export default async function DashboardLayout({
       </div>
     </HydrationBoundary>
   );
+}
+
+async function CheckWelcomeTour({
+  userId,
+  isAnonymous,
+}: {
+  userId: string;
+  isAnonymous: boolean | null | undefined;
+}) {
+  const showTour = await shouldShowWelcomeTour(db, { userId, isAnonymous });
+
+  if (!showTour) return null;
+
+  return <WelcomeTour />;
 }
