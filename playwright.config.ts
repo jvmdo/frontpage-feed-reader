@@ -81,11 +81,18 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       env: {
         PLAYWRIGHT_TEST: "true",
+        TRIGGER_API_URL: "http://localhost:3433",
+        TRIGGER_SECRET_KEY: "e2e-mock-secret",
       },
     },
     {
       command: "bun run serve -p 3432 ./e2e/fixtures",
       url: process.env.CI ? "http://localhost:3432" : undefined,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: "bun run e2e/fixtures/trigger-mock-server.ts",
+      url: process.env.CI ? "http://localhost:3433" : undefined,
       reuseExistingServer: !process.env.CI,
     },
   ],
