@@ -1,9 +1,9 @@
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
-import { settings } from "@/env";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useViewOptions } from "@/hooks/ui/use-view-options";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import { getDefaultSorting } from "@/lib/sorting";
+import { getAbsoluteUrl } from "@/lib/utils";
 import type { ListItemWithSource } from "@/types";
 
 export function useItems() {
@@ -34,8 +34,9 @@ export function useItems() {
     ],
     queryFn: async ({ pageParam, signal }) => {
       const offset = pageParam as number;
-      const baseUrl = typeof window !== "undefined" ? "" : settings.baseUrl;
-      let url = `${baseUrl}/api/items?offset=${offset}&limit=${PAGINATION_LIMIT}`;
+      let url = getAbsoluteUrl(
+        `/api/items?offset=${offset}&limit=${PAGINATION_LIMIT}`,
+      );
 
       if (feedId) {
         url += `&feedId=${feedId}`;

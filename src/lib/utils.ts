@@ -7,6 +7,7 @@ import {
   colors,
   uniqueNamesGenerator,
 } from "unique-names-generator";
+import { settings } from "@/env";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -62,4 +63,13 @@ export function normalizeUrl(urlString: string): string {
   } catch {
     return urlString.trim();
   }
+}
+
+/**
+ * Returns an absolute URL for server-side fetches or a relative URL for client-side fetches.
+ * Prevents Next.js SSR from crashing because relative URLs calls during SSR.
+ */
+export function getAbsoluteUrl(path: string): string {
+  if (typeof window !== "undefined") return path;
+  return `${settings.baseUrl}${path}`;
 }

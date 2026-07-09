@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { getAbsoluteUrl } from "@/lib/utils";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 
 /**
@@ -9,7 +10,9 @@ export function useUnreadCounts() {
   return useSuspenseQuery<UnreadCounts>({
     queryKey: ["feeds", "unread-counts"],
     queryFn: async ({ signal }) => {
-      const response = await fetch("/api/feeds/unread-counts", { signal });
+      const response = await fetch(getAbsoluteUrl("/api/feeds/unread-counts"), {
+        signal,
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch unread counts");

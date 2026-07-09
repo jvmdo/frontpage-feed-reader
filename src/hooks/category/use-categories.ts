@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { getAbsoluteUrl } from "@/lib/utils";
 import type { Category } from "@/types";
 
 /**
@@ -9,7 +10,7 @@ export function useCategories() {
   return useSuspenseQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: async () => {
-      const response = await fetch("/api/categories");
+      const response = await fetch(getAbsoluteUrl("/api/categories"));
 
       if (!response.ok) {
         throw new Error("Failed to fetch categories");
