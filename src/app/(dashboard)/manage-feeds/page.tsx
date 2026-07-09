@@ -1,8 +1,10 @@
 import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { FeedManager } from "@/components/feed/feed-manager";
+import { FeedManagerSkeleton } from "@/components/feed/feed-manager-skeleton";
 import { getCurrentSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -38,7 +40,9 @@ export default async function ManageFeedsPage() {
         </AddFeedDialog>
       </header>
 
-      <FeedManager />
+      <Suspense fallback={<FeedManagerSkeleton />}>
+        <FeedManager />
+      </Suspense>
     </section>
   );
 }

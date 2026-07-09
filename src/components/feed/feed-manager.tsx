@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useFeeds } from "@/hooks/feed/use-feeds";
 import { AddFeedDialog } from "./add-feed-dialog";
 import { FeedTable } from "./feed-table";
+import { RefreshTaskStatusBanner } from "./refresh-task-status-banner";
 
 export function FeedManager() {
   const { data } = useFeeds();
@@ -28,5 +29,10 @@ export function FeedManager() {
     );
   }
 
-  return <FeedTable data={data} />;
+  return (
+    <div className="space-y-6">
+      <RefreshTaskStatusBanner />
+      <FeedTable data={data} />
+    </div>
+  );
 }

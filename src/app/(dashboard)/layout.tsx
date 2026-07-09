@@ -21,6 +21,7 @@ import { getCurrentSession } from "@/lib/session";
 import { getCategories } from "@/services/category/get-categories";
 import { getUnreadCounts } from "@/services/feed/get-unread-counts";
 import { getSubscriptions } from "@/services/subscription/get-subscriptions";
+import { getRefreshTaskStatus } from "@/services/system/get-refresh-task-status";
 import { shouldShowWelcomeTour } from "@/services/user/should-show-welcome-tour";
 
 export const metadata: Metadata = {
@@ -60,6 +61,11 @@ export default async function DashboardLayout({
   queryClient.prefetchQuery({
     queryKey: ["feeds", "unread-counts"],
     queryFn: () => getUnreadCounts(db, session.user.id),
+  });
+
+  queryClient.prefetchQuery({
+    queryKey: ["system", "refresh-task-status"],
+    queryFn: () => getRefreshTaskStatus(),
   });
 
   return (
