@@ -1,3 +1,4 @@
+import { syncEnvVars } from "@trigger.dev/build/extensions/core";
 import { defineConfig } from "@trigger.dev/sdk";
 
 export default defineConfig({
@@ -20,4 +21,17 @@ export default defineConfig({
   },
   dirs: ["./src/trigger"],
   ignorePatterns: ["./src/trigger/*.test.ts"],
+  build: {
+    extensions: [
+      syncEnvVars(async () => {
+        return [
+          { name: "DATABASE_URL", value: process.env.DATABASE_URL ?? "" },
+          {
+            name: "BETTER_AUTH_SECRET",
+            value: process.env.BETTER_AUTH_SECRET ?? "",
+          },
+        ];
+      }),
+    ],
+  },
 });

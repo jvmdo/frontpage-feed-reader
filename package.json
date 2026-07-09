@@ -105,6 +105,7 @@
     "msw": "^2.13.4",
     "serve": "^14.2.6",
     "tailwindcss": "^4",
+    "trigger.dev": "4.5.0",
     "tsx": "^4.21.0",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",

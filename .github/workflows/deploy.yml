@@ -94,7 +94,14 @@ jobs:
           echo "DEPLOY_URL=$DEPLOY_URL" >> $GITHUB_ENV
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
 
-      # 3. Seed and Warm Database using the deployed URL
+      # 3. Deploy tasks to Trigger.dev
+      - name: Deploy Tasks to Trigger.dev (Production)
+        if: github.ref == 'refs/heads/main'
+        run: bun x trigger.dev deploy --env prod
+        env:
+          TRIGGER_ACCESS_TOKEN: ${{ secrets.TRIGGER_ACCESS_TOKEN }}
+
+      # 4. Seed and Warm Database using the deployed URL
       - name: Seed and Warm Database
         run: |
           NEXT_PUBLIC_APP_URL=${{ env.DEPLOY_URL }} bun run db:seed
@@ -111,6 +118,8 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
+      - uses: actions/checkout@v4
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -128,3 +137,9 @@ jobs:
             "${{ github.event.ref }}" \
             --yes \
             --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Archive Trigger.dev Preview Branch
+        run: |
+          bun x trigger.dev preview archive --branch "${{ github.event.ref }}"
+        env:
+          TRIGGER_ACCESS_TOKEN: ${{ secrets.TRIGGER_ACCESS_TOKEN }}
