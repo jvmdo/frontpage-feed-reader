@@ -23,6 +23,7 @@ export const env = createEnv({
     // Provided by Vercel
     VERCEL_URL: z.string().optional(),
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
+    TRIGGER_SECRET_KEY: z.string().optional(),
   },
 
   /**
@@ -32,6 +33,10 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: z.url().optional(),
     NEXT_PUBLIC_VERCEL_URL: z.string().optional(),
     NEXT_PUBLIC_DEFAULT_REFRESH_INTERVAL: z.coerce.number().default(900),
+    NEXT_PUBLIC_TRIGGER_THROTTLE_MS: z.coerce
+      .number()
+      .optional()
+      .default(60000),
   },
 
   experimental__runtimeEnv: {
@@ -39,6 +44,8 @@ export const env = createEnv({
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
     NEXT_PUBLIC_DEFAULT_REFRESH_INTERVAL:
       process.env.NEXT_PUBLIC_DEFAULT_REFRESH_INTERVAL,
+    NEXT_PUBLIC_TRIGGER_THROTTLE_MS:
+      process.env.NEXT_PUBLIC_TRIGGER_THROTTLE_MS,
   },
 
   /**

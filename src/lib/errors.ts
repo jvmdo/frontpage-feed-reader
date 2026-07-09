@@ -186,3 +186,14 @@ export class InvalidPasswordError extends Error {
     this.name = "InvalidPasswordError";
   }
 }
+
+/**
+ * Thrown when the global sync schedule could not be found.
+ */
+export class SyncScheduleNotFoundError extends Error {
+  code = "SYNC_SCHEDULE_NOT_FOUND" as const;
+  constructor(message = "The global sync schedule could not be found.") {
+    super(message);
+    this.name = "SyncScheduleNotFoundError";
+  }
+}

@@ -78,3 +78,10 @@ export type SortConfig = {
 
 export const FILTER_STATUSES = ["all", "unread", "read"] as const;
 export type FilterStatus = (typeof FILTER_STATUSES)[number];
+
+export interface SystemSyncStatus {
+  active: boolean;
+  isFailing: boolean;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+}
