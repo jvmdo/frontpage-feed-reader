@@ -4,21 +4,29 @@ import {
   AlertCircleIcon,
   CircleCheckIcon,
   ClockIcon,
+  CloudOffIcon,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useFeeds } from "@/hooks/feed/use-feeds";
+import { useRefreshTaskStatus } from "@/hooks/system/use-refresh-task-status";
 import { cn } from "@/lib/utils";
-import type { FeedWithSubscription } from "@/types";
+import type { FeedWithSubscription, SystemSyncStatus } from "@/types";
 
 /**
  * Represents a rule for determining the aggregate status of feeds.
  * This allows the status logic to be extended without modifying the core component (OCP).
  */
 export interface FeedStatusRule {
-  predicate: (subscriptions: FeedWithSubscription[]) => boolean;
-  resolve: (subscriptions: FeedWithSubscription[]) => {
+  predicate: (
+    subscriptions: FeedWithSubscription[],
+    systemStatus?: SystemSyncStatus,
+  ) => boolean;
+  resolve: (
+    subscriptions: FeedWithSubscription[],
+    systemStatus?: SystemSyncStatus,
+  ) => {
     label: string;
     icon: LucideIcon;
     iconClassName?: string;
@@ -26,6 +34,18 @@ export interface FeedStatusRule {
 }
 
 const DEFAULT_RULES: FeedStatusRule[] = [
+  {
+    predicate: (_, systemStatus) =>
+      systemStatus?.isFailing === true || systemStatus?.active === false,
+    resolve: (_, systemStatus) => ({
+      label:
+        systemStatus?.active === false
+          ? "Sync engine paused"
+          : "Sync engine failing",
+      icon: CloudOffIcon,
+      iconClassName: "text-destructive",
+    }),
+  },
   {
     predicate: (subs) => subs.some((s) => s.feed.healthStatus === "error"),
     resolve: (subs) => {
@@ -76,15 +96,20 @@ interface FeedStatusProps {
  */
 export function FeedStatus({ rules = DEFAULT_RULES }: FeedStatusProps) {
   const { data: subscriptions } = useFeeds();
+  const { data: systemStatus } = useRefreshTaskStatus();
 
   // First predicate to match wins (error has precedence)
-  const activeRule = rules.find((rule) => rule.predicate(subscriptions));
+  const activeRule = rules.find((rule) =>
+    rule.predicate(subscriptions, systemStatus),
+  );
 
   const {
     label,
     icon: Icon,
     iconClassName,
-  } = activeRule ? activeRule.resolve(subscriptions) : HEALTHY_FALLBACK;
+  } = activeRule
+    ? activeRule.resolve(subscriptions, systemStatus)
+    : HEALTHY_FALLBACK;
 
   return (
     <StatusLink

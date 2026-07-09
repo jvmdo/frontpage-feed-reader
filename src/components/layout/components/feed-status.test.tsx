@@ -1,6 +1,5 @@
 import { HttpResponse, http } from "msw";
 import { Suspense } from "react";
-import { describe, expect, it } from "vitest";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { createMockFeedWithSubscription } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
@@ -8,19 +7,34 @@ import { render, screen } from "@/tests/rtl-utils";
 import { FeedStatus } from "./feed-status";
 
 describe("FeedStatus", () => {
-  it("renders 'All feeds healthy' when all feeds are healthy", async () => {
+  const healthySystemStatus = {
+    active: true,
+    isFailing: false,
+    lastRunAt: "2026-01-01T12:00:00Z",
+    nextRunAt: "2026-01-01T12:05:00Z",
+  };
+
+  const setupMocks = (
+    systemStatus = healthySystemStatus,
+    feedsData: any[] = [],
+  ) => {
     server.use(
+      http.get("/api/refresh-task-status", () => {
+        return HttpResponse.json({ success: true, data: systemStatus });
+      }),
       http.get("/api/feeds/subscriptions", () => {
         return HttpResponse.json({
           success: true,
-          data: [
-            createMockFeedWithSubscription({
-              feed: { healthStatus: "healthy" },
-            }),
-          ],
+          data: feedsData,
         });
       }),
     );
+  };
+
+  it("renders 'All feeds healthy' when all feeds are healthy and system is healthy", async () => {
+    setupMocks(healthySystemStatus, [
+      createMockFeedWithSubscription({ feed: { healthStatus: "healthy" } }),
+    ]);
 
     render(
       <SidebarProvider>
@@ -34,24 +48,11 @@ describe("FeedStatus", () => {
   });
 
   it("shows error status when feeds have errors", async () => {
-    server.use(
-      http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({
-          success: true,
-          data: [
-            createMockFeedWithSubscription({
-              feed: { healthStatus: "error" },
-            }),
-            createMockFeedWithSubscription({
-              feed: { healthStatus: "stale" },
-            }),
-            createMockFeedWithSubscription({
-              feed: { healthStatus: "healthy" },
-            }),
-          ],
-        });
-      }),
-    );
+    setupMocks(healthySystemStatus, [
+      createMockFeedWithSubscription({ feed: { healthStatus: "error" } }),
+      createMockFeedWithSubscription({ feed: { healthStatus: "stale" } }),
+      createMockFeedWithSubscription({ feed: { healthStatus: "healthy" } }),
+    ]);
 
     render(
       <SidebarProvider>
@@ -65,21 +66,10 @@ describe("FeedStatus", () => {
   });
 
   it("shows stale status when feeds are stale and none have errors", async () => {
-    server.use(
-      http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({
-          success: true,
-          data: [
-            createMockFeedWithSubscription({
-              feed: { healthStatus: "stale" },
-            }),
-            createMockFeedWithSubscription({
-              feed: { healthStatus: "healthy" },
-            }),
-          ],
-        });
-      }),
-    );
+    setupMocks(healthySystemStatus, [
+      createMockFeedWithSubscription({ feed: { healthStatus: "stale" } }),
+      createMockFeedWithSubscription({ feed: { healthStatus: "healthy" } }),
+    ]);
 
     render(
       <SidebarProvider>
@@ -93,11 +83,7 @@ describe("FeedStatus", () => {
   });
 
   it("shows 'Manage feeds' when there are no subscriptions", async () => {
-    server.use(
-      http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({ success: true, data: [] });
-      }),
-    );
+    setupMocks(healthySystemStatus, []);
 
     render(
       <SidebarProvider>
@@ -110,7 +96,59 @@ describe("FeedStatus", () => {
     expect(await screen.findByText(/manage feeds/i)).toBeInTheDocument();
   });
 
+  it("shows 'Sync engine paused' when system task is inactive", async () => {
+    setupMocks({ ...healthySystemStatus, active: false }, [
+      createMockFeedWithSubscription({ feed: { healthStatus: "healthy" } }),
+    ]);
+
+    render(
+      <SidebarProvider>
+        <Suspense fallback={<div>Loading...</div>}>
+          <FeedStatus />
+        </Suspense>
+      </SidebarProvider>,
+    );
+
+    expect(await screen.findByText(/sync engine paused/i)).toBeInTheDocument();
+  });
+
+  it("shows 'Sync engine failing' when system task is failing", async () => {
+    setupMocks({ ...healthySystemStatus, isFailing: true }, [
+      createMockFeedWithSubscription({ feed: { healthStatus: "healthy" } }),
+    ]);
+
+    render(
+      <SidebarProvider>
+        <Suspense fallback={<div>Loading...</div>}>
+          <FeedStatus />
+        </Suspense>
+      </SidebarProvider>,
+    );
+
+    expect(await screen.findByText(/sync engine failing/i)).toBeInTheDocument();
+  });
+
+  it("gives precedence to system failure over feed errors", async () => {
+    setupMocks(
+      { ...healthySystemStatus, isFailing: true }, // Engine is failing
+      [createMockFeedWithSubscription({ feed: { healthStatus: "error" } })], // Feed also has an error
+    );
+
+    render(
+      <SidebarProvider>
+        <Suspense fallback={<div>Loading...</div>}>
+          <FeedStatus />
+        </Suspense>
+      </SidebarProvider>,
+    );
+
+    // System failure should be shown because it's the first rule in DEFAULT_RULES
+    expect(await screen.findByText(/sync engine failing/i)).toBeInTheDocument();
+  });
+
   it("allows extending status logic with custom rules (OCP)", async () => {
+    setupMocks(healthySystemStatus, []);
+
     const customRules = [
       {
         predicate: () => true,
@@ -120,12 +158,6 @@ describe("FeedStatus", () => {
         }),
       },
     ];
-
-    server.use(
-      http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({ success: true, data: [] });
-      }),
-    );
 
     render(
       <SidebarProvider>
