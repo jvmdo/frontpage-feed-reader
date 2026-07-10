@@ -1,7 +1,20 @@
-import { like } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import { db } from "@/db";
-import { feeds } from "@/db/schema";
+import { feeds, user } from "@/db/schema";
 import { auth } from "@/lib/auth";
+
+/**
+ * Clean up a test user and their data by their email address.
+ */
+export async function cleanupUserByEmail(email: string) {
+  const dbUser = await db.query.user.findFirst({
+    where: eq(user.email, email),
+  });
+
+  if (dbUser) {
+    await cleanupUser(dbUser.id);
+  }
+}
 
 /**
  * Manually trigger the teardown logic for a specific test user.

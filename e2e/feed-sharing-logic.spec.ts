@@ -80,9 +80,11 @@ test.describe("Feed Sharing and First-Fetch Logic", () => {
     );
 
     // 4. Verify User A sees the articles that were already in the DB
-    await expect(page.getByText("Existing Shared Article")).toBeVisible();
-
-    // Cleanup shared feed (authedPage only cleans up tenant-specific feeds)
-    await db.delete(feeds).where(eq(feeds.id, feed.id));
+    try {
+      await expect(page.getByText("Existing Shared Article")).toBeVisible();
+    } finally {
+      // Cleanup shared feed (authedPage only cleans up tenant-specific feeds)
+      await db.delete(feeds).where(eq(feeds.id, feed.id));
+    }
   });
 });

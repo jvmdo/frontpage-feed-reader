@@ -4,6 +4,7 @@ import { and, desc, eq, like } from "drizzle-orm";
 import { db } from "@/db";
 import { verification } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { cleanupUserByEmail } from "@/tests/cleanup-user";
 
 const testUser = {
   name: "Recovery User",
@@ -13,14 +14,7 @@ const testUser = {
 };
 
 test.afterAll(async () => {
-  // Clean up the test user
-  const ctx = await auth.$context;
-  const existingUser = await ctx.internalAdapter.findUserByEmail(
-    testUser.email,
-  );
-  if (existingUser) {
-    await ctx.test.deleteUser(existingUser.user.id);
-  }
+  await cleanupUserByEmail(testUser.email);
 });
 
 test("password recovery flow", async ({ page }) => {

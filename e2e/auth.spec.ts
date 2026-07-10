@@ -1,8 +1,6 @@
 import crypto from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { eq } from "drizzle-orm";
-import { db } from "@/db";
-import { user } from "@/db/schema";
+import { cleanupUserByEmail } from "@/tests/cleanup-user";
 
 const email = `journey-${crypto.randomUUID()}@example.com`;
 const testUser = {
@@ -12,8 +10,7 @@ const testUser = {
 };
 
 test.afterAll(async () => {
-  // Clean up the test user
-  await db.delete(user).where(eq(user.email, testUser.email));
+  await cleanupUserByEmail(testUser.email);
 });
 
 test("full journey: sign up, sign out, and sign in", async ({ page }) => {

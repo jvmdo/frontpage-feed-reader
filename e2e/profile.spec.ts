@@ -3,6 +3,7 @@ import { test as omegaTest } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { user } from "@/db/schema";
+import { cleanupUserByEmail } from "@/tests/cleanup-user";
 import { seedCategory, seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
@@ -14,13 +15,21 @@ const testUser = {
 };
 
 let newEmail: string | null = null;
+let testUserId: string | null = null;
 
 test.afterAll(async () => {
-  // Clean up the test user
-  if (newEmail) {
-    await db.delete(user).where(eq(user.email, newEmail));
+  // 1. Delete associated feeds using the captured userId (since user is deleted in UI)
+  if (testUserId) {
+    const { like } = require("drizzle-orm");
+    const { feeds } = require("@/db/schema");
+    await db.delete(feeds).where(like(feeds.url, `%tenant=${testUserId}%`));
   }
-  await db.delete(user).where(eq(user.email, testUser.email));
+
+  // 2. Clean up mock users by email in case the test failed before UI deletion
+  await cleanupUserByEmail(testUser.email);
+  if (newEmail) {
+    await cleanupUserByEmail(newEmail);
+  }
 });
 
 omegaTest("profile page management flow", async ({ page }) => {
@@ -55,6 +64,8 @@ omegaTest("profile page management flow", async ({ page }) => {
   if (!dbUser) {
     throw new Error("Created user not found in DB");
   }
+
+  testUserId = dbUser.id;
 
   // Seed 1 category and 2 subscriptions so stats grid is populated
   await seedCategory(db, { userId: dbUser.id, name: "Tech News" });

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/test-extend";
 
 test.describe("Landing Page Flow", () => {
   test.beforeEach(async ({ page }) => {
@@ -6,7 +6,11 @@ test.describe("Landing Page Flow", () => {
     await page.waitForSelector('body[data-hydrated="true"]');
   });
 
-  test("can enter the app via 'Try as Guest' hero button", async ({ page }) => {
+  test("can enter the app via 'Try as Guest' hero button", async ({
+    page,
+    context,
+    guestTracker,
+  }) => {
     // Target the button in the main hero section specifically
     const heroGuestButton = page
       .locator("main")
@@ -18,6 +22,9 @@ test.describe("Landing Page Flow", () => {
 
     // Verify navigation to dashboard
     await expect(page).toHaveURL(/\/dashboard/);
+
+    // Track the guest user for cleanup
+    await guestTracker.trackCurrentUser(context);
   });
 
   test("can navigate to sign-up page via 'Create Account' button", async ({
