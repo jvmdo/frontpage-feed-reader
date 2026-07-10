@@ -101,10 +101,10 @@ jobs:
         env:
           TRIGGER_ACCESS_TOKEN: ${{ secrets.TRIGGER_ACCESS_TOKEN }}
 
-      # 4. Seed and Warm Database using the deployed URL
+      # 4. Seed and Warm Database
       - name: Seed and Warm Database
         run: |
-          NEXT_PUBLIC_APP_URL=${{ env.DEPLOY_URL }} bun run db:seed
+          bun run db:seed
 
   # Runs when a git branch is deleted (e.g. after merging a PR on GitHub)
   cleanup_preview:

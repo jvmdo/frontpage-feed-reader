@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { feeds } from "@/db/schema";
+import { WELCOME_FEED_URL } from "@/lib/constants";
 import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { test } from "@/tests/test-extend";
 import sampleFeeds from "../../data/sample-feeds.json";
@@ -16,8 +17,10 @@ describe("db:seed integration", () => {
     });
   });
 
-  const TOTAL_EXPECTED_FEEDS =
-    sampleFeeds.categories.reduce((acc, cat) => acc + cat.feeds.length, 0) + 1; // Welcome Feed
+  const TOTAL_EXPECTED_FEEDS = sampleFeeds.categories.reduce(
+    (acc, cat) => acc + cat.feeds.length,
+    0,
+  );
 
   test("successfully seeds all curated feeds", { timeout: 20000 }, async ({
     tx,
@@ -60,5 +63,15 @@ describe("db:seed integration", () => {
     });
 
     expect(checkFeed?.title).toBe("MODIFIED_TITLE");
+  });
+
+  test("does not seed the welcome feed", async ({ tx }) => {
+    await seed(tx);
+
+    const welcomeFeed = await tx.query.feeds.findFirst({
+      where: eq(feeds.url, WELCOME_FEED_URL),
+    });
+
+    expect(welcomeFeed).toBeUndefined();
   });
 });
