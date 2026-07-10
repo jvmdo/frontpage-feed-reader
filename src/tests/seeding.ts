@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { DB } from "@/db";
 import * as schema from "@/db/schema";
-import { WELCOME_FEED_URL } from "@/lib/constants";
+
 import { parseFeedXml } from "@/lib/feed/parser";
 import type {
   NewAccount,
@@ -179,12 +179,6 @@ export async function seedItems(
 export async function seedCuratedFeeds(tx: DB) {
   // 1. Process Metadata
   const feedsToSeed = [
-    {
-      url: WELCOME_FEED_URL,
-      title: "Frontpage",
-      description: "Welcome to your new favorite way to read the web.",
-      isCurated: true,
-    },
     ...sampleFeeds.categories.flatMap((c) =>
       c.feeds.map((f) => ({
         url: f.feedUrl,
@@ -197,27 +191,7 @@ export async function seedCuratedFeeds(tx: DB) {
 
   await tx.insert(schema.feeds).values(feedsToSeed).onConflictDoNothing();
 
-  // 2. Seed "Frontpage" Items
-  const welcomeFeed = await tx.query.feeds.findFirst({
-    where: (feeds, { eq }) => eq(feeds.url, WELCOME_FEED_URL),
-  });
-
-  if (welcomeFeed) {
-    const publicPath = path.join(process.cwd(), "public", "feed.xml");
-    if (fs.existsSync(publicPath)) {
-      const xml = fs.readFileSync(publicPath, "utf-8");
-      const { items } = await parseFeedXml(xml, WELCOME_FEED_URL);
-
-      if (items.length > 0) {
-        await tx
-          .insert(schema.feedItems)
-          .values(items.map((item) => ({ ...item, feedId: welcomeFeed.id })))
-          .onConflictDoNothing();
-      }
-    }
-  }
-
-  // 3. Process Fixture Items for other curated feeds
+  // 2. Process Fixture Items for other curated feeds
   for (const category of sampleFeeds.categories) {
     for (const feedData of category.feeds) {
       const fixtureName = (feedData as any).fixture;

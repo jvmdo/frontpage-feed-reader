@@ -1,5 +1,6 @@
-import { eq } from "drizzle-orm";
-import { subscriptions, userPreferences } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
+import { feeds, subscriptions, userPreferences } from "@/db/schema";
+import { WELCOME_FEED_URL } from "@/lib/constants";
 import { CuratedFeedsMissingError } from "@/lib/errors";
 import { seedCuratedFeeds } from "@/tests/seeding";
 import { test } from "@/tests/test-extend";
@@ -39,6 +40,46 @@ describe("onboardGuest", () => {
     expect(dbPrefs?.markedAllReadAt).toBeNull();
   });
 
+  test("succeeds when the welcome feed is absent from the DB", async ({
+    tx,
+    testUser,
+  }) => {
+    // 0. Seed only curated category feeds — welcome feed is intentionally absent.
+    //    onboardGuest must succeed regardless.
+    await seedCuratedFeeds(tx);
+
+    // Confirm the welcome feed is not present
+    const welcomeFeed = await tx.query.feeds.findFirst({
+      where: eq(feeds.url, WELCOME_FEED_URL),
+    });
+    expect(welcomeFeed).toBeUndefined();
+
+    // Must not throw
+    await expect(onboardGuest(tx, testUser.id)).resolves.not.toThrow();
+  });
+
+  test("does not create a subscription to the welcome feed", async ({
+    tx,
+    testUser,
+  }) => {
+    await seedCuratedFeeds(tx);
+    await onboardGuest(tx, testUser.id);
+
+    const dbSubscriptions = await tx
+      .select({ feedId: subscriptions.feedId })
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, testUser.id));
+
+    // Resolve feed IDs to URLs for a readable assertion
+    const feedIds = dbSubscriptions.map((s) => s.feedId);
+    const subscribedFeeds = await tx.query.feeds.findMany({
+      where: inArray(feeds.id, feedIds),
+    });
+
+    const subscribedUrls = subscribedFeeds.map((f) => f.url);
+    expect(subscribedUrls).not.toContain(WELCOME_FEED_URL);
+  });
+
   test("is idempotent and doesn't create duplicate records", async ({
     tx,
     testUser,
@@ -62,7 +103,7 @@ describe("onboardGuest", () => {
     tx,
     testUser,
   }) => {
-    // 1. Act & Assert: Should throw because DB is empty
+    // DB is empty — no curated category feeds are present.
     await expect(onboardGuest(tx, testUser.id)).rejects.toThrow(
       CuratedFeedsMissingError,
     );

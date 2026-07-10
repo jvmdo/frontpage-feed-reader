@@ -1,5 +1,6 @@
 import { delay, HttpResponse, http } from "msw";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { WELCOME_FEED_URL } from "@/lib/constants";
 import {
   FeedNetworkError,
   FeedNotFoundError,
@@ -127,5 +128,27 @@ describe("fetchFeedXml", () => {
     vi.advanceTimersByTime(10001);
 
     await expect(fetchPromise).rejects.toThrow(FeedNetworkError);
+  });
+
+  describe("local welcome feed bypass", () => {
+    it("returns XML without making a network request for WELCOME_FEED_URL", async () => {
+      const result = await fetchFeedXml(WELCOME_FEED_URL);
+
+      expect(result.status).toBe("success");
+      if (result.status === "success") {
+        expect(result.xml).toContain("<rss");
+        expect(result.etag).toBeNull();
+        expect(result.lastModified).toBeNull();
+        expect(result.finalUrl).toBe(WELCOME_FEED_URL);
+      }
+    });
+
+    it("returns fresh XML on every call (no caching)", async () => {
+      const first = await fetchFeedXml(WELCOME_FEED_URL);
+      const second = await fetchFeedXml(WELCOME_FEED_URL);
+
+      expect(first.status).toBe("success");
+      expect(second.status).toBe("success");
+    });
   });
 });

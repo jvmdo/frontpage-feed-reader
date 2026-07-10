@@ -1,10 +1,8 @@
-import { settings } from "@/env";
-
 export const PAGINATION_LIMIT = 20;
 export const PAGINATION_INITIAL_OFFSET = 0;
 export const DEFAULT_CATEGORY_COLOR = "#2563eb";
 
-export const WELCOME_FEED_URL = `${settings.baseUrl}/feed.xml`;
+export const WELCOME_FEED_URL = "https://frontpage.rss/feed.xml";
 
 export const LANDING_USERS = [
   {

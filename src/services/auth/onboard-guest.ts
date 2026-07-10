@@ -1,7 +1,6 @@
 import { inArray, sql } from "drizzle-orm";
 import type { DB } from "@/db";
 import { categories, feeds, subscriptions, userPreferences } from "@/db/schema";
-import { WELCOME_FEED_URL } from "@/lib/constants";
 import {
   CuratedFeedsMissingError,
   OnboardingInvariantError,
@@ -32,19 +31,17 @@ export async function onboardGuest(db: DB, userId: string) {
     })
     .onConflictDoNothing();
 
-  // 2. Resolve Database Records for all feeds (Welcome + Curated)
+  // 2. Resolve Database Records for all curated feeds
   const curatedUrls = sampleFeeds.categories.flatMap((c) =>
     c.feeds.map((f) => f.feedUrl),
   );
 
-  const allUrls = [WELCOME_FEED_URL, ...curatedUrls];
-
   const feedRecords = await db.query.feeds.findMany({
-    where: inArray(feeds.url, allUrls),
+    where: inArray(feeds.url, curatedUrls),
   });
 
   // Strict check: Fail fast if the database is not properly seeded
-  if (feedRecords.length < allUrls.length) {
+  if (feedRecords.length < curatedUrls.length) {
     throw new CuratedFeedsMissingError("Missing curated feeds in DB.");
   }
 
