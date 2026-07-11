@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useErrorBoundary } from "react-error-boundary";
 import { useFeeds } from "@/hooks/feed/use-feeds";
 import { useRefreshTaskStatus } from "@/hooks/system/use-refresh-task-status";
 import { cn } from "@/lib/utils";
@@ -166,4 +167,18 @@ function StatusIcon({
   className?: string;
 }) {
   return <Icon className={cn("size-3.5", className)} />;
+}
+
+export function FeedStatusErrorFallback() {
+  const { resetBoundary } = useErrorBoundary();
+  return (
+    <button
+      type="button"
+      onClick={() => resetBoundary()}
+      className="flex items-center gap-2 px-4 h-12 w-full text-xs text-destructive hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors text-left font-normal border-0 cursor-pointer"
+    >
+      <CloudOffIcon className="size-3.5 text-destructive animate-pulse" />
+      <span>Status offline (Retry)</span>
+    </button>
+  );
 }

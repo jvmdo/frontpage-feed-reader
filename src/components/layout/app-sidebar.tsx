@@ -13,10 +13,12 @@ import { AddCategoryDialog } from "@/components/category/add-category-dialog";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import {
   FeedStatus,
+  FeedStatusErrorFallback,
   FeedStatusFallback,
 } from "@/components/layout/components/feed-status";
 import ManagementMenu from "@/components/layout/components/management-menu";
 import { DashboardLink } from "@/components/shared/dashboard-link";
+import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
@@ -79,7 +81,9 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                     </DashboardLink>
                   </SidebarMenuButton>
                   <Suspense fallback={null}>
-                    <AllItemsBadge />
+                    <QueryErrorBoundary fallback={null} resetKeys={[pathname]}>
+                      <AllItemsBadge />
+                    </QueryErrorBoundary>
                   </Suspense>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
@@ -95,7 +99,9 @@ export function AppSidebar({ children }: { children: ReactNode }) {
                     </DashboardLink>
                   </SidebarMenuButton>
                   <Suspense fallback={null}>
-                    <SavedItemsBadge />
+                    <QueryErrorBoundary fallback={null} resetKeys={[pathname]}>
+                      <SavedItemsBadge />
+                    </QueryErrorBoundary>
                   </Suspense>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -138,7 +144,9 @@ export function AppSidebar({ children }: { children: ReactNode }) {
 
       <SidebarFooter className="p-0 border-t border-border">
         <Suspense fallback={<FeedStatusFallback />}>
-          <FeedStatus />
+          <QueryErrorBoundary fallback={<FeedStatusErrorFallback />}>
+            <FeedStatus />
+          </QueryErrorBoundary>
         </Suspense>
       </SidebarFooter>
     </Sidebar>

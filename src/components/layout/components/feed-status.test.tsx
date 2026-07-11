@@ -1,10 +1,13 @@
+import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { Suspense } from "react";
+import { vi } from "vitest";
+import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { createMockFeedWithSubscription } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
-import { FeedStatus } from "./feed-status";
+import { FeedStatus, FeedStatusErrorFallback } from "./feed-status";
 
 describe("FeedStatus", () => {
   const healthySystemStatus = {
@@ -169,5 +172,63 @@ describe("FeedStatus", () => {
 
     expect(await screen.findByText(/custom status/i)).toBeInTheDocument();
     expect(screen.getByTestId("custom-icon")).toBeInTheDocument();
+  });
+
+  describe("Error handling", () => {
+    beforeEach(() => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("renders status offline fallback when query fails and recovers on retry", async () => {
+      let callCount = 0;
+      setupMocks(); // Set up standard mocks first, then override
+
+      server.use(
+        http.get("/api/refresh-task-status", () => {
+          callCount++;
+          if (callCount === 1) {
+            return new HttpResponse(null, { status: 500 });
+          }
+          return HttpResponse.json({
+            success: true,
+            data: healthySystemStatus,
+          });
+        }),
+        http.get("/api/feeds/subscriptions", () => {
+          return HttpResponse.json({
+            success: true,
+            data: [
+              createMockFeedWithSubscription({
+                feed: { healthStatus: "healthy" },
+              }),
+            ],
+          });
+        }),
+      );
+
+      render(
+        <SidebarProvider>
+          <QueryErrorBoundary fallback={<FeedStatusErrorFallback />}>
+            <Suspense fallback={<div>Loading...</div>}>
+              <FeedStatus />
+            </Suspense>
+          </QueryErrorBoundary>
+        </SidebarProvider>,
+      );
+
+      const retryButton = await screen.findByRole("button", {
+        name: /status offline \(retry\)/i,
+      });
+      expect(retryButton).toBeInTheDocument();
+
+      const user = userEvent.setup();
+      await user.click(retryButton);
+
+      expect(await screen.findByText(/all feeds healthy/i)).toBeInTheDocument();
+    });
   });
 });
