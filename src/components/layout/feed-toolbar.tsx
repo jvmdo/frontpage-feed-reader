@@ -1,6 +1,13 @@
 "use client";
 
-import { CheckCheckIcon, ListPlus, MoreHorizontalIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  CheckCheckIcon,
+  ListPlus,
+  MoreHorizontalIcon,
+  RotateCcwIcon,
+} from "lucide-react";
+import { useErrorBoundary } from "react-error-boundary";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
 import { NewItemsBanner } from "@/components/feed/new-items-banner";
 import { FeedSortingToggles } from "@/components/layout/components/feed-sorting-toggles";
@@ -107,5 +114,32 @@ function MarkAllReadButton() {
         Mark all read
       </Button>
     </MarkAllReadDialog>
+  );
+}
+
+export function FeedToolbarErrorFallback() {
+  const { resetBoundary } = useErrorBoundary();
+  return (
+    <header
+      className="flex items-center justify-between gap-2 p-2 sm:p-3 md:p-4 border-b border-border bg-destructive/5"
+      role="toolbar"
+      aria-label="Feed toolbar offline"
+    >
+      <div className="flex items-center gap-2.5 text-destructive min-w-0">
+        <AlertCircleIcon className="size-5 shrink-0" />
+        <span className="font-semibold text-sm sm:text-base truncate">
+          Feed details unavailable
+        </span>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => resetBoundary()}
+        className="text-xs shrink-0"
+      >
+        <RotateCcwIcon className="size-3.5 mr-1.5" />
+        Retry
+      </Button>
+    </header>
   );
 }

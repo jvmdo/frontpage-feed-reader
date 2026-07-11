@@ -2,11 +2,15 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { ItemList } from "@/components/feed/item-list";
+import { ItemList, ItemListErrorFallback } from "@/components/feed/item-list";
 import ItemListSkeleton from "@/components/feed/item-list-skeleton";
 import { ActiveFilterChips } from "@/components/layout/components/active-filter-chips";
 import { FeedToolbarSkeleton } from "@/components/layout/components/feed-toolbar-skeleton";
-import { FeedToolbar } from "@/components/layout/feed-toolbar";
+import {
+  FeedToolbar,
+  FeedToolbarErrorFallback,
+} from "@/components/layout/feed-toolbar";
+import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
 import { db } from "@/db";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import { getQueryClient } from "@/lib/get-query-client";
@@ -96,7 +100,9 @@ export default async function DashboardPage({
     >
       <HydrationBoundary state={dehydrate(queryClient)}>
         <Suspense fallback={<FeedToolbarSkeleton />}>
-          <FeedToolbar />
+          <QueryErrorBoundary fallback={<FeedToolbarErrorFallback />}>
+            <FeedToolbar />
+          </QueryErrorBoundary>
         </Suspense>
         <ActiveFilterChips />
         <section
@@ -105,7 +111,9 @@ export default async function DashboardPage({
           aria-label="Feed"
         >
           <Suspense fallback={<ItemListSkeleton />}>
-            <ItemList />
+            <QueryErrorBoundary fallback={<ItemListErrorFallback />}>
+              <ItemList />
+            </QueryErrorBoundary>
           </Suspense>
         </section>
       </HydrationBoundary>

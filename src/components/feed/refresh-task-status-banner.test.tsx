@@ -1,3 +1,4 @@
+import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { Suspense } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -63,7 +64,7 @@ describe("RefreshTaskStatusBanner", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows offline UI when the API fails (caught by ErrorBoundary)", async () => {
+  it("shows offline UI when API fails and recovers on retry", async () => {
     // Suppress React ErrorBoundary console output for cleaner test logs
     const consoleError = vi
       .spyOn(console, "error")
@@ -78,6 +79,16 @@ describe("RefreshTaskStatusBanner", () => {
 
     expect(
       await screen.findByText(/sync telemetry offline/i),
+    ).toBeInTheDocument();
+
+    setupMock(healthySystemStatus, 200);
+
+    const retryButton = screen.getByRole("button", { name: /retry/i });
+    const user = userEvent.setup();
+    await user.click(retryButton);
+
+    expect(
+      await screen.findByText(/background engine healthy/i),
     ).toBeInTheDocument();
 
     consoleError.mockRestore();

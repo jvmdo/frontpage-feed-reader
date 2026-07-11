@@ -2,14 +2,16 @@
 
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
+import { Suspense } from "react";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { markAllReadAction } from "@/actions/feed/mark-all-read-action";
 import { refreshFeedAction } from "@/actions/feed/refresh-feed-action";
+import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
 import { useNewItemsPolling } from "@/hooks/feed/use-new-items-polling";
 import { server } from "@/tests/mocks/server";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
-import { FeedToolbar } from "./feed-toolbar";
+import { FeedToolbar, FeedToolbarErrorFallback } from "./feed-toolbar";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -435,6 +437,51 @@ describe("FeedToolbar", () => {
       expect(
         (await screen.findAllByText("Broken Feed")).length,
       ).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Error Boundary Fallback", () => {
+    beforeEach(() => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("renders FeedToolbarErrorFallback when query fails and recovers on retry", async () => {
+      let callCount = 0;
+      server.use(
+        http.get("/api/feeds/unread-counts", () => {
+          callCount++;
+          if (callCount === 1) {
+            return new HttpResponse(null, { status: 500 });
+          }
+          return HttpResponse.json({
+            success: true,
+            data: { global: 10, categories: {}, feeds: {} },
+          });
+        }),
+      );
+
+      render(
+        <QueryErrorBoundary fallback={<FeedToolbarErrorFallback />}>
+          <Suspense fallback={<div>Loading...</div>}>
+            <FeedToolbar />
+          </Suspense>
+        </QueryErrorBoundary>,
+      );
+
+      const retryButton = await screen.findByRole("button", {
+        name: /retry/i,
+      });
+      expect(retryButton).toBeInTheDocument();
+      expect(screen.getByText("Feed details unavailable")).toBeInTheDocument();
+
+      const user = userEvent.setup();
+      await user.click(retryButton);
+
+      expect(await screen.findByText("All Items")).toBeInTheDocument();
     });
   });
 });

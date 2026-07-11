@@ -1,10 +1,13 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { CheckCircle2, CloudOff } from "lucide-react";
-import { ErrorBoundary } from "react-error-boundary";
+import { CheckCircle2, CloudOff, RotateCcwIcon } from "lucide-react";
+import { useErrorBoundary } from "react-error-boundary";
+import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
+import { Button } from "@/components/ui/button";
 import {
   Item,
+  ItemActions,
   ItemContent,
   ItemDescription,
   ItemMedia,
@@ -48,25 +51,34 @@ function RefreshTaskStatusBannerContent() {
   );
 }
 
+export function RefreshTaskStatusBannerErrorFallback() {
+  const { resetBoundary } = useErrorBoundary();
+  return (
+    <Item className="border-destructive/20 bg-destructive/10">
+      <ItemMedia>
+        <CloudOff className="size-5 text-destructive" />
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>Sync Telemetry Offline</ItemTitle>
+        <ItemDescription>
+          Unable to verify the background engine status. Check your connection
+          or configuration.
+        </ItemDescription>
+      </ItemContent>
+      <ItemActions>
+        <Button variant="outline" size="sm" onClick={resetBoundary}>
+          <RotateCcwIcon className="size-3.5 mr-1.5" />
+          Retry
+        </Button>
+      </ItemActions>
+    </Item>
+  );
+}
+
 export function RefreshTaskStatusBanner() {
   return (
-    <ErrorBoundary
-      fallbackRender={() => (
-        <Item className="border-destructive/20 bg-destructive/10">
-          <ItemMedia>
-            <CloudOff className="size-5 text-destructive" />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>Sync Telemetry Offline</ItemTitle>
-            <ItemDescription>
-              Unable to verify the background engine status. Check your
-              connection or configuration.
-            </ItemDescription>
-          </ItemContent>
-        </Item>
-      )}
-    >
+    <QueryErrorBoundary fallback={<RefreshTaskStatusBannerErrorFallback />}>
       <RefreshTaskStatusBannerContent />
-    </ErrorBoundary>
+    </QueryErrorBoundary>
   );
 }

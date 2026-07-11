@@ -1,7 +1,13 @@
 "use client";
 
-import { FolderIcon, RssIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  FolderIcon,
+  RotateCcwIcon,
+  RssIcon,
+} from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { useErrorBoundary } from "react-error-boundary";
 import { Virtuoso, VirtuosoGrid } from "react-virtuoso";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
 import { ItemCard } from "@/components/feed/item-card";
@@ -222,6 +228,23 @@ function FeedEmptyState({
             <Button variant="outline">Assign feeds</Button>
           </AssignFeedsDialog>
         </div>
+      }
+    />
+  );
+}
+
+export function ItemListErrorFallback() {
+  const { resetBoundary } = useErrorBoundary();
+  return (
+    <EmptyState
+      title={<h3>Failed to load articles</h3>}
+      description="There was a problem querying the article list. This might be due to a temporary network drop."
+      icon={AlertCircleIcon}
+      action={
+        <Button variant="outline" onClick={() => resetBoundary()}>
+          <RotateCcwIcon className="size-4 mr-2" />
+          Try again
+        </Button>
       }
     />
   );
