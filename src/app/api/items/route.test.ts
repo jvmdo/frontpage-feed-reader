@@ -25,7 +25,7 @@ describe("GET /api/items", () => {
     expect(res.status).toBe(401);
 
     const json = await res.json();
-    expect(json).toEqual({ error: "Unauthorized" });
+    expect(json).toEqual({ error: "You must be signed in to fetch items." });
   });
 
   it("returns validation error (400) if search query is too short", async () => {
@@ -40,7 +40,9 @@ describe("GET /api/items", () => {
     expect(res.status).toBe(400);
 
     const json = await res.json();
-    expect(json).toEqual({ error: "Invalid query parameters" });
+    expect(json).toEqual({
+      error: "Too small: expected string to have >=2 characters",
+    });
   });
 
   it("returns items matching search criteria when input validation succeeds", async () => {

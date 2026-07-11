@@ -9,7 +9,11 @@ export async function GET() {
 
     if (!session?.user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized", code: "UNAUTHORIZED" },
+        {
+          success: false,
+          error: "You must be signed in to view sync status.",
+          code: "UNAUTHORIZED",
+        },
         { status: 401 },
       );
     }

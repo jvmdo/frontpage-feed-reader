@@ -17,7 +17,7 @@ describe("GET /api/items/[id]", () => {
     const body = await response.json();
 
     expect(response.status).toBe(401);
-    expect(body.error).toBe("Unauthorized");
+    expect(body.error).toBe("You must be signed in to fetch item details.");
   });
 
   it("returns 400 if ID is not a number", async () => {

@@ -13,7 +13,10 @@ export async function GET(
     const session = await getCurrentSession();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "You must be signed in to fetch item details." },
+        { status: 401 },
+      );
     }
 
     const itemId = Number.parseInt(id, 10);

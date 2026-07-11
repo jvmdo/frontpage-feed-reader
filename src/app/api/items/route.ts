@@ -8,7 +8,10 @@ export async function GET(request: NextRequest) {
   const session = await getCurrentSession();
 
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: "You must be signed in to fetch items." },
+      { status: 401 },
+    );
   }
 
   const searchParams = request.nextUrl.searchParams;
@@ -18,7 +21,10 @@ export async function GET(request: NextRequest) {
 
   if (!parseResult.success) {
     return NextResponse.json(
-      { error: "Invalid query parameters" },
+      {
+        error:
+          parseResult.error.issues[0]?.message || "Invalid query parameters",
+      },
       { status: 400 },
     );
   }

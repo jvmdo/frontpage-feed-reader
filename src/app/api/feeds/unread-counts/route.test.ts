@@ -16,7 +16,7 @@ describe("GET /api/feeds/unread-counts", () => {
     expect(response.status).toBe(401);
     expect(body).toEqual({
       success: false,
-      error: "Unauthorized",
+      error: "You must be signed in to fetch unread counts.",
       code: "UNAUTHORIZED",
     });
   });

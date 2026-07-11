@@ -27,7 +27,7 @@ describe("GET /api/refresh-task-status", () => {
     const json = await response.json();
     expect(json).toEqual({
       success: false,
-      error: "Unauthorized",
+      error: "You must be signed in to view sync status.",
       code: "UNAUTHORIZED",
     });
   });

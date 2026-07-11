@@ -21,7 +21,7 @@ describe("GET /api/categories", () => {
     const json = await res.json();
     expect(json).toEqual({
       success: false,
-      error: "Unauthorized",
+      error: "You must be signed in to fetch categories.",
       code: "UNAUTHORIZED",
     });
   });

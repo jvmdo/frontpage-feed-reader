@@ -24,7 +24,7 @@ describe("GET /api/feeds/subscriptions", () => {
     const json = await res.json();
     expect(json).toEqual({
       success: false,
-      error: "Unauthorized",
+      error: "You must be signed in to fetch subscriptions.",
       code: "UNAUTHORIZED",
     });
   });

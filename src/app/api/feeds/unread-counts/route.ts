@@ -12,7 +12,11 @@ export async function GET() {
 
   if (!session?.user) {
     return NextResponse.json(
-      { success: false, error: "Unauthorized", code: "UNAUTHORIZED" },
+      {
+        success: false,
+        error: "You must be signed in to fetch unread counts.",
+        code: "UNAUTHORIZED",
+      },
       { status: 401 },
     );
   }
