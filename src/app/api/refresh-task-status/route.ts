@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { SyncScheduleNotFoundError } from "@/lib/errors";
+import { getCurrentSession } from "@/lib/session";
 import { getRefreshTaskStatus } from "@/services/system/get-refresh-task-status";
 
 export async function GET() {
   try {
+    const session = await getCurrentSession();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized", code: "UNAUTHORIZED" },
+        { status: 401 },
+      );
+    }
+
     const payload = await getRefreshTaskStatus();
 
     return NextResponse.json({
