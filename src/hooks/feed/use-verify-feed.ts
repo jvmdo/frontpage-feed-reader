@@ -1,16 +1,17 @@
 import { useMutation } from "@tanstack/react-query";
-import type { VerifiedFeedResult } from "@/actions/feed/verify-feed-action";
-import { verifyFeedAction } from "@/actions/feed/verify-feed-action";
+import type { VerifiedFeedResult } from "@/types";
 
 /**
  * Custom hook for verifying a feed URL.
- * Uses TanStack Query mutation to wrap the server action.
+ * Uses TanStack Query mutation to wrap the GET endpoint.
  */
 export function useVerifyFeed() {
   return useMutation<VerifiedFeedResult, Error, string>({
     mutationFn: async (url: string) => {
-      const response = await verifyFeedAction({ url });
-      return response;
+      const response = await fetch(
+        `/api/feeds/verify?url=${encodeURIComponent(url)}`,
+      );
+      return response.json();
     },
   });
 }

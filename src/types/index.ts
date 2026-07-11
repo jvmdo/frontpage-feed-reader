@@ -85,3 +85,11 @@ export interface SystemSyncStatus {
   lastRunAt: string | null;
   nextRunAt: string | null;
 }
+
+export interface VerifiedFeedResult {
+  success: boolean;
+  alreadySubscribed?: boolean;
+  feed?: Pick<Feed, "title" | "description" | "iconUrl">;
+  error?: string;
+  code?: string;
+}

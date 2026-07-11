@@ -3,7 +3,6 @@ import { HttpResponse, http } from "msw";
 import { Suspense } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addFeedAction } from "@/actions/feed/add-feed-action";
-import { verifyFeedAction } from "@/actions/feed/verify-feed-action";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import {
   createMockCategory,
@@ -33,10 +32,6 @@ vi.mock("next/link", async () => {
 // Mock the server actions
 vi.mock("@/actions/feed/add-feed-action", () => ({
   addFeedAction: vi.fn(),
-}));
-
-vi.mock("@/actions/feed/verify-feed-action", () => ({
-  verifyFeedAction: vi.fn(),
 }));
 
 vi.mock("@/actions/feed/remove-feed-action", () => ({
@@ -127,15 +122,19 @@ describe("AppSidebar Integration", () => {
     });
 
     // Mock verification to succeed
-    vi.mocked(verifyFeedAction).mockResolvedValueOnce({
-      success: true,
-      alreadySubscribed: false,
-      feed: {
-        title: "New Feed",
-        description: "New Description",
-        iconUrl: null,
-      },
-    });
+    server.use(
+      http.get("/api/feeds/verify", () => {
+        return HttpResponse.json({
+          success: true,
+          alreadySubscribed: false,
+          feed: {
+            title: "New Feed",
+            description: "New Description",
+            iconUrl: null,
+          },
+        });
+      }),
+    );
 
     render(
       <SidebarProvider>

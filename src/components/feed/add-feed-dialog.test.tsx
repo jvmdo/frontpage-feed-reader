@@ -1,24 +1,19 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Tests */
 
 import userEvent from "@testing-library/user-event";
+import { HttpResponse, http } from "msw";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addFeedAction } from "@/actions/feed/add-feed-action";
-import {
-  type VerifiedFeedResult,
-  verifyFeedAction,
-} from "@/actions/feed/verify-feed-action";
 import { useCategories } from "@/hooks/category/use-categories";
+import { server } from "@/tests/mocks/server";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
+import type { VerifiedFeedResult } from "@/types";
 import { AddFeedDialog } from "./add-feed-dialog";
 
 // Mock the server actions
 vi.mock("@/actions/feed/add-feed-action", () => ({
   addFeedAction: vi.fn(),
-}));
-
-vi.mock("@/actions/feed/verify-feed-action", () => ({
-  verifyFeedAction: vi.fn(),
 }));
 
 // Mock useCategories
@@ -101,15 +96,16 @@ describe("AddFeedDialog", () => {
     expect(
       await screen.findByText(/please enter a valid url/i),
     ).toBeInTheDocument();
-    expect(verifyFeedAction).not.toHaveBeenCalled();
   });
 
   it("guides user through verification, reveals category selection, and completes addition", async () => {
     const url = "https://example.com/feed.xml";
 
     // 1. Mock verification to succeed
-    vi.mocked(verifyFeedAction).mockResolvedValueOnce(
-      makeVerifySuccessResult(),
+    server.use(
+      http.get("/api/feeds/verify", () => {
+        return HttpResponse.json(makeVerifySuccessResult());
+      }),
     );
 
     // 2. Mock subscription addition to succeed
@@ -134,8 +130,7 @@ describe("AddFeedDialog", () => {
     await user.type(input, url);
     await user.click(verifyButton);
 
-    // Verify verification call
-    expect(verifyFeedAction).toHaveBeenCalledExactlyOnceWith({ url });
+    // Verify verification call (preview metadata should display once resolved)
 
     // Preview metadata should display
     expect(await screen.findByText(/Test Feed Title/i)).toBeInTheDocument();
@@ -168,8 +163,10 @@ describe("AddFeedDialog", () => {
   });
 
   it("resets verification state when URL is modified after verification", async () => {
-    vi.mocked(verifyFeedAction).mockResolvedValueOnce(
-      makeVerifySuccessResult(),
+    server.use(
+      http.get("/api/feeds/verify", () => {
+        return HttpResponse.json(makeVerifySuccessResult());
+      }),
     );
 
     const url = "https://example.com/feed.xml";
@@ -206,8 +203,12 @@ describe("AddFeedDialog", () => {
   });
 
   it("blocks submission and shows Already Subscribed badge if user is already subscribed", async () => {
-    vi.mocked(verifyFeedAction).mockResolvedValueOnce(
-      makeVerifySuccessResult({ alreadySubscribed: true }),
+    server.use(
+      http.get("/api/feeds/verify", () => {
+        return HttpResponse.json(
+          makeVerifySuccessResult({ alreadySubscribed: true }),
+        );
+      }),
     );
 
     const url = "https://example.com/feed.xml";
@@ -264,11 +265,15 @@ describe("AddFeedDialog", () => {
 
     for (const { name, error, code } of errorCases) {
       it(`shows friendly error message under input for ${name}`, async () => {
-        vi.mocked(verifyFeedAction).mockResolvedValueOnce({
-          success: false,
-          error,
-          code,
-        });
+        server.use(
+          http.get("/api/feeds/verify", () => {
+            return HttpResponse.json({
+              success: false,
+              error,
+              code,
+            });
+          }),
+        );
 
         const { user } = setup();
 

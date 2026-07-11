@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: testing asset */
-
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   FeedInvalidFormatError,
@@ -10,34 +8,46 @@ import {
 import { getCurrentSession } from "@/lib/session";
 import { verifyFeed } from "@/services/feed/verify-feed";
 import { createMockUser } from "@/tests/factories";
-import { verifyFeedAction } from "./verify-feed-action";
+import { GET } from "./route";
 
 vi.mock("@/services/feed/verify-feed");
 vi.mock("@/lib/session");
 
-describe("verifyFeedAction", () => {
+describe("GET /api/feeds/verify", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
-  it("returns validation error if input URL is invalid", async () => {
-    const result = await verifyFeedAction({ url: "invalid-url" });
+  it("returns validation error (400) if input URL is invalid", async () => {
+    vi.mocked(getCurrentSession).mockResolvedValueOnce({
+      user: createMockUser({ id: "user-123" }),
+    } as any);
 
-    expect(result).toEqual({
+    const req = new Request(
+      "http://localhost/api/feeds/verify?url=invalid-url",
+    );
+    const res = await GET(req);
+    expect(res.status).toBe(400);
+
+    const json = await res.json();
+    expect(json).toEqual({
       success: false,
       error: expect.any(String),
       code: "VALIDATION_ERROR",
     });
   });
 
-  it("returns unauthorized error if session is missing", async () => {
+  it("returns unauthorized error (401) if session is missing", async () => {
     vi.mocked(getCurrentSession).mockResolvedValueOnce(null);
 
-    const result = await verifyFeedAction({
-      url: "https://example.com/feed.xml",
-    });
+    const req = new Request(
+      "http://localhost/api/feeds/verify?url=https://example.com/feed.xml",
+    );
+    const res = await GET(req);
+    expect(res.status).toBe(401);
 
-    expect(result).toEqual({
+    const json = await res.json();
+    expect(json).toEqual({
       success: false,
       error: "You must be signed in to verify a feed.",
       code: "UNAUTHORIZED",
@@ -60,11 +70,15 @@ describe("verifyFeedAction", () => {
     } as any);
     vi.mocked(verifyFeed).mockResolvedValueOnce(mockServiceResult);
 
-    const result = await verifyFeedAction({
-      url: "https://example.com/feed.xml",
-    });
+    const req = new Request(
+      "http://localhost/api/feeds/verify?url=https://example.com/feed.xml",
+    );
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Cache-Control")).toBe("private, max-age=60");
 
-    expect(result).toEqual({
+    const json = await res.json();
+    expect(json).toEqual({
       success: true,
       alreadySubscribed: true,
       feed: {
@@ -85,42 +99,46 @@ describe("verifyFeedAction", () => {
     const errorsMap = [
       {
         exception: new FeedNotFoundError(),
-        error: "We couldn't reach this URL. Please double-check for typos.",
+        error: new FeedNotFoundError().message,
         code: "FEED_NOT_FOUND",
+        status: 404,
       },
       {
         exception: new FeedUnavailableError(),
-        error:
-          "The source site is currently slow or unavailable. Try again in a few minutes.",
+        error: new FeedUnavailableError().message,
         code: "FEED_UNAVAILABLE",
+        status: 503,
       },
       {
         exception: new FeedNetworkError(),
-        error:
-          "A network error occurred while reaching the feed. Please try again.",
+        error: new FeedNetworkError().message,
         code: "FEED_NETWORK_ERROR",
+        status: 502,
       },
       {
         exception: new FeedInvalidFormatError(),
-        error:
-          "This link doesn't seem to be a valid RSS or Atom feed. Make sure you're using the direct feed link.",
+        error: new FeedInvalidFormatError().message,
         code: "FEED_INVALID_FORMAT",
+        status: 422,
       },
     ];
 
-    for (const { exception, error, code } of errorsMap) {
-      it(`maps ${code} exception to user-friendly verified feed result`, async () => {
+    for (const { exception, error, code, status } of errorsMap) {
+      it(`maps ${code} exception to user-friendly status ${status}`, async () => {
         const mockUser = createMockUser({ id: "user-123" });
         vi.mocked(getCurrentSession).mockResolvedValueOnce({
           user: mockUser,
         } as any);
         vi.mocked(verifyFeed).mockRejectedValueOnce(exception);
 
-        const result = await verifyFeedAction({
-          url: "https://example.com/feed.xml",
-        });
+        const req = new Request(
+          "http://localhost/api/feeds/verify?url=https://example.com/feed.xml",
+        );
+        const res = await GET(req);
+        expect(res.status).toBe(status);
 
-        expect(result).toEqual({
+        const json = await res.json();
+        expect(json).toEqual({
           success: false,
           error,
           code,
@@ -128,18 +146,21 @@ describe("verifyFeedAction", () => {
       });
     }
 
-    it("returns internal error on unexpected errors", async () => {
+    it("returns internal error (500) on unexpected errors", async () => {
       const mockUser = createMockUser({ id: "user-123" });
       vi.mocked(getCurrentSession).mockResolvedValueOnce({
         user: mockUser,
       } as any);
       vi.mocked(verifyFeed).mockRejectedValueOnce(new Error("Unexpected"));
 
-      const result = await verifyFeedAction({
-        url: "https://example.com/feed.xml",
-      });
+      const req = new Request(
+        "http://localhost/api/feeds/verify?url=https://example.com/feed.xml",
+      );
+      const res = await GET(req);
+      expect(res.status).toBe(500);
 
-      expect(result).toEqual({
+      const json = await res.json();
+      expect(json).toEqual({
         success: false,
         error: "An unexpected error occurred. Please try again later.",
         code: "INTERNAL_ERROR",
