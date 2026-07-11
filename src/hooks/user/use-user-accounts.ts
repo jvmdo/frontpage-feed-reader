@@ -12,6 +12,7 @@ export function useUserAccounts() {
     queryKey: USER_ACCOUNTS_QUERY_KEY,
     queryFn: async () => {
       const res = await authClient.listAccounts();
+      if (res.error) throw res.error;
       return res.data || [];
     },
   });

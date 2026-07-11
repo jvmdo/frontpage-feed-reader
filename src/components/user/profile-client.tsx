@@ -1,7 +1,17 @@
 "use client";
 
+import { AlertCircleIcon, RotateCcwIcon } from "lucide-react";
 import { Suspense } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useErrorBoundary } from "react-error-boundary";
+import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DeleteAccountForm } from "@/components/user/delete-account-form";
 import { EmailChangeForm } from "@/components/user/email-change-form";
@@ -9,6 +19,7 @@ import { OAuthProviders } from "@/components/user/oauth-providers";
 import { PasswordChangeForm } from "@/components/user/password-change-form";
 import { ProfileForm } from "@/components/user/profile-form";
 import { authClient, type SessionUser } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 interface ProfileClientProps {
   user: SessionUser & { createdAt: Date | string };
@@ -25,21 +36,42 @@ export function ProfileClient({ user: initialUser }: ProfileClientProps) {
       {!currentUser.isAnonymous && (
         <>
           <Suspense fallback={<PasswordChangeFormSkeleton />}>
-            <EmailChangeForm />
+            <QueryErrorBoundary
+              fallback={<ProfileFormErrorFallback title="Email Settings" />}
+            >
+              <EmailChangeForm />
+            </QueryErrorBoundary>
           </Suspense>
 
           <Suspense fallback={<PasswordChangeFormSkeleton />}>
-            <PasswordChangeForm />
+            <QueryErrorBoundary
+              fallback={<ProfileFormErrorFallback title="Password Settings" />}
+            >
+              <PasswordChangeForm />
+            </QueryErrorBoundary>
           </Suspense>
 
           <Suspense fallback={<OAuthProvidersSkeleton />}>
-            <OAuthProviders />
+            <QueryErrorBoundary
+              fallback={<ProfileFormErrorFallback title="Connected Accounts" />}
+            >
+              <OAuthProviders />
+            </QueryErrorBoundary>
           </Suspense>
         </>
       )}
 
       <Suspense fallback={<PasswordChangeFormSkeleton />}>
-        <DeleteAccountForm />
+        <QueryErrorBoundary
+          fallback={
+            <ProfileFormErrorFallback
+              title="Danger Zone"
+              className="ring-destructive/50"
+            />
+          }
+        >
+          <DeleteAccountForm />
+        </QueryErrorBoundary>
       </Suspense>
     </div>
   );
@@ -126,5 +158,42 @@ export function ProfileDetailsSkeleton() {
       <PasswordChangeFormSkeleton />
       <OAuthProvidersSkeleton />
     </div>
+  );
+}
+
+interface ProfileFormErrorFallbackProps {
+  title: string;
+  className?: string;
+}
+
+export function ProfileFormErrorFallback({
+  title,
+  className,
+}: ProfileFormErrorFallbackProps) {
+  const { resetBoundary } = useErrorBoundary();
+  return (
+    <Card
+      className={cn(
+        "border border-destructive/20 *:w-full *:mx-auto xl:*:min-w-xl xl:*:max-w-3xl xl:*:mx-56 bg-destructive/5",
+        className,
+      )}
+    >
+      <CardHeader>
+        <CardTitle className="text-destructive flex items-center gap-2">
+          <AlertCircleIcon className="size-5 shrink-0" />
+          <h2>{title} Unavailable</h2>
+        </CardTitle>
+        <CardDescription>
+          We encountered an issue fetching details for this section. Check your
+          connection or session status.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex justify-end pt-2">
+        <Button variant="outline" size="sm" onClick={() => resetBoundary()}>
+          <RotateCcwIcon className="size-4 mr-2" />
+          Retry loading section
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

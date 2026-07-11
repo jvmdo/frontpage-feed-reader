@@ -7,15 +7,21 @@ import { ErrorBoundary } from "react-error-boundary";
 interface QueryErrorBoundaryProps {
   children: ReactNode;
   fallback: ReactNode;
+  resetKeys?: Array<unknown>;
 }
 export function QueryErrorBoundary({
   children,
   fallback,
+  resetKeys,
 }: QueryErrorBoundaryProps) {
   return (
     <QueryErrorResetBoundary>
       {({ reset }) => (
-        <ErrorBoundary onReset={reset} fallback={fallback}>
+        <ErrorBoundary
+          onReset={reset}
+          fallback={fallback}
+          resetKeys={resetKeys}
+        >
           {children}
         </ErrorBoundary>
       )}
