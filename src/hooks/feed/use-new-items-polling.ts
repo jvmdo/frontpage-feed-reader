@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { checkNewItemsAction } from "@/actions/feed/check-new-items-action";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useItems } from "@/hooks/item/use-items";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
@@ -46,15 +45,19 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
     queryFn: async () => {
       if (!latestItemDate) return 0;
 
-      const res = await checkNewItemsAction({
-        feedId,
-        categoryId,
-        since: latestItemDate,
-        unreadOnly: isUnreadOnly,
-        feedIds,
+      const params = new URLSearchParams({
+        since: latestItemDate.toISOString(),
+        ...(feedId && { feedId: feedId.toString() }),
+        ...(categoryId && { categoryId: categoryId.toString() }),
+        ...(isUnreadOnly && { unreadOnly: "true" }),
+        ...(feedIds?.length ? { feedIds: feedIds.join(",") } : {}),
       });
 
-      return res.success ? (res.data as { count: number }).count : 0;
+      const response = await fetch(`/api/feeds/check-new?${params.toString()}`);
+      if (!response.ok) return 0;
+
+      const res = await response.json();
+      return res.success ? (res.data.count as number) : 0;
     },
     enabled: !!latestItemDate && !isTourActive && !isSaved,
     refetchInterval: 60000, // 60 seconds

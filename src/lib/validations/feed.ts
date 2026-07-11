@@ -93,7 +93,13 @@ export const checkNewItemsSchema = z.object({
   categoryId: z.coerce.number().int().nullable().optional(),
   since: z.coerce.date(),
   unreadOnly: z.coerce.boolean().optional(),
-  feedIds: z.array(z.coerce.number()).optional(),
+  feedIds: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) =>
+      val ? val.split(",").map((id) => Number.parseInt(id, 10)) : undefined,
+    ),
 });
 
 export type CheckNewItemsInput = z.infer<typeof checkNewItemsSchema>;
