@@ -13,12 +13,15 @@ import {
   markAllReadSchema,
 } from "@/lib/validations/feed";
 import { markAllRead } from "@/services/feed/mark-all-read";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to mark all items in a scope as read.
  * @param input - Data containing scope and optional ID.
  */
-export async function markAllReadAction(input: MarkAllReadInput) {
+export async function markAllReadAction(
+  input: MarkAllReadInput,
+): Promise<ServerActionResult> {
   const result = markAllReadSchema.safeParse(input);
 
   if (!result.success) {
@@ -48,31 +51,12 @@ export async function markAllReadAction(input: MarkAllReadInput) {
   } catch (error) {
     console.error("[markAllReadAction]", error);
 
-    if (error instanceof CategoryNotFoundError) {
-      return {
-        success: false,
-        error: "The category could not be found.",
-        code: error.code,
-      };
-    }
-
-    if (error instanceof SubscriptionNotFoundError) {
-      return {
-        success: false,
-        error: "The subscription could not be found.",
-        code: error.code,
-      };
-    }
-
-    if (error instanceof MarkAllReadIdRequiredError) {
-      return {
-        success: false,
-        error: error.message,
-        code: error.code,
-      };
-    }
-
-    if (error instanceof InvalidMarkAllReadScopeError) {
+    if (
+      error instanceof CategoryNotFoundError ||
+      error instanceof SubscriptionNotFoundError ||
+      error instanceof MarkAllReadIdRequiredError ||
+      error instanceof InvalidMarkAllReadScopeError
+    ) {
       return {
         success: false,
         error: error.message,

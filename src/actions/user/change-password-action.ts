@@ -9,12 +9,15 @@ import {
   changePasswordSchema,
 } from "@/lib/validations/profile";
 import { updateUserPassword } from "@/services/user/update-user-password";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to update user password.
  * @param input - The password change inputs.
  */
-export async function changePasswordAction(input: ChangePasswordInput) {
+export async function changePasswordAction(
+  input: ChangePasswordInput,
+): Promise<ServerActionResult> {
   const result = changePasswordSchema.safeParse(input);
 
   if (!result.success) {

@@ -11,12 +11,15 @@ import { getCurrentSession } from "@/lib/session";
 import { type AddFeedInput, addFeedSchema } from "@/lib/validations/feed";
 import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { createSubscription } from "@/services/subscription/create-subscription";
+import type { FeedWithSubscription, ServerActionResult } from "@/types";
 
 /**
  * Server action to add a feed.
  * @param input - Data from the add feed form, validated by addFeedSchema.
  */
-export async function addFeedAction(input: AddFeedInput) {
+export async function addFeedAction(
+  input: AddFeedInput,
+): Promise<ServerActionResult<FeedWithSubscription>> {
   const result = addFeedSchema.safeParse(input);
 
   if (!result.success) {
@@ -60,37 +63,25 @@ export async function addFeedAction(input: AddFeedInput) {
   } catch (error) {
     console.error("[addFeedAction]", error);
 
-    if (error instanceof FeedNotFoundError) {
-      return {
-        success: false,
-        error: "We couldn't reach this URL. Please double-check for typos.",
-        code: error.code,
-      };
-    }
-
-    if (error instanceof FeedUnavailableError) {
-      return {
-        success: false,
-        error:
+    if (
+      error instanceof FeedNotFoundError ||
+      error instanceof FeedUnavailableError ||
+      error instanceof FeedInvalidFormatError ||
+      error instanceof FeedNetworkError
+    ) {
+      const errorMessages = {
+        FEED_NOT_FOUND:
+          "We couldn't reach this URL. Please double-check for typos.",
+        FEED_UNAVAILABLE:
           "The source site is currently slow or unavailable. Try again in a few minutes.",
-        code: error.code,
-      };
-    }
-
-    if (error instanceof FeedInvalidFormatError) {
-      return {
-        success: false,
-        error:
+        FEED_INVALID_FORMAT:
           "This link doesn't seem to be a valid RSS or Atom feed. Make sure you're using the direct feed link.",
-        code: error.code,
+        FEED_NETWORK_ERROR:
+          "A network error occurred while reaching the feed. Please try again.",
       };
-    }
-
-    if (error instanceof FeedNetworkError) {
       return {
         success: false,
-        error:
-          "A network error occurred while reaching the feed. Please try again.",
+        error: errorMessages[error.code],
         code: error.code,
       };
     }

@@ -8,12 +8,15 @@ import {
   createCategorySchema,
 } from "@/lib/validations/category";
 import { createCategory } from "@/services/category/create-category";
+import type { Category, ServerActionResult } from "@/types";
 
 /**
  * Server action to create a category.
  * @param input - Data for creating a category, validated by createCategorySchema.
  */
-export async function createCategoryAction(input: CreateCategoryInput) {
+export async function createCategoryAction(
+  input: CreateCategoryInput,
+): Promise<ServerActionResult<Category>> {
   const result = createCategorySchema.safeParse(input);
 
   if (!result.success) {

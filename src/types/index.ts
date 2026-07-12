@@ -90,3 +90,13 @@ export interface VerifiedFeedResult {
   alreadySubscribed: boolean;
   feed?: Pick<Feed, "title" | "description" | "iconUrl">;
 }
+
+export type ServerActionResult<T = undefined> =
+  | (T extends undefined
+      ? { success: true; data?: never }
+      : { success: true; data: T })
+  | {
+      success: false;
+      error: string;
+      code: string;
+    };

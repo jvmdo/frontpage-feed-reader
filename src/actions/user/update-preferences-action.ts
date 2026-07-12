@@ -7,12 +7,15 @@ import {
   updatePreferencesSchema,
 } from "@/lib/validations/user";
 import { updateUserPreferences } from "@/services/user/update-user-preferences";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to update user preferences.
  * @param input - The preferences to update.
  */
-export async function updatePreferencesAction(input: UpdatePreferencesInput) {
+export async function updatePreferencesAction(
+  input: UpdatePreferencesInput,
+): Promise<ServerActionResult> {
   const result = updatePreferencesSchema.safeParse(input);
 
   if (!result.success) {

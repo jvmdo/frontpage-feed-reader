@@ -5,12 +5,15 @@ import { SubscriptionNotFoundError } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
 import { type UpdateFeedInput, updateFeedSchema } from "@/lib/validations/feed";
 import { updateSubscription } from "@/services/subscription/update-subscription";
+import type { ServerActionResult, Subscription } from "@/types";
 
 /**
  * Server action to update a subscription.
  * @param input - Data to update, validated by updateFeedSchema.
  */
-export async function updateFeedAction(input: UpdateFeedInput) {
+export async function updateFeedAction(
+  input: UpdateFeedInput,
+): Promise<ServerActionResult<Subscription>> {
   const result = updateFeedSchema.safeParse(input);
 
   if (!result.success) {

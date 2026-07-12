@@ -35,7 +35,7 @@ describe("toggleBookmarkAction", () => {
 
     expect(result).toEqual({
       success: false,
-      error: "You must have a valid session to perform this action.",
+      error: "You must be signed in to bookmark items.",
       code: "UNAUTHORIZED",
     });
   });

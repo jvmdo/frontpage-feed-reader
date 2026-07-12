@@ -7,12 +7,15 @@ import {
   setReadStatusSchema,
 } from "@/lib/validations/feed";
 import { setReadStatus } from "@/services/item/set-read-status";
+import type { ServerActionResult, UserItemState } from "@/types";
 
 /**
  * Server action to set the read status of an item.
  * @param input - Item ID and target read state, validated by setReadStatusSchema.
  */
-export async function setReadStatusAction(input: SetReadStatusInput) {
+export async function setReadStatusAction(
+  input: SetReadStatusInput,
+): Promise<ServerActionResult<UserItemState>> {
   const result = setReadStatusSchema.safeParse(input);
 
   if (!result.success) {
@@ -28,7 +31,7 @@ export async function setReadStatusAction(input: SetReadStatusInput) {
   if (!session?.user) {
     return {
       success: false,
-      error: "You must be signed in to perform this action.",
+      error: "You must be signed in to change read status.",
       code: "UNAUTHORIZED",
     };
   }

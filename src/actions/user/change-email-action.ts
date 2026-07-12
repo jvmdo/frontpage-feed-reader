@@ -13,12 +13,15 @@ import {
   changeEmailSchema,
 } from "@/lib/validations/profile";
 import { updateUserEmail } from "@/services/user/update-user-email";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to update user email.
  * @param input - The change email inputs.
  */
-export async function changeEmailAction(input: ChangeEmailInput) {
+export async function changeEmailAction(
+  input: ChangeEmailInput,
+): Promise<ServerActionResult> {
   const result = changeEmailSchema.safeParse(input);
 
   if (!result.success) {

@@ -8,12 +8,15 @@ import {
   updateCategorySchema,
 } from "@/lib/validations/category";
 import { updateCategory } from "@/services/category/update-category";
+import type { Category, ServerActionResult } from "@/types";
 
 /**
  * Server action to update a category.
  * @param input - Data for updating a category, validated by updateCategorySchema.
  */
-export async function updateCategoryAction(input: UpdateCategoryInput) {
+export async function updateCategoryAction(
+  input: UpdateCategoryInput,
+): Promise<ServerActionResult<Category>> {
   const result = updateCategorySchema.safeParse(input);
 
   if (!result.success) {
@@ -46,15 +49,10 @@ export async function updateCategoryAction(input: UpdateCategoryInput) {
   } catch (error) {
     console.error("[updateCategoryAction]", error);
 
-    if (error instanceof DuplicateCategoryError) {
-      return {
-        success: false,
-        error: error.message,
-        code: error.code,
-      };
-    }
-
-    if (error instanceof CategoryNotFoundError) {
+    if (
+      error instanceof DuplicateCategoryError ||
+      error instanceof CategoryNotFoundError
+    ) {
       return {
         success: false,
         error: error.message,

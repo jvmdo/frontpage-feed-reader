@@ -5,12 +5,15 @@ import { SubscriptionNotFoundError } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
 import { type RemoveFeedInput, removeFeedSchema } from "@/lib/validations/feed";
 import { deleteSubscription } from "@/services/subscription/delete-subscription";
+import type { ServerActionResult, Subscription } from "@/types";
 
 /**
  * Server action to remove a feed.
  * @param input - ID of the subscription to remove, validated by removeFeedSchema.
  */
-export async function removeFeedAction(input: RemoveFeedInput) {
+export async function removeFeedAction(
+  input: RemoveFeedInput,
+): Promise<ServerActionResult<Subscription>> {
   const result = removeFeedSchema.safeParse(input);
 
   if (!result.success) {

@@ -9,11 +9,14 @@ import {
   deleteAccountSchema,
 } from "@/lib/validations/profile";
 import { deleteUserService } from "@/services/user/delete-user";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to delete the user's account.
  */
-export async function deleteUserAction(input: DeleteAccountInput) {
+export async function deleteUserAction(
+  input: DeleteAccountInput,
+): Promise<ServerActionResult> {
   const result = deleteAccountSchema.safeParse(input);
 
   if (!result.success) {

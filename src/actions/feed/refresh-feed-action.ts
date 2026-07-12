@@ -13,12 +13,15 @@ import {
   refreshFeedSchema,
 } from "@/lib/validations/feed";
 import { refreshFeeds } from "@/services/feed/refresh-feeds";
+import type { FeedWithSubscription, ServerActionResult } from "@/types";
 
 /**
  * Server action to refresh feeds based on scope (global, category, or specific feed).
  * @param input - Scope and optional target ID.
  */
-export async function refreshFeedAction(input: RefreshFeedInput) {
+export async function refreshFeedAction(
+  input: RefreshFeedInput,
+): Promise<ServerActionResult<FeedWithSubscription | undefined>> {
   const result = refreshFeedSchema.safeParse(input);
 
   if (!result.success) {
@@ -52,42 +55,30 @@ export async function refreshFeedAction(input: RefreshFeedInput) {
 
     return {
       success: true,
-      data: data ?? undefined,
+      data,
     };
   } catch (error) {
     console.error("[refreshFeedAction]", error);
 
-    if (error instanceof FeedNotFoundError) {
-      return {
-        success: false,
-        error: "We couldn't reach this URL. Please double-check for typos.",
-        code: error.code,
-      };
-    }
-
-    if (error instanceof FeedUnavailableError) {
-      return {
-        success: false,
-        error:
+    if (
+      error instanceof FeedNotFoundError ||
+      error instanceof FeedUnavailableError ||
+      error instanceof FeedInvalidFormatError ||
+      error instanceof FeedNetworkError
+    ) {
+      const errorMessages = {
+        FEED_NOT_FOUND:
+          "We couldn't reach this URL. Please double-check for typos.",
+        FEED_UNAVAILABLE:
           "The source site is currently slow or unavailable. Try again in a few minutes.",
-        code: error.code,
-      };
-    }
-
-    if (error instanceof FeedInvalidFormatError) {
-      return {
-        success: false,
-        error:
+        FEED_INVALID_FORMAT:
           "This link doesn't seem to be a valid RSS or Atom feed. Make sure you're using the direct feed link.",
-        code: error.code,
+        FEED_NETWORK_ERROR:
+          "A network error occurred while reaching the feed. Please try again.",
       };
-    }
-
-    if (error instanceof FeedNetworkError) {
       return {
         success: false,
-        error:
-          "A network error occurred while reaching the feed. Please try again.",
+        error: errorMessages[error.code],
         code: error.code,
       };
     }

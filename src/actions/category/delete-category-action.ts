@@ -8,12 +8,15 @@ import {
   deleteCategorySchema,
 } from "@/lib/validations/category";
 import { deleteCategory } from "@/services/category/delete-category";
+import type { Category, ServerActionResult } from "@/types";
 
 /**
  * Server action to delete a category.
  * @param input - Data for deleting a category, validated by deleteCategorySchema.
  */
-export async function deleteCategoryAction(input: DeleteCategoryInput) {
+export async function deleteCategoryAction(
+  input: DeleteCategoryInput,
+): Promise<ServerActionResult<Category>> {
   const result = deleteCategorySchema.safeParse(input);
 
   if (!result.success) {
@@ -38,10 +41,11 @@ export async function deleteCategoryAction(input: DeleteCategoryInput) {
 
     const { id } = result.data;
 
-    await deleteCategory(db, session.user.id, id);
+    const deleted = await deleteCategory(db, session.user.id, id);
 
     return {
       success: true,
+      data: deleted,
     };
   } catch (error) {
     console.error("[deleteCategoryAction]", error);

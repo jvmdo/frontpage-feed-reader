@@ -18,7 +18,7 @@ export function useAddFeed() {
         throw new Error(response.error);
       }
 
-      return response.data as FeedWithSubscription;
+      return response.data;
     },
     onSuccess: (newSubscription) => {
       // Manually update the 'subscriptions' cache by adding the new item.

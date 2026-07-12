@@ -7,6 +7,7 @@ import {
   toggleBookmarkSchema,
 } from "@/lib/validations/feed";
 import { toggleBookmark } from "@/services/item/toggle-bookmark";
+import type { ServerActionResult, UserItemState } from "@/types";
 
 /**
  * Server action to toggle the bookmark status of an item.
@@ -14,7 +15,9 @@ import { toggleBookmark } from "@/services/item/toggle-bookmark";
  *
  * @param input - Item ID to toggle, validated by toggleBookmarkSchema.
  */
-export async function toggleBookmarkAction(input: ToggleBookmarkInput) {
+export async function toggleBookmarkAction(
+  input: ToggleBookmarkInput,
+): Promise<ServerActionResult<UserItemState>> {
   const result = toggleBookmarkSchema.safeParse(input);
 
   if (!result.success) {
@@ -30,7 +33,7 @@ export async function toggleBookmarkAction(input: ToggleBookmarkInput) {
   if (!session?.user) {
     return {
       success: false,
-      error: "You must have a valid session to perform this action.",
+      error: "You must be signed in to bookmark items.",
       code: "UNAUTHORIZED",
     };
   }
