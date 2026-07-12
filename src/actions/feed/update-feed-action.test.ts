@@ -61,7 +61,6 @@ describe("updateFeedAction", () => {
 
     expect(result).toEqual({
       success: true,
-      data: mockUpdatedSubscription,
     });
     expect(updateSubscription).toHaveBeenCalledWith(
       expect.anything(),

@@ -67,7 +67,6 @@ describe("updateCategoryAction", () => {
 
     expect(result).toEqual({
       success: true,
-      data: mockCategory,
     });
     expect(updateCategory).toHaveBeenCalledWith(
       expect.anything(),

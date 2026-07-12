@@ -8,7 +8,7 @@ import {
   createCategorySchema,
 } from "@/lib/validations/category";
 import { createCategory } from "@/services/category/create-category";
-import type { Category, ServerActionResult } from "@/types";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to create a category.
@@ -16,7 +16,7 @@ import type { Category, ServerActionResult } from "@/types";
  */
 export async function createCategoryAction(
   input: CreateCategoryInput,
-): Promise<ServerActionResult<Category>> {
+): Promise<ServerActionResult> {
   const result = createCategorySchema.safeParse(input);
 
   if (!result.success) {
@@ -40,11 +40,10 @@ export async function createCategoryAction(
 
     const { name, color } = result.data;
 
-    const category = await createCategory(db, session.user.id, name, color);
+    await createCategory(db, session.user.id, name, color);
 
     return {
       success: true,
-      data: category,
     };
   } catch (error) {
     console.error("[createCategoryAction]", error);

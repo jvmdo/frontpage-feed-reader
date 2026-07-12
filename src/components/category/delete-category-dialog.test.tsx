@@ -57,7 +57,6 @@ describe("DeleteCategoryDialog", () => {
   it("calls deleteCategoryAction when confirmed", async () => {
     vi.mocked(deleteCategoryAction).mockResolvedValue({
       success: true,
-      data: category,
     });
 
     const { user } = setup();

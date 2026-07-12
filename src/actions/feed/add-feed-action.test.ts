@@ -72,7 +72,6 @@ describe("addFeedAction", () => {
 
     expect(result).toEqual({
       success: true,
-      data: { subscription: mockSubscription, feed: mockFeed },
     });
     expect(createSubscription).toHaveBeenCalledWith(
       expect.anything(),
@@ -115,7 +114,6 @@ describe("addFeedAction", () => {
 
     expect(result).toEqual({
       success: true,
-      data: { subscription: mockSubscription, feed: mockFeed },
     });
     expect(createSubscription).toHaveBeenCalledWith(
       expect.anything(),

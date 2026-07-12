@@ -11,7 +11,7 @@ import { getCurrentSession } from "@/lib/session";
 import { type AddFeedInput, addFeedSchema } from "@/lib/validations/feed";
 import { ingestItems } from "@/services/ingestion/feed-ingestion";
 import { createSubscription } from "@/services/subscription/create-subscription";
-import type { FeedWithSubscription, ServerActionResult } from "@/types";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to add a feed.
@@ -19,7 +19,7 @@ import type { FeedWithSubscription, ServerActionResult } from "@/types";
  */
 export async function addFeedAction(
   input: AddFeedInput,
-): Promise<ServerActionResult<FeedWithSubscription>> {
+): Promise<ServerActionResult> {
   const result = addFeedSchema.safeParse(input);
 
   if (!result.success) {
@@ -58,7 +58,6 @@ export async function addFeedAction(
 
     return {
       success: true,
-      data: { subscription, feed },
     };
   } catch (error) {
     console.error("[addFeedAction]", error);

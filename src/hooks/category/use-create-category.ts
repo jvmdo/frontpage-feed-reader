@@ -16,8 +16,6 @@ export function useCreateCategory() {
       if (!result.success) {
         throw new Error(result.error);
       }
-
-      return result.data;
     },
     onSuccess: () => {
       // Invalidate categories query to trigger a refetch

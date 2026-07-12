@@ -67,7 +67,6 @@ describe("createCategoryAction", () => {
 
     expect(result).toEqual({
       success: true,
-      data: mockCategory,
     });
     expect(createCategory).toHaveBeenCalledWith(
       expect.anything(),

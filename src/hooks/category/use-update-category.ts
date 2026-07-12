@@ -17,21 +17,39 @@ export function useUpdateCategory() {
       if (!result.success) {
         throw new Error(result.error);
       }
-
-      return result.data;
     },
-    onSuccess: (updatedCategory) => {
-      if (!updatedCategory) return;
+    onMutate: async (variables) => {
+      // 1. Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["categories"] });
 
-      // Update the 'categories' list in the cache immediately
+      // 2. Snapshot current categories cache
+      const previousCategories = queryClient.getQueryData<Category[]>([
+        "categories",
+      ]);
+
+      // 3. Optimistically update the categories list in place
       queryClient.setQueryData<Category[]>(["categories"], (old) => {
         if (!old) return undefined;
         return old.map((cat) =>
-          cat.id === updatedCategory.id ? updatedCategory : cat,
+          cat.id === variables.id
+            ? {
+                ...cat,
+                name: variables.name ?? cat.name,
+                color: variables.color ?? cat.color,
+              }
+            : cat,
         );
       });
 
-      // Invalidate to ensure consistency across the app
+      // Return snapshot
+      return { previousCategories };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousCategories) {
+        queryClient.setQueryData(["categories"], context.previousCategories);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });

@@ -65,7 +65,6 @@ describe("EditCategoryDialog", () => {
   it("calls updateCategoryAction with new name and color when submitted", async () => {
     vi.mocked(updateCategoryAction).mockResolvedValue({
       success: true,
-      data: { ...category, name: "New Name", color: "#dc2626" },
     });
 
     const { user } = setup();

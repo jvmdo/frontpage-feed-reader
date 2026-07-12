@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { refreshFeedAction } from "@/actions/feed/refresh-feed-action";
 import type { RefreshFeedInput } from "@/lib/validations/feed";
-import type { FeedWithSubscription } from "@/types";
 
 /**
  * Custom hook for refreshing a feed.
@@ -17,29 +16,8 @@ export function useRefreshFeed() {
       if (!response.success) {
         throw new Error(response.error);
       }
-
-      return response.data;
     },
-    onSuccess: (updatedData) => {
-      if (updatedData?.subscription && updatedData?.feed) {
-        const data = updatedData as FeedWithSubscription;
-
-        // Manually update the 'subscriptions' cache with the refreshed feed and subscription data.
-        queryClient.setQueryData<FeedWithSubscription[]>(
-          ["subscriptions"],
-          (old) => {
-            if (!old) return undefined;
-
-            return old.map((item): FeedWithSubscription => {
-              if (item.subscription.id === data.subscription.id) {
-                return data;
-              }
-              return item;
-            });
-          },
-        );
-      }
-
+    onSuccess: () => {
       // Invalidate to ensure consistent state across other queries.
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });

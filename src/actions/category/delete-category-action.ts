@@ -8,7 +8,7 @@ import {
   deleteCategorySchema,
 } from "@/lib/validations/category";
 import { deleteCategory } from "@/services/category/delete-category";
-import type { Category, ServerActionResult } from "@/types";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to delete a category.
@@ -16,7 +16,7 @@ import type { Category, ServerActionResult } from "@/types";
  */
 export async function deleteCategoryAction(
   input: DeleteCategoryInput,
-): Promise<ServerActionResult<Category>> {
+): Promise<ServerActionResult> {
   const result = deleteCategorySchema.safeParse(input);
 
   if (!result.success) {
@@ -41,11 +41,10 @@ export async function deleteCategoryAction(
 
     const { id } = result.data;
 
-    const deleted = await deleteCategory(db, session.user.id, id);
+    await deleteCategory(db, session.user.id, id);
 
     return {
       success: true,
-      data: deleted,
     };
   } catch (error) {
     console.error("[deleteCategoryAction]", error);

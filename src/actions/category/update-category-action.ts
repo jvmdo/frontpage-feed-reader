@@ -8,7 +8,7 @@ import {
   updateCategorySchema,
 } from "@/lib/validations/category";
 import { updateCategory } from "@/services/category/update-category";
-import type { Category, ServerActionResult } from "@/types";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to update a category.
@@ -16,7 +16,7 @@ import type { Category, ServerActionResult } from "@/types";
  */
 export async function updateCategoryAction(
   input: UpdateCategoryInput,
-): Promise<ServerActionResult<Category>> {
+): Promise<ServerActionResult> {
   const result = updateCategorySchema.safeParse(input);
 
   if (!result.success) {
@@ -39,12 +39,10 @@ export async function updateCategoryAction(
     }
 
     const { id, name, color } = result.data;
-
-    const category = await updateCategory(db, session.user.id, id, name, color);
+    await updateCategory(db, session.user.id, id, name, color);
 
     return {
       success: true,
-      data: category,
     };
   } catch (error) {
     console.error("[updateCategoryAction]", error);

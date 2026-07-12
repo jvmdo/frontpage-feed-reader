@@ -115,7 +115,7 @@ describe("AppSidebar Integration", () => {
       // Update mockSubscriptions to simulate backend change
       mockSubscriptions = [...mockSubscriptions, newSub];
 
-      return { success: true, data: newSub };
+      return { success: true };
     });
 
     // Mock verification to succeed

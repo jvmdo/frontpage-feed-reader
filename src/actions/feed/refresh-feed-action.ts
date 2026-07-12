@@ -13,7 +13,7 @@ import {
   refreshFeedSchema,
 } from "@/lib/validations/feed";
 import { refreshFeeds } from "@/services/feed/refresh-feeds";
-import type { FeedWithSubscription, ServerActionResult } from "@/types";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to refresh feeds based on scope (global, category, or specific feed).
@@ -21,7 +21,7 @@ import type { FeedWithSubscription, ServerActionResult } from "@/types";
  */
 export async function refreshFeedAction(
   input: RefreshFeedInput,
-): Promise<ServerActionResult<FeedWithSubscription | undefined>> {
+): Promise<ServerActionResult> {
   const result = refreshFeedSchema.safeParse(input);
 
   if (!result.success) {
@@ -55,7 +55,6 @@ export async function refreshFeedAction(
 
     return {
       success: true,
-      data,
     };
   } catch (error) {
     console.error("[refreshFeedAction]", error);

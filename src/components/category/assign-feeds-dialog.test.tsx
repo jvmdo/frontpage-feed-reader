@@ -230,7 +230,6 @@ describe("AssignFeedsDialog", () => {
 
     resolveAction({
       success: true,
-      data: { id: 1, categoryId: targetCategoryId },
     });
 
     await waitFor(() => {
@@ -262,7 +261,6 @@ describe("AssignFeedsDialog", () => {
 
     resolveAction({
       success: true,
-      data: { id: 3, categoryId: null },
     });
 
     await waitFor(() => {

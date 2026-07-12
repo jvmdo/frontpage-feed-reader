@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addFeedAction } from "@/actions/feed/add-feed-action";
 import type { AddFeedInput } from "@/lib/validations/feed";
-import type { FeedWithSubscription } from "@/types";
 
 /**
  * Custom hook for adding a feed subscription.
@@ -17,29 +16,8 @@ export function useAddFeed() {
       if (!response.success) {
         throw new Error(response.error);
       }
-
-      return response.data;
     },
-    onSuccess: (newSubscription) => {
-      // Manually update the 'subscriptions' cache by adding the new item.
-      queryClient.setQueryData<FeedWithSubscription[]>(
-        ["subscriptions"],
-        (old) => {
-          if (!old) return [newSubscription];
-
-          // Avoid duplicates just in case
-          if (
-            old.some(
-              (s) => s.subscription.id === newSubscription.subscription.id,
-            )
-          ) {
-            return old;
-          }
-
-          return [...old, newSubscription];
-        },
-      );
-
+    onSuccess: () => {
       // Invalidate specific dependent queries to sync with the server truth.
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });

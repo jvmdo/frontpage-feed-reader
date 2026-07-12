@@ -5,7 +5,7 @@ import { SubscriptionNotFoundError } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
 import { type UpdateFeedInput, updateFeedSchema } from "@/lib/validations/feed";
 import { updateSubscription } from "@/services/subscription/update-subscription";
-import type { ServerActionResult, Subscription } from "@/types";
+import type { ServerActionResult } from "@/types";
 
 /**
  * Server action to update a subscription.
@@ -13,7 +13,7 @@ import type { ServerActionResult, Subscription } from "@/types";
  */
 export async function updateFeedAction(
   input: UpdateFeedInput,
-): Promise<ServerActionResult<Subscription>> {
+): Promise<ServerActionResult> {
   const result = updateFeedSchema.safeParse(input);
 
   if (!result.success) {
@@ -37,14 +37,13 @@ export async function updateFeedAction(
 
     const { id, customTitle, categoryId } = result.data;
 
-    const updated = await updateSubscription(db, session.user.id, id, {
+    await updateSubscription(db, session.user.id, id, {
       customTitle,
       categoryId,
     });
 
     return {
       success: true,
-      data: updated,
     };
   } catch (error) {
     console.error("[updateFeedAction]", error);

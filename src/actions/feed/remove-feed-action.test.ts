@@ -55,7 +55,6 @@ describe("removeFeedAction", () => {
 
     expect(result).toEqual({
       success: true,
-      data: mockDeletedSubscription,
     });
     expect(deleteSubscription).toHaveBeenCalledWith(
       expect.anything(),
