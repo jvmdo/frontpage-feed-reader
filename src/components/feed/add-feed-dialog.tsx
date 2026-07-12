@@ -99,14 +99,6 @@ function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
     const urlValue = getValues("url");
 
     verifyFeed(urlValue, {
-      onSuccess: (data) => {
-        if (!data.success) {
-          setError("url", {
-            type: "server",
-            message: data.error || "Failed to verify feed",
-          });
-        }
-      },
       onError: (error) => {
         setError("url", {
           type: "server",
@@ -128,7 +120,7 @@ function AddFeedForm({ onSuccess, onCancel }: AddFeedFormProps) {
     });
   };
 
-  const isVerified = !!verifyResult?.success;
+  const isVerified = !!verifyResult;
   const alreadySubscribed = !!verifyResult?.alreadySubscribed;
 
   return (

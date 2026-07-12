@@ -20,7 +20,7 @@ describe("RefreshTaskStatusBanner", () => {
         if (status !== 200) {
           return new HttpResponse(null, { status });
         }
-        return HttpResponse.json({ success: true, data: systemStatus });
+        return HttpResponse.json(systemStatus);
       }),
     );
   };

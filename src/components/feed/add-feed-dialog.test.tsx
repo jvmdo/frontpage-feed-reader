@@ -33,7 +33,6 @@ function makeVerifySuccessResult(
   overrides?: Partial<VerifiedFeedResult>,
 ): VerifiedFeedResult {
   return {
-    success: true,
     alreadySubscribed: false,
     feed: {
       title: "Test Feed Title",
@@ -265,13 +264,17 @@ describe("AddFeedDialog", () => {
 
     for (const { name, error, code } of errorCases) {
       it(`shows friendly error message under input for ${name}`, async () => {
+        const ERROR_STATUS_MAP: Record<string, number> = {
+          FEED_NOT_FOUND: 404,
+          FEED_UNAVAILABLE: 503,
+          FEED_INVALID_FORMAT: 422,
+          FEED_NETWORK_ERROR: 502,
+        };
+
         server.use(
           http.get("/api/feeds/verify", () => {
-            return HttpResponse.json({
-              success: false,
-              error,
-              code,
-            });
+            const status = ERROR_STATUS_MAP[code] || 400;
+            return HttpResponse.json({ error }, { status });
           }),
         );
 

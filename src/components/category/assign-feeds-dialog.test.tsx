@@ -57,13 +57,10 @@ describe("AssignFeedsDialog", () => {
 
     server.use(
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({ success: true, data: mockSubscriptions });
+        return HttpResponse.json(mockSubscriptions);
       }),
       http.get("/api/categories", () => {
-        return HttpResponse.json({
-          success: true,
-          data: [targetCategory, otherCategory],
-        });
+        return HttpResponse.json([targetCategory, otherCategory]);
       }),
     );
 
@@ -276,7 +273,7 @@ describe("AssignFeedsDialog", () => {
   it("renders empty state with Add Feed button when user has no feeds", async () => {
     server.use(
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({ success: true, data: [] });
+        return HttpResponse.json([]);
       }),
     );
 

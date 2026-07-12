@@ -26,11 +26,7 @@ export async function GET(request: Request) {
 
     if (!session?.user) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "You must be signed in to verify a feed.",
-          code: "UNAUTHORIZED",
-        },
+        { error: "You must be signed in to verify a feed." },
         { status: 401 },
       );
     }
@@ -42,11 +38,7 @@ export async function GET(request: Request) {
 
     if (!result.success) {
       return NextResponse.json(
-        {
-          success: false,
-          error: result.error.issues[0]?.message || "Invalid input",
-          code: "VALIDATION_ERROR",
-        },
+        { error: result.error.issues[0]?.message || "Invalid input" },
         { status: 400 },
       );
     }
@@ -54,40 +46,34 @@ export async function GET(request: Request) {
     const { url } = result.data;
     const verificationResult = await verifyFeed(db, session.user.id, url);
 
-    return NextResponse.json(
-      {
-        success: true,
-        ...verificationResult,
+    return NextResponse.json(verificationResult, {
+      headers: {
+        "Cache-Control": "private, max-age=60",
       },
-      {
-        headers: {
-          "Cache-Control": "private, max-age=60",
-        },
-      },
-    );
+    });
   } catch (error) {
     console.error("[GET /api/feeds/verify]", error);
 
     const code = (error as { code?: string }).code;
     const status = code ? ERROR_STATUS_MAP[code] : undefined;
 
-    if (status) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: (error as Error).message,
-          code,
-        },
-        { status },
-      );
+    if (status && code) {
+      const errorMessages: Record<string, string> = {
+        FEED_NOT_FOUND:
+          "We couldn't reach this URL. Please double-check for typos.",
+        FEED_UNAVAILABLE:
+          "The source site is currently slow or unavailable. Try again in a few minutes.",
+        FEED_INVALID_FORMAT:
+          "This link doesn't seem to be a valid RSS or Atom feed. Make sure you're using the direct feed link.",
+        FEED_NETWORK_ERROR:
+          "A network error occurred while reaching the feed. Please try again.",
+      };
+      const errorMessage = errorMessages[code] || (error as Error).message;
+      return NextResponse.json({ error: errorMessage }, { status });
     }
 
     return NextResponse.json(
-      {
-        success: false,
-        error: "An unexpected error occurred. Please try again later.",
-        code: "INTERNAL_ERROR",
-      },
+      { error: "An unexpected error occurred. Please try again later." },
       { status: 500 },
     );
   }

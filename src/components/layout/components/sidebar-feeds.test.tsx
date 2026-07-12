@@ -49,19 +49,16 @@ describe("SidebarFeeds", () => {
   beforeEach(() => {
     server.use(
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({ success: true, data: mockSubscriptions });
+        return HttpResponse.json(mockSubscriptions);
       }),
       http.get("/api/categories", () => {
-        return HttpResponse.json({ success: true, data: mockCategories });
+        return HttpResponse.json(mockCategories);
       }),
       http.get("/api/feeds/unread-counts", () => {
         return HttpResponse.json({
-          success: true,
-          data: {
-            global: 10,
-            categories: { 10: 5, 20: 3 },
-            feeds: { 1: 2, 2: 3, 3: 5 },
-          },
+          global: 10,
+          categories: { 10: 5, 20: 3 },
+          feeds: { 1: 2, 2: 3, 3: 5 },
         });
       }),
     );
@@ -136,22 +133,18 @@ describe("SidebarFeeds", () => {
     const _user = userEvent.setup();
     server.use(
       http.get("/api/categories", () => {
-        return HttpResponse.json({
-          success: true,
-          data: [createMockCategory({ id: 30, name: "Empty Category" })],
-        });
+        return HttpResponse.json([
+          createMockCategory({ id: 30, name: "Empty Category" }),
+        ]);
       }),
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({ success: true, data: [] });
+        return HttpResponse.json([]);
       }),
       http.get("/api/feeds/unread-counts", () => {
         return HttpResponse.json({
-          success: true,
-          data: {
-            global: 0,
-            categories: { 30: 0 },
-            feeds: {},
-          },
+          global: 0,
+          categories: { 30: 0 },
+          feeds: {},
         });
       }),
     );
@@ -191,10 +184,10 @@ describe("SidebarFeeds", () => {
   it("shows 'No subscriptions yet.' when both categories and subscriptions are empty", async () => {
     server.use(
       http.get("/api/categories", () => {
-        return HttpResponse.json({ success: true, data: [] });
+        return HttpResponse.json([]);
       }),
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({ success: true, data: [] });
+        return HttpResponse.json([]);
       }),
     );
 

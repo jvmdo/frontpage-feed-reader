@@ -15,9 +15,7 @@ describe("GET /api/feeds/unread-counts", () => {
 
     expect(response.status).toBe(401);
     expect(body).toEqual({
-      success: false,
       error: "You must be signed in to fetch unread counts.",
-      code: "UNAUTHORIZED",
     });
   });
 
@@ -32,10 +30,7 @@ describe("GET /api/feeds/unread-counts", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({
-      success: true,
-      data: mockCounts,
-    });
+    expect(body).toEqual(mockCounts);
     expect(getUnreadCounts).toHaveBeenCalledWith(expect.anything(), "user-123");
   });
 
@@ -51,9 +46,7 @@ describe("GET /api/feeds/unread-counts", () => {
 
     expect(response.status).toBe(500);
     expect(body).toEqual({
-      success: false,
       error: "Failed to fetch unread counts",
-      code: "INTERNAL_SERVER_ERROR",
     });
   });
 });

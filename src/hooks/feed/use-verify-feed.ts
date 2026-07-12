@@ -11,6 +11,10 @@ export function useVerifyFeed() {
       const response = await fetch(
         `/api/feeds/verify?url=${encodeURIComponent(url)}`,
       );
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.error || "Failed to verify feed");
+      }
       return response.json();
     },
   });

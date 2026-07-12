@@ -26,9 +26,7 @@ describe("GET /api/refresh-task-status", () => {
 
     const json = await response.json();
     expect(json).toEqual({
-      success: false,
       error: "You must be signed in to view sync status.",
-      code: "UNAUTHORIZED",
     });
   });
 
@@ -51,7 +49,7 @@ describe("GET /api/refresh-task-status", () => {
     expect(response.status).toBe(200);
 
     const json = await response.json();
-    expect(json).toEqual({ success: true, data: mockPayload });
+    expect(json).toEqual(mockPayload);
   });
 
   it("returns 404 when getRefreshTaskStatus throws SyncScheduleNotFoundError", async () => {
@@ -69,8 +67,6 @@ describe("GET /api/refresh-task-status", () => {
 
     const json = await response.json();
     expect(json).toEqual({
-      success: false,
-      code: "NOT_FOUND",
       error: "The global sync schedule could not be found.",
     });
   });
@@ -90,8 +86,6 @@ describe("GET /api/refresh-task-status", () => {
 
     const json = await response.json();
     expect(json).toEqual({
-      success: false,
-      code: "INTERNAL_SERVER_ERROR",
       error: "Failed to fetch sync status",
     });
   });

@@ -31,9 +31,7 @@ describe("GET /api/feeds/verify", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: false,
       error: expect.any(String),
-      code: "VALIDATION_ERROR",
     });
   });
 
@@ -48,9 +46,7 @@ describe("GET /api/feeds/verify", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: false,
       error: "You must be signed in to verify a feed.",
-      code: "UNAUTHORIZED",
     });
   });
 
@@ -79,7 +75,6 @@ describe("GET /api/feeds/verify", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: true,
       alreadySubscribed: true,
       feed: {
         title: "Mock Title",
@@ -99,25 +94,28 @@ describe("GET /api/feeds/verify", () => {
     const errorsMap = [
       {
         exception: new FeedNotFoundError(),
-        error: new FeedNotFoundError().message,
+        error: "We couldn't reach this URL. Please double-check for typos.",
         code: "FEED_NOT_FOUND",
         status: 404,
       },
       {
         exception: new FeedUnavailableError(),
-        error: new FeedUnavailableError().message,
+        error:
+          "The source site is currently slow or unavailable. Try again in a few minutes.",
         code: "FEED_UNAVAILABLE",
         status: 503,
       },
       {
         exception: new FeedNetworkError(),
-        error: new FeedNetworkError().message,
+        error:
+          "A network error occurred while reaching the feed. Please try again.",
         code: "FEED_NETWORK_ERROR",
         status: 502,
       },
       {
         exception: new FeedInvalidFormatError(),
-        error: new FeedInvalidFormatError().message,
+        error:
+          "This link doesn't seem to be a valid RSS or Atom feed. Make sure you're using the direct feed link.",
         code: "FEED_INVALID_FORMAT",
         status: 422,
       },
@@ -139,9 +137,7 @@ describe("GET /api/feeds/verify", () => {
 
         const json = await res.json();
         expect(json).toEqual({
-          success: false,
           error,
-          code,
         });
       });
     }
@@ -161,9 +157,7 @@ describe("GET /api/feeds/verify", () => {
 
       const json = await res.json();
       expect(json).toEqual({
-        success: false,
         error: "An unexpected error occurred. Please try again later.",
-        code: "INTERNAL_ERROR",
       });
     });
   });

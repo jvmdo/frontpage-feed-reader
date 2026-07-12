@@ -10,27 +10,18 @@ describe("FeedManager", () => {
   const setupMocks = (feedsData: any[] = []) => {
     server.use(
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({
-          success: true,
-          data: feedsData,
-        });
+        return HttpResponse.json(feedsData);
       }),
       http.get("/api/refresh-task-status", () => {
         return HttpResponse.json({
-          success: true,
-          data: {
-            active: true,
-            isFailing: false,
-            lastRunAt: "2026-01-01T12:00:00Z",
-            nextRunAt: "2026-01-01T12:05:00Z",
-          },
+          active: true,
+          isFailing: false,
+          lastRunAt: "2026-01-01T12:00:00Z",
+          nextRunAt: "2026-01-01T12:05:00Z",
         });
       }),
       http.get("/api/categories", () => {
-        return HttpResponse.json({
-          success: true,
-          data: [],
-        });
+        return HttpResponse.json([]);
       }),
     );
   };

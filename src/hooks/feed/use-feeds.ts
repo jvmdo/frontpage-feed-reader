@@ -15,16 +15,11 @@ export function useFeeds() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch feeds");
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.error || "Failed to fetch feeds");
       }
 
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to fetch feeds");
-      }
-
-      return result.data as FeedWithSubscription[];
+      return response.json();
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

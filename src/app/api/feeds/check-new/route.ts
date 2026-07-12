@@ -10,11 +10,7 @@ export async function GET(request: Request) {
 
     if (!session?.user) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "You must be signed in to check for new items.",
-          code: "UNAUTHORIZED",
-        },
+        { error: "You must be signed in to check for new items." },
         { status: 401 },
       );
     }
@@ -35,29 +31,18 @@ export async function GET(request: Request) {
 
     if (!result.success) {
       return NextResponse.json(
-        {
-          success: false,
-          error: result.error.issues[0]?.message || "Invalid input",
-          code: "VALIDATION_ERROR",
-        },
+        { error: result.error.issues[0]?.message || "Invalid input" },
         { status: 400 },
       );
     }
 
     const count = await countNewItems(db, session.user.id, result.data);
 
-    return NextResponse.json({
-      success: true,
-      data: { count },
-    });
+    return NextResponse.json({ count });
   } catch (error) {
     console.error("[GET /api/feeds/check-new]", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "An unexpected error occurred while checking for new items.",
-        code: "INTERNAL_ERROR",
-      },
+      { error: "An unexpected error occurred while checking for new items." },
       { status: 500 },
     );
   }

@@ -61,7 +61,7 @@ describe("FeedTable", () => {
   beforeEach(() => {
     server.use(
       http.get("/api/categories", () => {
-        return HttpResponse.json({ success: true, data: mockCategories });
+        return HttpResponse.json(mockCategories);
       }),
     );
   });

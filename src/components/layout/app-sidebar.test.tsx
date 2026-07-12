@@ -72,19 +72,16 @@ describe("AppSidebar Integration", () => {
     // Mock GET handlers
     server.use(
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({ success: true, data: mockSubscriptions });
+        return HttpResponse.json(mockSubscriptions);
       }),
       http.get("/api/categories", () => {
-        return HttpResponse.json({ success: true, data: mockCategories });
+        return HttpResponse.json(mockCategories);
       }),
       http.get("/api/feeds/unread-counts", () => {
         return HttpResponse.json({
-          success: true,
-          data: {
-            global: 42,
-            categories: { "10": 0 },
-            feeds: { "1": 0, "2": 0 },
-          },
+          global: 42,
+          categories: { "10": 0 },
+          feeds: { "1": 0, "2": 0 },
         });
       }),
     );

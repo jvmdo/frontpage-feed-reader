@@ -9,29 +9,17 @@ export async function GET() {
 
     if (!session?.user) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "You must be signed in to fetch subscriptions.",
-          code: "UNAUTHORIZED",
-        },
+        { error: "You must be signed in to fetch subscriptions." },
         { status: 401 },
       );
     }
 
     const subscriptions = await getSubscriptions(db, session.user.id);
-
-    return NextResponse.json({
-      success: true,
-      data: subscriptions,
-    });
+    return NextResponse.json(subscriptions);
   } catch (error) {
     console.error("[API_FEEDS_SUBSCRIPTIONS_GET]", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch subscriptions",
-        code: "INTERNAL_SERVER_ERROR",
-      },
+      { error: "Failed to fetch subscriptions" },
       { status: 500 },
     );
   }

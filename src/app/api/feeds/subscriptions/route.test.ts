@@ -23,9 +23,7 @@ describe("GET /api/feeds/subscriptions", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: false,
       error: "You must be signed in to fetch subscriptions.",
-      code: "UNAUTHORIZED",
     });
   });
 
@@ -46,10 +44,7 @@ describe("GET /api/feeds/subscriptions", () => {
     expect(res.status).toBe(200);
 
     const json = await res.json();
-    expect(json).toEqual({
-      success: true,
-      data: JSON.parse(JSON.stringify(mockSubscriptions)),
-    });
+    expect(json).toEqual(JSON.parse(JSON.stringify(mockSubscriptions)));
 
     expect(getSubscriptions).toHaveBeenCalledWith(
       expect.anything(),
@@ -71,9 +66,7 @@ describe("GET /api/feeds/subscriptions", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: false,
       error: "Failed to fetch subscriptions",
-      code: "INTERNAL_SERVER_ERROR",
     });
   });
 });

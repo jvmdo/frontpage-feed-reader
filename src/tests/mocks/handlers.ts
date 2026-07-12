@@ -37,13 +37,10 @@ export const handlers = [
   // Mock System Sync/Refresh Task Status endpoint
   http.get("/api/refresh-task-status", () => {
     return HttpResponse.json({
-      success: true,
-      data: {
-        active: true,
-        isFailing: false,
-        lastRunAt: "2026-07-08T22:00:00.000Z",
-        nextRunAt: "2026-07-08T22:15:00.000Z",
-      },
+      active: true,
+      isFailing: false,
+      lastRunAt: "2026-07-08T22:00:00.000Z",
+      nextRunAt: "2026-07-08T22:15:00.000Z",
     });
   }),
 ];

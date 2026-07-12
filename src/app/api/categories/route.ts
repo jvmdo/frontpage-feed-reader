@@ -13,29 +13,17 @@ export async function GET() {
 
     if (!session?.user) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "You must be signed in to fetch categories.",
-          code: "UNAUTHORIZED",
-        },
+        { error: "You must be signed in to fetch categories." },
         { status: 401 },
       );
     }
 
     const categories = await getCategories(db, session.user.id);
-
-    return NextResponse.json({
-      success: true,
-      data: categories,
-    });
+    return NextResponse.json(categories);
   } catch (error) {
     console.error("[API_CATEGORIES_GET]", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch categories",
-        code: "INTERNAL_SERVER_ERROR",
-      },
+      { error: "Failed to fetch categories" },
       { status: 500 },
     );
   }

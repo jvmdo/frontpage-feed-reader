@@ -15,16 +15,11 @@ export function useUnreadCounts() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch unread counts");
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.error || "Failed to fetch unread counts");
       }
 
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to fetch unread counts");
-      }
-
-      return result.data as UnreadCounts;
+      return response.json();
     },
     staleTime: 1000 * 30, // 30 seconds
   });

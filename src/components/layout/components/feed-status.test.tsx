@@ -23,13 +23,10 @@ describe("FeedStatus", () => {
   ) => {
     server.use(
       http.get("/api/refresh-task-status", () => {
-        return HttpResponse.json({ success: true, data: systemStatus });
+        return HttpResponse.json(systemStatus);
       }),
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({
-          success: true,
-          data: feedsData,
-        });
+        return HttpResponse.json(feedsData);
       }),
     );
   };
@@ -193,20 +190,14 @@ describe("FeedStatus", () => {
           if (callCount === 1) {
             return new HttpResponse(null, { status: 500 });
           }
-          return HttpResponse.json({
-            success: true,
-            data: healthySystemStatus,
-          });
+          return HttpResponse.json(healthySystemStatus);
         }),
         http.get("/api/feeds/subscriptions", () => {
-          return HttpResponse.json({
-            success: true,
-            data: [
-              createMockFeedWithSubscription({
-                feed: { healthStatus: "healthy" },
-              }),
-            ],
-          });
+          return HttpResponse.json([
+            createMockFeedWithSubscription({
+              feed: { healthStatus: "healthy" },
+            }),
+          ]);
         }),
       );
 

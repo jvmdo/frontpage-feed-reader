@@ -20,9 +20,7 @@ describe("GET /api/categories", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: false,
       error: "You must be signed in to fetch categories.",
-      code: "UNAUTHORIZED",
     });
   });
 
@@ -39,10 +37,7 @@ describe("GET /api/categories", () => {
     expect(res.status).toBe(200);
 
     const json = await res.json();
-    expect(json).toEqual({
-      success: true,
-      data: JSON.parse(JSON.stringify(mockCategories)),
-    });
+    expect(json).toEqual(JSON.parse(JSON.stringify(mockCategories)));
 
     expect(getCategories).toHaveBeenCalledWith(expect.anything(), "user-123");
   });
@@ -59,9 +54,7 @@ describe("GET /api/categories", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: false,
       error: "Failed to fetch categories",
-      code: "INTERNAL_SERVER_ERROR",
     });
   });
 });

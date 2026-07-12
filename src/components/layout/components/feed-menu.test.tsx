@@ -33,27 +33,20 @@ describe("FeedMenu Integration", () => {
 
     server.use(
       http.get("/api/categories", () => {
-        return HttpResponse.json({
-          success: true,
-          data: [createMockCategory({ id: CATEGORY_ID, name: "Tech" })],
-        });
+        return HttpResponse.json([
+          createMockCategory({ id: CATEGORY_ID, name: "Tech" }),
+        ]);
       }),
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({
-          success: true,
-          data: [
-            createMockFeedWithSubscription({
-              feed: { id: FEED_1_ID, title: "Tech News 1" },
-              subscription: { categoryId: CATEGORY_ID },
-            }),
-          ],
-        });
+        return HttpResponse.json([
+          createMockFeedWithSubscription({
+            feed: { id: FEED_1_ID, title: "Tech News 1" },
+            subscription: { categoryId: CATEGORY_ID },
+          }),
+        ]);
       }),
       http.get("/api/feeds/unread-counts", () => {
-        return HttpResponse.json({
-          success: true,
-          data: { global: 0, categories: {}, feeds: {} },
-        });
+        return HttpResponse.json({ global: 0, categories: {}, feeds: {} });
       }),
     );
   });

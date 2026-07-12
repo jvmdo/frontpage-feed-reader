@@ -87,9 +87,6 @@ export interface SystemSyncStatus {
 }
 
 export interface VerifiedFeedResult {
-  success: boolean;
-  alreadySubscribed?: boolean;
+  alreadySubscribed: boolean;
   feed?: Pick<Feed, "title" | "description" | "iconUrl">;
-  error?: string;
-  code?: string;
 }

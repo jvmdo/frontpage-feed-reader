@@ -10,16 +10,11 @@ export function useRefreshTaskStatus() {
       const response = await fetch(getAbsoluteUrl("/api/refresh-task-status"));
 
       if (!response.ok) {
-        throw new Error("Failed to fetch sync status");
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.error || "Failed to fetch sync status");
       }
 
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to fetch sync status");
-      }
-
-      return result.data;
+      return response.json();
     },
     refetchInterval: env.NEXT_PUBLIC_TRIGGER_THROTTLE_MS,
   });

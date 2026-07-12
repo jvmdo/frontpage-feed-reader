@@ -25,9 +25,7 @@ describe("GET /api/feeds/check-new", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: false,
       error: expect.any(String),
-      code: "VALIDATION_ERROR",
     });
   });
 
@@ -42,9 +40,7 @@ describe("GET /api/feeds/check-new", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: false,
       error: "You must be signed in to check for new items.",
-      code: "UNAUTHORIZED",
     });
   });
 
@@ -65,8 +61,7 @@ describe("GET /api/feeds/check-new", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: true,
-      data: { count: 5 },
+      count: 5,
     });
 
     expect(countNewItems).toHaveBeenCalledWith(
@@ -96,8 +91,7 @@ describe("GET /api/feeds/check-new", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: true,
-      data: { count: 3 },
+      count: 3,
     });
 
     expect(countNewItems).toHaveBeenCalledWith(
@@ -125,9 +119,7 @@ describe("GET /api/feeds/check-new", () => {
 
     const json = await res.json();
     expect(json).toEqual({
-      success: false,
       error: "An unexpected error occurred while checking for new items.",
-      code: "INTERNAL_ERROR",
     });
   });
 });

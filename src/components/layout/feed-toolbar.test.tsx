@@ -41,16 +41,13 @@ describe("FeedToolbar", () => {
 
     server.use(
       http.get("/api/categories", () => {
-        return HttpResponse.json({ success: true, data: [] });
+        return HttpResponse.json([]);
       }),
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({ success: true, data: [] });
+        return HttpResponse.json([]);
       }),
       http.get("/api/feeds/unread-counts", () => {
-        return HttpResponse.json({
-          success: true,
-          data: { global: 10, categories: {}, feeds: {} },
-        });
+        return HttpResponse.json({ global: 10, categories: {}, feeds: {} });
       }),
     );
   });
@@ -166,8 +163,9 @@ describe("FeedToolbar", () => {
       server.use(
         http.get("/api/feeds/unread-counts", () => {
           return HttpResponse.json({
-            success: true,
-            data: { global: 10, categories: { "10": 5 }, feeds: {} },
+            global: 10,
+            categories: { "10": 5 },
+            feeds: {},
           });
         }),
       );
@@ -199,8 +197,9 @@ describe("FeedToolbar", () => {
       server.use(
         http.get("/api/feeds/unread-counts", () => {
           return HttpResponse.json({
-            success: true,
-            data: { global: 10, categories: {}, feeds: { "123": 3 } },
+            global: 10,
+            categories: {},
+            feeds: { "123": 3 },
           });
         }),
       );
@@ -228,10 +227,7 @@ describe("FeedToolbar", () => {
     it("disables the button when there are no unread items", async () => {
       server.use(
         http.get("/api/feeds/unread-counts", () => {
-          return HttpResponse.json({
-            success: true,
-            data: { global: 0, categories: {}, feeds: {} },
-          });
+          return HttpResponse.json({ global: 0, categories: {}, feeds: {} });
         }),
       );
 
@@ -399,20 +395,17 @@ describe("FeedToolbar", () => {
       // Setup mock data for feeds with an error
       server.use(
         http.get("/api/feeds/subscriptions", () => {
-          return HttpResponse.json({
-            success: true,
-            data: [
-              {
-                feed: {
-                  id: 1,
-                  title: "Broken Feed",
-                  healthStatus: "error",
-                  lastFetchedAt: lastChecked.toISOString(),
-                },
-                subscription: { id: 101 },
+          return HttpResponse.json([
+            {
+              feed: {
+                id: 1,
+                title: "Broken Feed",
+                healthStatus: "error",
+                lastFetchedAt: lastChecked.toISOString(),
               },
-            ],
-          });
+              subscription: { id: 101 },
+            },
+          ]);
         }),
       );
 
@@ -457,10 +450,7 @@ describe("FeedToolbar", () => {
           if (callCount === 1) {
             return new HttpResponse(null, { status: 500 });
           }
-          return HttpResponse.json({
-            success: true,
-            data: { global: 10, categories: {}, feeds: {} },
-          });
+          return HttpResponse.json({ global: 10, categories: {}, feeds: {} });
         }),
       );
 

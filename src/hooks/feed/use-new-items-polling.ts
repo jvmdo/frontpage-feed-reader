@@ -57,7 +57,7 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
       if (!response.ok) return 0;
 
       const res = await response.json();
-      return res.success ? (res.data.count as number) : 0;
+      return res.count as number;
     },
     enabled: !!latestItemDate && !isTourActive && !isSaved,
     refetchInterval: 60000, // 60 seconds

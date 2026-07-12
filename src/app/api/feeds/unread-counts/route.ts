@@ -12,30 +12,18 @@ export async function GET() {
 
   if (!session?.user) {
     return NextResponse.json(
-      {
-        success: false,
-        error: "You must be signed in to fetch unread counts.",
-        code: "UNAUTHORIZED",
-      },
+      { error: "You must be signed in to fetch unread counts." },
       { status: 401 },
     );
   }
 
   try {
     const counts = await getUnreadCounts(db, session.user.id);
-
-    return NextResponse.json({
-      success: true,
-      data: counts,
-    });
+    return NextResponse.json(counts);
   } catch (error) {
     console.error("[GET /api/feeds/unread-counts] Error:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch unread counts",
-        code: "INTERNAL_SERVER_ERROR",
-      },
+      { error: "Failed to fetch unread counts" },
       { status: 500 },
     );
   }

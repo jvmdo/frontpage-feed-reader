@@ -95,16 +95,13 @@ describe("ItemList", () => {
     mockTourState.isTourActive = false;
     server.use(
       http.get("/api/categories", () => {
-        return HttpResponse.json({ success: true, data: [] });
+        return HttpResponse.json([]);
       }),
       http.get("/api/feeds/subscriptions", () => {
-        return HttpResponse.json({ success: true, data: [] });
+        return HttpResponse.json([]);
       }),
       http.get("/api/feeds/unread-counts", () => {
-        return HttpResponse.json({
-          success: true,
-          data: { global: 0, categories: {}, feeds: {} },
-        });
+        return HttpResponse.json({ global: 0, categories: {}, feeds: {} });
       }),
     );
   });
@@ -163,7 +160,7 @@ describe("ItemList", () => {
         return HttpResponse.json([]);
       }),
       http.get("/api/categories", () => {
-        return HttpResponse.json({ success: true, data: [] });
+        return HttpResponse.json([]);
       }),
     );
 
