@@ -127,6 +127,10 @@ export function useSetReadStatus() {
         }) === 1
       ) {
         queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+        queryClient.invalidateQueries({
+          queryKey: ["feeds", "items"],
+          refetchType: "none",
+        });
       }
     },
   });

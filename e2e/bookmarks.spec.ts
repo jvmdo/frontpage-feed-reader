@@ -3,6 +3,7 @@ import {
   seedCategory,
   seedFeedWithSubscription,
   seedItems,
+  seedUserItemState,
 } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
@@ -123,5 +124,72 @@ test.describe("Bookmarks / Save for Later", () => {
       .filter({ hasText: "Saved" })
       .locator('[data-slot="sidebar-menu-badge"]');
     await expect(savedBadge).toHaveText("1");
+  });
+
+  test("should correctly filter items after marking a read bookmark as unread", async ({
+    authedPage,
+  }) => {
+    const { page, userId } = authedPage;
+
+    // 1. Seed a feed subscription and an item that is bookmarked and read
+    const { feed } = await seedFeedWithSubscription(db, userId, {
+      title: "E2E Test Feed",
+    });
+    const [item] = await seedItems(db, feed.id, [
+      { title: "Bug Triggering Item", publishedAt: new Date() },
+    ]);
+    await seedUserItemState(db, {
+      userId,
+      itemId: item.id,
+      readAt: new Date(),
+      bookmarkedAt: new Date(),
+    });
+
+    // 2. Navigate to Saved view
+    await page.goto("/dashboard?saved=true");
+    await page.waitForSelector('body[data-hydrated="true"]');
+
+    // Item should be visible
+    const article = page
+      .locator("article")
+      .filter({ hasText: "Bug Triggering Item" });
+    await expect(article).toBeVisible();
+
+    // 3. Filter by Read only
+    await page.getByRole("button", { name: /Filter/ }).click();
+    await page
+      .getByRole("menuitemradio", { name: "Read only", exact: true })
+      .click();
+
+    // Verify it is loaded and listed
+    await expect(page).toHaveURL(/status=read/);
+    await expect(article).toBeVisible();
+
+    // 4. Mark the item as unread
+    // Press 'j' to set focusedIndex, then 'm' to toggle read status
+    await page.keyboard.press("j");
+    await page.keyboard.press("m");
+
+    // The item should still be visible because we do not instantly jump/remove (good UX)
+    await expect(article).toBeVisible();
+    await expect(article).toContainText(/\bunread\b/i);
+
+    // 5. Change filter to 'All items'
+    await page.getByRole("button", { name: /Filter/ }).click();
+    await page
+      .getByRole("menuitemradio", { name: "All items", exact: true })
+      .click();
+    await expect(page).not.toHaveURL(/status=/);
+    await expect(article).toBeVisible();
+
+    // 6. Change filter back to 'Read only'
+    await page.getByRole("button", { name: /Filter/ }).click();
+    await page
+      .getByRole("menuitemradio", { name: "Read only", exact: true })
+      .click();
+    await expect(page).toHaveURL(/status=read/);
+
+    // The item should NOT be listed in the "Read only" view
+    await expect(article).not.toBeVisible();
   });
 });

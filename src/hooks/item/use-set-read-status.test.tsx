@@ -217,8 +217,11 @@ describe("useSetReadStatus", () => {
       expect(invalidate).toHaveBeenCalledWith(
         expect.objectContaining({ queryKey: COUNTS_KEY }),
       );
-      expect(invalidate).not.toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ["feeds", "items"] }),
+      expect(invalidate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryKey: ["feeds", "items"],
+          refetchType: "none",
+        }),
       );
     });
   });
