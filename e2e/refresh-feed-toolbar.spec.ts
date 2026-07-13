@@ -26,7 +26,7 @@ test.describe("FeedToolbar Refresh", () => {
 
     // 3. Verify toolbar shows the correct title
     await expect(
-      page.getByRole("heading", { name: "Toolbar Refresh Test" }),
+      page.getByRole("heading", { name: "Toolbar Refresh Test", exact: true }),
     ).toBeVisible();
 
     // 4. Trigger Refresh from the toolbar
@@ -62,7 +62,7 @@ test.describe("FeedToolbar Refresh", () => {
     await page.waitForSelector('body[data-hydrated="true"]');
 
     await expect(
-      page.getByRole("heading", { name: /your feed is empty/i }),
+      page.getByRole("heading", { name: /Data Refresh Test is empty/i }),
     ).toBeVisible();
 
     // 2. Trigger Refresh

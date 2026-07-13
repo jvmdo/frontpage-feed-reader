@@ -1,20 +1,14 @@
 "use client";
 
-import {
-  AlertCircleIcon,
-  FolderIcon,
-  RotateCcwIcon,
-  RssIcon,
-} from "lucide-react";
+import { AlertCircleIcon, RotateCcwIcon } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useErrorBoundary } from "react-error-boundary";
 import { Virtuoso, VirtuosoGrid } from "react-virtuoso";
-import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
+import { EmptyItemList } from "@/components/feed/empty-item-list";
 import { ItemCard } from "@/components/feed/item-card";
 import ItemListSkeleton from "@/components/feed/item-list-skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { useCategories } from "@/hooks/category/use-categories";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useActiveItem } from "@/hooks/item/use-active-item";
 import { useItems } from "@/hooks/item/use-items";
@@ -25,7 +19,7 @@ import { useTourStore } from "@/hooks/ui/use-tour-store";
 import { FeedLayout, useViewOptions } from "@/hooks/ui/use-view-options";
 import { WELCOME_FEED_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Category, ListItemWithSource } from "@/types";
+import type { ListItemWithSource } from "@/types";
 
 interface VirtuosoContext {
   isFetching: boolean;
@@ -64,7 +58,6 @@ const virtuosoComponents = {
 
 export function ItemList() {
   const { feedId, categoryId, isSaved } = useFeedFilter();
-  const { data: categories } = useCategories();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useItems();
   const { isTourActive } = useTourStore();
   const { layout } = useViewOptions();
@@ -73,7 +66,7 @@ export function ItemList() {
   const { mutate: toggleBookmark } = useToggleBookmark();
 
   const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
-  const virtuosoRef = useRef<any>(null);
+  const virtuosoRef = useRef(null);
 
   // Identify the scroll container on mount
   useLayoutEffect(() => {
@@ -105,13 +98,7 @@ export function ItemList() {
   };
 
   if (!items.length) {
-    return (
-      <FeedEmptyState
-        categoryId={categoryId}
-        categories={categories}
-        isSaved={isSaved}
-      />
-    );
+    return <EmptyItemList />;
   }
 
   // Find the index of the first item from the welcome feed
@@ -179,57 +166,6 @@ export function ItemList() {
 
   return (
     <Virtuoso ref={virtuosoRef} {...sharedProps} key={`list-${listKey}`} />
-  );
-}
-
-function FeedEmptyState({
-  categoryId,
-  categories,
-  isSaved,
-}: {
-  categoryId: number | null;
-  categories: Category[];
-  isSaved: boolean;
-}) {
-  if (isSaved) {
-    return (
-      <EmptyState
-        title={<h3>No saved items yet</h3>}
-        description="Articles you save for later will appear here, even after they've been read."
-        icon={RssIcon}
-      />
-    );
-  }
-
-  if (!categoryId) {
-    return (
-      <EmptyState
-        title={<h3>Your feed is empty</h3>}
-        description="Subscribe to more feeds or refresh your current ones to see new articles here."
-        icon={RssIcon}
-      />
-    );
-  }
-
-  const categoryName =
-    categories?.find((c) => c.id === categoryId)?.name || "This category";
-
-  return (
-    <EmptyState
-      title={<h3>{categoryName} has no items yet</h3>}
-      description="There are no feeds assigned to this category or the assigned feeds haven't published anything yet."
-      icon={FolderIcon}
-      action={
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-muted-foreground text-sm">
-            Assign feeds to this category to see them here.
-          </p>
-          <AssignFeedsDialog categoryId={categoryId}>
-            <Button variant="outline">Assign feeds</Button>
-          </AssignFeedsDialog>
-        </div>
-      }
-    />
   );
 }
 
