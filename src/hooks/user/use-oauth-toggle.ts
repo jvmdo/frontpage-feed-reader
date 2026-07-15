@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { USER_ACCOUNTS_QUERY_KEY, useUserAccounts } from "./use-user-accounts";
+import { queryKeys } from "@/lib/query-keys";
+import { useUserAccounts } from "./use-user-accounts";
 
 interface UseOAuthToggleOptions {
   onLinkSuccess?: () => void;
@@ -63,7 +64,7 @@ export function useOAuthToggle(
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: USER_ACCOUNTS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userAccounts.all });
       options?.onUnlinkSuccess?.();
     },
     onError: (error) => {

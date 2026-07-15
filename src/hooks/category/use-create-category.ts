@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createCategoryAction } from "@/actions/category/create-category-action";
+import { queryKeys } from "@/lib/query-keys";
 import type { CreateCategoryInput } from "@/lib/validations/category";
 
 /**
@@ -19,7 +20,7 @@ export function useCreateCategory() {
     },
     onSuccess: () => {
       // Invalidate categories query to trigger a refetch
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
     },
   });
 }

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteCategoryAction } from "@/actions/category/delete-category-action";
+import { queryKeys } from "@/lib/query-keys";
 import type { DeleteCategoryInput } from "@/lib/validations/category";
 import type { Category, FeedWithSubscription } from "@/types";
 
@@ -20,26 +21,28 @@ export function useDeleteCategory() {
     },
     onMutate: async (variables) => {
       // 1. Cancel outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({ queryKey: ["categories"] });
-      await queryClient.cancelQueries({ queryKey: ["subscriptions"] });
+      await queryClient.cancelQueries({ queryKey: queryKeys.categories.all });
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.subscriptions.all,
+      });
 
       // 2. Snapshot current caches for rollback
-      const previousCategories = queryClient.getQueryData<Category[]>([
-        "categories",
-      ]);
+      const previousCategories = queryClient.getQueryData<Category[]>(
+        queryKeys.categories.all,
+      );
       const previousSubscriptions = queryClient.getQueryData<
         FeedWithSubscription[]
-      >(["subscriptions"]);
+      >(queryKeys.subscriptions.all);
 
       // 3. Optimistically remove the category from the list
-      queryClient.setQueryData<Category[]>(["categories"], (old) => {
+      queryClient.setQueryData<Category[]>(queryKeys.categories.all, (old) => {
         if (!old) return undefined;
         return old.filter((cat) => cat.id !== variables.id);
       });
 
       // 4. Optimistically uncategorize feeds that belonged to the deleted category
       queryClient.setQueryData<FeedWithSubscription[]>(
-        ["subscriptions"],
+        queryKeys.subscriptions.all,
         (old) => {
           if (!old) return undefined;
           return old.map((item): FeedWithSubscription => {
@@ -63,21 +66,24 @@ export function useDeleteCategory() {
     onError: (_err, _variables, context) => {
       // Rollback to snapshots on failure
       if (context?.previousCategories) {
-        queryClient.setQueryData(["categories"], context.previousCategories);
+        queryClient.setQueryData(
+          queryKeys.categories.all,
+          context.previousCategories,
+        );
       }
       if (context?.previousSubscriptions) {
         queryClient.setQueryData(
-          ["subscriptions"],
+          queryKeys.subscriptions.all,
           context.previousSubscriptions,
         );
       }
     },
     onSettled: () => {
       // Force invalidation to sync client cache with DB truth
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCounts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feeds.items.all() });
     },
   });
 }

@@ -1,11 +1,10 @@
-"use client";
-
 import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import type { ItemWithSource } from "@/types";
 
 export function useItem(itemId: number | null) {
   return useQuery<ItemWithSource>({
-    queryKey: ["feeds", "items", "detail", itemId],
+    queryKey: queryKeys.feeds.items.detail(itemId),
     queryFn: async () => {
       if (!itemId) throw new Error("Item ID is required");
 

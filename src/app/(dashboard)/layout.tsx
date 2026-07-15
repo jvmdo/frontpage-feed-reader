@@ -17,6 +17,7 @@ import { WelcomeTour } from "@/components/shared/welcome-tour";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { db } from "@/db";
 import { getQueryClient } from "@/lib/get-query-client";
+import { queryKeys } from "@/lib/query-keys";
 import { getCurrentSession } from "@/lib/session";
 import { getCategories } from "@/services/category/get-categories";
 import { getUnreadCounts } from "@/services/feed/get-unread-counts";
@@ -26,8 +27,8 @@ import { shouldShowWelcomeTour } from "@/services/user/should-show-welcome-tour"
 
 export const metadata: Metadata = {
   title: {
-    default: "App",
     template: "%s | Frontpage",
+    default: "Frontpage",
   },
   robots: {
     index: false,
@@ -49,22 +50,22 @@ export default async function DashboardLayout({
   const queryClient = getQueryClient();
 
   queryClient.prefetchQuery({
-    queryKey: ["subscriptions"],
+    queryKey: queryKeys.subscriptions.all,
     queryFn: () => getSubscriptions(db, session.user.id),
   });
 
   queryClient.prefetchQuery({
-    queryKey: ["categories"],
+    queryKey: queryKeys.categories.all,
     queryFn: () => getCategories(db, session.user.id),
   });
 
   queryClient.prefetchQuery({
-    queryKey: ["feeds", "unread-counts"],
+    queryKey: queryKeys.unreadCounts.all,
     queryFn: () => getUnreadCounts(db, session.user.id),
   });
 
   queryClient.prefetchQuery({
-    queryKey: ["system", "refresh-task-status"],
+    queryKey: queryKeys.system.refreshTaskStatus(),
     queryFn: () => getRefreshTaskStatus(),
   });
 

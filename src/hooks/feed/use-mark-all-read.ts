@@ -3,6 +3,7 @@ import { markAllReadAction } from "@/actions/feed/mark-all-read-action";
 import { useFeeds } from "@/hooks/feed/use-feeds";
 import type { GenericCacheData } from "@/hooks/item/cache";
 import { updateInCache } from "@/hooks/item/cache";
+import { queryKeys } from "@/lib/query-keys";
 import type { MarkAllReadInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 import type { ItemWithSource, ListItemWithSource } from "@/types";
@@ -30,19 +31,20 @@ export function useMarkAllRead() {
       const { scope, id } = variables;
 
       // 1. Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["feeds", "unread-counts"] });
-      await queryClient.cancelQueries({ queryKey: ["feeds", "items"] });
+      await queryClient.cancelQueries({ queryKey: queryKeys.unreadCounts.all });
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.feeds.items.all(),
+      });
 
       // 2. Snapshot current counts for rollback
-      const previousCounts = queryClient.getQueryData<UnreadCounts>([
-        "feeds",
-        "unread-counts",
-      ]);
+      const previousCounts = queryClient.getQueryData<UnreadCounts>(
+        queryKeys.unreadCounts.all,
+      );
 
       // 3. Optimistically update unread counts
       if (previousCounts) {
         queryClient.setQueryData<UnreadCounts>(
-          ["feeds", "unread-counts"],
+          queryKeys.unreadCounts.all,
           (old) => {
             if (!old) return old;
 
@@ -90,7 +92,7 @@ export function useMarkAllRead() {
 
       // 4. Optimistically update items in all queries
       queryClient.setQueriesData<CacheData>(
-        { queryKey: ["feeds", "items"] },
+        { queryKey: queryKeys.feeds.items.all() },
         (old) =>
           updateInCache(
             old,
@@ -117,12 +119,12 @@ export function useMarkAllRead() {
       // Rollback unread counts
       if (context?.previousCounts) {
         queryClient.setQueryData(
-          ["feeds", "unread-counts"],
+          queryKeys.unreadCounts.all,
           context.previousCounts,
         );
       }
       // Invalidate items to fetch correct state
-      queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feeds.items.all() });
     },
     onSettled: () => {
       // Final sync with server, only when last mutation settles
@@ -131,8 +133,10 @@ export function useMarkAllRead() {
           mutationKey: ["feeds", "items", "mark-all-read"],
         }) === 1
       ) {
-        queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
-        queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadCounts.all });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.feeds.items.all(),
+        });
       }
     },
   });

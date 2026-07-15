@@ -1,11 +1,12 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { env } from "@/env";
+import { queryKeys } from "@/lib/query-keys";
 import { getAbsoluteUrl } from "@/lib/utils";
 import type { SystemSyncStatus } from "@/types";
 
 export function useRefreshTaskStatus() {
   return useSuspenseQuery({
-    queryKey: ["system", "refresh-task-status"],
+    queryKey: queryKeys.system.refreshTaskStatus(),
     queryFn: async (): Promise<SystemSyncStatus> => {
       const response = await fetch(getAbsoluteUrl("/api/refresh-task-status"));
 

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addFeedAction } from "@/actions/feed/add-feed-action";
+import { queryKeys } from "@/lib/query-keys";
 import type { AddFeedInput } from "@/lib/validations/feed";
 
 /**
@@ -19,9 +20,9 @@ export function useAddFeed() {
     },
     onSuccess: () => {
       // Invalidate specific dependent queries to sync with the server truth.
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCounts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feeds.items.all() });
     },
   });
 }

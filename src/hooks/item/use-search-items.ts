@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import type { ListItemWithSource } from "@/types";
 
 const SEARCH_PAGE_SIZE = 10;
@@ -9,7 +10,7 @@ const SEARCH_PAGE_SIZE = 10;
  */
 export function useSearchItems(search: string) {
   return useInfiniteQuery<ListItemWithSource[], Error, ListItemWithSource[]>({
-    queryKey: ["feeds", "items", "search", search],
+    queryKey: queryKeys.feeds.items.search(search),
     queryFn: async ({ pageParam = 0, signal }) => {
       if (!search) return [];
 

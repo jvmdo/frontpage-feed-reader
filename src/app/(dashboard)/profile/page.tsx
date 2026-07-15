@@ -10,6 +10,7 @@ import {
 import { db } from "@/db";
 import { auth } from "@/lib/auth";
 import { getQueryClient } from "@/lib/get-query-client";
+import { queryKeys } from "@/lib/query-keys";
 import { getCurrentSession } from "@/lib/session";
 import { getUserStats } from "@/services/user/get-user-stats";
 import { ProfileClient } from "../../../components/user/profile-client";
@@ -33,7 +34,7 @@ export default async function ProfilePage() {
   const headersList = await headers();
 
   queryClient.prefetchQuery({
-    queryKey: ["user-accounts"],
+    queryKey: queryKeys.userAccounts.all,
     queryFn: () => auth.api.listUserAccounts({ headers: headersList }),
   });
 

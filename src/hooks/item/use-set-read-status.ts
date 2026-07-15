@@ -1,7 +1,6 @@
-"use client";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { setReadStatusAction } from "@/actions/item/set-read-status-action";
+import { queryKeys } from "@/lib/query-keys";
 import type { SetReadStatusInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 import type {
@@ -32,20 +31,21 @@ export function useSetReadStatus() {
 
     onMutate: async ({ itemId, isRead = true }) => {
       // 1. Cancel outgoing refetches to avoid overwriting optimistic state
-      await queryClient.cancelQueries({ queryKey: ["feeds", "items"] });
-      await queryClient.cancelQueries({ queryKey: ["feeds", "unread-counts"] });
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.feeds.items.all(),
+      });
+      await queryClient.cancelQueries({ queryKey: queryKeys.unreadCounts.all });
 
       // 2. Snapshot current state for rollback
       const previousQueries = queryClient.getQueriesData<CacheData>({
-        queryKey: ["feeds", "items"],
+        queryKey: queryKeys.feeds.items.all(),
       });
-      const previousCounts = queryClient.getQueryData<UnreadCounts>([
-        "feeds",
-        "unread-counts",
-      ]);
-      const subscriptions = queryClient.getQueryData<FeedWithSubscription[]>([
-        "subscriptions",
-      ]);
+      const previousCounts = queryClient.getQueryData<UnreadCounts>(
+        queryKeys.unreadCounts.all,
+      );
+      const subscriptions = queryClient.getQueryData<FeedWithSubscription[]>(
+        queryKeys.subscriptions.all,
+      );
 
       // 3. Identify the item context
       const found = findInCache(previousQueries, (i) => i.item.id === itemId);
@@ -61,7 +61,7 @@ export function useSetReadStatus() {
 
       // 4. Update items across all cached queries
       queryClient.setQueriesData<CacheData>(
-        { queryKey: ["feeds", "items"] },
+        { queryKey: queryKeys.feeds.items.all() },
         (old) =>
           updateInCache(
             old,
@@ -101,7 +101,7 @@ export function useSetReadStatus() {
           }
         }
 
-        queryClient.setQueryData(["feeds", "unread-counts"], next);
+        queryClient.setQueryData(queryKeys.unreadCounts.all, next);
       }
 
       return { previousQueries, previousCounts };
@@ -113,7 +113,7 @@ export function useSetReadStatus() {
       }
       if (context?.previousCounts) {
         queryClient.setQueryData(
-          ["feeds", "unread-counts"],
+          queryKeys.unreadCounts.all,
           context.previousCounts,
         );
       }
@@ -126,9 +126,9 @@ export function useSetReadStatus() {
           mutationKey: ["feeds", "items", "set-read-status"],
         }) === 1
       ) {
-        queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadCounts.all });
         queryClient.invalidateQueries({
-          queryKey: ["feeds", "items"],
+          queryKey: queryKeys.feeds.items.all(),
           refetchType: "none",
         });
       }

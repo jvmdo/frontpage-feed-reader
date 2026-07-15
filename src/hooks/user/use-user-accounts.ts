@@ -1,7 +1,8 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
+import { queryKeys } from "@/lib/query-keys";
 
-export const USER_ACCOUNTS_QUERY_KEY = ["user-accounts"] as const;
+export const USER_ACCOUNTS_QUERY_KEY = queryKeys.userAccounts.all;
 
 /**
  * Custom hook to fetch the current user's connected authentication accounts.
@@ -9,7 +10,7 @@ export const USER_ACCOUNTS_QUERY_KEY = ["user-accounts"] as const;
  */
 export function useUserAccounts() {
   return useSuspenseQuery({
-    queryKey: USER_ACCOUNTS_QUERY_KEY,
+    queryKey: queryKeys.userAccounts.all,
     queryFn: async () => {
       const res = await authClient.listAccounts();
       if (res.error) throw res.error;

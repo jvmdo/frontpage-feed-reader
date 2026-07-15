@@ -2,6 +2,7 @@ import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useViewOptions } from "@/hooks/ui/use-view-options";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
+import { queryKeys } from "@/lib/query-keys";
 import { getDefaultSorting } from "@/lib/sorting";
 import { getAbsoluteUrl } from "@/lib/utils";
 import type { ListItemWithSource } from "@/types";
@@ -19,19 +20,15 @@ export function useItems() {
     Error,
     ListItemWithSource[]
   >({
-    queryKey: [
-      "feeds",
-      "items",
-      {
-        feedId: feedId ?? null,
-        categoryId: categoryId ?? null,
-        bookmarkedOnly: isSaved,
-        status,
-        feedIds: [...feedIds].sort(),
-        sortBy,
-        sortOrder,
-      },
-    ],
+    queryKey: queryKeys.feeds.items.list({
+      feedId: feedId ?? null,
+      categoryId: categoryId ?? null,
+      bookmarkedOnly: isSaved,
+      status,
+      feedIds: [...feedIds].sort(),
+      sortBy,
+      sortOrder,
+    }),
     queryFn: async ({ pageParam, signal }) => {
       const offset = pageParam as number;
       let url = getAbsoluteUrl(

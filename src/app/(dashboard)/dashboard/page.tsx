@@ -14,6 +14,7 @@ import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
 import { db } from "@/db";
 import { PAGINATION_INITIAL_OFFSET, PAGINATION_LIMIT } from "@/lib/constants";
 import { getQueryClient } from "@/lib/get-query-client";
+import { queryKeys } from "@/lib/query-keys";
 import { getCurrentSession } from "@/lib/session";
 import { getDefaultSorting } from "@/lib/sorting";
 import { itemsQuerySchema } from "@/lib/validations/feed";
@@ -65,19 +66,15 @@ export default async function DashboardPage({
   // Prefetch items for the unified "All Items" feed, specific feed, or category.
   // The key must match the one used in the useItems hook.
   queryClient.prefetchInfiniteQuery({
-    queryKey: [
-      "feeds",
-      "items",
-      {
-        feedId: feedId ?? null,
-        categoryId: categoryId ?? null,
-        bookmarkedOnly: saved,
-        status,
-        feedIds: [...feedIds].sort(),
-        sortBy,
-        sortOrder,
-      },
-    ],
+    queryKey: queryKeys.feeds.items.list({
+      feedId: feedId ?? null,
+      categoryId: categoryId ?? null,
+      bookmarkedOnly: saved,
+      status,
+      feedIds: [...feedIds].sort(),
+      sortBy,
+      sortOrder,
+    }),
     queryFn: () =>
       getItems(db, session.user.id, {
         limit,

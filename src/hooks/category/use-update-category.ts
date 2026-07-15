@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateCategoryAction } from "@/actions/category/update-category-action";
+import { queryKeys } from "@/lib/query-keys";
 import type { UpdateCategoryInput } from "@/lib/validations/category";
 import type { Category } from "@/types";
 
@@ -20,15 +21,15 @@ export function useUpdateCategory() {
     },
     onMutate: async (variables) => {
       // 1. Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["categories"] });
+      await queryClient.cancelQueries({ queryKey: queryKeys.categories.all });
 
       // 2. Snapshot current categories cache
-      const previousCategories = queryClient.getQueryData<Category[]>([
-        "categories",
-      ]);
+      const previousCategories = queryClient.getQueryData<Category[]>(
+        queryKeys.categories.all,
+      );
 
       // 3. Optimistically update the categories list in place
-      queryClient.setQueryData<Category[]>(["categories"], (old) => {
+      queryClient.setQueryData<Category[]>(queryKeys.categories.all, (old) => {
         if (!old) return undefined;
         return old.map((cat) =>
           cat.id === variables.id
@@ -46,13 +47,16 @@ export function useUpdateCategory() {
     },
     onError: (_err, _variables, context) => {
       if (context?.previousCategories) {
-        queryClient.setQueryData(["categories"], context.previousCategories);
+        queryClient.setQueryData(
+          queryKeys.categories.all,
+          context.previousCategories,
+        );
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feeds.items.all() });
     },
   });
 }

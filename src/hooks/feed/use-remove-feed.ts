@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { removeFeedAction } from "@/actions/feed/remove-feed-action";
 import type { GenericCacheData } from "@/hooks/item/cache";
 import { filterFromCache } from "@/hooks/item/cache";
+import { queryKeys } from "@/lib/query-keys";
 import type { RemoveFeedInput } from "@/lib/validations/feed";
 import type {
   FeedWithSubscription,
@@ -28,16 +29,20 @@ export function useRemoveFeed() {
     },
     onMutate: async (variables) => {
       // 1. Cancel outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({ queryKey: ["subscriptions"] });
-      await queryClient.cancelQueries({ queryKey: ["feeds", "items"] });
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.subscriptions.all,
+      });
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.feeds.items.all(),
+      });
 
       // 2. Snapshot current caches for rollback
       const previousSubscriptions = queryClient.getQueryData<
         FeedWithSubscription[]
-      >(["subscriptions"]);
+      >(queryKeys.subscriptions.all);
       // Snapshot items cache queries
       const previousQueries = queryClient.getQueriesData<ItemCacheData>({
-        queryKey: ["feeds", "items"],
+        queryKey: queryKeys.feeds.items.all(),
       });
 
       // Find the associated feedId from the subscriptions cache before we modify it
@@ -48,7 +53,7 @@ export function useRemoveFeed() {
 
       // 3. Optimistically remove subscription from cache
       queryClient.setQueryData<FeedWithSubscription[]>(
-        ["subscriptions"],
+        queryKeys.subscriptions.all,
         (old) => {
           if (!old) return undefined;
           return old.filter((item) => item.subscription.id !== variables.id);
@@ -58,7 +63,7 @@ export function useRemoveFeed() {
       // 4. Optimistically filter out items belonging to the removed feed
       if (feedId) {
         queryClient.setQueriesData<ItemCacheData>(
-          { queryKey: ["feeds", "items"] },
+          { queryKey: queryKeys.feeds.items.all() },
           (old) => filterFromCache(old, (item) => item.feed.id === feedId),
         );
       }
@@ -70,7 +75,7 @@ export function useRemoveFeed() {
       // Rollback to snapshots on failure
       if (context?.previousSubscriptions) {
         queryClient.setQueryData(
-          ["subscriptions"],
+          queryKeys.subscriptions.all,
           context.previousSubscriptions,
         );
       }
@@ -82,9 +87,9 @@ export function useRemoveFeed() {
     },
     onSettled: () => {
       // Force invalidation to sync client cache with DB truth
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
-      queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadCounts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feeds.items.all() });
     },
   });
 }

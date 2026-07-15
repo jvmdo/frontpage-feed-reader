@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import { getAbsoluteUrl } from "@/lib/utils";
 import type { FeedWithSubscription } from "@/types";
 
@@ -8,7 +9,7 @@ import type { FeedWithSubscription } from "@/types";
  */
 export function useFeeds() {
   return useSuspenseQuery<FeedWithSubscription[]>({
-    queryKey: ["subscriptions"],
+    queryKey: queryKeys.subscriptions.all,
     queryFn: async ({ signal }) => {
       const response = await fetch(getAbsoluteUrl("/api/feeds/subscriptions"), {
         signal,
@@ -21,6 +22,5 @@ export function useFeeds() {
 
       return response.json();
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

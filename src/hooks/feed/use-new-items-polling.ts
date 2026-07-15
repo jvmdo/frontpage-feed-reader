@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useItems } from "@/hooks/item/use-items";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
+import { queryKeys } from "@/lib/query-keys";
 
 interface UseNewItemsPollingOptions {
   onBeforeRefresh?: () => void;
@@ -35,13 +36,12 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
   const isUnreadOnly = status === "unread";
 
   const { data: newItemsCount } = useQuery({
-    queryKey: [
-      "new-items-count",
+    queryKey: queryKeys.newItemsCount.all(
       feedId,
       categoryId,
       isUnreadOnly,
       [...feedIds].sort(),
-    ],
+    ),
     queryFn: async () => {
       if (!latestItemDate) return 0;
 
@@ -65,16 +65,15 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
 
   const handleLoadNew = () => {
     onBeforeRefresh?.();
-    queryClient.invalidateQueries({ queryKey: ["feeds", "items"] });
-    queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.feeds.items.all() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.unreadCounts.all });
     queryClient.setQueryData(
-      [
-        "new-items-count",
+      queryKeys.newItemsCount.all(
         feedId,
         categoryId,
         isUnreadOnly,
         [...feedIds].sort(),
-      ],
+      ),
       0,
     );
   };

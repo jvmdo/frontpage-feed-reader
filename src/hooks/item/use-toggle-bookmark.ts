@@ -1,7 +1,6 @@
-"use client";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toggleBookmarkAction } from "@/actions/item/toggle-bookmark-action";
+import { queryKeys } from "@/lib/query-keys";
 import type { ToggleBookmarkInput } from "@/lib/validations/feed";
 import type { UnreadCounts } from "@/services/feed/get-unread-counts";
 import type { ItemWithSource, ListItemWithSource } from "@/types";
@@ -34,17 +33,18 @@ export function useToggleBookmark() {
 
     onMutate: async ({ itemId }) => {
       // 1. Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["feeds", "items"] });
-      await queryClient.cancelQueries({ queryKey: ["feeds", "unread-counts"] });
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.feeds.items.all(),
+      });
+      await queryClient.cancelQueries({ queryKey: queryKeys.unreadCounts.all });
 
       // 2. Snapshot current state
       const previousQueries = queryClient.getQueriesData<CacheData>({
-        queryKey: ["feeds", "items"],
+        queryKey: queryKeys.feeds.items.all(),
       });
-      const previousCounts = queryClient.getQueryData<UnreadCounts>([
-        "feeds",
-        "unread-counts",
-      ]);
+      const previousCounts = queryClient.getQueryData<UnreadCounts>(
+        queryKeys.unreadCounts.all,
+      );
 
       // 3. Identify item context
       const found = findInCache(previousQueries, (i) => i.item.id === itemId);
@@ -111,7 +111,7 @@ export function useToggleBookmark() {
         const diff = !isBookmarked ? 1 : -1;
         next.saved = Math.max(0, next.saved + diff);
 
-        queryClient.setQueryData(["feeds", "unread-counts"], next);
+        queryClient.setQueryData(queryKeys.unreadCounts.all, next);
       }
 
       return { previousQueries, previousCounts };
@@ -125,7 +125,7 @@ export function useToggleBookmark() {
       }
       if (context?.previousCounts) {
         queryClient.setQueryData(
-          ["feeds", "unread-counts"],
+          queryKeys.unreadCounts.all,
           context.previousCounts,
         );
       }
@@ -138,7 +138,7 @@ export function useToggleBookmark() {
           mutationKey: ["feeds", "items", "bookmark"],
         }) === 1
       ) {
-        queryClient.invalidateQueries({ queryKey: ["feeds", "unread-counts"] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadCounts.all });
       }
     },
   });

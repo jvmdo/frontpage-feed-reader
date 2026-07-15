@@ -9,6 +9,9 @@ function makeQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000 * 5, // 5 minutes
+        // Disable retries on the server to prevent stalling page rendering.
+        // On the browser, retry failed queries up to 2 times before showing an error boundary.
+        retry: environmentManager.isServer() ? false : 2,
       },
       dehydrate: {
         // include pending queries in dehydration
