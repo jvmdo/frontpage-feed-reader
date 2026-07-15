@@ -94,6 +94,9 @@ export const auth = betterAuth({
     }),
     testUtils(),
   ],
+  rateLimit: {
+    enabled: process.env.PLAYWRIGHT_TEST !== "true",
+  },
   advanced: {
     // Disable secure cookies during E2E tests so they work over localhost
     useSecureCookies:

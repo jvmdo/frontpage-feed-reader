@@ -7,17 +7,11 @@ import { cleanupUserByEmail } from "@/tests/cleanup-user";
 import { seedCategory, seedFeedWithSubscription } from "@/tests/seeding";
 import { expect, test } from "./fixtures/test-extend";
 
-const testUser = {
-  name: "Profile E2E User",
-  email: `profile-test-${crypto.randomUUID()}@example.com`,
-  password: "password123",
-  newPassword: "newpassword123",
-};
-
-let newEmail: string | null = null;
+let testUserEmail: string | null = null;
+let testUserNewEmail: string | null = null;
 let testUserId: string | null = null;
 
-test.afterAll(async () => {
+test.afterEach(async () => {
   // 1. Delete associated feeds using the captured userId (since user is deleted in UI)
   if (testUserId) {
     const { like } = require("drizzle-orm");
@@ -26,13 +20,28 @@ test.afterAll(async () => {
   }
 
   // 2. Clean up mock users by email in case the test failed before UI deletion
-  await cleanupUserByEmail(testUser.email);
-  if (newEmail) {
-    await cleanupUserByEmail(newEmail);
+  if (testUserEmail) {
+    await cleanupUserByEmail(testUserEmail);
   }
+  if (testUserNewEmail) {
+    await cleanupUserByEmail(testUserNewEmail);
+  }
+
+  // Reset variables for next test run
+  testUserEmail = null;
+  testUserNewEmail = null;
+  testUserId = null;
 });
 
 omegaTest("profile page management flow", async ({ page }) => {
+  testUserEmail = `profile-test-${crypto.randomUUID()}@example.com`;
+  const testUser = {
+    name: "Profile E2E User",
+    email: testUserEmail,
+    password: "password123",
+    newPassword: "newpassword123",
+  };
+
   // Setup: Sign Up a new user to have a real credential account
   await page.goto("/sign-up");
   await page.waitForSelector('body[data-hydrated="true"]');
@@ -113,8 +122,8 @@ omegaTest("profile page management flow", async ({ page }) => {
   ).toBeVisible();
 
   // 5. Change Email Address
-  newEmail = `profile-test-updated-${crypto.randomUUID()}@example.com`;
-  await page.getByLabel(/new email address/i).fill(newEmail);
+  testUserNewEmail = `profile-test-updated-${crypto.randomUUID()}@example.com`;
+  await page.getByLabel(/new email address/i).fill(testUserNewEmail);
   await page.getByLabel(/confirm password/i).fill("new-pass");
   await page.getByRole("button", { name: /update email/i }).click();
 
@@ -125,7 +134,7 @@ omegaTest("profile page management flow", async ({ page }) => {
       .filter({ hasText: /email address updated/i }),
   ).toBeVisible();
   // Verify reactivity
-  await expect(page.getByText(newEmail)).toBeVisible();
+  await expect(page.getByText(testUserNewEmail)).toBeVisible();
 
   // 6. Delete User
   await page.getByRole("button", { name: /delete account/i }).click();
