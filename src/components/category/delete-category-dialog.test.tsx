@@ -1,52 +1,36 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Test asset */
-
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteCategoryAction } from "@/actions/category/delete-category-action";
 import { createMockCategory } from "@/tests/factories";
-import {
-  render,
-  screen,
-  waitFor,
-  waitForElementToBeRemoved,
-} from "@/tests/rtl-utils";
+import { render, screen, waitFor } from "@/tests/rtl-utils";
+import type { Category } from "@/types";
 import { DeleteCategoryDialog } from "./delete-category-dialog";
 
-// Mock the server action
 vi.mock("@/actions/category/delete-category-action", () => ({
   deleteCategoryAction: vi.fn(),
 }));
 
-// Mock sonner toast
 vi.mock("sonner", () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
+  toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 describe("DeleteCategoryDialog", () => {
-  const category = createMockCategory({ id: 1, name: "Tech" });
+  const category = createMockCategory({ name: "Tech" });
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  const setup = () => {
+  const setup = (cat: Category | null = category) => {
     const user = userEvent.setup();
-    render(
-      <DeleteCategoryDialog category={category}>
-        <button type="button">Open Dialog</button>
-      </DeleteCategoryDialog>,
-    );
-    return { user };
+    const onOpenChange = vi.fn();
+    render(<DeleteCategoryDialog category={cat} onOpenChange={onOpenChange} />);
+    return { user, onOpenChange };
   };
 
   it("opens the confirmation dialog", async () => {
-    const { user } = setup();
-
-    await user.click(screen.getByRole("button", { name: /open dialog/i }));
+    setup();
 
     expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
     expect(screen.getByText(/are you absolutely sure\?/i)).toBeInTheDocument();
@@ -61,7 +45,6 @@ describe("DeleteCategoryDialog", () => {
 
     const { user } = setup();
 
-    await user.click(screen.getByRole("button", { name: /open dialog/i }));
     await user.click(screen.getByRole("button", { name: /delete category/i }));
 
     expect(deleteCategoryAction).toHaveBeenCalledWith({
@@ -84,7 +67,6 @@ describe("DeleteCategoryDialog", () => {
 
     const { user } = setup();
 
-    await user.click(screen.getByRole("button", { name: /open dialog/i }));
     await user.click(screen.getByRole("button", { name: /delete category/i }));
 
     await waitFor(() => {
@@ -93,23 +75,20 @@ describe("DeleteCategoryDialog", () => {
   });
 
   it("displays loading state while deleting", async () => {
-    let resolveAction!: (value: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
+    const { promise, resolve } = Promise.withResolvers<any>();
+    vi.mocked(deleteCategoryAction).mockReturnValue(promise);
 
-    vi.mocked(deleteCategoryAction).mockReturnValue(pendingPromise as any);
+    const { user, onOpenChange } = setup();
 
-    const { user } = setup();
-
-    await user.click(screen.getByRole("button", { name: /open dialog/i }));
     await user.click(screen.getByRole("button", { name: /delete category/i }));
 
     expect(screen.getByRole("button", { name: /deleting/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /cancel/i })).toBeDisabled();
 
-    resolveAction({ success: true });
+    resolve({ success: true });
 
-    await waitForElementToBeRemoved(screen.queryByRole("alertdialog"));
+    await waitFor(() => {
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
   });
 });

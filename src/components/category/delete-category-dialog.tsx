@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type { ComponentProps } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -11,31 +11,31 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useDeleteCategory } from "@/hooks/category/use-delete-category";
 import type { Category } from "@/types";
 
-interface DeleteCategoryDialogProps {
-  category: Category;
-  children: React.ReactNode;
+interface DeleteCategoryDialogProps extends ComponentProps<typeof AlertDialog> {
+  category: Category | null;
 }
 
 export function DeleteCategoryDialog({
   category,
-  children,
+  onOpenChange,
+  ...props
 }: DeleteCategoryDialogProps) {
-  const [open, setOpen] = React.useState(false);
   const { mutate: deleteCategory, isPending } = useDeleteCategory();
 
   const handleDelete = () => {
+    if (!category) return;
+
     deleteCategory(
       { id: category.id },
       {
         onSuccess: () => {
           toast.success("Category deleted successfully");
-          setOpen(false);
+          onOpenChange?.(false);
         },
         onError: (error) => {
           toast.error(error.message || "Failed to delete category");
@@ -45,13 +45,12 @@ export function DeleteCategoryDialog({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+    <AlertDialog open={!!category} onOpenChange={onOpenChange} {...props}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete the <strong>{category.name}</strong>{" "}
+            This will permanently delete the <strong>{category?.name}</strong>{" "}
             category. All feeds in this category will be moved to{" "}
             <strong>Uncategorized</strong>.
           </AlertDialogDescription>

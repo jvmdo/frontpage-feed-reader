@@ -1,57 +1,37 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Test asset */
-
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { updateCategoryAction } from "@/actions/category/update-category-action";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import { createMockCategory } from "@/tests/factories";
-import {
-  render,
-  screen,
-  waitFor,
-  waitForElementToBeRemoved,
-} from "@/tests/rtl-utils";
+import { render, screen, waitFor } from "@/tests/rtl-utils";
+import type { Category } from "@/types";
 import { EditCategoryDialog } from "./edit-category-dialog";
 
-// Mock the server action
 vi.mock("@/actions/category/update-category-action", () => ({
   updateCategoryAction: vi.fn(),
 }));
 
-// Mock sonner toast
 vi.mock("sonner", () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
+  toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 describe("EditCategoryDialog", () => {
-  const category = createMockCategory({
-    id: 1,
-    name: "Old Name",
-    color: DEFAULT_CATEGORY_COLOR,
-  });
+  const category = createMockCategory({ name: "Old Name" });
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  const setup = () => {
+  const setup = (cat: Category | null = category) => {
     const user = userEvent.setup();
-    render(
-      <EditCategoryDialog category={category}>
-        <button type="button">Open Dialog</button>
-      </EditCategoryDialog>,
-    );
-    return { user };
+    const onOpenChange = vi.fn();
+    render(<EditCategoryDialog category={cat} onOpenChange={onOpenChange} />);
+    return { user, onOpenChange };
   };
 
   it("opens the dialog and shows the current name and color", async () => {
-    const { user } = setup();
-
-    await user.click(screen.getByRole("button", { name: /open dialog/i }));
+    setup();
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /name/i })).toHaveValue(
@@ -68,8 +48,6 @@ describe("EditCategoryDialog", () => {
     });
 
     const { user } = setup();
-
-    await user.click(screen.getByRole("button", { name: /open dialog/i }));
 
     const nameInput = screen.getByRole("textbox", { name: /name/i });
     await user.clear(nameInput);
@@ -88,8 +66,6 @@ describe("EditCategoryDialog", () => {
         "Category updated successfully",
       );
     });
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("shows error toast when update fails", async () => {
@@ -100,8 +76,6 @@ describe("EditCategoryDialog", () => {
     });
 
     const { user } = setup();
-
-    await user.click(screen.getByRole("button", { name: /open dialog/i }));
 
     const input = screen.getByRole("textbox", { name: /name/i });
     await user.clear(input);
@@ -119,8 +93,6 @@ describe("EditCategoryDialog", () => {
   it("shows validation error for empty name", async () => {
     const { user } = setup();
 
-    await user.click(screen.getByRole("button", { name: /open dialog/i }));
-
     const input = screen.getByRole("textbox", { name: /name/i });
     await user.clear(input);
 
@@ -134,16 +106,10 @@ describe("EditCategoryDialog", () => {
   });
 
   it("displays loading state while saving", async () => {
-    let resolveAction!: (value: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
+    const { promise, resolve } = Promise.withResolvers<any>();
+    vi.mocked(updateCategoryAction).mockReturnValue(promise);
 
-    vi.mocked(updateCategoryAction).mockReturnValue(pendingPromise as any);
-
-    const { user } = setup();
-
-    await user.click(screen.getByRole("button", { name: /open dialog/i }));
+    const { user, onOpenChange } = setup();
 
     const input = screen.getByRole("textbox", { name: /name/i });
     await user.clear(input);
@@ -153,11 +119,10 @@ describe("EditCategoryDialog", () => {
 
     expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled();
 
-    resolveAction({
-      success: true,
-      data: { ...category, name: "New Name" },
-    });
+    resolve({ success: true, data: { ...category, name: "New Name" } });
 
-    await waitForElementToBeRemoved(screen.queryByRole("dialog"));
+    await waitFor(() => {
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
   });
 });

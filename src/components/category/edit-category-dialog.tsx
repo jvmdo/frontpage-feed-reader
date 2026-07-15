@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as React from "react";
+import type { ComponentProps } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Field,
@@ -30,20 +29,19 @@ import {
 } from "@/lib/validations/category";
 import type { Category } from "@/types";
 
-interface EditCategoryDialogProps {
-  category: Category;
-  children: React.ReactNode;
+interface EditCategoryDialogProps extends ComponentProps<typeof Dialog> {
+  category: Category | null;
 }
 
 export function EditCategoryDialog({
   category,
-  children,
+  onOpenChange,
+  ...props
 }: EditCategoryDialogProps) {
-  const [open, setOpen] = React.useState(false);
+  const open = !!category;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange} {...props}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Category</DialogTitle>
@@ -52,11 +50,11 @@ export function EditCategoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
+        {open && category && (
           <EditCategoryForm
             category={category}
-            onSuccess={() => setOpen(false)}
-            onCancel={() => setOpen(false)}
+            onSuccess={() => onOpenChange?.(false)}
+            onCancel={() => onOpenChange?.(false)}
           />
         )}
       </DialogContent>
