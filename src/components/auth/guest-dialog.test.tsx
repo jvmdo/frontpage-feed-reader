@@ -1,8 +1,5 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Tests */
-
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { authClient } from "@/lib/auth-client";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { GuestDialog } from "./guest-dialog";
@@ -108,12 +105,9 @@ describe("GuestDialog", () => {
   });
 
   it("displays loading state while converting", async () => {
-    let resolveAction!: (value: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
+    const { promise, resolve } = Promise.withResolvers<any>();
 
-    vi.mocked(authClient.signUp.email).mockReturnValue(pendingPromise as any);
+    vi.mocked(authClient.signUp.email).mockReturnValue(promise as any);
 
     const { user } = setup();
 
@@ -126,7 +120,7 @@ describe("GuestDialog", () => {
 
     expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled();
 
-    resolveAction({ data: { session: {} }, error: null });
+    resolve({ data: { session: {} }, error: null });
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalled();

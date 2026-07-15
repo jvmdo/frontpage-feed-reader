@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import GithubButton from "@/components/auth/github-button";
@@ -19,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@/lib/auth-client";
+import { useSignUp } from "@/hooks/user/use-sign-up";
 import { cn } from "@/lib/utils";
 import { type SignUpInput, signUpSchema } from "@/lib/validations/auth";
 
@@ -27,12 +26,12 @@ export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const router = useRouter();
+  const { mutate: signUp, isPending } = useSignUp();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     watch,
   } = useForm<SignUpInput>({
     resolver: zodResolver(signUpSchema),
@@ -47,18 +46,14 @@ export function SignupForm({
   const passwordValue = watch("password");
 
   const onSubmit = async (data: SignUpInput) => {
-    const { error } = await authClient.signUp.email({
-      email: data.email,
-      password: data.password,
-      name: data.name,
+    signUp(data, {
+      onSuccess: () => {
+        toast.success("Account created successfully!");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
     });
-
-    if (error) {
-      toast.error(error.message || "An error occurred during sign up.");
-    } else {
-      toast.success("Account created successfully!");
-      router.push("/dashboard");
-    }
   };
 
   return (
@@ -81,7 +76,7 @@ export function SignupForm({
             id="name"
             type="text"
             placeholder="John Doe"
-            disabled={isSubmitting}
+            disabled={isPending}
             {...register("name")}
             aria-describedby="error-name"
           />
@@ -95,7 +90,7 @@ export function SignupForm({
             id="email"
             type="email"
             placeholder="m@example.com"
-            disabled={isSubmitting}
+            disabled={isPending}
             {...register("email")}
             aria-describedby="error-email"
           />
@@ -110,7 +105,7 @@ export function SignupForm({
           <PasswordInput.Label htmlFor="password">Password</PasswordInput.Label>
           <PasswordInput.Control
             id="password"
-            disabled={isSubmitting}
+            disabled={isPending}
             {...register("password")}
             aria-describedby="error-password"
           />
@@ -133,7 +128,7 @@ export function SignupForm({
           </PasswordInput.Label>
           <PasswordInput.Control
             id="confirm-password"
-            disabled={isSubmitting}
+            disabled={isPending}
             {...register("confirmPassword")}
             aria-describedby="error-confirm"
           />
@@ -144,21 +139,21 @@ export function SignupForm({
           )}
         </PasswordInput.Root>
         <Field>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Spinner data-icon="inline-start" />}
-            {isSubmitting ? "Creating account..." : "Create Account"}
+          <Button type="submit" disabled={isPending}>
+            {isPending && <Spinner data-icon="inline-start" />}
+            {isPending ? "Creating account..." : "Create Account"}
           </Button>
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
           <div className="flex flex-col gap-2">
-            <GithubButton disabled={isSubmitting}>
+            <GithubButton disabled={isPending}>
               Sign up with GitHub
             </GithubButton>
             <GuestButton
               variant="outline"
               showIcon={true}
-              disabled={isSubmitting}
+              disabled={isPending}
             />
           </div>
           <FieldDescription className="px-6 text-center">

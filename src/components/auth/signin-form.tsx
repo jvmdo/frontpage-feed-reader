@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import GithubButton from "@/components/auth/github-button";
@@ -19,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@/lib/auth-client";
+import { useSignIn } from "@/hooks/user/use-sign-in";
 import { cn } from "@/lib/utils";
 import { type SignInInput, signInSchema } from "@/lib/validations/auth";
 
@@ -27,12 +26,11 @@ export function SigninForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const router = useRouter();
-
+  const { mutate: signIn, isPending } = useSignIn();
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<SignInInput>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -42,18 +40,14 @@ export function SigninForm({
   });
 
   const onSubmit = async (data: SignInInput) => {
-    const { error } = await authClient.signIn.email({
-      email: data.email,
-      password: data.password,
-      callbackURL: "/dashboard",
+    signIn(data, {
+      onSuccess: () => {
+        toast.success("Signed in successfully!");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
     });
-
-    if (error) {
-      toast.error(error.message || "Invalid email or password.");
-    } else {
-      toast.success("Signed in successfully!");
-      router.push("/dashboard");
-    }
   };
 
   return (
@@ -76,7 +70,7 @@ export function SigninForm({
             id="email"
             type="email"
             placeholder="m@example.com"
-            disabled={isSubmitting}
+            disabled={isPending}
             {...register("email")}
             aria-describedby="error-email"
           />
@@ -101,7 +95,7 @@ export function SigninForm({
           </div>
           <PasswordInput.Control
             id="password"
-            disabled={isSubmitting}
+            disabled={isPending}
             {...register("password")}
             aria-describedby="error-password"
           />
@@ -112,28 +106,28 @@ export function SigninForm({
           )}
         </PasswordInput.Root>
         <Field>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Spinner data-icon="inline-start" />}
-            {isSubmitting ? "Signing in..." : "Sign In"}
+          <Button type="submit" disabled={isPending}>
+            {isPending && <Spinner data-icon="inline-start" />}
+            {isPending ? "Signing in..." : "Sign In"}
           </Button>
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
           <div className="flex flex-col gap-2">
-            <GithubButton disabled={isSubmitting}>
+            <GithubButton disabled={isPending}>
               Sign in with GitHub
             </GithubButton>
             <GuestButton
               variant={"outline"}
               showIcon={true}
-              disabled={isSubmitting}
+              disabled={isPending}
             />
             {process.env.NODE_ENV === "development" && (
               <Button
                 asChild={true}
                 variant="outline"
                 className="w-full"
-                disabled={isSubmitting}
+                disabled={isPending}
               >
                 <Link href="/api/dev-login">Auto Login (Dev Only)</Link>
               </Button>

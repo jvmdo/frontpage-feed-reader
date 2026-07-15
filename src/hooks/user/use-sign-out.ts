@@ -12,8 +12,6 @@ export function useSignOut() {
       if (error) {
         throw new Error(error.message || "An error occurred during operation.");
       }
-
-      return true;
     },
     onSuccess: () => {
       router.push("/sign-in");

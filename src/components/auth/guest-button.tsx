@@ -1,11 +1,9 @@
 "use client";
 
 import { UserIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
+import { useSignInAnonymous } from "@/hooks/user/use-sign-in-anonymous";
 import { cn } from "@/lib/utils";
 
 interface GuestButtonProps extends React.ComponentProps<typeof Button> {
@@ -20,28 +18,21 @@ export function GuestButton({
   variant = "default",
   ...props
 }: GuestButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const { mutate: signInAnonymous, isPending } = useSignInAnonymous();
 
   const handleGuestSignIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (isLoading) return;
+    if (isPending) return;
 
     e.preventDefault();
-    setIsLoading(true);
 
-    try {
-      const { error } = await authClient.signIn.anonymous();
-      if (error) {
-        toast.error(error.message || "Failed to sign in as guest.");
-      } else {
+    signInAnonymous(undefined, {
+      onSuccess: () => {
         toast.success("Signed in as guest!");
-        router.push("/dashboard");
-      }
-    } catch {
-      toast.error("An unexpected error occurred.");
-    } finally {
-      setIsLoading(false);
-    }
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
   };
 
   return (
@@ -50,16 +41,16 @@ export function GuestButton({
       type="button"
       className={cn(
         "relative overflow-hidden",
-        isLoading && "pointer-events-none select-none opacity-80",
+        isPending && "pointer-events-none select-none opacity-80",
         className,
       )}
-      aria-label={isLoading ? "Signing in as guest" : undefined}
+      aria-label={isPending ? "Signing in as guest" : undefined}
       onClick={handleGuestSignIn}
       {...props}
     >
       {showIcon && <UserIcon data-icon="inline-start" />}
       {children || "Try as Guest"}
-      {isLoading && (
+      {isPending && (
         <span
           role="status"
           aria-label="Loading"

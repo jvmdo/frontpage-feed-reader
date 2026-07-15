@@ -1,34 +1,21 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Tests */
-
 import userEvent from "@testing-library/user-event";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { authClient } from "@/lib/auth-client";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { SigninForm } from "./signin-form";
 
-// Mock next/navigation
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
 }));
 
-// Mock sonner toast
 vi.mock("sonner", () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
+  toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-// Mock authClient
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
-    signIn: {
-      email: vi.fn(),
-      social: vi.fn(),
-      anonymous: vi.fn(),
-    },
+    signIn: { email: vi.fn(), social: vi.fn(), anonymous: vi.fn() },
   },
 }));
 
@@ -135,12 +122,8 @@ describe("SigninForm", () => {
   });
 
   it("displays loading state while signing in", async () => {
-    let resolveAction!: (value: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
-
-    vi.mocked(authClient.signIn.email).mockReturnValue(pendingPromise as any);
+    const { promise, resolve } = Promise.withResolvers<any>();
+    vi.mocked(authClient.signIn.email).mockReturnValue(promise);
 
     const { user } = setup();
 
@@ -150,7 +133,7 @@ describe("SigninForm", () => {
 
     expect(screen.getByRole("button", { name: /signing in/i })).toBeDisabled();
 
-    resolveAction({ data: { session: {} }, error: null });
+    resolve({ data: { session: {} }, error: null });
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalled();

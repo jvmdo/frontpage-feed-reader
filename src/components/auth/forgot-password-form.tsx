@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@/lib/auth-client";
+import { useForgotPassword } from "@/hooks/user/use-forgot-password";
 import { cn } from "@/lib/utils";
 import {
   type ForgotPasswordInput,
@@ -26,11 +26,12 @@ export function ForgotPasswordForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const { mutate: forgotPassword, isPending, isSuccess } = useForgotPassword();
+
   const {
     register,
     handleSubmit,
-    setError,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    formState: { errors },
   } = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
@@ -39,21 +40,14 @@ export function ForgotPasswordForm({
   });
 
   const onSubmit = async (data: ForgotPasswordInput) => {
-    const { error } = await authClient.requestPasswordReset({
-      email: data.email,
-      redirectTo: "/reset-password",
+    forgotPassword(data, {
+      onError: (error) => {
+        toast.error(error.message);
+      },
     });
-
-    if (error) {
-      toast.error(error.message || "Failed to request password reset.");
-      setError("root", {
-        type: "server",
-        message: error.message,
-      });
-    }
   };
 
-  if (isSubmitSuccessful) {
+  if (isSuccess) {
     return (
       <div className={cn("flex flex-col gap-6 text-center", className)}>
         <div className="flex flex-col items-center gap-2">
@@ -110,7 +104,7 @@ export function ForgotPasswordForm({
             id="email"
             type="email"
             placeholder="name@example.com"
-            disabled={isSubmitting}
+            disabled={isPending}
             {...register("email")}
             aria-describedby="error-email"
           />
@@ -119,9 +113,9 @@ export function ForgotPasswordForm({
           )}
         </Field>
         <Field>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Spinner data-icon="inline-start" />}
-            {isSubmitting ? "Sending link..." : "Send reset link"}
+          <Button type="submit" disabled={isPending}>
+            {isPending && <Spinner data-icon="inline-start" />}
+            {isPending ? "Sending link..." : "Send reset link"}
           </Button>
         </Field>
         <div className="text-center text-sm">

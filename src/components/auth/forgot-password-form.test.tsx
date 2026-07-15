@@ -1,8 +1,5 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Tests */
-
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { authClient } from "@/lib/auth-client";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { ForgotPasswordForm } from "./forgot-password-form";
@@ -101,14 +98,9 @@ describe("ForgotPasswordForm", () => {
   });
 
   it("displays loading state while submitting", async () => {
-    let resolveAction!: (value: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
+    const { promise, resolve } = Promise.withResolvers<any>();
 
-    vi.mocked(authClient.requestPasswordReset).mockReturnValue(
-      pendingPromise as any,
-    );
+    vi.mocked(authClient.requestPasswordReset).mockReturnValue(promise as any);
 
     const { user } = setup();
 
@@ -119,7 +111,7 @@ describe("ForgotPasswordForm", () => {
       screen.getByRole("button", { name: /sending link/i }),
     ).toBeDisabled();
 
-    resolveAction({ data: { status: true }, error: null });
+    resolve({ data: { status: true }, error: null });
 
     await waitFor(() => {
       expect(screen.getByText(/check your email/i)).toBeInTheDocument();

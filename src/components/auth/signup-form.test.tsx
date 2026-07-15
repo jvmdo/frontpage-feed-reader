@@ -1,9 +1,6 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Tests */
-
 import userEvent from "@testing-library/user-event";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { authClient } from "@/lib/auth-client";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { SignupForm } from "./signup-form";
@@ -165,12 +162,9 @@ describe("SignupForm", () => {
   });
 
   it("displays loading state while creating account", async () => {
-    let resolveAction!: (value: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
+    const { promise, resolve } = Promise.withResolvers<any>();
 
-    vi.mocked(authClient.signUp.email).mockReturnValue(pendingPromise as any);
+    vi.mocked(authClient.signUp.email).mockReturnValue(promise as any);
 
     const { user } = setup();
 
@@ -184,7 +178,7 @@ describe("SignupForm", () => {
       screen.getByRole("button", { name: /creating account/i }),
     ).toBeDisabled();
 
-    resolveAction({ data: { session: {} }, error: null });
+    resolve({ data: { session: {} }, error: null });
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalled();

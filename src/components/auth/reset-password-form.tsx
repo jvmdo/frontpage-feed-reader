@@ -2,14 +2,13 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Spinner } from "@/components/ui/spinner";
-import { authClient } from "@/lib/auth-client";
+import { useResetPassword } from "@/hooks/user/use-reset-password";
 import { cn } from "@/lib/utils";
 import {
   type ResetPasswordInput,
@@ -25,12 +24,12 @@ export function ResetPasswordForm({
   token,
   ...props
 }: ResetPasswordFormProps) {
-  const router = useRouter();
+  const { mutate: resetPassword, isPending } = useResetPassword();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     watch,
   } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
@@ -48,19 +47,19 @@ export function ResetPasswordForm({
       return;
     }
 
-    const { error } = await authClient.resetPassword({
-      newPassword: data.password,
-      token,
-    });
-
-    if (error) {
-      toast.error(
-        error.message || "Failed to reset password. The link may have expired.",
-      );
-    } else {
-      toast.success("Password reset successfully! You can now sign in.");
-      router.push("/sign-in");
-    }
+    resetPassword(
+      { password: data.password, confirmPassword: data.confirmPassword, token },
+      {
+        onSuccess: () => {
+          toast.success("Password reset successfully!", {
+            description: "You can now sign in.",
+          });
+        },
+        onError: (error) => {
+          toast.error(error.message);
+        },
+      },
+    );
   };
 
   if (!token) {
@@ -102,7 +101,7 @@ export function ResetPasswordForm({
           </PasswordInput.Label>
           <PasswordInput.Control
             id="password"
-            disabled={isSubmitting}
+            disabled={isPending}
             {...register("password")}
             aria-describedby="error-password"
           />
@@ -122,7 +121,7 @@ export function ResetPasswordForm({
           </PasswordInput.Label>
           <PasswordInput.Control
             id="confirm"
-            disabled={isSubmitting}
+            disabled={isPending}
             {...register("confirmPassword")}
             aria-describedby="error-confirm"
           />
@@ -133,9 +132,9 @@ export function ResetPasswordForm({
           )}
         </PasswordInput.Root>
         <Field>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Spinner data-icon="inline-start" />}
-            {isSubmitting ? "Resetting..." : "Reset password"}
+          <Button type="submit" disabled={isPending}>
+            {isPending && <Spinner data-icon="inline-start" />}
+            {isPending ? "Resetting..." : "Reset password"}
           </Button>
         </Field>
         <div className="text-center text-sm">
