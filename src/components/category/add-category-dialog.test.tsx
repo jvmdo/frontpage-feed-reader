@@ -1,8 +1,5 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Tests */
-
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createCategoryAction } from "@/actions/category/create-category-action";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/constants";
 import {
@@ -125,12 +122,9 @@ describe("AddCategoryDialog", () => {
   it("displays a loading state while the action is pending", async () => {
     const categoryName = "New Category";
 
-    let resolveAction!: (value: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
+    const { promise, resolve } = Promise.withResolvers<any>();
 
-    vi.mocked(createCategoryAction).mockReturnValue(pendingPromise as any);
+    vi.mocked(createCategoryAction).mockReturnValue(promise as any);
 
     const { user } = setup();
 
@@ -147,7 +141,7 @@ describe("AddCategoryDialog", () => {
     expect(submitButton).toBeDisabled();
     expect(submitButton).toHaveTextContent(/creating/i);
 
-    resolveAction({
+    resolve({
       success: true,
       data: { id: 1, name: categoryName, color: DEFAULT_CATEGORY_COLOR },
     });

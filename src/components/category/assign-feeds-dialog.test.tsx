@@ -1,9 +1,6 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: test assets */
-
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { updateFeedAction } from "@/actions/feed/update-feed-action";
 import {
   createMockCategory,
@@ -206,12 +203,9 @@ describe("AssignFeedsDialog", () => {
   });
 
   it("displays loading state while moving a feed", async () => {
-    let resolveAction!: (value: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
+    const { promise, resolve } = Promise.withResolvers<any>();
 
-    vi.mocked(updateFeedAction).mockReturnValue(pendingPromise as any);
+    vi.mocked(updateFeedAction).mockReturnValue(promise as any);
 
     const { user } = setup();
 
@@ -228,7 +222,7 @@ describe("AssignFeedsDialog", () => {
     expect(moveButton).toBeDisabled();
     expect(within(moveButton).getByText(/moving/i)).toBeInTheDocument();
 
-    resolveAction({
+    resolve({
       success: true,
     });
 
@@ -238,12 +232,9 @@ describe("AssignFeedsDialog", () => {
   });
 
   it("displays loading state while removing a feed", async () => {
-    let resolveAction!: (value: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
+    const { promise, resolve } = Promise.withResolvers<any>();
 
-    vi.mocked(updateFeedAction).mockReturnValue(pendingPromise as any);
+    vi.mocked(updateFeedAction).mockReturnValue(promise as any);
 
     const { user } = setup();
 
@@ -259,7 +250,7 @@ describe("AssignFeedsDialog", () => {
     expect(removeButton).toBeDisabled();
     expect(within(removeButton).getByText(/removing/i)).toBeInTheDocument();
 
-    resolveAction({
+    resolve({
       success: true,
     });
 

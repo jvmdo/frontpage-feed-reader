@@ -1,7 +1,5 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: test asset */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setReadStatusAction } from "@/actions/item/set-read-status-action";
 import { useSetReadStatus } from "@/hooks/item/use-set-read-status";
 import { renderHook, waitFor } from "@/tests/rtl-utils";
@@ -247,11 +245,10 @@ describe("useSetReadStatus", () => {
 
   describe("single-item cache shape", () => {
     it("marks a single cached item as read", async () => {
+      const { promise, resolve } = Promise.withResolvers<any>();
       const singleKey = ["feeds", "items", { itemId: ITEM_ID }];
       queryClient.setQueryData(singleKey, makeItem({ isRead: false }));
-      vi.mocked(setReadStatusAction).mockImplementation(
-        () => new Promise(() => {}),
-      );
+      vi.mocked(setReadStatusAction).mockReturnValue(promise);
 
       const { result } = renderHook(() => useSetReadStatus(), { wrapper });
       result.current.mutate({ itemId: ITEM_ID, isRead: true });
@@ -259,6 +256,8 @@ describe("useSetReadStatus", () => {
       await waitFor(() => {
         expect(getItemsData(singleKey)?.isRead).toBe(true);
       });
+
+      resolve();
     });
   });
 });

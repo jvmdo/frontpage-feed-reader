@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: test asset */
-
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
 import { usePathname, useRouter } from "next/navigation";
@@ -143,10 +141,8 @@ describe("SearchPalette", () => {
       item: { id: 2, title: "Second Page Item" },
     });
 
-    let resolveSecondPage!: (value: any) => void;
-    const secondPagePromise = new Promise((resolve) => {
-      resolveSecondPage = resolve;
-    });
+    const { promise: secondPagePromise, resolve: resolveSecondPage } =
+      Promise.withResolvers<any>();
 
     server.use(
       http.get("/api/items", ({ request }) => {
@@ -192,10 +188,7 @@ describe("SearchPalette", () => {
   });
 
   it("shows loading state and then content using the hanging promise pattern", async () => {
-    let resolveSearch!: (value: any) => void;
-    const promise = new Promise((resolve) => {
-      resolveSearch = resolve;
-    });
+    const { promise, resolve: resolveSearch } = Promise.withResolvers<any>();
 
     server.use(
       http.get("/api/items", async () => {

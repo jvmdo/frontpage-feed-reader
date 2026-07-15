@@ -1,9 +1,6 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: test assets */
-
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { removeFeedAction } from "@/actions/feed/remove-feed-action";
 import { createMockFeed, createMockSubscription } from "@/tests/factories";
 import {
@@ -117,12 +114,9 @@ describe("RemoveFeedDialog", () => {
   });
 
   it("displays loading state while removing", async () => {
-    let resolveAction!: (reason: any) => void;
-    const pendingPromise = new Promise((resolve) => {
-      resolveAction = resolve;
-    });
+    const { promise, resolve } = Promise.withResolvers<any>();
 
-    vi.mocked(removeFeedAction).mockReturnValue(pendingPromise as any);
+    vi.mocked(removeFeedAction).mockReturnValue(promise as any);
 
     const { user } = setup();
 
@@ -134,7 +128,7 @@ describe("RemoveFeedDialog", () => {
     expect(removeButton).toBeDisabled();
     expect(removeButton).toHaveTextContent(/removing/i);
 
-    resolveAction({ success: true, data: mockFeed });
+    resolve({ success: true, data: mockFeed });
 
     await waitForElementToBeRemoved(screen.queryByRole("alertdialog"));
   });
