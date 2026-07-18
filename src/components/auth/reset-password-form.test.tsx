@@ -38,19 +38,11 @@ describe("ResetPasswordForm", () => {
     } as any);
   });
 
-  const setup = (token?: string) => {
+  const setup = (token: string) => {
     const user = userEvent.setup();
     render(<ResetPasswordForm token={token} />);
     return { user };
   };
-
-  it("shows error state if token is missing", () => {
-    setup(undefined);
-
-    expect(
-      screen.getByRole("heading", { name: /invalid link/i }),
-    ).toBeInTheDocument();
-  });
 
   it("shows validation errors for mismatching passwords", async () => {
     const { user } = setup("valid-token");

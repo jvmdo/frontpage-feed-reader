@@ -4,16 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import GithubButton from "@/components/auth/github-button";
-import { GuestButton } from "@/components/auth/guest-button";
 import { Button } from "@/components/ui/button";
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -58,12 +54,6 @@ export function SigninForm({
       {...props}
     >
       <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Sign in to Frontpage</h1>
-          <p className="text-sm text-balance text-muted-foreground">
-            Enter your credentials to access your feeds.
-          </p>
-        </div>
         <Field data-invalid={!!errors.email}>
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input
@@ -110,32 +100,6 @@ export function SigninForm({
             {isPending && <Spinner data-icon="inline-start" />}
             {isPending ? "Signing in..." : "Sign In"}
           </Button>
-        </Field>
-        <FieldSeparator>Or continue with</FieldSeparator>
-        <Field>
-          <div className="flex flex-col gap-2">
-            <GithubButton disabled={isPending}>
-              Sign in with GitHub
-            </GithubButton>
-            <GuestButton
-              variant={"outline"}
-              showIcon={true}
-              disabled={isPending}
-            />
-            {process.env.NODE_ENV === "development" && (
-              <Button
-                asChild={true}
-                variant="outline"
-                className="w-full"
-                disabled={isPending}
-              >
-                <Link href="/api/dev-login">Auto Login (Dev Only)</Link>
-              </Button>
-            )}
-          </div>
-          <FieldDescription className="px-6 text-center">
-            Don&apos;t have an account? <Link href="/sign-up">Sign up</Link>
-          </FieldDescription>
         </Field>
       </FieldGroup>
     </form>

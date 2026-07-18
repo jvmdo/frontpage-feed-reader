@@ -15,7 +15,7 @@ vi.mock("sonner", () => ({
 
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
-    signIn: { email: vi.fn(), social: vi.fn(), anonymous: vi.fn() },
+    signIn: { email: vi.fn() },
   },
 }));
 
@@ -98,27 +98,6 @@ describe("SigninForm", () => {
     });
 
     expect(mockPush).not.toHaveBeenCalled();
-  });
-
-  it("calls authClient.signIn.social when GitHub button is clicked", async () => {
-    const { user } = setup();
-
-    await user.click(
-      screen.getByRole("button", { name: /sign in with github/i }),
-    );
-
-    expect(authClient.signIn.social).toHaveBeenCalledWith({
-      provider: "github",
-      callbackURL: "/dashboard",
-    });
-  });
-
-  it("calls authClient.signIn.anonymous when guest button is clicked", async () => {
-    const { user } = setup();
-
-    await user.click(screen.getByRole("button", { name: /try as guest/i }));
-
-    expect(authClient.signIn.anonymous).toHaveBeenCalled();
   });
 
   it("displays loading state while signing in", async () => {

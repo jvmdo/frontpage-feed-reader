@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,9 @@ import {
   resetPasswordSchema,
 } from "@/lib/validations/auth";
 
-interface ResetPasswordFormProps extends React.ComponentProps<"form"> {
-  token?: string;
+interface ResetPasswordFormProps
+  extends Omit<React.ComponentProps<"form">, "children"> {
+  token: string;
 }
 
 export function ResetPasswordForm({
@@ -62,22 +62,6 @@ export function ResetPasswordForm({
     );
   };
 
-  if (!token) {
-    return (
-      <div className={cn("flex flex-col gap-6 text-center", className)}>
-        <div className="flex flex-col items-center gap-2">
-          <h1 className="text-2xl font-bold">Invalid Link</h1>
-          <p className="text-sm text-balance text-muted-foreground">
-            This password reset link is invalid or has expired.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/forgot-password">Request a new link</Link>
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <form
       noValidate
@@ -86,12 +70,6 @@ export function ResetPasswordForm({
       {...props}
     >
       <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Reset Password</h1>
-          <p className="text-sm text-balance text-muted-foreground">
-            Enter your new password below.
-          </p>
-        </div>
         <PasswordInput.Root
           data-invalid={!!errors.password}
           autoComplete="new-password"
@@ -137,15 +115,6 @@ export function ResetPasswordForm({
             {isPending ? "Resetting..." : "Reset password"}
           </Button>
         </Field>
-        <div className="text-center text-sm">
-          Remembered your password?{" "}
-          <Link
-            href="/sign-in"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Sign in
-          </Link>
-        </div>
       </FieldGroup>
     </form>
   );

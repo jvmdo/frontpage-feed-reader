@@ -21,28 +21,27 @@ test("password recovery flow", async ({ page }) => {
   const ctx = await auth.$context;
   const testUtils = ctx.test;
 
-  // 1. Setup: Create a real user via test utils (handles accounts/relations)
+  // Setup: Create a real user via test utils (handles accounts/relations)
   const user = testUtils.createUser({
     email: testUser.email,
     name: testUser.name,
   });
   const savedUser = await testUtils.saveUser(user);
 
-  // 2. Go to Sign In page
+  // 1. Go to Sign In page
   await page.goto("/sign-in");
   await page.waitForSelector('body[data-hydrated="true"]');
 
-  // 3. Request Password Reset
+  // 2. Request Password Reset
   await page.getByRole("link", { name: /forgot password/i }).click();
   await expect(page).toHaveURL(/\/forgot-password/);
 
   await page.getByLabel(/email/i).fill(testUser.email);
   await page.getByRole("button", { name: /send reset link/i }).click();
 
-  // 4. Verify Success Message
   await expect(page.getByText(/check your email/i)).toBeVisible();
 
-  // 5. Get the Token from the Database
+  // Get the Token from the Database
   // Better Auth implementation detail:
   // - 'identifier' is formatted as "reset-password:TOKEN" (the raw token is the suffix)
   // - 'value' stores the user's ID to link the reset request
@@ -69,30 +68,36 @@ test("password recovery flow", async ({ page }) => {
     )
     .toBeDefined();
 
-  // 6. Navigate to Reset Password page using the extracted token
+  // 3 Verify missing token branch
+  await page.goto("/reset-password");
+  await page.waitForSelector('body[data-hydrated="true"]');
+  await expect(
+    page.getByRole("heading", { name: /invalid link/i }),
+  ).toBeVisible();
+
+  // 4. Navigate to Reset Password page using the extracted token
   await page.goto(`/reset-password?token=${token}`);
   await page.waitForSelector('body[data-hydrated="true"]');
 
-  // 7. Reset Password via UI
+  // 5. Reset Password via UI
   await page.getByLabel(/^new password$/i).fill(testUser.newPassword);
   await page.getByLabel(/confirm password/i).fill(testUser.newPassword);
   await page.getByRole("button", { name: /reset password/i }).click();
 
-  // 8. Verify Success Toast
+  // Verify Success
   await expect(
     page
       .locator("[data-sonner-toast]")
       .filter({ hasText: /success|successfully/i }),
   ).toBeVisible();
 
-  // 9. Verify Redirect to sign-in
   await expect(page).toHaveURL(/\/sign-in/);
 
-  // 10. Sign In with New Password
+  // 6. Sign In with New Password
   await page.getByLabel(/email/i).fill(testUser.email);
   await page.getByLabel(/^password$/i).fill(testUser.newPassword);
   await page.getByRole("button", { name: /^sign in$/i }).click();
 
-  // 11. Verify successful login to dashboard
+  // Verify successful login to dashboard
   await expect(page).toHaveURL(/\/dashboard/);
 });

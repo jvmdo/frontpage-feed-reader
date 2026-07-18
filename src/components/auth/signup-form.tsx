@@ -1,11 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import GithubButton from "@/components/auth/github-button";
-import { GuestButton } from "@/components/auth/guest-button";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -13,7 +10,6 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -64,12 +60,6 @@ export function SignupForm({
       {...props}
     >
       <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Create your account</h1>
-          <p className="text-sm text-balance text-muted-foreground">
-            Fill in the form below to create your account
-          </p>
-        </div>
         <Field data-invalid={!!errors.name}>
           <FieldLabel htmlFor="name">Full Name</FieldLabel>
           <Input
@@ -143,25 +133,6 @@ export function SignupForm({
             {isPending && <Spinner data-icon="inline-start" />}
             {isPending ? "Creating account..." : "Create Account"}
           </Button>
-        </Field>
-        <FieldSeparator>Or continue with</FieldSeparator>
-        <Field>
-          <div className="flex flex-col gap-2">
-            <GithubButton disabled={isPending}>
-              Sign up with GitHub
-            </GithubButton>
-            <GuestButton
-              variant="outline"
-              showIcon={true}
-              disabled={isPending}
-            />
-          </div>
-          <FieldDescription className="px-6 text-center">
-            Already have an account?{" "}
-            <Link href="/sign-in" className="underline underline-offset-4">
-              Sign in
-            </Link>
-          </FieldDescription>
         </Field>
       </FieldGroup>
     </form>
