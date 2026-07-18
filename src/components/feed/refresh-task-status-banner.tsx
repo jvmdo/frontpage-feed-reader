@@ -1,7 +1,14 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { CheckCircle2, CloudOff, RotateCcwIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  CloudOff,
+  Loader2,
+  PauseCircle,
+  RotateCcwIcon,
+} from "lucide-react";
 import { useErrorBoundary } from "react-error-boundary";
 import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
 import { Button } from "@/components/ui/button";
@@ -14,31 +21,62 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { useRefreshTaskStatus } from "@/hooks/system/use-refresh-task-status";
+import type { SystemSyncStatus } from "@/types";
+
+export type BannerStatus =
+  | "healthy"
+  | "initializing"
+  | "degraded"
+  | "paused"
+  | "offline";
+
+export function deriveBannerStatus(status: SystemSyncStatus): BannerStatus {
+  if (!status.active && status.isFailing) return "offline";
+  if (!status.active) return "paused";
+  if (status.isFailing) return "degraded";
+  if (!status.lastRunAt) return "initializing";
+  return "healthy";
+}
+
+const config = {
+  healthy: {
+    itemClass: "border-success/20 bg-success/10",
+    icon: <CheckCircle2 className="size-5 text-success" />,
+    title: "Background Engine Healthy",
+  },
+  initializing: {
+    itemClass: "border-primary/20 bg-primary/10",
+    icon: <Loader2 className="size-5 text-primary animate-spin" />,
+    title: "Background Engine Initializing",
+  },
+  degraded: {
+    itemClass: "border-warning/20 bg-warning/10",
+    icon: <AlertTriangle className="size-5 text-warning" />,
+    title: "Background Engine Degraded",
+  },
+  paused: {
+    itemClass: "border-muted/20 bg-muted/10",
+    icon: <PauseCircle className="size-5 text-muted-foreground" />,
+    title: "Background Engine Paused",
+  },
+  offline: {
+    itemClass: "border-destructive/20 bg-destructive/10",
+    icon: <CloudOff className="size-5 text-destructive" />,
+    title: "Background Engine Offline",
+  },
+} as const;
 
 function RefreshTaskStatusBannerContent() {
   const { data: status } = useRefreshTaskStatus();
 
-  const isHealthy = status.active && !status.isFailing;
+  const bannerStatus = deriveBannerStatus(status);
+  const { itemClass, icon, title } = config[bannerStatus];
 
   return (
-    <Item
-      className={
-        isHealthy
-          ? "border-success/20 bg-success/10"
-          : "border-destructive/20 bg-destructive/10"
-      }
-    >
-      <ItemMedia>
-        {isHealthy ? (
-          <CheckCircle2 className="size-5 text-success" />
-        ) : (
-          <CloudOff className="size-5 text-destructive" />
-        )}
-      </ItemMedia>
+    <Item className={itemClass}>
+      <ItemMedia>{icon}</ItemMedia>
       <ItemContent>
-        <ItemTitle>
-          Background Engine {isHealthy ? "Healthy" : "Offline"}
-        </ItemTitle>
+        <ItemTitle>{title}</ItemTitle>
         <ItemDescription>
           {status?.lastRunAt
             ? `Last global sync was ${formatDistanceToNow(new Date(status.lastRunAt))} ago.`

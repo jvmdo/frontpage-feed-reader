@@ -4,10 +4,11 @@ import { Suspense } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { server } from "@/tests/mocks/server";
 import { render, screen } from "@/tests/rtl-utils";
+import type { SystemSyncStatus } from "@/types";
 import { RefreshTaskStatusBanner } from "./refresh-task-status-banner";
 
 describe("RefreshTaskStatusBanner", () => {
-  const healthySystemStatus = {
+  const healthySystemStatus: SystemSyncStatus = {
     active: true,
     isFailing: false,
     lastRunAt: "2026-01-01T12:00:00Z",
@@ -38,8 +39,34 @@ describe("RefreshTaskStatusBanner", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows offline status when the engine is failing", async () => {
+  it("shows degraded status when the engine is active but failing", async () => {
     setupMock({ ...healthySystemStatus, isFailing: true });
+    render(
+      <Suspense fallback={<div>Loading...</div>}>
+        <RefreshTaskStatusBanner />
+      </Suspense>,
+    );
+
+    expect(
+      await screen.findByText(/background engine degraded/i),
+    ).toBeInTheDocument();
+  });
+
+  it("shows paused status when the engine is inactive and not failing", async () => {
+    setupMock({ ...healthySystemStatus, active: false });
+    render(
+      <Suspense fallback={<div>Loading...</div>}>
+        <RefreshTaskStatusBanner />
+      </Suspense>,
+    );
+
+    expect(
+      await screen.findByText(/background engine paused/i),
+    ).toBeInTheDocument();
+  });
+
+  it("shows offline status when the engine is inactive and failing", async () => {
+    setupMock({ ...healthySystemStatus, active: false, isFailing: true });
     render(
       <Suspense fallback={<div>Loading...</div>}>
         <RefreshTaskStatusBanner />
@@ -51,8 +78,8 @@ describe("RefreshTaskStatusBanner", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows offline status when the engine is inactive", async () => {
-    setupMock({ ...healthySystemStatus, active: false });
+  it("shows initializing status when the engine is active but has no last run yet", async () => {
+    setupMock({ ...healthySystemStatus, lastRunAt: null });
     render(
       <Suspense fallback={<div>Loading...</div>}>
         <RefreshTaskStatusBanner />
@@ -60,7 +87,7 @@ describe("RefreshTaskStatusBanner", () => {
     );
 
     expect(
-      await screen.findByText(/background engine offline/i),
+      await screen.findByText(/background engine initializing/i),
     ).toBeInTheDocument();
   });
 
