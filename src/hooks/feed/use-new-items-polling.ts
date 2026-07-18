@@ -41,6 +41,7 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
       categoryId,
       isUnreadOnly,
       [...feedIds].sort(),
+      latestItemDate?.toISOString(),
     ),
     queryFn: async () => {
       if (!latestItemDate) return 0;
@@ -73,6 +74,7 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
         categoryId,
         isUnreadOnly,
         [...feedIds].sort(),
+        latestItemDate?.toISOString(),
       ),
       0,
     );

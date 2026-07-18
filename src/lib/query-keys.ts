@@ -43,7 +43,15 @@ export const queryKeys = {
       categoryId: number | null,
       isUnreadOnly: boolean,
       feedIds: number[],
+      since?: string,
     ) =>
-      ["new-items-count", feedId, categoryId, isUnreadOnly, feedIds] as const,
+      [
+        "new-items-count",
+        feedId,
+        categoryId,
+        isUnreadOnly,
+        feedIds,
+        since,
+      ] as const,
   },
 } as const;

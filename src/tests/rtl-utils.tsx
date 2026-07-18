@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { type RenderOptions, render } from "@testing-library/react";
+import { type RenderOptions, render, renderHook } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactElement } from "react";
 import { ServerTimeProvider } from "@/components/providers/server-time-provider";
@@ -40,18 +40,32 @@ function createWrapper(options: WrapperOptions = {}) {
   };
 }
 
-interface CustomRenderOptions
-  extends Omit<RenderOptions, "wrapper">,
-    WrapperOptions {}
+interface CustomRenderOptions extends RenderOptions, WrapperOptions {}
 
 function customRender(ui: ReactElement, options: CustomRenderOptions = {}) {
-  const { searchParams, ...renderOptions } = options;
+  const { searchParams, wrapper, ...renderOptions } = options;
 
   return render(ui, {
-    wrapper: createWrapper({ searchParams }),
+    wrapper: wrapper ?? createWrapper({ searchParams }),
+    ...renderOptions,
+  });
+}
+
+function customRenderHook<TResult, TProps>(
+  renderFn: (initialProps: TProps) => TResult,
+  options: CustomRenderOptions = {},
+) {
+  const { searchParams, wrapper, ...renderOptions } = options;
+
+  return renderHook(renderFn, {
+    wrapper: wrapper ?? createWrapper({ searchParams }),
     ...renderOptions,
   });
 }
 
 export * from "@testing-library/react";
-export { createTestQueryClient, customRender as render };
+export {
+  createTestQueryClient,
+  customRender as render,
+  customRenderHook as renderHook,
+};
