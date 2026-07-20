@@ -165,17 +165,19 @@ function AssignedFeedAction({
   feedId: number;
   title: string;
 }) {
-  const { mutate, isPending } = useUpdateFeed();
+  const { mutateAsync, isPending } = useUpdateFeed();
 
-  const handleUnassign = () => {
-    mutate(
-      { id: feedId, categoryId: null },
-      {
-        onSuccess: () => toast.success("Feed removed from category"),
-        onError: (error) =>
-          toast.error(error.message || "Failed to remove feed"),
-      },
-    );
+  const handleUnassign = async () => {
+    try {
+      // NOTE: We use mutateAsync + try/catch instead of standard mutate callbacks.
+      // The invalidation inside the hook awaits query re-fetching, which triggers
+      // a re-render that unmounts this component. Standard mutate callbacks do not
+      // fire if the component has unmounted, but standard Promise chains continue to run.
+      await mutateAsync({ id: feedId, categoryId: null });
+      toast.success("Feed removed from category");
+    } catch (error) {
+      toast.error((error as Error).message || "Failed to remove feed");
+    }
   };
 
   return (
@@ -206,16 +208,15 @@ function AvailableFeedAction({
   title: string;
   targetCategoryId: number;
 }) {
-  const { mutate, isPending } = useUpdateFeed();
+  const { mutateAsync, isPending } = useUpdateFeed();
 
-  const handleAssign = () => {
-    mutate(
-      { id: feedId, categoryId: targetCategoryId },
-      {
-        onSuccess: () => toast.success("Feed moved to category"),
-        onError: (error) => toast.error(error.message || "Failed to move feed"),
-      },
-    );
+  const handleAssign = async () => {
+    try {
+      await mutateAsync({ id: feedId, categoryId: targetCategoryId });
+      toast.success("Feed moved to category");
+    } catch (error) {
+      toast.error((error as Error).message || "Failed to move feed");
+    }
   };
 
   return (

@@ -12,6 +12,7 @@ interface UseOAuthToggleOptions {
 
 /**
  * Custom hook to toggle OAuth account linkage (link/unlink).
+ * Uses TanStack Query mutation to wrap the Better Auth SDK and wait for the invalidated query to finish.
  */
 export function useOAuthToggle(
   providerId: "github",
@@ -64,8 +65,10 @@ export function useOAuthToggle(
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.userAccounts.all });
       options?.onUnlinkSuccess?.();
+      return queryClient.invalidateQueries({
+        queryKey: queryKeys.userAccounts.all,
+      });
     },
     onError: (error) => {
       options?.onError?.(error);
