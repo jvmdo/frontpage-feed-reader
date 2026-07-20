@@ -38,17 +38,18 @@ export function AssignFeedsDialog({
   categoryId,
   children,
 }: AssignFeedsDialogProps) {
-  const { data: subscriptions } = useFeeds();
+  const { data: feeds } = useFeeds();
   const { data: categories } = useCategories();
 
-  const targetCategory = categories.find((c) => c.id === categoryId);
-  const targetCategoryName = targetCategory?.name || "this category";
+  const categoryById = new Map(categories.map((c) => [c.id, c]));
+  const targetCategoryName =
+    categoryById.get(categoryId)?.name ?? "this category";
 
-  const currentCategoryFeeds = subscriptions.filter(
-    (s) => s.subscription.categoryId === categoryId,
+  const categoryFeeds = feeds.filter(
+    (feed) => feed.subscription.categoryId === categoryId,
   );
-  const availableFeeds = subscriptions.filter(
-    (s) => s.subscription.categoryId !== categoryId,
+  const availableFeeds = feeds.filter(
+    (feed) => feed.subscription.categoryId !== categoryId,
   );
 
   return (
@@ -65,8 +66,8 @@ export function AssignFeedsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-6 flex-1 min-h-0 overflow-y-auto">
-          {subscriptions.length === 0 ? (
+        <div className="flex flex-col gap-6 flex-1 min-h-0 overflow-y-auto -mr-6 pr-6">
+          {feeds.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-4 text-center">
               <p className="text-sm text-muted-foreground italic">
                 No feeds available yet.
@@ -77,7 +78,7 @@ export function AssignFeedsDialog({
             </div>
           ) : (
             <>
-              {currentCategoryFeeds.length > 0 && (
+              {categoryFeeds.length > 0 && (
                 <section
                   className="flex flex-col gap-3"
                   aria-labelledby="current-feeds-header"
@@ -89,12 +90,22 @@ export function AssignFeedsDialog({
                     In this category
                   </h3>
                   <ItemGroup>
-                    {currentCategoryFeeds.map((item) => (
-                      <AssignedFeedItem
-                        key={item.subscription.id}
-                        item={item}
-                      />
-                    ))}
+                    {categoryFeeds.map((feed) => {
+                      const title = getFeedTitle(feed);
+
+                      return (
+                        <CategoryFeed
+                          key={feed.subscription.id}
+                          feedWithSub={feed}
+                          description="Currently in this category"
+                        >
+                          <AssignedFeedAction
+                            feedId={feed.subscription.id}
+                            title={title}
+                          />
+                        </CategoryFeed>
+                      );
+                    })}
                   </ItemGroup>
                 </section>
               )}
@@ -115,18 +126,25 @@ export function AssignFeedsDialog({
                   </p>
                 ) : (
                   <ItemGroup>
-                    {availableFeeds.map((item) => {
-                      const currentCat = categories.find(
-                        (c) => c.id === item.subscription.categoryId,
-                      );
+                    {availableFeeds.map((feed) => {
+                      const title = getFeedTitle(feed);
+                      const category =
+                        feed.subscription.categoryId !== null
+                          ? categoryById.get(feed.subscription.categoryId)
+                          : undefined;
 
                       return (
-                        <AvailableFeedItem
-                          key={item.subscription.id}
-                          item={item}
-                          categoryId={categoryId}
-                          currentCategoryName={currentCat?.name}
-                        />
+                        <CategoryFeed
+                          key={feed.subscription.id}
+                          feedWithSub={feed}
+                          description={category?.name || "Uncategorized"}
+                        >
+                          <AvailableFeedAction
+                            feedId={feed.subscription.id}
+                            title={title}
+                            targetCategoryId={categoryId}
+                          />
+                        </CategoryFeed>
                       );
                     })}
                   </ItemGroup>
@@ -140,12 +158,18 @@ export function AssignFeedsDialog({
   );
 }
 
-function AssignedFeedItem({ item }: { item: FeedWithSubscription }) {
+function AssignedFeedAction({
+  feedId,
+  title,
+}: {
+  feedId: number;
+  title: string;
+}) {
   const { mutate, isPending } = useUpdateFeed();
 
   const handleUnassign = () => {
     mutate(
-      { id: item.subscription.id, categoryId: null },
+      { id: feedId, categoryId: null },
       {
         onSuccess: () => toast.success("Feed removed from category"),
         onError: (error) =>
@@ -154,48 +178,39 @@ function AssignedFeedItem({ item }: { item: FeedWithSubscription }) {
     );
   };
 
-  const title = item.subscription.customTitle || item.feed.title || "Untitled";
-
   return (
-    <FeedItemBase item={item} description="Currently in this category">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8 hover:bg-destructive/10 hover:text-destructive"
-        onClick={handleUnassign}
-        disabled={isPending}
-        aria-label={`Remove ${title} from category`}
-      >
-        {isPending ? (
-          <>
-            <Spinner data-icon="inline-end" />
-            <span className="sr-only">Removing...</span>
-          </>
-        ) : (
-          <>
-            Remove
-            <XIcon data-icon="inline-end" />
-          </>
-        )}
-      </Button>
-    </FeedItemBase>
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-8 hover:bg-destructive/10 hover:text-destructive"
+      onClick={handleUnassign}
+      disabled={isPending}
+      aria-label={`Remove ${title} from category`}
+    >
+      {isPending ? (
+        <Spinner data-icon="inline-start" />
+      ) : (
+        <XIcon data-icon="inline-start" />
+      )}
+      {isPending ? "Removing..." : "Remove"}
+    </Button>
   );
 }
 
-function AvailableFeedItem({
-  item,
-  categoryId,
-  currentCategoryName,
+function AvailableFeedAction({
+  feedId,
+  title,
+  targetCategoryId,
 }: {
-  item: FeedWithSubscription;
-  categoryId: number;
-  currentCategoryName?: string;
+  feedId: number;
+  title: string;
+  targetCategoryId: number;
 }) {
   const { mutate, isPending } = useUpdateFeed();
 
   const handleAssign = () => {
     mutate(
-      { id: item.subscription.id, categoryId },
+      { id: feedId, categoryId: targetCategoryId },
       {
         onSuccess: () => toast.success("Feed moved to category"),
         onError: (error) => toast.error(error.message || "Failed to move feed"),
@@ -203,59 +218,51 @@ function AvailableFeedItem({
     );
   };
 
-  const title = item.subscription.customTitle || item.feed.title || "Untitled";
-
   return (
-    <FeedItemBase
-      item={item}
-      description={currentCategoryName || "Uncategorized"}
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-8"
+      onClick={handleAssign}
+      disabled={isPending}
+      aria-label={`Move ${title} to category`}
     >
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8"
-        onClick={handleAssign}
-        disabled={isPending}
-        aria-label={`Move ${title} to category`}
-      >
-        {isPending ? (
-          <>
-            <Spinner />
-            <span className="sr-only">Moving...</span>
-          </>
-        ) : (
-          <>
-            Move
-            <MoveRightIcon data-icon="inline-end" />
-          </>
-        )}
-      </Button>
-    </FeedItemBase>
+      {isPending ? "Moving..." : "Move"}
+      {isPending ? (
+        <Spinner data-icon="inline-end" />
+      ) : (
+        <MoveRightIcon data-icon="inline-end" />
+      )}
+    </Button>
   );
 }
 
-function FeedItemBase({
-  item,
+function CategoryFeed({
+  feedWithSub,
   description,
   children,
 }: {
-  item: FeedWithSubscription;
+  feedWithSub: FeedWithSubscription;
   description: string;
   children: React.ReactNode;
 }) {
-  const { subscription: sub, feed } = item;
-  const title = sub.customTitle || feed.title || "Untitled Feed";
+  const { feed } = feedWithSub;
+  const title = getFeedTitle(feedWithSub);
 
   return (
     <Item variant="outline" size="sm">
       <ItemMedia variant="image">
         <FeedIcon url={feed.iconUrl || feed.url} title={title} size={24} />
       </ItemMedia>
-      <ItemContent>
+      <ItemContent className="flex-3">
         <ItemTitle>{title}</ItemTitle>
         <ItemDescription>{description}</ItemDescription>
       </ItemContent>
-      <ItemActions>{children}</ItemActions>
+      <ItemActions className="flex-1 justify-end">{children}</ItemActions>
     </Item>
   );
+}
+
+function getFeedTitle(feed: FeedWithSubscription) {
+  return feed.subscription.customTitle || feed.feed.title || "Untitled";
 }
