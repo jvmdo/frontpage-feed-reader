@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { TopLoader } from "@/components/layout/top-loader";
 import { HotkeysProvider } from "@/components/providers/hotkeys-provider";
 import HydrationFlagProvider from "@/components/providers/hydration-flag-provider";
 import { ReactQueryClientProvider } from "@/components/providers/query-client-provider";
@@ -81,6 +82,7 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
+        <TopLoader />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

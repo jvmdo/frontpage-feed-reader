@@ -14,7 +14,7 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock("next/navigation", () => ({
+vi.mock("nextjs-toploader/app", () => ({
   useRouter: vi.fn(() => ({ push: vi.fn(), refresh: vi.fn() })),
 }));
 

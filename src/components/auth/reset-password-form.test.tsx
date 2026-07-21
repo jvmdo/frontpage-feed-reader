@@ -1,13 +1,17 @@
 import userEvent from "@testing-library/user-event";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { ResetPasswordForm } from "./reset-password-form";
 
+// Mock nextjs-toploader/app
+vi.mock("nextjs-toploader/app", () => ({
+  useRouter: vi.fn(),
+}));
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
-  useRouter: vi.fn(),
   useSearchParams: vi.fn(() => ({
     get: vi.fn(),
   })),

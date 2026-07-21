@@ -19,6 +19,11 @@ import { UserMenu } from "./user-menu";
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(() => ({ push: mockPush })),
+  usePathname: vi.fn(() => "/"),
+}));
+
+vi.mock("nextjs-toploader/app", () => ({
+  useRouter: vi.fn(() => ({ push: mockPush, replace: vi.fn() })),
 }));
 
 vi.mock("sonner", () => ({

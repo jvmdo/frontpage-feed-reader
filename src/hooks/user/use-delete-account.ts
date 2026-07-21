@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { deleteUserAction } from "@/actions/user/delete-user-action";
 import { authClient } from "@/lib/auth-client";
 import type { DeleteAccountInput } from "@/lib/validations/profile";

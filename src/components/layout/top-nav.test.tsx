@@ -7,9 +7,12 @@ import { TopNav } from "./top-nav";
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn(() => "/dashboard"),
-  useRouter: vi.fn(() => ({
-    push: vi.fn(),
-  })),
+  useRouter: vi.fn(() => ({ push: vi.fn() })),
+}));
+
+// Mock nextjs-toploader/app
+vi.mock("nextjs-toploader/app", () => ({
+  useRouter: vi.fn(() => ({ push: vi.fn(), replace: vi.fn() })),
 }));
 
 // Mock AddFeedDialog to simplify integration test

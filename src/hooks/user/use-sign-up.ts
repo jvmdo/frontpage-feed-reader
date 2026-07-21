@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { authClient } from "@/lib/auth-client";
 import type { SignUpInput } from "@/lib/validations/auth";
 

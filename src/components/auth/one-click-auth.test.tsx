@@ -1,10 +1,10 @@
 import userEvent from "@testing-library/user-event";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { authClient } from "@/lib/auth-client";
 import { render, screen } from "@/tests/rtl-utils";
 import { OneClickAuth } from "./one-click-auth";
 
-vi.mock("next/navigation", () => ({
+vi.mock("nextjs-toploader/app", () => ({
   useRouter: vi.fn(),
 }));
 

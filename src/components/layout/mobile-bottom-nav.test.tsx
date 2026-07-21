@@ -9,9 +9,13 @@ import { MobileBottomNav } from "./mobile-bottom-nav";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
-  useRouter: vi.fn(() => ({
-    push: vi.fn(),
-  })),
+  usePathname: vi.fn(() => "/"),
+  useRouter: vi.fn(() => ({ push: vi.fn() })),
+}));
+
+// Mock nextjs-toploader/app
+vi.mock("nextjs-toploader/app", () => ({
+  useRouter: vi.fn(() => ({ push: vi.fn(), replace: vi.fn() })),
 }));
 
 // Mock useSidebar

@@ -1,11 +1,11 @@
 import userEvent from "@testing-library/user-event";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { SigninForm } from "./signin-form";
 
-vi.mock("next/navigation", () => ({
+vi.mock("nextjs-toploader/app", () => ({
   useRouter: vi.fn(),
 }));
 
