@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "nextjs-toploader/app";
+import { useTransition } from "react";
 import { authClient } from "@/lib/auth-client";
 import type { ResetPasswordInput } from "@/lib/validations/auth";
 
@@ -9,8 +10,9 @@ import type { ResetPasswordInput } from "@/lib/validations/auth";
  */
 export function useResetPassword() {
   const router = useRouter();
+  const [isNavigating, startTransition] = useTransition();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async ({
       password,
       token,
@@ -28,7 +30,14 @@ export function useResetPassword() {
       }
     },
     onSuccess: () => {
-      router.push("/sign-in");
+      startTransition(() => {
+        router.push("/sign-in");
+      });
     },
   });
+
+  return {
+    ...mutation,
+    isPending: mutation.isPending || isNavigating,
+  };
 }

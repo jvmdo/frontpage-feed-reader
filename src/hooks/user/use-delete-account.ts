@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "nextjs-toploader/app";
+import { useTransition } from "react";
 import { deleteUserAction } from "@/actions/user/delete-user-action";
 import { authClient } from "@/lib/auth-client";
 import type { DeleteAccountInput } from "@/lib/validations/profile";
@@ -11,8 +12,9 @@ export function useDeleteAccount() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { refetch } = authClient.useSession();
+  const [isNavigating, startTransition] = useTransition();
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async (input: DeleteAccountInput) => {
       const result = await deleteUserAction(input);
 
@@ -25,8 +27,15 @@ export function useDeleteAccount() {
     onSuccess: async () => {
       await refetch();
       queryClient.clear();
-      router.push("/");
-      router.refresh();
+      startTransition(() => {
+        router.push("/");
+        router.refresh();
+      });
     },
   });
+
+  return {
+    ...mutation,
+    isPending: mutation.isPending || isNavigating,
+  };
 }
