@@ -71,7 +71,7 @@ export function SearchPalette() {
           onValueChange={setSearch}
           className="flex-1"
         />
-        <CommandList className="[scrollbar-width:auto] [::-webkit-scrollbar]:block">
+        <CommandList>
           {trimmedSearch.length < 2 ? (
             <CommandEmpty>Start typing to search (min 2 chars)</CommandEmpty>
           ) : isSearching ? (

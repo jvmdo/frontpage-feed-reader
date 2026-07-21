@@ -20,7 +20,7 @@ export function TopNavActions({ user }: TopNavActionsProps) {
         variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
-        className="max-w-[16rem] flex-1 flex items-center gap-2 bg-accent text-muted-foreground"
+        className="max-w-[16rem] flex-1 flex items-center justify-start gap-2 bg-accent text-muted-foreground"
         aria-keyshortcuts="/"
       >
         <SearchIcon className="size-4 shrink-0" />

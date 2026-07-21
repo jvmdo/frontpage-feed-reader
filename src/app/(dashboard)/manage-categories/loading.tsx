@@ -12,8 +12,7 @@ export default function Loading() {
           Manage Categories
         </h1>
         <p className="text-muted-foreground text-sm">
-          Structure your feed categories. Changes here are reflected in your
-          sidebar.
+          Categories organize and structure your feeds.
         </p>
       </div>
 

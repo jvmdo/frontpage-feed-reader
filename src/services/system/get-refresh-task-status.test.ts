@@ -57,23 +57,22 @@ describe("getRefreshTaskStatus", () => {
     expect(status.lastRunAt).toBe("2026-01-01T11:00:00.000Z");
   });
 
-  it.each([
-    "FAILED",
-    "TIMED_OUT",
-    "CRASHED",
-  ])("returns failing status when latest run status is %s", async (runStatus) => {
-    vi.mocked(schedules.list).mockResolvedValueOnce({
-      data: [{ task: "refresh-feeds", active: true, nextRun: mockDate }],
-    } as any);
+  it.each(["FAILED", "TIMED_OUT", "CRASHED"])(
+    "returns failing status when latest run status is %s",
+    async (runStatus) => {
+      vi.mocked(schedules.list).mockResolvedValueOnce({
+        data: [{ task: "refresh-feeds", active: true, nextRun: mockDate }],
+      } as any);
 
-    vi.mocked(runs.list).mockResolvedValueOnce({
-      data: [{ status: runStatus, finishedAt: mockDate }],
-    } as any);
+      vi.mocked(runs.list).mockResolvedValueOnce({
+        data: [{ status: runStatus, finishedAt: mockDate }],
+      } as any);
 
-    const status = await getRefreshTaskStatus();
+      const status = await getRefreshTaskStatus();
 
-    expect(status.isFailing).toBe(true);
-  });
+      expect(status.isFailing).toBe(true);
+    },
+  );
 
   it("returns healthy status when latest run is still EXECUTING or QUEUED", async () => {
     vi.mocked(schedules.list).mockResolvedValueOnce({

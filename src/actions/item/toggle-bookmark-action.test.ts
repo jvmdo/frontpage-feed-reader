@@ -7,9 +7,6 @@ import { toggleBookmarkAction } from "./toggle-bookmark-action";
 
 vi.mock("@/services/item/toggle-bookmark");
 vi.mock("@/lib/session");
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
-}));
 
 describe("toggleBookmarkAction", () => {
   beforeEach(() => {

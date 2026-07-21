@@ -20,8 +20,7 @@ export function TopNav({ user }: TopNavProps) {
         <div className="bg-primary text-surface flex size-7 items-center justify-center rounded-lg">
           <RssIcon className="size-4" />
         </div>
-        <span className="sm:hidden text-lg font-bold tracking-tight">Fage</span>
-        <span className="hidden sm:block text-lg font-bold tracking-tight">
+        <span className="text-[clamp(1rem,0.886rem+0.57vw,1.25rem)] font-bold tracking-tight">
           Frontpage
         </span>
       </Link>
