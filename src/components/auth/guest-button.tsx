@@ -3,7 +3,10 @@
 import { UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useSignInAnonymous } from "@/hooks/user/use-sign-in-anonymous";
+import {
+  useIsSigningInAnonymous,
+  useSignInAnonymous,
+} from "@/hooks/user/use-sign-in-anonymous";
 import { cn } from "@/lib/utils";
 
 interface GuestButtonProps extends React.ComponentProps<typeof Button> {
@@ -18,7 +21,10 @@ export function GuestButton({
   variant = "default",
   ...props
 }: GuestButtonProps) {
-  const { mutate: signInAnonymous, isPending } = useSignInAnonymous();
+  const { mutate: signInAnonymous, isPending: isLocalPending } =
+    useSignInAnonymous();
+  const isGlobalPending = useIsSigningInAnonymous();
+  const isPending = isLocalPending || isGlobalPending;
 
   const handleGuestSignIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (isPending) return;
@@ -26,9 +32,6 @@ export function GuestButton({
     e.preventDefault();
 
     signInAnonymous(undefined, {
-      onSuccess: () => {
-        toast.success("Signed in as guest!");
-      },
       onError: (error) => {
         toast.error(error.message);
       },
@@ -39,6 +42,7 @@ export function GuestButton({
     <Button
       variant={variant}
       type="button"
+      disabled={disabled || isPending}
       className={cn(
         "relative overflow-hidden",
         isPending && "pointer-events-none select-none opacity-80",

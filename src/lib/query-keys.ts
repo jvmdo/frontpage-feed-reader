@@ -1,6 +1,9 @@
 import type { FilterStatus } from "@/types";
 
 export const queryKeys = {
+  auth: {
+    anonymous: ["auth", "anonymous"] as const,
+  },
   categories: {
     all: ["categories"] as const,
   },

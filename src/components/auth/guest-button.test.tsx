@@ -1,6 +1,7 @@
 import userEvent from "@testing-library/user-event";
 import { useRouter } from "nextjs-toploader/app";
 import { toast } from "sonner";
+import { useGuestSignInStore } from "@/hooks/ui/use-guest-sign-in-store";
 import { authClient } from "@/lib/auth-client";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { GuestButton } from "./guest-button";
@@ -32,6 +33,7 @@ describe("GuestButton", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    useGuestSignInStore.setState({ isSigningIn: false });
     vi.mocked(useRouter).mockReturnValue({
       push: mockPush,
     } as any);
@@ -58,8 +60,6 @@ describe("GuestButton", () => {
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/dashboard");
     });
-
-    expect(toast.success).toHaveBeenCalledWith("Signed in as guest!");
   });
 
   it("shows error toast on failed anonymous sign in", async () => {
@@ -100,7 +100,7 @@ describe("GuestButton", () => {
     resolve({ data: { session: {} }, error: null });
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith("/dashboard");
     });
   });
 });
