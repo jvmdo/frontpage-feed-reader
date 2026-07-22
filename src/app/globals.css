@@ -550,3 +550,11 @@
   /* biome-ignore lint/complexity/noImportantStyles: it's necessary */
   font-weight: 600 !important;
 }
+
+[data-sonner-toaster][data-x-position="right"][data-y-position="top"]
+  [data-sonner-toast]:not([data-mounted="true"]),
+[data-sonner-toaster][data-x-position="right"][data-y-position="top"]
+  [data-sonner-toast][data-removed="true"] {
+  /* biome-ignore lint/complexity/noImportantStyles: override Sonner initial/removed --y variable to slide from right */
+  --y: translate3d(100%, 0, 0) !important;
+}
