@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { GuestTransitionOverlay } from "@/components/auth/guest-transition-overlay";
+import { GuestWorkspaceSetupOverlay } from "@/components/auth/guest-workspace-setup-overlay";
 import { TopLoader } from "@/components/layout/top-loader";
 import { HotkeysProvider } from "@/components/providers/hotkeys-provider";
 import HydrationFlagProvider from "@/components/providers/hydration-flag-provider";
@@ -90,7 +90,6 @@ export default function RootLayout({
           enableSystem={true}
         >
           <ReactQueryClientProvider>
-            <GuestTransitionOverlay />
             <NuqsAdapter>
               <ServerTimeProvider serverNow={new Date().toISOString()}>
                 <TooltipProvider>
@@ -100,6 +99,7 @@ export default function RootLayout({
                 </TooltipProvider>
               </ServerTimeProvider>
             </NuqsAdapter>
+            <GuestWorkspaceSetupOverlay />
           </ReactQueryClientProvider>
           <Toaster />
         </ThemeProvider>

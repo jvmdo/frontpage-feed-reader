@@ -1,7 +1,6 @@
 import userEvent from "@testing-library/user-event";
 import { useRouter } from "nextjs-toploader/app";
 import { toast } from "sonner";
-import { useGuestSignInStore } from "@/hooks/ui/use-guest-sign-in-store";
 import { authClient } from "@/lib/auth-client";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { GuestButton } from "./guest-button";
@@ -33,7 +32,6 @@ describe("GuestButton", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    useGuestSignInStore.setState({ isSigningIn: false });
     vi.mocked(useRouter).mockReturnValue({
       push: mockPush,
     } as any);

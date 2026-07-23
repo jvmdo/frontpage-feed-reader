@@ -130,3 +130,33 @@ test("guest can explicitly sign out and lose data", async ({
   // 5. Verify redirection
   await expect(page).toHaveURL(/\/sign-in/);
 });
+
+test("guest transition overlay is rendered during delayed sign in", async ({
+  page,
+  context,
+  guestTracker,
+}) => {
+  await page.goto("/sign-in");
+  await page.waitForSelector('body[data-hydrated="true"]');
+
+  const { promise, resolve } = Promise.withResolvers<void>();
+
+  await page.route("**/api/auth/sign-in/anonymous", async (route) => {
+    await promise;
+    await route.continue();
+  });
+
+  await page.getByRole("button", { name: /try as guest/i }).click();
+
+  // Overlay dialog should become visible when request is held
+  const overlay = page.getByRole("dialog", {
+    name: /setting up your guest workspace/i,
+  });
+  await expect(overlay).toBeVisible();
+
+  // Unpause request and verify navigation to dashboard
+  resolve();
+
+  await expect(page).toHaveURL(/\/dashboard/);
+  await guestTracker.trackCurrentUser(context);
+});

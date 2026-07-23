@@ -2,13 +2,20 @@
 
 import { RssIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useGuestSignInStore } from "@/hooks/ui/use-guest-sign-in-store";
 import { useIsSigningInAnonymous } from "@/hooks/user/use-sign-in-anonymous";
 
+/**
+ * Delay threshold before showing the overlay.
+ * The overlay is rendered ONLY IF the operation takes longer than this value.
+ */
 export const OVERLAY_DELAY_MS = 1500;
-export const MIN_VISIBILITY_MS = 800;
+
+/**
+ * Minimum duration the overlay stays visible once rendered.
+ * Prevents the modal from vanishing abruptly if the operation completes shortly after `OVERLAY_DELAY_MS`.
+ */
+export const MIN_VISIBILITY_MS = 2800; // If overlay is rendered, it stay mounted this value
 
 const SAMPLE_CARD_TAGS = [
   { category: "Frontend", title: "React 19 & Server Components" },
@@ -16,62 +23,48 @@ const SAMPLE_CARD_TAGS = [
   { category: "Design", title: "Typography & Information Density" },
 ];
 
-export function GuestTransitionOverlay() {
-  const pathname = usePathname();
+export function GuestWorkspaceSetupOverlay() {
   const isSigningIn = useIsSigningInAnonymous();
-  const setIsSigningIn = useGuestSignInStore((state) => state.setIsSigningIn);
-
-  const [showOverlay, setShowOverlay] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
+
+  const [visible, setVisible] = useState(false);
   const shownAtRef = useRef<number | null>(null);
 
   useEffect(
-    function autoDismissOnNavigation() {
-      if (pathname.startsWith("/dashboard") && isSigningIn) {
-        setIsSigningIn(false);
-      }
-    },
-    [pathname, isSigningIn, setIsSigningIn],
-  );
-
-  useEffect(
-    function manageOverlayDisplayTimers() {
-      let delayTimer = null;
-      let dismissTimer = null;
-
+    function syncOverlayVisibility() {
+      // Wait OVERLAY_DELAY_MS before showing overlay
       if (isSigningIn) {
-        delayTimer = setTimeout(() => {
+        const delayTimer = setTimeout(() => {
           shownAtRef.current = Date.now();
-          setShowOverlay(true);
+          setVisible(true);
         }, OVERLAY_DELAY_MS);
-      } else {
-        if (shownAtRef.current !== null) {
-          const elapsedSinceShown = Date.now() - shownAtRef.current;
-          const remainingTime = Math.max(
-            0,
-            MIN_VISIBILITY_MS - elapsedSinceShown,
-          );
 
-          dismissTimer = setTimeout(() => {
-            setShowOverlay(false);
-            shownAtRef.current = null;
-          }, remainingTime);
-        } else {
-          setShowOverlay(false);
-        }
+        return () => clearTimeout(delayTimer);
       }
 
-      return () => {
-        if (delayTimer) clearTimeout(delayTimer);
-        if (dismissTimer) clearTimeout(dismissTimer);
-      };
+      // If sign-in completed < OVERLAY_DELAY_MS (overlay was never shown), hide immediately
+      if (!shownAtRef.current) {
+        setVisible(false);
+        return;
+      }
+
+      // If overlay WAS shown, hold for remaining min visibility duration
+      const elapsed = Date.now() - shownAtRef.current;
+      const remainingHold = Math.max(0, MIN_VISIBILITY_MS - elapsed);
+
+      const holdTimer = setTimeout(() => {
+        setVisible(false);
+        shownAtRef.current = null;
+      }, remainingHold);
+
+      return () => clearTimeout(holdTimer);
     },
     [isSigningIn],
   );
 
   useEffect(
     function rotateEditorialCards() {
-      if (!showOverlay) return;
+      if (!visible) return;
 
       const interval = setInterval(() => {
         setCardIndex((prev) => (prev + 1) % SAMPLE_CARD_TAGS.length);
@@ -79,31 +72,34 @@ export function GuestTransitionOverlay() {
 
       return () => clearInterval(interval);
     },
-    [showOverlay],
+    [visible],
   );
 
   return (
     <AnimatePresence>
-      {showOverlay && (
+      {visible && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-background/85 backdrop-blur-md pointer-events-auto select-none overflow-hidden"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-background/85 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
-          aria-label="Setting up guest session"
+          aria-labelledby="guest-overlay-title"
         >
           <motion.div
             initial={{ scale: 0.92, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.92, opacity: 0, y: 10 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center w-full max-w-[calc(100vw-1.5rem)] xs:max-w-[22rem] sm:max-w-sm p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-card/95 border border-border/60 shadow-2xl text-center space-y-4 sm:space-y-6 overflow-hidden"
+            className="max-w-[calc(100vw-1.5rem)] sm:max-w-sm p-4 sm:p-6 rounded-2xl bg-card/95 border border-border/60 shadow-2xl text-center space-y-4"
           >
             {/* Editorial Card Stacking Animation Container */}
-            <div className="relative w-full h-36 sm:h-40 flex items-center justify-center pt-1 sm:pt-2 overflow-visible">
+            <div
+              aria-hidden={true}
+              className="relative h-[min(calc(100vh-1.5rem),8rem)] md:h-40 flex items-center"
+            >
               {SAMPLE_CARD_TAGS.map((card, i) => {
                 const position =
                   (i - cardIndex + SAMPLE_CARD_TAGS.length) %
@@ -142,10 +138,10 @@ export function GuestTransitionOverlay() {
                         <RssIcon className="w-2.5 h-2.5" />
                         {card.category}
                       </span>
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-ping" />
+                      <span className="size-1.5 rounded-full bg-primary" />
                     </div>
 
-                    <p className="font-serif text-xs sm:text-sm font-semibold tracking-tight text-foreground truncate">
+                    <p className="font-serif text-xs sm:text-sm font-semibold">
                       {card.title}
                     </p>
 
@@ -168,8 +164,11 @@ export function GuestTransitionOverlay() {
             </div>
 
             {/* Editorial Copy */}
-            <div className="space-y-1 sm:space-y-1.5 pt-1 sm:pt-2">
-              <h3 className="font-serif text-lg sm:text-xl font-semibold tracking-tight text-foreground">
+            <div className="space-y-1.5">
+              <h3
+                id="guest-overlay-title"
+                className="font-serif text-lg sm:text-xl font-semibold tracking-tight text-foreground"
+              >
                 Setting up your guest workspace
               </h3>
               <p className="text-xs sm:text-sm text-text-secondary leading-relaxed max-w-65 sm:max-w-none mx-auto">

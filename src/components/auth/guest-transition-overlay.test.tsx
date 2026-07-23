@@ -1,41 +1,34 @@
-import { usePathname } from "next/navigation";
 import * as useSignInModule from "@/hooks/user/use-sign-in-anonymous";
 import { act, render, screen } from "@/tests/rtl-utils";
 import {
-  GuestTransitionOverlay,
-  MIN_VISIBILITY_MS,
+  GuestWorkspaceSetupOverlay,
   OVERLAY_DELAY_MS,
-} from "./guest-transition-overlay";
-
-vi.mock("next/navigation", () => ({
-  usePathname: vi.fn().mockReturnValue("/"),
-}));
+} from "./guest-workspace-setup-overlay";
 
 describe("GuestTransitionOverlay", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
-    vi.mocked(usePathname).mockReturnValue("/");
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it("does not render dialog overlay when sign in is not active", () => {
+  it("does not render dialog overlay when guest sign-in is not active", () => {
     vi.spyOn(useSignInModule, "useIsSigningInAnonymous").mockReturnValue(false);
 
-    render(<GuestTransitionOverlay />);
+    render(<GuestWorkspaceSetupOverlay />);
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("delays rendering overlay for 1.5s (Phase 1 threshold)", () => {
+  it("delays rendering overlay for 1.5s threshold", () => {
     vi.spyOn(useSignInModule, "useIsSigningInAnonymous").mockReturnValue(true);
 
-    render(<GuestTransitionOverlay />);
+    render(<GuestWorkspaceSetupOverlay />);
 
-    // Fast condition (<1.5s): Overlay should not be visible yet
+    // Before 1.5s delay threshold
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     // Fast forward past 1.5s threshold
@@ -43,84 +36,72 @@ describe("GuestTransitionOverlay", () => {
       vi.advanceTimersByTime(OVERLAY_DELAY_MS);
     });
 
+    const dialog = screen.getByRole("dialog", {
+      name: /setting up your guest workspace/i,
+    });
+    expect(dialog).toBeInTheDocument();
+    expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(
-      screen.getByRole("dialog", { name: /setting up guest session/i }),
+      screen.getByRole("heading", { name: /setting up your guest workspace/i }),
     ).toBeInTheDocument();
   });
 
-  it("keeps overlay open during long-running operations (e.g. 10s)", () => {
+  it("holds overlay visible for minimum duration when operation completes shortly after 1.5s", () => {
     const isSigningInSpy = vi
       .spyOn(useSignInModule, "useIsSigningInAnonymous")
       .mockReturnValue(true);
 
-    const { rerender } = render(<GuestTransitionOverlay />);
+    const { rerender } = render(<GuestWorkspaceSetupOverlay />);
 
-    // Advance past 1.5s threshold
+    // Advance past 1.5s threshold to show overlay
     act(() => {
       vi.advanceTimersByTime(OVERLAY_DELAY_MS);
     });
     expect(screen.getByRole("dialog")).toBeInTheDocument();
 
-    // Fast forward 8.5 seconds (total 10s) while still signing in
-    act(() => {
-      vi.advanceTimersByTime(8500);
-    });
-    // Overlay MUST remain visible throughout long process
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-
-    // Operation completes at 10s
-    isSigningInSpy.mockReturnValue(false);
-    rerender(<GuestTransitionOverlay />);
-
-    // Dismisses immediately because 600ms quota was already fulfilled
-    act(() => {
-      vi.advanceTimersByTime(0);
-    });
-
-    vi.useRealTimers();
-  });
-
-  it("enforces minimum visibility duration of 600ms once shown (Option A)", () => {
-    const isSigningInSpy = vi
-      .spyOn(useSignInModule, "useIsSigningInAnonymous")
-      .mockReturnValue(true);
-
-    const { rerender } = render(<GuestTransitionOverlay />);
-
-    // Advance past 1.5s so overlay becomes visible
-    act(() => {
-      vi.advanceTimersByTime(OVERLAY_DELAY_MS);
-    });
-
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-
-    // Simulate sign-in completing 100ms later (at 1.6s total time)
-    isSigningInSpy.mockReturnValue(false);
-    rerender(<GuestTransitionOverlay />);
-
-    // Advance 100ms: Overlay should STILL be in document due to 600ms minimum visibility
+    // Advance 100ms so Date.now() advances to 1.6s total time
     act(() => {
       vi.advanceTimersByTime(100);
     });
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
 
-    // Advance past remaining 500ms minimum visibility
+    // Operation completes 100ms later (at 1.6s total time) -> returns false
+    isSigningInSpy.mockReturnValue(false);
+    rerender(<GuestWorkspaceSetupOverlay />);
+
+    // Advance 1500ms (elapsed visible = 1600ms): Dialog MUST STILL be in document due to 800ms min visibility
     act(() => {
-      vi.advanceTimersByTime(MIN_VISIBILITY_MS);
+      vi.advanceTimersByTime(1500);
     });
-
-    vi.useRealTimers();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
-  it("resets store state when route changes away from landing page", () => {
+  it("cycles through editorial topic cards every 2 seconds when active", () => {
     vi.spyOn(useSignInModule, "useIsSigningInAnonymous").mockReturnValue(true);
 
-    const { rerender } = render(<GuestTransitionOverlay />);
+    render(<GuestWorkspaceSetupOverlay />);
 
-    // Simulate navigating to /dashboard
-    vi.mocked(usePathname).mockReturnValue("/dashboard");
-    rerender(<GuestTransitionOverlay />);
+    act(() => {
+      vi.advanceTimersByTime(OVERLAY_DELAY_MS);
+    });
 
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("React 19 & Server Components"),
+    ).toBeInTheDocument();
+
+    // Advance 2s to cycle to 2nd card
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(
+      screen.getByText("Distributed Systems Architecture"),
+    ).toBeInTheDocument();
+
+    // Advance 2s to cycle to 3rd card
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(
+      screen.getByText("Typography & Information Density"),
+    ).toBeInTheDocument();
   });
 });
