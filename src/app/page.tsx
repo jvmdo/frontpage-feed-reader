@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { Benefits } from "@/components/landing/benefits";
 import { FAQ } from "@/components/landing/faq";
 import { FinalCTA } from "@/components/landing/final-cta";
@@ -8,15 +7,8 @@ import { Hero } from "@/components/landing/hero";
 import { MediaSection } from "@/components/landing/media-section";
 import { Testimonials } from "@/components/landing/testimonials";
 import { settings } from "@/env";
-import { getCurrentSession } from "@/lib/session";
 
-export default async function Home() {
-  const session = await getCurrentSession();
-
-  if (session) {
-    redirect("/dashboard");
-  }
-
+export default function Home() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
