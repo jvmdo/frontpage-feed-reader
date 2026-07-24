@@ -6,20 +6,26 @@ import {
   PlusIcon,
   SearchIcon,
 } from "lucide-react";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
 import { FeedMenu } from "@/components/layout/components/feed-menu";
-import { UserMenu } from "@/components/layout/components/user-menu";
+import {
+  UserMenu,
+  UserMenuErrorFallback,
+  UserMenuSkeleton,
+} from "@/components/layout/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
-import type { SessionUser } from "@/lib/auth-client";
+import type { SessionPromise } from "@/types";
 
-interface MobileBottomNavProps {
-  user: SessionUser;
-}
-
-export function MobileBottomNav({ user }: MobileBottomNavProps) {
+export function MobileBottomNav({
+  sessionPromise,
+}: {
+  sessionPromise: SessionPromise;
+}) {
   const { toggleSidebar } = useSidebar();
   const [_, setOpen] = useSearchPaletteState();
   const { status } = useFeedFilter();
@@ -78,7 +84,11 @@ export function MobileBottomNav({ user }: MobileBottomNavProps) {
         </Button>
       </FeedMenu>
 
-      <UserMenu user={user} />
+      <ErrorBoundary fallback={<UserMenuErrorFallback />}>
+        <Suspense fallback={<UserMenuSkeleton />}>
+          <UserMenu sessionPromise={sessionPromise} />
+        </Suspense>
+      </ErrorBoundary>
     </div>
   );
 }

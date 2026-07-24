@@ -1,7 +1,7 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { GuestBanner } from "@/components/auth/guest-banner";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ClientDialogs } from "@/components/layout/client-dialogs";
@@ -24,6 +24,9 @@ import { getUnreadCounts } from "@/services/feed/get-unread-counts";
 import { getSubscriptions } from "@/services/subscription/get-subscriptions";
 import { getRefreshTaskStatus } from "@/services/system/get-refresh-task-status";
 import { shouldShowWelcomeTour } from "@/services/user/should-show-welcome-tour";
+import type { SessionPromise } from "@/types";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: {
@@ -36,32 +39,36 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getCurrentSession();
-
-  if (!session?.user) {
-    redirect("/sign-in");
-  }
-
   const queryClient = getQueryClient();
+  const sessionPromise = getCurrentSession();
 
   queryClient.prefetchQuery({
     queryKey: queryKeys.subscriptions.all,
-    queryFn: () => getSubscriptions(db, session.user.id),
+    queryFn: async () => {
+      const session = await sessionPromise;
+      return getSubscriptions(db, session?.user.id ?? "");
+    },
   });
 
   queryClient.prefetchQuery({
     queryKey: queryKeys.categories.all,
-    queryFn: () => getCategories(db, session.user.id),
+    queryFn: async () => {
+      const session = await sessionPromise;
+      return getCategories(db, session?.user.id ?? "");
+    },
   });
 
   queryClient.prefetchQuery({
     queryKey: queryKeys.unreadCounts.all,
-    queryFn: () => getUnreadCounts(db, session.user.id),
+    queryFn: async () => {
+      const session = await sessionPromise;
+      return getUnreadCounts(db, session?.user.id ?? "");
+    },
   });
 
   queryClient.prefetchQuery({
@@ -72,7 +79,7 @@ export default async function DashboardLayout({
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="flex h-screen flex-col">
-        <TopNav user={session.user} />
+        <TopNav sessionPromise={sessionPromise} />
 
         <SidebarProvider className="overflow-hidden">
           <AppSidebar>
@@ -83,20 +90,24 @@ export default async function DashboardLayout({
             </QueryErrorBoundary>
           </AppSidebar>
           <div className="flex flex-1 flex-col overflow-x-hidden">
-            {session.user.isAnonymous && <GuestBanner />}
+            <ErrorBoundary fallback={null}>
+              <Suspense fallback={null}>
+                <GuestBannerWithSession sessionPromise={sessionPromise} />
+              </Suspense>
+            </ErrorBoundary>
 
             <SidebarInset className="flex flex-col p-4 overflow-y-scroll">
               {children}
             </SidebarInset>
 
-            <MobileBottomNav user={session.user} />
+            <MobileBottomNav sessionPromise={sessionPromise} />
           </div>
-          <Suspense fallback={null}>
-            <CheckWelcomeTour
-              userId={session.user.id}
-              isAnonymous={session.user.isAnonymous}
-            />
-          </Suspense>
+
+          <ErrorBoundary fallback={null}>
+            <Suspense fallback={null}>
+              <WelcomeTourWithSession sessionPromise={sessionPromise} />
+            </Suspense>
+          </ErrorBoundary>
         </SidebarProvider>
 
         <ClientDialogs />
@@ -107,16 +118,35 @@ export default async function DashboardLayout({
   );
 }
 
-async function CheckWelcomeTour({
-  userId,
-  isAnonymous,
+async function GuestBannerWithSession({
+  sessionPromise,
 }: {
-  userId: string;
-  isAnonymous: boolean | null | undefined;
+  sessionPromise: SessionPromise;
 }) {
-  const showTour = await shouldShowWelcomeTour(db, { userId, isAnonymous });
+  const session = await sessionPromise;
 
-  if (!showTour) return null;
+  if (!session?.user.isAnonymous) {
+    return null;
+  }
+
+  return <GuestBanner />;
+}
+
+async function WelcomeTourWithSession({
+  sessionPromise,
+}: {
+  sessionPromise: SessionPromise;
+}) {
+  const session = await sessionPromise;
+
+  const showTour = await shouldShowWelcomeTour(db, {
+    userId: session?.user.id ?? "",
+    isAnonymous: session?.user.isAnonymous,
+  });
+
+  if (!showTour) {
+    return null;
+  }
 
   return <WelcomeTour />;
 }

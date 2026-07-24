@@ -1,17 +1,24 @@
 "use client";
+
 import { PlusIcon, SearchIcon } from "lucide-react";
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { AddFeedDialog } from "@/components/feed/add-feed-dialog";
-import { UserMenu } from "@/components/layout/components/user-menu";
+import {
+  UserMenu,
+  UserMenuErrorFallback,
+  UserMenuSkeleton,
+} from "@/components/layout/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
-import type { SessionUser } from "@/lib/auth-client";
+import type { SessionPromise } from "@/types";
 
-interface TopNavActionsProps {
-  user: SessionUser;
-}
-
-export function TopNavActions({ user }: TopNavActionsProps) {
+export function TopNavActions({
+  sessionPromise,
+}: {
+  sessionPromise: SessionPromise;
+}) {
   const [_, setOpen] = useSearchPaletteState();
 
   return (
@@ -29,7 +36,6 @@ export function TopNavActions({ user }: TopNavActionsProps) {
           /
         </Kbd>
       </Button>
-
       <AddFeedDialog asChild>
         <Button
           variant="ghost"
@@ -41,7 +47,11 @@ export function TopNavActions({ user }: TopNavActionsProps) {
         </Button>
       </AddFeedDialog>
 
-      <UserMenu user={user} />
+      <ErrorBoundary fallback={<UserMenuErrorFallback />}>
+        <Suspense fallback={<UserMenuSkeleton />}>
+          <UserMenu sessionPromise={sessionPromise} />
+        </Suspense>
+      </ErrorBoundary>
     </div>
   );
 }

@@ -2,13 +2,13 @@ import { RssIcon } from "lucide-react";
 import Link from "next/link";
 import { TopNavActions } from "@/components/layout/components/top-nav-actions";
 import { TopNavItems } from "@/components/layout/components/top-nav-items";
-import type { SessionUser } from "@/lib/auth-client";
+import type { getCurrentSession } from "@/lib/session";
 
-interface TopNavProps {
-  user: SessionUser;
-}
-
-export function TopNav({ user }: TopNavProps) {
+export function TopNav({
+  sessionPromise,
+}: {
+  sessionPromise: ReturnType<typeof getCurrentSession>;
+}) {
   return (
     <header className="h-14 border-b border-border flex items-center justify-between md:justify-start gap-6 px-3 sm:px-5">
       {/* Left: Logo + Name */}
@@ -29,7 +29,7 @@ export function TopNav({ user }: TopNavProps) {
       <TopNavItems />
 
       {/* Desktop-only utilities (Search input grows) */}
-      <TopNavActions user={user} />
+      <TopNavActions sessionPromise={sessionPromise} />
     </header>
   );
 }

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { use } from "react";
 import { LogoutFlow } from "@/components/auth/logout-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -26,27 +27,34 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useKeyboardShortcutsStore } from "@/hooks/ui/use-keyboard-shortcuts-store";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
-import { authClient, type SessionUser } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { getInitials } from "@/lib/utils";
-
-interface UserMenuProps {
-  user: SessionUser;
-}
+import type { SessionPromise } from "@/types";
 
 /**
  * Dropdown that displays user info, routes, reset tour and logout action.
  */
-export function UserMenu({ user: initialUser }: UserMenuProps) {
-  const { data: session } = authClient.useSession();
+export function UserMenu({
+  sessionPromise,
+}: {
+  sessionPromise: SessionPromise;
+}) {
+  const serverSession = use(sessionPromise);
+  const { data: clientSession } = authClient.useSession();
+
   const { setTheme, theme } = useTheme();
   const resetTour = useTourStore((s) => s.reset);
   const setShortcutsOpen = useKeyboardShortcutsStore((s) => s.setOpen);
 
-  const user = session?.user ?? initialUser;
+  const user = clientSession?.user ?? serverSession?.user;
+
+  if (!user) return null;
+
   const initials = getInitials(user.name);
 
   return (
@@ -165,5 +173,19 @@ export function UserMenu({ user: initialUser }: UserMenuProps) {
         </DropdownMenu>
       )}
     </LogoutFlow>
+  );
+}
+
+export function UserMenuSkeleton() {
+  return <Skeleton className="size-8 rounded-full animate-pulse" />;
+}
+
+export function UserMenuErrorFallback() {
+  return (
+    <Avatar className="size-8 opacity-50" aria-label="Failed to load user">
+      <AvatarFallback className="bg-destructive/10 text-destructive">
+        <UserIcon className="size-4" />
+      </AvatarFallback>
+    </Avatar>
   );
 }

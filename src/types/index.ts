@@ -10,6 +10,7 @@ import type {
   userPreferences,
   verification,
 } from "@/db/schema";
+import type { getCurrentSession } from "@/lib/session";
 
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
@@ -100,3 +101,5 @@ export type ServerActionResult<T = undefined> =
       error: string;
       code: string;
     };
+
+export type SessionPromise = ReturnType<typeof getCurrentSession>;
