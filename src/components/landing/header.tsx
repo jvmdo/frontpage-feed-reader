@@ -7,14 +7,20 @@ import { Button } from "@/components/ui/button";
 export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-2 sm:px-4 md:px-6">
-        <Link href="/" className="flex">
-          <span className="font-serif text-lg sm:text-2xl font-bold tracking-tighter">
+      <div className="container mx-auto max-w-7xl flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6 lg:px-8">
+        {/* Brand Logo */}
+        <Link
+          href="/"
+          className="flex items-center gap-1 sm:gap-1.5 transition-opacity hover:opacity-90 shrink-0"
+        >
+          <span className="font-serif text-base xs:text-lg sm:text-2xl font-bold tracking-tighter">
             Frontpage
           </span>
-          <RssIcon size={20} className="text-primary" />
+          <RssIcon className="size-4 sm:size-5 text-primary" />
         </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium md:text-base">
+
+        {/* Center Desktop Navigation (hidden on mobile) */}
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm lg:text-base font-medium">
           <Link
             href="#features"
             className="transition-colors hover:text-primary"
@@ -31,12 +37,22 @@ export function Header() {
             FAQ
           </Link>
         </nav>
-        <div className="flex items-center gap-2 sm:gap-4">
+
+        {/* Right Actions Container with Optical Kerning / Spacing Balance */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <ThemeToggle />
-          <Button variant="ghost" asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-xs sm:h-9 sm:text-sm px-2.5 sm:px-3"
+            asChild
+          >
             <Link href="/sign-in">Sign In</Link>
           </Button>
-          <GuestButton />
+          <GuestButton
+            size="sm"
+            className="h-8 text-xs sm:h-9 sm:text-sm px-2.5 sm:px-4"
+          />
         </div>
       </div>
     </header>

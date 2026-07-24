@@ -12,24 +12,28 @@ import { steps } from "@/lib/tour-steps";
 import { cn } from "@/lib/utils";
 
 export function WelcomeTour() {
-  const { setOpenMobile, isMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
   const setTourActive = useTourStore((s) => s.setTourActive);
   const setTourCompleted = useTourStore((s) => s.setTourCompleted);
   const isTourActive = useTourStore((s) => s.isTourActive);
   const isWaitingForFeed = useTourStore((s) => s.isWaitingForFeed);
 
+  // Adjust tooltip placements for mobile
+  // `useMemo` is mandatory. Compiler won't work here because of the biome-ignore below
   const responsiveSteps = React.useMemo(() => {
     return steps.map((step) => {
+      if (!isMobile) {
+        return step;
+      }
+
       const responsiveStep = { ...step };
 
-      // Adjust placements for mobile
-      if (isMobile) {
-        if (step.id === "add-feed-button") {
-          responsiveStep.placement = "top";
-        }
-        if (step.id === "click-welcome-feed") {
-          responsiveStep.placement = "bottom";
-        }
+      if (step.id === "add-feed-button") {
+        responsiveStep.placement = "top";
+      }
+
+      if (step.id === "click-welcome-feed") {
+        responsiveStep.placement = "bottom";
       }
 
       return responsiveStep;
@@ -40,13 +44,13 @@ export function WelcomeTour() {
     steps: responsiveSteps,
     closeOnInteractOutside: false,
     closeOnEscape: false,
-    onStatusChange: (details) => {
-      if (details.status === "started") {
+    onStatusChange: ({ status }) => {
+      if (status === "started") {
         setTourActive(true);
       } else if (
-        details.status === "dismissed" ||
-        details.status === "completed" ||
-        details.status === "skipped"
+        status === "dismissed" ||
+        status === "completed" ||
+        status === "skipped"
       ) {
         setTourActive(false);
         setTourCompleted(true);
@@ -56,20 +60,28 @@ export function WelcomeTour() {
     },
   });
 
-  // Sync steps if they change (e.g. on window resize)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `tour` isn't stable
-  React.useEffect(() => {
-    tour.setSteps(responsiveSteps);
-  }, [responsiveSteps]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `tour` isn't stable, it would fire the callback on every render
+  React.useEffect(
+    // Make sure tooltip placement react to viewport size changes
+    function syncTourResponsiveSteps() {
+      tour.setSteps(responsiveSteps);
+    },
+    [responsiveSteps],
+  );
 
-  // Ensure sidebar is open on mobile during relevant steps or waiting states
-  React.useEffect(() => {
-    if (!isTourActive || !isMobile) return;
+  const tourStepId = tour.step?.id ?? "";
 
-    if (isWaitingForFeed || tour.step?.id === "click-welcome-feed") {
-      setOpenMobile(true);
-    }
-  }, [tour.step?.id, isTourActive, isMobile, setOpenMobile, isWaitingForFeed]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `setOpenMobile` is stable
+  React.useEffect(
+    function autoOpenMobileSidebar() {
+      if (!isTourActive || !isMobile) return;
+
+      if (isWaitingForFeed || tourStepId === "click-welcome-feed") {
+        setOpenMobile(true);
+      }
+    },
+    [tourStepId, isTourActive, isMobile, isWaitingForFeed],
+  );
 
   return (
     <Tour.Root tour={tour}>
