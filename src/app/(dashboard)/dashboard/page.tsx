@@ -35,13 +35,15 @@ interface DashboardPageProps {
 export default async function DashboardPage({
   searchParams,
 }: DashboardPageProps) {
-  const session = await getCurrentSession();
+  const [session, params] = await Promise.all([
+    getCurrentSession(),
+    searchParams,
+  ]);
 
   if (!session?.user) {
     redirect("/sign-in");
   }
 
-  const params = await searchParams;
   const result = itemsQuerySchema.safeParse(params);
 
   const {
@@ -101,7 +103,9 @@ export default async function DashboardPage({
             <FeedToolbar />
           </QueryErrorBoundary>
         </Suspense>
-        <ActiveFilterChips />
+        <Suspense fallback={null}>
+          <ActiveFilterChips />
+        </Suspense>
         <section
           id="feed-container"
           className="flex-1 overflow-y-auto -mb-8"

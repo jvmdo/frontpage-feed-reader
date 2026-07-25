@@ -11,6 +11,7 @@ import {
 } from "@/components/layout/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
 import type { SessionPromise } from "@/types";
 
@@ -52,6 +53,19 @@ export function TopNavActions({
           <UserMenu sessionPromise={sessionPromise} />
         </Suspense>
       </ErrorBoundary>
+    </div>
+  );
+}
+
+export function TopNavActionsSkeleton() {
+  return (
+    <div
+      className="hidden md:flex flex-1 items-center justify-end gap-3"
+      aria-hidden="true"
+    >
+      <Skeleton className="h-8 max-w-[16rem] flex-1 rounded-md" />
+      <Skeleton className="size-8 rounded-md" />
+      <Skeleton className="size-8 rounded-full" />
     </div>
   );
 }

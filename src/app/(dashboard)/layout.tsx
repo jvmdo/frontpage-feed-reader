@@ -8,7 +8,10 @@ import { ClientDialogs } from "@/components/layout/client-dialogs";
 import { SidebarErrorFallback } from "@/components/layout/components/sidebar-error-fallback";
 import { SidebarFeeds } from "@/components/layout/components/sidebar-feeds";
 import { SidebarFeedsSkeleton } from "@/components/layout/components/sidebar-feeds-skeleton";
-import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import {
+  MobileBottomNav,
+  MobileBottomNavSkeleton,
+} from "@/components/layout/mobile-bottom-nav";
 import { TopNav } from "@/components/layout/top-nav";
 import { KeyboardShortcutsDialog } from "@/components/shared/keyboard-shortcuts-dialog";
 import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
@@ -25,8 +28,6 @@ import { getSubscriptions } from "@/services/subscription/get-subscriptions";
 import { getRefreshTaskStatus } from "@/services/system/get-refresh-task-status";
 import { shouldShowWelcomeTour } from "@/services/user/should-show-welcome-tour";
 import type { SessionPromise } from "@/types";
-
-export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: {
@@ -89,18 +90,19 @@ export default function DashboardLayout({
               </Suspense>
             </QueryErrorBoundary>
           </AppSidebar>
+
           <div className="flex flex-1 flex-col overflow-x-hidden">
-            <ErrorBoundary fallback={null}>
-              <Suspense fallback={null}>
-                <GuestBannerWithSession sessionPromise={sessionPromise} />
-              </Suspense>
-            </ErrorBoundary>
+            <Suspense fallback={null}>
+              <GuestBannerWithSession sessionPromise={sessionPromise} />
+            </Suspense>
 
             <SidebarInset className="flex flex-col p-4 overflow-y-scroll">
               {children}
             </SidebarInset>
 
-            <MobileBottomNav sessionPromise={sessionPromise} />
+            <Suspense fallback={<MobileBottomNavSkeleton />}>
+              <MobileBottomNav sessionPromise={sessionPromise} />
+            </Suspense>
           </div>
 
           <ErrorBoundary fallback={null}>

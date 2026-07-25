@@ -1,5 +1,6 @@
-import ItemListSkeleton from "@/components/feed/item-list-skeleton";
+import { ItemSkeleton } from "@/components/feed/item-list-skeleton";
 import { FeedToolbarSkeleton } from "@/components/layout/components/feed-toolbar-skeleton";
+import { FeedLayout } from "@/hooks/ui/use-view-options";
 
 export default function Loading() {
   return (
@@ -14,7 +15,18 @@ export default function Loading() {
         className="flex-1 overflow-y-auto -mb-8"
         aria-label="Feed"
       >
-        <ItemListSkeleton />
+        <div aria-busy="true" className="w-full">
+          <span className="sr-only" role="status">
+            Loading items
+          </span>
+
+          <div aria-hidden="true" className={"flex flex-col"}>
+            {Array.from({ length: 20 }).map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: Static list for skeleton
+              <ItemSkeleton key={`skeleton-${i}`} layout={FeedLayout.List} />
+            ))}
+          </div>
+        </div>
       </section>
     </div>
   );

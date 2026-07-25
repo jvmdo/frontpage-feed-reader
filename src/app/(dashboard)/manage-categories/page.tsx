@@ -1,8 +1,10 @@
 import { Folder } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { AddCategoryDialog } from "@/components/category/add-category-dialog";
 import { CategoryManagementList } from "@/components/category/category-management-list";
+import { CategoryManagementListSkeleton } from "@/components/category/category-management-list-skeleton";
 import { getCurrentSession } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -43,7 +45,9 @@ export default async function ManageCategoriesPage() {
         </AddCategoryDialog>
       </div>
       <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
-        <CategoryManagementList />
+        <Suspense fallback={<CategoryManagementListSkeleton />}>
+          <CategoryManagementList />
+        </Suspense>
       </div>
     </section>
   );

@@ -31,11 +31,13 @@ export default async function ProfilePage() {
   }
 
   const queryClient = getQueryClient();
-  const headersList = await headers();
 
   queryClient.prefetchQuery({
     queryKey: queryKeys.userAccounts.all,
-    queryFn: () => auth.api.listUserAccounts({ headers: headersList }),
+    queryFn: async () => {
+      const headersList = await headers();
+      return auth.api.listUserAccounts({ headers: headersList });
+    },
   });
 
   return (

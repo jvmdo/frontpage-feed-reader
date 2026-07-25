@@ -17,6 +17,7 @@ import {
 } from "@/components/layout/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useSearchPaletteState } from "@/hooks/ui/use-search-palette-state";
 import type { SessionPromise } from "@/types";
@@ -89,6 +90,21 @@ export function MobileBottomNav({
           <UserMenu sessionPromise={sessionPromise} />
         </Suspense>
       </ErrorBoundary>
+    </div>
+  );
+}
+
+export function MobileBottomNavSkeleton() {
+  return (
+    <div
+      className="md:hidden h-14 border-t border-border bg-card flex items-center justify-around z-30"
+      aria-hidden="true"
+    >
+      <Skeleton className="size-10 rounded-md" />
+      <Skeleton className="size-10 rounded-md" />
+      <Skeleton className="size-10 rounded-md" />
+      <Skeleton className="size-10 rounded-md" />
+      <Skeleton className="size-8 rounded-full" />
     </div>
   );
 }

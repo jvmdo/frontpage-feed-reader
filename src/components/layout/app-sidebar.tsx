@@ -7,6 +7,7 @@ import {
   PlusIcon,
   RssIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 import { AddCategoryDialog } from "@/components/category/add-category-dialog";
@@ -38,14 +39,6 @@ import { useUnreadCounts } from "@/hooks/feed/use-unread-counts";
 import { dashboardState } from "@/lib/search-params";
 
 export function AppSidebar({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const { feedId, categoryId, isSaved } = useFeedFilter();
-
-  const isDashboardActive =
-    pathname === "/dashboard" && !feedId && !categoryId && !isSaved;
-
-  const isSavedActive = pathname === "/dashboard" && isSaved;
-
   return (
     <Sidebar
       collapsible="icon"
@@ -68,42 +61,12 @@ export function AppSidebar({ children }: { children: ReactNode }) {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isDashboardActive}
-                    tooltip="All Items"
-                    className="relative font-medium"
-                  >
-                    <DashboardLink state={dashboardState.allItems()}>
-                      <InboxIcon className="size-4" />
-                      <span>All Items</span>
-                    </DashboardLink>
-                  </SidebarMenuButton>
-                  <Suspense fallback={null}>
-                    <QueryErrorBoundary fallback={null} resetKeys={[pathname]}>
-                      <AllItemsBadge />
-                    </QueryErrorBoundary>
-                  </Suspense>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isSavedActive}
-                    tooltip="Saved"
-                    className="relative font-medium"
-                  >
-                    <DashboardLink state={dashboardState.saved()}>
-                      <BookmarkIcon className="size-4" />
-                      <span>Saved</span>
-                    </DashboardLink>
-                  </SidebarMenuButton>
-                  <Suspense fallback={null}>
-                    <QueryErrorBoundary fallback={null} resetKeys={[pathname]}>
-                      <SavedItemsBadge />
-                    </QueryErrorBoundary>
-                  </Suspense>
-                </SidebarMenuItem>
+                <Suspense fallback={<AllItemsNavigationItemFallback />}>
+                  <AllItemsNavigationItem />
+                </Suspense>
+                <Suspense fallback={<SavedNavigationItemFallback />}>
+                  <SavedNavigationItem />
+                </Suspense>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -150,6 +113,100 @@ export function AppSidebar({ children }: { children: ReactNode }) {
         </Suspense>
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function AllItemsNavigationItem() {
+  const pathname = usePathname();
+  const { feedId, categoryId, isSaved } = useFeedFilter();
+  const isDashboardActive =
+    pathname === "/dashboard" && !feedId && !categoryId && !isSaved;
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={isDashboardActive}
+        tooltip="All Items"
+        className="relative font-medium"
+      >
+        <DashboardLink state={dashboardState.allItems()}>
+          <InboxIcon className="size-4" />
+          <span>All Items</span>
+        </DashboardLink>
+      </SidebarMenuButton>
+      <Suspense fallback={null}>
+        <QueryErrorBoundary fallback={null} resetKeys={[pathname]}>
+          <AllItemsBadge />
+        </QueryErrorBoundary>
+      </Suspense>
+    </SidebarMenuItem>
+  );
+}
+
+function AllItemsNavigationItemFallback() {
+  const pathname = usePathname();
+  const isDashboardActive = pathname === "/dashboard";
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={isDashboardActive}
+        tooltip="All Items"
+        className="relative font-medium"
+      >
+        <Link href="/dashboard">
+          <InboxIcon className="size-4" />
+          <span>All Items</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+function SavedNavigationItem() {
+  const pathname = usePathname();
+  const { isSaved } = useFeedFilter();
+  const isSavedActive = pathname === "/dashboard" && isSaved;
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={isSavedActive}
+        tooltip="Saved"
+        className="relative font-medium"
+      >
+        <DashboardLink state={dashboardState.saved()}>
+          <BookmarkIcon className="size-4" />
+          <span>Saved</span>
+        </DashboardLink>
+      </SidebarMenuButton>
+      <Suspense fallback={null}>
+        <QueryErrorBoundary fallback={null} resetKeys={[pathname]}>
+          <SavedItemsBadge />
+        </QueryErrorBoundary>
+      </Suspense>
+    </SidebarMenuItem>
+  );
+}
+
+function SavedNavigationItemFallback() {
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={false}
+        tooltip="Saved"
+        className="relative font-medium"
+      >
+        <Link href="/dashboard?saved=true">
+          <BookmarkIcon className="size-4" />
+          <span>Saved</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }
 

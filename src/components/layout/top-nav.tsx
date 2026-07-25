@@ -1,6 +1,10 @@
 import { RssIcon } from "lucide-react";
 import Link from "next/link";
-import { TopNavActions } from "@/components/layout/components/top-nav-actions";
+import { Suspense } from "react";
+import {
+  TopNavActions,
+  TopNavActionsSkeleton,
+} from "@/components/layout/components/top-nav-actions";
 import { TopNavItems } from "@/components/layout/components/top-nav-items";
 import type { getCurrentSession } from "@/lib/session";
 
@@ -29,7 +33,9 @@ export function TopNav({
       <TopNavItems />
 
       {/* Desktop-only utilities (Search input grows) */}
-      <TopNavActions sessionPromise={sessionPromise} />
+      <Suspense fallback={<TopNavActionsSkeleton />}>
+        <TopNavActions sessionPromise={sessionPromise} />
+      </Suspense>
     </header>
   );
 }
