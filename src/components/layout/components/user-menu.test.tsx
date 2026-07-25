@@ -11,8 +11,9 @@ vi.mock("next-themes", () => ({
   }),
 }));
 
+import { Suspense } from "react";
 import { authClient } from "@/lib/auth-client";
-import { createMockUser } from "@/tests/factories";
+import { createMockSessionPromise, createMockUser } from "@/tests/factories";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { UserMenu } from "./user-menu";
 
@@ -60,19 +61,29 @@ describe("UserMenu Integration", () => {
     return user;
   };
 
+  const renderUserMenu = (user: any) => {
+    const sessionPromise = createMockSessionPromise(user);
+    return render(
+      <Suspense>
+        <UserMenu sessionPromise={sessionPromise} />
+      </Suspense>,
+    );
+  };
+
   it("renders user avatar and initials fallback", async () => {
     const user = setupUser(false);
-    render(<UserMenu user={user} />);
+    renderUserMenu(user);
 
-    expect(screen.getByText("JD")).toBeInTheDocument();
+    expect(await screen.findByText("JD")).toBeInTheDocument();
   });
 
   it("opens menu and shows user info on click", async () => {
     const user = setupUser(false);
     const actor = userEvent.setup();
-    render(<UserMenu user={user} />);
+    renderUserMenu(user);
 
-    await actor.click(screen.getByRole("button", { name: /user menu/i }));
+    const button = await screen.findByRole("button", { name: /user menu/i });
+    await actor.click(button);
 
     expect(screen.getByText(user.name)).toBeInTheDocument();
     expect(screen.getByText(user.email)).toBeInTheDocument();
@@ -81,9 +92,10 @@ describe("UserMenu Integration", () => {
   it("signs out immediately for regular members without showing guest warning", async () => {
     const user = setupUser(false);
     const actor = userEvent.setup();
-    render(<UserMenu user={user} />);
+    renderUserMenu(user);
 
-    await actor.click(screen.getByRole("button", { name: /user menu/i }));
+    const button = await screen.findByRole("button", { name: /user menu/i });
+    await actor.click(button);
     await actor.click(screen.getByRole("menuitem", { name: /log out/i }));
 
     expect(authClient.signOut).toHaveBeenCalled();
@@ -94,9 +106,10 @@ describe("UserMenu Integration", () => {
   it("shows confirmation dialog for guest users when logging out", async () => {
     const user = setupUser(true);
     const actor = userEvent.setup();
-    render(<UserMenu user={user} />);
+    renderUserMenu(user);
 
-    await actor.click(screen.getByRole("button", { name: /user menu/i }));
+    const button = await screen.findByRole("button", { name: /user menu/i });
+    await actor.click(button);
     await actor.click(screen.getByRole("menuitem", { name: /log out/i }));
 
     expect(authClient.signOut).not.toHaveBeenCalled();
@@ -109,9 +122,10 @@ describe("UserMenu Integration", () => {
   it("allows guest users to cancel warning and save progress", async () => {
     const user = setupUser(true);
     const actor = userEvent.setup();
-    render(<UserMenu user={user} />);
+    renderUserMenu(user);
 
-    await actor.click(screen.getByRole("button", { name: /user menu/i }));
+    const button = await screen.findByRole("button", { name: /user menu/i });
+    await actor.click(button);
     await actor.click(screen.getByRole("menuitem", { name: /log out/i }));
 
     await actor.click(screen.getByRole("button", { name: /save progress/i }));
@@ -128,9 +142,10 @@ describe("UserMenu Integration", () => {
   it("allows guest users to confirm logout and delete data", async () => {
     const user = setupUser(true);
     const actor = userEvent.setup();
-    render(<UserMenu user={user} />);
+    renderUserMenu(user);
 
-    await actor.click(screen.getByRole("button", { name: /user menu/i }));
+    const button = await screen.findByRole("button", { name: /user menu/i });
+    await actor.click(button);
     await actor.click(screen.getByRole("menuitem", { name: /log out/i }));
 
     await actor.click(screen.getByRole("button", { name: /yes, goodbye!/i }));
@@ -146,13 +161,15 @@ describe("UserMenu Integration", () => {
     vi.mocked(authClient.signOut).mockReturnValue(promise);
 
     const actor = userEvent.setup();
-    render(<UserMenu user={user} />);
+    renderUserMenu(user);
 
-    await actor.click(screen.getByRole("button", { name: /user menu/i }));
+    const button = await screen.findByRole("button", { name: /user menu/i });
+    await actor.click(button);
     await actor.click(screen.getByRole("menuitem", { name: /log out/i }));
 
     // The menu closes automatically. Reopen it to check the pending state.
-    await actor.click(screen.getByRole("button", { name: /user menu/i }));
+    const button2 = await screen.findByRole("button", { name: /user menu/i });
+    await actor.click(button2);
 
     expect(
       screen.getByRole("menuitem", { name: /logging out/i }),
@@ -170,9 +187,10 @@ describe("UserMenu Integration", () => {
     } as any);
 
     const actor = userEvent.setup();
-    render(<UserMenu user={user} />);
+    renderUserMenu(user);
 
-    await actor.click(screen.getByRole("button", { name: /user menu/i }));
+    const button = await screen.findByRole("button", { name: /user menu/i });
+    await actor.click(button);
     await actor.click(screen.getByRole("menuitem", { name: /log out/i }));
 
     expect(toast.error).toHaveBeenCalledWith("Network connection lost.");
@@ -181,9 +199,10 @@ describe("UserMenu Integration", () => {
   it("allows selecting a theme", async () => {
     const user = setupUser(false);
     const actor = userEvent.setup();
-    render(<UserMenu user={user} />);
+    renderUserMenu(user);
 
-    await actor.click(screen.getByRole("button", { name: /user menu/i }));
+    const button = await screen.findByRole("button", { name: /user menu/i });
+    await actor.click(button);
     const darkItem = screen.getByRole("radio", { name: /dark theme/i });
     await actor.click(darkItem);
 

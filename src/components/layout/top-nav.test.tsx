@@ -1,6 +1,6 @@
 import { usePathname } from "next/navigation";
 import { describe, expect, it, vi } from "vitest";
-import { createMockUser } from "@/tests/factories";
+import { createMockSessionPromise, createMockUser } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
 import { TopNav } from "./top-nav";
 
@@ -24,9 +24,10 @@ vi.mock("@/components/feed/add-feed-dialog", () => ({
 
 describe("TopNav", () => {
   const mockUser = createMockUser();
+  const mockSessionPromise = createMockSessionPromise(mockUser);
 
   it("renders branding and navigation links", () => {
-    render(<TopNav user={mockUser} />);
+    render(<TopNav sessionPromise={mockSessionPromise} />);
 
     // Verify branding (desktop version)
     expect(screen.getByText("Frontpage")).toBeInTheDocument();
@@ -41,7 +42,7 @@ describe("TopNav", () => {
 
   it("highlights the active link based on pathname", () => {
     vi.mocked(usePathname).mockReturnValue("/dashboard");
-    const { rerender } = render(<TopNav user={mockUser} />);
+    const { rerender } = render(<TopNav sessionPromise={mockSessionPromise} />);
 
     // Default mock is /dashboard
     const feedLink = screen.getByRole("link", { name: /feed/i });
@@ -49,7 +50,7 @@ describe("TopNav", () => {
 
     // Change pathname to /digest
     vi.mocked(usePathname).mockReturnValue("/digest");
-    rerender(<TopNav user={mockUser} />);
+    rerender(<TopNav sessionPromise={mockSessionPromise} />);
 
     // Uncomment when Digest page is available
     // const digestLink = screen.getByRole("link", { name: /digest/i });
@@ -60,8 +61,8 @@ describe("TopNav", () => {
     );
   });
 
-  it("renders desktop-only utilities", () => {
-    render(<TopNav user={mockUser} />);
+  it("renders desktop-only utilities", async () => {
+    render(<TopNav sessionPromise={mockSessionPromise} />);
 
     // Desktop utilities are inside a hidden md:flex div
     // But RTL renders everything in a jsdom environment by default
@@ -69,6 +70,6 @@ describe("TopNav", () => {
       screen.getByRole("button", { name: /search your articles/i }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/add feed/i)).toBeInTheDocument();
-    expect(screen.getByText("JD")).toBeInTheDocument(); // Avatar fallback for John Doe
+    expect(await screen.findByText("JD")).toBeInTheDocument(); // Avatar fallback for John Doe
   });
 });

@@ -9,6 +9,7 @@ import type {
   ItemWithSource,
   ListItem,
   ListItemWithSource,
+  SessionPromise,
   Subscription,
   User,
 } from "@/types";
@@ -213,4 +214,27 @@ export function createMockAccount(overrides: Partial<Account> = {}): Account {
     updatedAt: new Date(),
     ...overrides,
   };
+}
+
+export function createMockSessionPromise(
+  user = createMockUser(),
+): SessionPromise {
+  const result = {
+    session: {
+      id: "session-1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      userId: user.id,
+      expiresAt: new Date(),
+      token: "token-1",
+    },
+    user,
+  };
+  const promise = Promise.resolve(result) as unknown as SessionPromise & {
+    status?: string;
+    value?: unknown;
+  };
+  promise.status = "fulfilled";
+  promise.value = result;
+  return promise;
 }

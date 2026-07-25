@@ -3,7 +3,7 @@
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { useSidebar } from "@/components/ui/sidebar";
-import { createMockUser } from "@/tests/factories";
+import { createMockSessionPromise, createMockUser } from "@/tests/factories";
 import { render, screen } from "@/tests/rtl-utils";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 
@@ -39,11 +39,12 @@ vi.mock("@/components/layout/components/feed-menu", () => ({
 
 describe("MobileBottomNav", () => {
   const mockUser = createMockUser();
+  const mockSessionPromise = createMockSessionPromise(mockUser);
 
   it("renders all navigation items", () => {
     vi.mocked(useSidebar).mockReturnValue({ toggleSidebar: vi.fn() } as any);
 
-    render(<MobileBottomNav user={mockUser} />);
+    render(<MobileBottomNav sessionPromise={mockSessionPromise} />);
 
     expect(screen.getByLabelText(/open sidebar menu/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/search your items/i)).toBeInTheDocument();
@@ -57,7 +58,7 @@ describe("MobileBottomNav", () => {
     vi.mocked(useSidebar).mockReturnValue({ toggleSidebar } as any);
     const user = userEvent.setup();
 
-    render(<MobileBottomNav user={mockUser} />);
+    render(<MobileBottomNav sessionPromise={mockSessionPromise} />);
 
     const menuButton = screen.getByLabelText(/open sidebar menu/i);
     await user.click(menuButton);
@@ -68,7 +69,7 @@ describe("MobileBottomNav", () => {
   it("wraps AddFeedDialog around the add button", () => {
     vi.mocked(useSidebar).mockReturnValue({ toggleSidebar: vi.fn() } as any);
 
-    render(<MobileBottomNav user={mockUser} />);
+    render(<MobileBottomNav sessionPromise={mockSessionPromise} />);
 
     const dialogWrapper = screen.getByTestId("add-feed-dialog");
     expect(dialogWrapper).toContainElement(
@@ -79,7 +80,7 @@ describe("MobileBottomNav", () => {
   it("wraps FeedMenu around the more button", () => {
     vi.mocked(useSidebar).mockReturnValue({ toggleSidebar: vi.fn() } as any);
 
-    render(<MobileBottomNav user={mockUser} />);
+    render(<MobileBottomNav sessionPromise={mockSessionPromise} />);
 
     const menuWrapper = screen.getByTestId("feed-menu");
     expect(menuWrapper).toContainElement(screen.getByLabelText(/feed menu/i));
