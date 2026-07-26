@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/card";
 import { FieldError, FieldGroup } from "@/components/ui/field";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { useDeleteAccount } from "@/hooks/user/use-delete-account";
 import { useUserAccounts } from "@/hooks/user/use-user-accounts";
@@ -141,6 +142,23 @@ export function DeleteAccountForm() {
               </form>
             </AlertDialogContent>
           </AlertDialog>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function DeleteAccountFormSkeleton() {
+  return (
+    <Card className="ring-destructive/50 *:w-full *:mx-auto xl:*:min-w-xl xl:*:max-w-3xl xl:*:mx-56">
+      <CardHeader>
+        <Skeleton className="h-6 w-28" />
+        <Skeleton className="h-4 w-full" />
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <Skeleton className="h-4 w-full sm:w-80" />
+          <Skeleton className="h-9 w-32 shrink-0 rounded-md" />
         </div>
       </CardContent>
     </Card>

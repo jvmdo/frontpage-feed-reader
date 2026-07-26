@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { useChangeEmail } from "@/hooks/user/use-change-email";
 import { useUserAccounts } from "@/hooks/user/use-user-accounts";
@@ -121,5 +122,32 @@ export function EmailChangeForm() {
         </Button>
       </div>
     </form>
+  );
+}
+
+export function EmailChangeFormSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Card className="*:w-full *:mx-auto xl:*:min-w-xl xl:*:max-w-3xl xl:*:mx-56">
+        <CardHeader className="mb-1">
+          <Skeleton className="h-5.75 w-36" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-1/3" />
+        </CardHeader>
+        <CardContent className="space-y-7">
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+      <div className="flex justify-end mx-auto xl:min-w-xl xl:max-w-3xl xl:mx-50">
+        <Skeleton className="h-9 w-26 rounded-md" />
+      </div>
+    </div>
   );
 }

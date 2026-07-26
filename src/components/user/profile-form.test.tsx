@@ -1,8 +1,5 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Tests */
-
 import userEvent from "@testing-library/user-event";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { authClient } from "@/lib/auth-client";
 import { createMockUser } from "@/tests/factories";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
@@ -61,11 +58,11 @@ describe("ProfileForm", () => {
   });
 
   describe("member user", () => {
-    it("shows 'Member' badge without 'Save Progress' button", () => {
+    it("shows 'Member since' without 'Save Progress' button", () => {
       const userMock = mockSession({ isAnonymous: false });
       render(<ProfileForm user={{ ...userMock, createdAt: new Date() }} />);
 
-      expect(screen.getByText(/^member$/i)).toBeInTheDocument();
+      expect(screen.getByText(/member since/i)).toBeInTheDocument();
       expect(
         screen.queryByRole("button", { name: /save progress/i }),
       ).not.toBeInTheDocument();

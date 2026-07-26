@@ -82,12 +82,12 @@ export function UserStatsGridSkeleton() {
       {Array.from({ length: 4 }).map((_, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: static list
         <Card key={i}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="size-8 rounded-lg" />
           </CardHeader>
-          <CardContent className="space-y-2">
-            <Skeleton className="h-8 w-12" />
+          <CardContent className="space-y-0.5">
+            <Skeleton className="h-10 w-12" />
             <Skeleton className="h-3.5 w-32" />
           </CardContent>
         </Card>

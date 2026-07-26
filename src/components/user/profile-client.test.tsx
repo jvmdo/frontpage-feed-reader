@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Tests */
-
 import userEvent from "@testing-library/user-event";
 import { useUserAccounts } from "@/hooks/user/use-user-accounts";
 import { authClient } from "@/lib/auth-client";
@@ -23,6 +21,9 @@ vi.mock("./email-change-form", () => ({
     useUserAccounts();
     return <div data-testid="email-change-form">Email Change Form</div>;
   },
+  EmailChangeFormSkeleton: () => (
+    <div data-testid="email-change-form-skeleton" />
+  ),
 }));
 
 vi.mock("./password-change-form", () => ({
@@ -30,6 +31,9 @@ vi.mock("./password-change-form", () => ({
     useUserAccounts();
     return <div data-testid="password-change-form">Password Change Form</div>;
   },
+  PasswordChangeFormSkeleton: () => (
+    <div data-testid="password-change-form-skeleton" />
+  ),
 }));
 
 vi.mock("./oauth-providers", () => ({
@@ -37,6 +41,7 @@ vi.mock("./oauth-providers", () => ({
     useUserAccounts();
     return <div data-testid="oauth-providers">OAuth Providers</div>;
   },
+  OAuthProvidersSkeleton: () => <div data-testid="oauth-providers-skeleton" />,
 }));
 
 vi.mock("./delete-account-form", () => ({
@@ -44,6 +49,9 @@ vi.mock("./delete-account-form", () => ({
     useUserAccounts();
     return <div data-testid="delete-account-form">Delete Account Form</div>;
   },
+  DeleteAccountFormSkeleton: () => (
+    <div data-testid="delete-account-form-skeleton" />
+  ),
 }));
 
 describe("ProfileClient Integration & Error Boundaries", () => {

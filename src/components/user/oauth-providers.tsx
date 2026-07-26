@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { GithubIcon } from "@/components/ui/icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { useOAuthToggle } from "@/hooks/user/use-oauth-toggle";
 import { useUserAccounts } from "@/hooks/user/use-user-accounts";
@@ -68,6 +69,30 @@ export function OAuthProviders() {
                   : "Connect"}
             </Button>
           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function OAuthProvidersSkeleton() {
+  return (
+    <Card className="*:w-full *:mx-auto xl:*:min-w-xl xl:*:max-w-3xl xl:*:mx-56">
+      <CardHeader>
+        <Skeleton className="h-6 w-36" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-1/2" />
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between p-4 border rounded-lg bg-bg-secondary">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-5 rounded-full" />
+            <div className="space-y-1">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-19 rounded-md" />
         </div>
       </CardContent>
     </Card>

@@ -70,14 +70,14 @@ export function ProfileForm({ user }: ProfileFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Card className="*:w-full *:mx-auto xl:*:min-w-xl xl:*:max-w-3xl xl:*:mx-56">
           <CardHeader>
-            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
-              <Avatar size="lg">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Avatar className="size-21">
                 {user.image && <AvatarImage src={user.image} alt={user.name} />}
                 <AvatarFallback className="text-lg font-semibold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <div className="space-y-1 text-center sm:text-left">
+              <div className="space-y-1">
                 <CardTitle className="text-lg">
                   <h2>{user.name}</h2>
                 </CardTitle>
@@ -99,11 +99,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
                       </Button>
                     </>
                   ) : (
-                    <Badge variant="secondary">Member</Badge>
+                    <span className="text-xs text-muted-foreground">
+                      Member since {format(joinDate, "MMMM yyyy")}
+                    </span>
                   )}
-                  <span className="text-xs text-muted-foreground">
-                    Member since {format(joinDate, "MMMM yyyy")}
-                  </span>
                 </div>
               </div>
             </div>
