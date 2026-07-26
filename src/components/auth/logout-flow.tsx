@@ -34,9 +34,6 @@ export function LogoutFlow({ isUserAnonymous, children }: LogoutFlowProps) {
       setShowGuestAlert(true);
     } else {
       signOut(undefined, {
-        onSuccess: () => {
-          toast.success("Logged out successfully.");
-        },
         onError: (error) => {
           toast.error(error.message);
         },

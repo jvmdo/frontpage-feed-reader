@@ -13,9 +13,14 @@ vi.mock("@/services/user/delete-user", () => ({
   deleteUserService: vi.fn(),
 }));
 
+const mockCookieStore = {
+  delete: vi.fn(),
+};
+
 vi.mock("next/headers", () => {
   return {
     headers: vi.fn(async () => new Headers()),
+    cookies: vi.fn(async () => mockCookieStore),
   };
 });
 
@@ -50,7 +55,7 @@ describe("deleteUserAction", () => {
     });
   });
 
-  it("returns success and calls deleteUserService on successful validation", async () => {
+  it("returns success, calls deleteUserService, and clears session cookies", async () => {
     const mockSession = { user: { id: "user-123", email: "old@example.com" } };
     vi.mocked(getCurrentSession).mockResolvedValueOnce(mockSession as any);
     vi.mocked(deleteUserService).mockResolvedValueOnce(undefined);
@@ -68,6 +73,15 @@ describe("deleteUserAction", () => {
       { password: "password123" },
       expect.any(Headers),
     );
+    expect(mockCookieStore.delete).toHaveBeenCalledWith({
+      name: "better-auth.session_token",
+      path: "/",
+    });
+    expect(mockCookieStore.delete).toHaveBeenCalledWith({
+      name: "__Secure-better-auth.session_token",
+      path: "/",
+      secure: true,
+    });
   });
 
   it("handles PasswordRequiredError", async () => {

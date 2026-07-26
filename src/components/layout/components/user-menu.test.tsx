@@ -42,6 +42,7 @@ vi.mock("@/hooks/ui/use-tour-store", () => ({
 describe("UserMenu Integration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal("location", { href: "" });
     vi.mocked(authClient.useSession).mockReturnValue({
       data: null,
       error: null,
@@ -99,7 +100,7 @@ describe("UserMenu Integration", () => {
     await actor.click(screen.getByRole("menuitem", { name: /log out/i }));
 
     expect(authClient.signOut).toHaveBeenCalled();
-    expect(mockPush).toHaveBeenCalledWith("/sign-in");
+    expect(window.location.href).toBe("/sign-in");
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 
@@ -152,7 +153,7 @@ describe("UserMenu Integration", () => {
 
     expect(authClient.signOut).toHaveBeenCalled();
 
-    expect(mockPush).toHaveBeenCalledWith("/sign-in");
+    expect(window.location.href).toBe("/sign-in");
   });
 
   it("shows loading state while logging out", async () => {

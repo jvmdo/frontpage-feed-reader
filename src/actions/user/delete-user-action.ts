@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { db } from "@/db";
 import { InvalidPasswordError, PasswordRequiredError } from "@/lib/errors";
 import { getCurrentSession } from "@/lib/session";
@@ -40,6 +40,20 @@ export async function deleteUserAction(
 
     const headersList = await headers();
     await deleteUserService(db, session.user.id, result.data, headersList);
+
+    // Because `deleteUserService` bypasses Better Auth's built-in SDK deleteUser method,
+    // we manually expire both standard and secure Better Auth session cookies to ensure
+    // the browser cookie is destroyed before the client navigates to public routes.
+    const cookieStore = await cookies();
+    cookieStore.delete({
+      name: "better-auth.session_token",
+      path: "/",
+    });
+    cookieStore.delete({
+      name: "__Secure-better-auth.session_token",
+      path: "/",
+      secure: true,
+    });
 
     return {
       success: true,
