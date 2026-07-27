@@ -1,4 +1,5 @@
 import sanitize from "sanitize-html";
+import { resolveRelativeUrl } from "./normalizer";
 
 /**
  * Sanitizes an HTML string to prevent XSS and other malicious content.
@@ -91,10 +92,9 @@ export function sanitizeHtml(
             !href.startsWith("tel:") &&
             !href.startsWith("#")
           ) {
-            try {
-              attribs.href = new URL(href, baseUrl).toString();
-            } catch {
-              // Ignore invalid URLs
+            const resolved = resolveRelativeUrl(href, baseUrl);
+            if (resolved) {
+              attribs.href = resolved;
             }
           }
         }
@@ -109,10 +109,9 @@ export function sanitizeHtml(
             !src.startsWith("//") &&
             !src.startsWith("data:")
           ) {
-            try {
-              attribs.src = new URL(src, baseUrl).toString();
-            } catch {
-              // Ignore invalid URLs
+            const resolved = resolveRelativeUrl(src, baseUrl);
+            if (resolved) {
+              attribs.src = resolved;
             }
           }
         }

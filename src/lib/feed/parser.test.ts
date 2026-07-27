@@ -77,6 +77,42 @@ describe("parseFeedXml", () => {
     expect(result.items[0].title).toBe("Processing Inclusions with XSLT");
   });
 
+  it("extracts metadata without processing items when metadataOnly: true", async () => {
+    const xml = fs.readFileSync(path.join(fixturesPath, "rss-2.xml"), "utf-8");
+    const result = await parseFeedXml(xml, "https://css-tricks.com/feed/", {
+      metadataOnly: true,
+    });
+
+    expect(result.metadata.title).toBe("Standard RSS 2.0 Feed");
+    expect(result.metadata.description).toBe(
+      "Tips, Tricks, and Techniques on using Cascading Style Sheets.",
+    );
+    expect(result.metadata.link).toBe("https://css-tricks.com/");
+    expect(result.items).toEqual([]);
+  });
+
+  it("resolves relative feed image URL against feed link or source URL", async () => {
+    const xmlWithRelativeImage = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <rss version="2.0">
+        <channel>
+          <title>Sidebar Feed</title>
+          <link>https://sidebar.io</link>
+          <description>Web design articles</description>
+          <image>
+            <url>img/favicon.png</url>
+            <title>Sidebar</title>
+            <link>https://sidebar.io</link>
+          </image>
+        </channel>
+      </rss>
+    `;
+
+    const result = await parseFeedXml(xmlWithRelativeImage);
+
+    expect(result.metadata.iconUrl).toBe("https://sidebar.io/img/favicon.png");
+  });
+
   it("throws FeedInvalidFormatError for invalid XML", async () => {
     const invalidXml = "not really xml";
     await expect(parseFeedXml(invalidXml)).rejects.toThrow(

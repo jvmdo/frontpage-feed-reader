@@ -54,7 +54,9 @@ export async function createSubscription(
     if (existingFeedByFinalUrl) {
       feed = existingFeedByFinalUrl;
     } else {
-      const parsed = await parseFeedXml(fetchResult.xml, resolvedUrl);
+      const parsed = await parseFeedXml(fetchResult.xml, resolvedUrl, {
+        metadataOnly: true,
+      });
       metadata = parsed.metadata;
     }
   }

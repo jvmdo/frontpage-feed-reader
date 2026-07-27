@@ -43,7 +43,7 @@ export async function addFeedAction(
 
     const { url, categoryId } = result.data;
 
-    const { subscription, feed, initialData } = await createSubscription(
+    const { feed, initialData } = await createSubscription(
       db,
       session.user.id,
       url,
