@@ -1,4 +1,4 @@
-import { transformEmbeds } from "./embeds";
+import { enhanceHtmlContent } from "./content-transformers";
 import { extractText } from "./extractor";
 import {
   decodeEntities,
@@ -7,7 +7,6 @@ import {
   resolveRelativeUrl,
 } from "./normalizer";
 import { sanitizeHtml } from "./sanitizer";
-import { highlightCodeBlocks } from "./syntax";
 
 export interface ProcessedItem {
   guid: string;
@@ -47,9 +46,8 @@ export async function processItem(
     item.summary ||
     item.descriptionRaw ||
     "";
-  const embeddedContent = transformEmbeds(rawContent);
-  const highlightedContent = highlightCodeBlocks(embeddedContent);
-  const content = sanitizeHtml(highlightedContent, feedLink || sourceUrl);
+  const enhancedContent = enhanceHtmlContent(rawContent);
+  const content = sanitizeHtml(enhancedContent, feedLink || sourceUrl);
 
   // 3. Plain Text Derivatives
   const textContent = extractText(rawContent);
