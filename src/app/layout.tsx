@@ -7,7 +7,6 @@ import { TopLoader } from "@/components/layout/top-loader";
 import { HotkeysProvider } from "@/components/providers/hotkeys-provider";
 import HydrationFlagProvider from "@/components/providers/hydration-flag-provider";
 import { ReactQueryClientProvider } from "@/components/providers/query-client-provider";
-import { ServerTimeProvider } from "@/components/providers/server-time-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -91,13 +90,11 @@ export default function RootLayout({
         >
           <ReactQueryClientProvider>
             <NuqsAdapter>
-              <ServerTimeProvider serverNow={new Date().toISOString()}>
-                <TooltipProvider>
-                  <HotkeysProvider>
-                    <HydrationFlagProvider>{children}</HydrationFlagProvider>
-                  </HotkeysProvider>
-                </TooltipProvider>
-              </ServerTimeProvider>
+              <TooltipProvider>
+                <HotkeysProvider>
+                  <HydrationFlagProvider>{children}</HydrationFlagProvider>
+                </HotkeysProvider>
+              </TooltipProvider>
             </NuqsAdapter>
             <GuestWorkspaceSetupOverlay />
           </ReactQueryClientProvider>

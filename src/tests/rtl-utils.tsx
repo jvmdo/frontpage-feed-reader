@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type RenderOptions, render, renderHook } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactElement } from "react";
-import { ServerTimeProvider } from "@/components/providers/server-time-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 function createTestQueryClient() {
@@ -31,9 +30,7 @@ function createWrapper(options: WrapperOptions = {}) {
     return (
       <NuqsTestingAdapter searchParams={options.searchParams}>
         <QueryClientProvider client={queryClient}>
-          <ServerTimeProvider serverNow={new Date().toISOString()}>
-            <TooltipProvider>{children}</TooltipProvider>
-          </ServerTimeProvider>
+          <TooltipProvider>{children}</TooltipProvider>
         </QueryClientProvider>
       </NuqsTestingAdapter>
     );

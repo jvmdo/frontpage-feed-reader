@@ -137,9 +137,11 @@ function LastFetched({
       aria-busy={isRefreshing}
     >
       <RelativeDate date={date} />
-      <span role="status" className="sr-only">
-        {isRefreshing ? "Refreshing feed..." : ""}
-      </span>
+      {isRefreshing && (
+        <span role="status" className="sr-only">
+          Refreshing feed
+        </span>
+      )}
     </div>
   );
 }

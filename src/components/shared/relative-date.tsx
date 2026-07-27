@@ -2,7 +2,8 @@
 
 import { formatDistance } from "date-fns";
 import type { ComponentProps } from "react";
-import { useServerTime } from "@/components/providers/server-time-provider";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useTicker } from "@/hooks/use-ticker";
 
 interface RelativeDateProps extends ComponentProps<"time"> {
   date: Date | string;
@@ -11,36 +12,38 @@ interface RelativeDateProps extends ComponentProps<"time"> {
 
 /**
  * Renders a relative date string (e.g., "5 minutes ago") safely for SSR/CSR.
- * Uses a synchronized server time to handle clock drift between client and server.
- * Updates every 30 seconds to keep the displayed time fresh.
+ * Uses a synchronized global ticker store to update displayed time every 30 seconds.
  */
 export function RelativeDate({
   date,
   addSuffix = true,
   ...props
 }: RelativeDateProps) {
-  const { adjustedNow } = useServerTime();
+  const nowTimestamp = useTicker();
 
-  if (!adjustedNow) {
-    // Initial server render and first client render before the effect runs
-    return <span className="text-muted-foreground/50">...</span>;
-  }
+  // Initial server render and first client render before hydration runs
+  if (nowTimestamp === 0) {
+    const parsedDate = typeof date === "string" ? new Date(date) : date;
+    const isoString = !Number.isNaN(parsedDate.getTime())
+      ? parsedDate.toISOString()
+      : "";
 
-  const parsedDate = typeof date === "string" ? new Date(date) : date;
-
-  // If the date is in the future relative to our adjusted now,
-  // we treat it as "just now" to avoid "in 5 minutes" or confusing drift.
-  if (parsedDate > adjustedNow) {
     return (
-      <time {...props} dateTime={parsedDate.toISOString()}>
-        Just now
+      <time {...props} dateTime={isoString} aria-busy="true">
+        <Skeleton className="min-w-16 w-full h-2" />
+        <span className="sr-only">Loading date...</span>
       </time>
     );
   }
 
-  // Also handle very recent past (less than 30 seconds) as "Just now"
-  const diffInSeconds = (adjustedNow.getTime() - parsedDate.getTime()) / 1000;
-  if (diffInSeconds < 30) {
+  const clientNow = new Date(nowTimestamp);
+  const parsedDate = typeof date === "string" ? new Date(date) : date;
+
+  // If the date is in the future relative to client now, or very recent past (< 30 seconds),
+  // we treat it as "Just now" to avoid confusing time drift.
+  const diffInSeconds = (clientNow.getTime() - parsedDate.getTime()) / 1000;
+
+  if (diffInSeconds < 30 || parsedDate > clientNow) {
     return (
       <time {...props} dateTime={parsedDate.toISOString()}>
         Just now
@@ -50,7 +53,7 @@ export function RelativeDate({
 
   return (
     <time {...props} dateTime={parsedDate.toISOString()}>
-      {formatDistance(parsedDate, adjustedNow, { addSuffix })}
+      {formatDistance(parsedDate, clientNow, { addSuffix })}
     </time>
   );
 }

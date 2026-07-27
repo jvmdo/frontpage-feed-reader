@@ -166,15 +166,16 @@ describe("FeedTable", () => {
     });
 
     // 5. Verify the row shows the loading status (accessible live region)
-    const statusEl = within(firstRow).getByRole("status");
-    expect(statusEl).toHaveTextContent(/refreshing feed/i);
+    expect(within(firstRow).getByRole("status")).toHaveTextContent(
+      /refreshing feed/i,
+    );
 
     // 5. Resolve the promise
     resolve({ success: true, data: mockData[0] });
 
-    // 6. Verify loading state is removed (status is empty) and success toast is shown
+    // 6. Verify loading state is removed (status is unmounted) and success toast is shown
     await waitFor(() => {
-      expect(statusEl).toHaveTextContent("");
+      expect(within(firstRow).queryByRole("status")).not.toBeInTheDocument();
       expect(toast.success).toHaveBeenCalledWith("Feed refreshed");
     });
   });
@@ -207,15 +208,16 @@ describe("FeedTable", () => {
     await user.click(refreshButton);
 
     // Verify the row shows the loading status (accessible live region)
-    const statusEl = within(firstRow).getByRole("status");
-    expect(statusEl).toHaveTextContent(/refreshing feed/i);
+    expect(within(firstRow).getByRole("status")).toHaveTextContent(
+      /refreshing feed/i,
+    );
 
     // 4. Resolve the promise with an error
     resolve({ success: false, error: "Failed to fetch XML feed" });
 
-    // 5. Verify loading state is removed (status is empty) and error toast is shown
+    // 5. Verify loading state is removed (status is unmounted) and error toast is shown
     await waitFor(() => {
-      expect(statusEl).toHaveTextContent("");
+      expect(within(firstRow).queryByRole("status")).not.toBeInTheDocument();
       expect(toast.error).toHaveBeenCalledWith("Failed to fetch XML feed");
     });
   });
