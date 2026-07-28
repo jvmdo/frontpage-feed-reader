@@ -1,7 +1,12 @@
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { authClient } from "@/lib/auth-client";
-import { render, screen, within } from "@/tests/rtl-utils";
+import {
+  render,
+  screen,
+  waitForElementToBeRemoved,
+  within,
+} from "@/tests/rtl-utils";
 import { GuestBanner } from "./guest-banner";
 
 // Mock authClient
@@ -64,9 +69,9 @@ describe("GuestBanner", () => {
     });
     await userEvent.click(dismissButton);
 
-    expect(
+    await waitForElementToBeRemoved(() =>
       screen.queryByText(/you are using a guest session/i),
-    ).not.toBeInTheDocument();
+    );
   });
 
   it("dismisses the banner when 'Ok, got it' is clicked inside the dialog", async () => {
@@ -86,9 +91,10 @@ describe("GuestBanner", () => {
     await userEvent.click(dismissButton);
 
     // Verify both banner and dialog are gone
-    expect(
+    await waitForElementToBeRemoved(() =>
       screen.queryByText(/you are using a guest session/i),
-    ).not.toBeInTheDocument();
+    );
+
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
