@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { HttpResponse, http } from "msw";
 import { feedItems, feeds } from "@/db/schema";
 import { env } from "@/env";
+import { WELCOME_FEED_URL } from "@/lib/constants";
 import { FeedNotFoundError, FeedRecordNotFoundError } from "@/lib/errors";
 import { server } from "@/tests/mocks/server";
 import { seedFeed, seedItems } from "@/tests/seeding";
@@ -228,6 +229,31 @@ describe("ingestItems integration", () => {
     // Because createdAt is 48h ago, the grace period has expired.
     // The publishedAt date from the RSS_CONTENT should be completely ignored.
     expect(updatedItem.publishedAt?.getTime()).toBe(originalDate.getTime());
+  });
+
+  test("always updates publishedAt for welcome feed items even if ingested more than 24 hours ago", async ({
+    tx,
+  }) => {
+    const insertedFeed = await seedFeed(tx, { url: WELCOME_FEED_URL });
+    const originalDate = new Date(Date.now() - 48 * 60 * 60 * 1000); // 48 hours ago
+
+    await seedItems(tx, insertedFeed.id, [
+      {
+        guid: "https://frontpage.app/welcome",
+        publishedAt: originalDate,
+        createdAt: originalDate,
+      },
+    ]);
+
+    await ingestItems(tx, insertedFeed.id);
+
+    const [updatedItem] = await tx
+      .select()
+      .from(feedItems)
+      .where(eq(feedItems.guid, "https://frontpage.app/welcome"));
+
+    // For the welcome feed, publishedAt should be updated to NOW even if createdAt is 48h ago
+    expect(updatedItem.publishedAt?.getTime()).not.toBe(originalDate.getTime());
   });
 
   test("successfully processes feed items using initialData (handoff)", async ({

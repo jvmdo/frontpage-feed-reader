@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import type { DB } from "@/db";
 import { feedItems, feeds } from "@/db/schema";
 import { env } from "@/env";
+import { WELCOME_FEED_URL } from "@/lib/constants";
 import { FeedRecordNotFoundError } from "@/lib/errors";
 import { parseFeedXml } from "@/lib/feed/parser";
 import {
@@ -77,6 +78,8 @@ export async function ingestItems(
       }
     }
 
+    const isWelcomeFeed = feed.url === WELCOME_FEED_URL;
+
     // 1. Upsert items
     if (items.length > 0) {
       await db
@@ -106,13 +109,16 @@ export async function ingestItems(
             author: sql`excluded.${sql.raw(feedItems.author.name)}`,
             // 24-hour grace period: Only accept publication date changes if the item was ingested recently.
             // This prevents old posts from "date-bumping" their way back to the top of the feed.
-            publishedAt: sql`
-              CASE 
-                WHEN ${feedItems.createdAt} > now() - interval '24 hours' 
-                THEN excluded.${sql.raw(feedItems.publishedAt.name)}
-                ELSE ${feedItems.publishedAt}
-              END
-            `,
+            // For the welcome feed, always accept publication date updates so it remains fresh.
+            publishedAt: isWelcomeFeed
+              ? sql`excluded.${sql.raw(feedItems.publishedAt.name)}`
+              : sql`
+                  CASE 
+                    WHEN ${feedItems.createdAt} > now() - interval '24 hours' 
+                    THEN excluded.${sql.raw(feedItems.publishedAt.name)}
+                    ELSE ${feedItems.publishedAt}
+                  END
+                `,
             updatedAt: sql`excluded.${sql.raw(feedItems.updatedAt.name)}`,
             textContent: sql`excluded.${sql.raw(feedItems.textContent.name)}`,
             rawPayload: sql`excluded.${sql.raw(feedItems.rawPayload.name)}`,
