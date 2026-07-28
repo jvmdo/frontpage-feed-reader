@@ -8,7 +8,7 @@ import { parseAsInteger, useQueryState } from "nuqs";
 export function useActiveItem() {
   const [activeItemId, setActiveItemId] = useQueryState(
     "itemId",
-    parseAsInteger.withOptions({ history: "push" }),
+    parseAsInteger.withOptions({ history: "replace" }),
   );
 
   return {

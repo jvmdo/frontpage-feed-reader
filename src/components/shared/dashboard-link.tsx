@@ -73,7 +73,7 @@ export function DashboardLink({
     if (pathname === "/dashboard" && state) {
       e.preventDefault();
 
-      setStates(state, { startTransition });
+      setStates(state, { startTransition, history: "push" });
     }
   };
 

@@ -19,39 +19,53 @@ export function useFeedFilter() {
   const feedIds = states.feedIds;
 
   const setFeedId = (id: number | null) =>
-    setStates({
-      feedId: id ?? 0,
-      categoryId: 0,
-      saved: false,
-      feedIds: [],
-    });
+    setStates(
+      {
+        feedId: id ?? 0,
+        categoryId: 0,
+        saved: false,
+        feedIds: [],
+      },
+      { history: "push" },
+    );
 
   const setCategoryId = (id: number | null) =>
-    setStates({
-      categoryId: id ?? 0,
-      feedId: 0,
-      saved: false,
-      feedIds: [],
-    });
+    setStates(
+      {
+        categoryId: id ?? 0,
+        feedId: 0,
+        saved: false,
+        feedIds: [],
+      },
+      { history: "push" },
+    );
 
   const goToSaved = () =>
-    setStates({
-      saved: true,
-      feedId: 0,
-      categoryId: 0,
-      feedIds: [],
-    });
+    setStates(
+      {
+        saved: true,
+        feedId: 0,
+        categoryId: 0,
+        feedIds: [],
+      },
+      { history: "push" },
+    );
 
-  const setFeedIds = (ids: number[]) => setStates({ feedIds: ids });
-  const setStatus = (status: FilterStatus) => setStates({ status });
+  const setFeedIds = (ids: number[]) =>
+    setStates({ feedIds: ids }, { history: "replace" });
+  const setStatus = (status: FilterStatus) =>
+    setStates({ status }, { history: "replace" });
 
   const clearFilter = () =>
-    setStates({
-      feedId: 0,
-      categoryId: 0,
-      feedIds: [],
-      status: "all",
-    });
+    setStates(
+      {
+        feedId: 0,
+        categoryId: 0,
+        feedIds: [],
+        status: "all",
+      },
+      { history: "push" },
+    );
 
   return {
     feedId,
