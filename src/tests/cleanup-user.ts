@@ -21,8 +21,6 @@ export async function cleanupUserByEmail(email: string) {
  * Useful for cleaning up after manual Playwright MCP sessions or crashed tests.
  */
 export async function cleanupUser(userId: string) {
-  console.log(`\n🧹 Starting cleanup for user: ${userId}...`);
-
   try {
     const { test: authTest } = await auth.$context;
 
@@ -34,7 +32,6 @@ export async function cleanupUser(userId: string) {
     // - user_preferences
     // - sessions/accounts
     await authTest.deleteUser(userId);
-    console.log(`✅ Deleted user ${userId} (and all cascaded records).`);
 
     // 2. Delete tenant-specific feeds
     // These are shared entities not tied to the user by FK, so they need explicit deletion.
@@ -45,12 +42,8 @@ export async function cleanupUser(userId: string) {
       .returning({ id: feeds.id, url: feeds.url });
 
     if (deletedFeeds.length > 0) {
-      console.log(`✅ Deleted ${deletedFeeds.length} tenant-specific feeds.`);
     } else {
-      console.log("ℹ️ No tenant-specific feeds found to delete.");
     }
-
-    console.log("✨ Cleanup complete.\n");
   } catch (error) {
     console.error("❌ Cleanup failed:", error);
     throw error;
@@ -63,7 +56,6 @@ if (process.versions.bun) {
 
   if (!userId) {
     console.error("\n❌ Error: No userId provided.");
-    console.log("Usage: bun run src/tests/cleanup-user.ts <userId>\n");
     process.exit(1);
   }
 

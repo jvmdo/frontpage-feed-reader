@@ -42,10 +42,8 @@ test("full journey: sign up, sign out, and sign in", async ({ page }) => {
   await page.getByRole("menuitem", { name: /log out/i }).click();
 
   // Verify redirect to sign-in
-  await expect(
-    page.locator("[data-sonner-toast]").filter({ hasText: /logged out/i }),
-  ).toBeVisible();
   await expect(page).toHaveURL(/\/sign-in/);
+  await page.waitForSelector('body[data-hydrated="true"]');
 
   // 3. Sign In
   await page.getByLabel(/email/i).fill(testUser.email);

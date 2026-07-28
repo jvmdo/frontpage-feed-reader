@@ -76,8 +76,6 @@ describe("SigninForm", () => {
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/dashboard");
     });
-
-    expect(toast.success).toHaveBeenCalledWith("Signed in successfully!");
   });
 
   it("shows error toast on failed sign in", async () => {
@@ -114,8 +112,6 @@ describe("SigninForm", () => {
 
     resolve({ data: { session: {} }, error: null });
 
-    await waitFor(() => {
-      expect(toast.success).toHaveBeenCalled();
-    });
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

@@ -37,9 +37,6 @@ export function SigninForm({
 
   const onSubmit = async (data: SignInInput) => {
     signIn(data, {
-      onSuccess: () => {
-        toast.success("Signed in successfully!");
-      },
       onError: (error) => {
         toast.error(error.message);
       },
