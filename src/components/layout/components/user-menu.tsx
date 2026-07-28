@@ -159,7 +159,10 @@ export function UserMenu({
 
             <DropdownMenuItem
               variant="destructive"
-              onSelect={handleLogout}
+              onSelect={(e) => {
+                e.preventDefault();
+                handleLogout();
+              }}
               disabled={isPending}
             >
               {isPending ? (

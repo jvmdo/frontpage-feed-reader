@@ -168,10 +168,7 @@ describe("UserMenu Integration", () => {
     await actor.click(button);
     await actor.click(screen.getByRole("menuitem", { name: /log out/i }));
 
-    // The menu closes automatically. Reopen it to check the pending state.
-    const button2 = await screen.findByRole("button", { name: /user menu/i });
-    await actor.click(button2);
-
+    // The menu stays open during logout so the user sees the pending state with spinner.
     expect(
       screen.getByRole("menuitem", { name: /logging out/i }),
     ).toBeInTheDocument();
