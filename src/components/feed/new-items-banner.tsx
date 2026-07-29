@@ -1,22 +1,22 @@
 "use client";
 
 import { ArrowUp } from "lucide-react";
+import { useNewItemsPolling } from "@/hooks/feed/use-new-items-polling";
 import { cn } from "@/lib/utils";
-
-interface NewItemsBannerProps {
-  count: number;
-  onClick: () => void;
-  className?: string;
-}
 
 /**
  * A banner that appears at the top of the item list when new items are available.
  */
-export function NewItemsBanner({
-  count,
-  onClick,
-  className,
-}: NewItemsBannerProps) {
+export function NewItemsBanner() {
+  const { newItemsCount: count, handleLoadNew } = useNewItemsPolling({
+    onBeforeRefresh: () => {
+      document.getElementById("feed-container")?.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    },
+  });
+
   return (
     <div
       className={cn(
@@ -24,7 +24,6 @@ export function NewItemsBanner({
         count > 0
           ? "h-8 border-t opacity-100"
           : "h-0 border-t-0 opacity-0 pointer-events-none",
-        className,
       )}
       role="status"
       aria-live="polite"
@@ -33,7 +32,7 @@ export function NewItemsBanner({
         <button
           type="button"
           className="absolute inset-0 flex items-center justify-center gap-1 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 animate-in fade-in slide-in-from-top-20"
-          onClick={onClick}
+          onClick={handleLoadNew}
         >
           <ArrowUp size={12} />
           {count} new {count === 1 ? "item" : "items"} available

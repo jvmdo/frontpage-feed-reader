@@ -7,6 +7,7 @@ import {
   MoreHorizontalIcon,
   RotateCcwIcon,
 } from "lucide-react";
+import { Suspense } from "react";
 import { useErrorBoundary } from "react-error-boundary";
 import { AssignFeedsDialog } from "@/components/category/assign-feeds-dialog";
 import { NewItemsBanner } from "@/components/feed/new-items-banner";
@@ -14,7 +15,6 @@ import { FeedSortingToggles } from "@/components/layout/components/feed-sorting-
 import { RefreshButton } from "@/components/layout/components/refresh-button";
 import { Button } from "@/components/ui/button";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
-import { useNewItemsPolling } from "@/hooks/feed/use-new-items-polling";
 import { useMarkAllReadUI } from "@/hooks/ui/use-mark-all-read-ui";
 import { cn } from "@/lib/utils";
 import { FeedLayoutToggles } from "./components/feed-layout-toggles";
@@ -25,15 +25,6 @@ import { ToolbarTitle } from "./components/toolbar-title";
 
 export function FeedToolbar() {
   const { feedId, categoryId, isSaved, status } = useFeedFilter();
-
-  const { newItemsCount, handleLoadNew } = useNewItemsPolling({
-    onBeforeRefresh: () => {
-      document.getElementById("feed-container")?.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    },
-  });
 
   const isFilterActive = status !== "all";
 
@@ -83,7 +74,9 @@ export function FeedToolbar() {
         </div>
       </div>
 
-      <NewItemsBanner count={newItemsCount} onClick={handleLoadNew} />
+      <Suspense fallback={null}>
+        <NewItemsBanner />
+      </Suspense>
     </header>
   );
 }

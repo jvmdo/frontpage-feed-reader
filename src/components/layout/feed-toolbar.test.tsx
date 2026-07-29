@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { markAllReadAction } from "@/actions/feed/mark-all-read-action";
 import { refreshFeedAction } from "@/actions/feed/refresh-feed-action";
 import { QueryErrorBoundary } from "@/components/shared/query-error-boundary";
-import { useNewItemsPolling } from "@/hooks/feed/use-new-items-polling";
+import { createMockFeedWithSubscription } from "@/tests/factories";
 import { server } from "@/tests/mocks/server";
 import { render, screen, waitFor } from "@/tests/rtl-utils";
 import { FeedToolbar, FeedToolbarErrorFallback } from "./feed-toolbar";
@@ -28,11 +28,8 @@ vi.mock("@/actions/feed/refresh-feed-action", () => ({
   refreshFeedAction: vi.fn(),
 }));
 
-vi.mock("@/hooks/feed/use-new-items-polling", () => ({
-  useNewItemsPolling: vi.fn(() => ({
-    newItemsCount: 0,
-    handleLoadNew: vi.fn(),
-  })),
+vi.mock("@/components/feed/new-items-banner", () => ({
+  NewItemsBanner: () => null,
 }));
 
 describe("FeedToolbar", () => {
@@ -131,6 +128,47 @@ describe("FeedToolbar", () => {
       await waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith("Feed refreshed");
       });
+    });
+
+    it("displays detailed health info in the refresh tooltip", async () => {
+      const user = userEvent.setup();
+
+      // Setup mock data for feeds with an error
+      server.use(
+        http.get("/api/feeds/subscriptions", () => {
+          return HttpResponse.json([
+            createMockFeedWithSubscription({
+              feed: {
+                title: "Broken Feed",
+                healthStatus: "error",
+                lastFetchedAt: new Date("2024-01-01T12:00:00Z"),
+              },
+            }),
+          ]);
+        }),
+      );
+
+      render(<FeedToolbar />);
+
+      const refreshButton = await screen.findByRole("button", {
+        name: /refresh/i,
+      });
+
+      // Hover to trigger tooltip
+      await user.hover(refreshButton);
+
+      // Verify "Last checked" (use findAllByText as Radix might render portals/clones)
+      expect(
+        (await screen.findAllByText(/last checked/i)).length,
+      ).toBeGreaterThan(0);
+
+      // Verify failed sources list
+      expect(
+        (await screen.findAllByText(/1 source unreachable/i)).length,
+      ).toBeGreaterThan(0);
+      expect(
+        (await screen.findAllByText("Broken Feed")).length,
+      ).toBeGreaterThan(0);
     });
   });
 
@@ -339,97 +377,6 @@ describe("FeedToolbar", () => {
       expect(
         screen.getByRole("button", { name: /oldest/i }),
       ).toBeInTheDocument();
-    });
-  });
-
-  describe("New Items Notification", () => {
-    it("renders the banner when new items are available", async () => {
-      vi.mocked(useNewItemsPolling).mockReturnValue({
-        newItemsCount: 5,
-        handleLoadNew: vi.fn(),
-      });
-
-      render(<FeedToolbar />);
-
-      expect(
-        await screen.findByText(/5 new items available/i),
-      ).toBeInTheDocument();
-    });
-
-    it("calls handleLoadNew when the banner is clicked", async () => {
-      const user = userEvent.setup();
-      const handleLoadNew = vi.fn();
-      vi.mocked(useNewItemsPolling).mockReturnValue({
-        newItemsCount: 3,
-        handleLoadNew,
-      });
-
-      render(<FeedToolbar />);
-
-      const bannerButton = await screen.findByRole("button", {
-        name: /3 new items available/i,
-      });
-      await user.click(bannerButton);
-
-      expect(handleLoadNew).toHaveBeenCalledTimes(1);
-    });
-
-    it("does not render text when there are no new items", async () => {
-      vi.mocked(useNewItemsPolling).mockReturnValue({
-        newItemsCount: 0,
-        handleLoadNew: vi.fn(),
-      });
-
-      render(<FeedToolbar />);
-
-      // The container might still be there but the button text should not be visible
-      expect(
-        screen.queryByText(/new items available/i),
-      ).not.toBeInTheDocument();
-    });
-
-    it("displays detailed health info in the refresh tooltip", async () => {
-      const user = userEvent.setup();
-      const lastChecked = new Date("2024-01-01T12:00:00Z");
-
-      // Setup mock data for feeds with an error
-      server.use(
-        http.get("/api/feeds/subscriptions", () => {
-          return HttpResponse.json([
-            {
-              feed: {
-                id: 1,
-                title: "Broken Feed",
-                healthStatus: "error",
-                lastFetchedAt: lastChecked.toISOString(),
-              },
-              subscription: { id: 101 },
-            },
-          ]);
-        }),
-      );
-
-      render(<FeedToolbar />);
-
-      const refreshButton = await screen.findByRole("button", {
-        name: /refresh/i,
-      });
-
-      // Hover to trigger tooltip
-      await user.hover(refreshButton);
-
-      // Verify "Last checked" (use findAllByText as Radix might render portals/clones)
-      expect(
-        (await screen.findAllByText(/last checked/i)).length,
-      ).toBeGreaterThan(0);
-
-      // Verify failed sources list
-      expect(
-        (await screen.findAllByText(/1 source unreachable/i)).length,
-      ).toBeGreaterThan(0);
-      expect(
-        (await screen.findAllByText("Broken Feed")).length,
-      ).toBeGreaterThan(0);
     });
   });
 

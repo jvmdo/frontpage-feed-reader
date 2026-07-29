@@ -164,6 +164,7 @@ test.describe("Bookmarks / Save for Later", () => {
     // Verify it is loaded and listed
     await expect(page).toHaveURL(/status=read/);
     await expect(article).toBeVisible();
+    await expect(page.getByRole("menu")).not.toBeVisible();
 
     // 4. Mark the item as unread
     // Press 'j' to set focusedIndex, then 'm' to toggle read status
