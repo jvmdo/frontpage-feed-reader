@@ -1,7 +1,9 @@
 import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useNewItemsPolling } from "@/hooks/feed/use-new-items-polling";
 import { useItems } from "@/hooks/item/use-items";
+import { useViewOptions } from "@/hooks/ui/use-view-options";
 import { server } from "@/tests/mocks/server";
 import { act, renderHook, waitFor } from "@/tests/rtl-utils";
 
@@ -12,6 +14,13 @@ vi.mock("@/hooks/feed/use-feed-filter", () => ({
     isSaved: false,
     status: "all",
     feedIds: [],
+  })),
+}));
+
+vi.mock("@/hooks/ui/use-view-options", () => ({
+  useViewOptions: vi.fn(() => ({
+    sortBy: "publishedAt",
+    sortOrder: "desc",
   })),
 }));
 
@@ -28,6 +37,17 @@ vi.mock("@/hooks/item/use-items", () => ({
 describe("useNewItemsPolling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useFeedFilter).mockReturnValue({
+      feedId: null,
+      categoryId: null,
+      isSaved: false,
+      status: "all",
+      feedIds: [],
+    } as any);
+    vi.mocked(useViewOptions).mockReturnValue({
+      sortBy: "publishedAt",
+      sortOrder: "desc",
+    } as any);
   });
 
   it("returns count from check-new API when polling succeeds", async () => {
@@ -124,6 +144,57 @@ describe("useNewItemsPolling", () => {
     const { result } = renderHook(() => useNewItemsPolling());
 
     // Should stay 0 because query is disabled when latestItemDate is undefined/null
+    expect(result.current.newItemsCount).toBe(0);
+    expect(apiCalled).toBe(false);
+  });
+
+  it("does not fetch when status is read", async () => {
+    vi.mocked(useFeedFilter).mockReturnValue({
+      feedId: null,
+      categoryId: null,
+      isSaved: false,
+      status: "read",
+      feedIds: [],
+    } as any);
+
+    let apiCalled = false;
+    server.use(
+      http.get("/api/feeds/check-new", () => {
+        apiCalled = true;
+        return HttpResponse.json({ count: 5 });
+      }),
+    );
+
+    vi.mocked(useItems).mockReturnValue({
+      data: [{ item: { publishedAt: new Date().toISOString() } }],
+    } as any);
+
+    const { result } = renderHook(() => useNewItemsPolling());
+
+    expect(result.current.newItemsCount).toBe(0);
+    expect(apiCalled).toBe(false);
+  });
+
+  it("does not fetch when sort is ascending", async () => {
+    vi.mocked(useViewOptions).mockReturnValue({
+      sortBy: "publishedAt",
+      sortOrder: "asc",
+    } as any);
+
+    let apiCalled = false;
+    server.use(
+      http.get("/api/feeds/check-new", () => {
+        apiCalled = true;
+        return HttpResponse.json({ count: 5 });
+      }),
+    );
+
+    vi.mocked(useItems).mockReturnValue({
+      data: [{ item: { publishedAt: new Date().toISOString() } }],
+    } as any);
+
+    const { result } = renderHook(() => useNewItemsPolling());
+
     expect(result.current.newItemsCount).toBe(0);
     expect(apiCalled).toBe(false);
   });

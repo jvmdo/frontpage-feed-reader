@@ -2,7 +2,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFeedFilter } from "@/hooks/feed/use-feed-filter";
 import { useItems } from "@/hooks/item/use-items";
 import { useTourStore } from "@/hooks/ui/use-tour-store";
+import { useViewOptions } from "@/hooks/ui/use-view-options";
 import { queryKeys } from "@/lib/query-keys";
+import { getDefaultSorting } from "@/lib/sorting";
 
 interface UseNewItemsPollingOptions {
   onBeforeRefresh?: () => void;
@@ -15,8 +17,16 @@ interface UseNewItemsPollingOptions {
 export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
   const { onBeforeRefresh } = options;
   const { feedId, categoryId, isSaved, status, feedIds } = useFeedFilter();
+  const { sortBy: urlSortBy, sortOrder: urlSortOrder } = useViewOptions();
   const { isTourActive } = useTourStore();
   const queryClient = useQueryClient();
+
+  const defaultSort = getDefaultSorting({ isSaved });
+  const sortOrder = urlSortOrder ?? defaultSort.sortOrder;
+  const sortBy = urlSortBy ?? defaultSort.sortBy;
+
+  const isNewestFirst = sortBy === "publishedAt" && sortOrder === "desc";
+  const isReadFilter = status === "read";
 
   // Find the maximum publishedAt timestamp across all items currently loaded in the client cache
   const { data } = useItems();
@@ -60,7 +70,12 @@ export function useNewItemsPolling(options: UseNewItemsPollingOptions = {}) {
       const res = await response.json();
       return res.count as number;
     },
-    enabled: !!latestItemDate && !isTourActive && !isSaved,
+    enabled:
+      !!latestItemDate &&
+      !isTourActive &&
+      !isSaved &&
+      isNewestFirst &&
+      !isReadFilter,
     refetchInterval: 60000, // 60 seconds
   });
 
